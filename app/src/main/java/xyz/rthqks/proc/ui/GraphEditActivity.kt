@@ -3,7 +3,10 @@ package xyz.rthqks.proc.ui
 import android.graphics.Rect
 import android.os.Bundle
 import android.util.Log
-import android.view.*
+import android.view.Gravity
+import android.view.LayoutInflater
+import android.view.View
+import android.view.ViewGroup
 import android.widget.ImageView
 import android.widget.TextView
 import androidx.lifecycle.ViewModelProvider
@@ -18,8 +21,9 @@ import kotlinx.android.synthetic.main.activity_graph_edit.*
 import kotlinx.android.synthetic.main.content_edit_graph.*
 import kotlinx.android.synthetic.main.node_edit_item.view.*
 import xyz.rthqks.proc.R
-import xyz.rthqks.proc.data.PortConfig
 import xyz.rthqks.proc.data.NodeConfig
+import xyz.rthqks.proc.data.NodeType
+import xyz.rthqks.proc.data.PortConfig
 import javax.inject.Inject
 import kotlin.math.round
 
@@ -48,7 +52,7 @@ class GraphEditActivity : DaggerAppCompatActivity() {
         bottom_sheet.layoutManager = GridLayoutManager(this, 4)
         bottom_sheet.adapter = AddNodeAdapter {
             Log.d(TAG, "clicked ${getText(it.name)}")
-            nodeAdapter.addNode(it)
+//            nodeAdapter.addNode(it)
             behavior.state = BottomSheetBehavior.STATE_HIDDEN
         }
 
@@ -121,12 +125,13 @@ class NodeViewHolder(
         outputMenu.adapter = outputAdapter
     }
 
-    fun bind(nodeConfig: NodeConfig) {
-        name.setText(nodeConfig.name)
-        name.setCompoundDrawablesWithIntrinsicBounds(nodeConfig.icon, 0, 0, 0)
+    fun bind(node: NodeConfig) {
+        val nodeType = node.type
+        name.setText(nodeType.name)
+        name.setCompoundDrawablesWithIntrinsicBounds(nodeType.icon, 0, 0, 0)
 
-        inputAdapter.setPorts(nodeConfig.inputs)
-        outputAdapter.setPorts(nodeConfig.outputs)
+        inputAdapter.setPorts(node.inputs)
+        outputAdapter.setPorts(node.outputs)
     }
 }
 
@@ -165,19 +170,20 @@ class PortViewHolder(
 
     init {
         itemView.setOnClickListener {
-            Log.d("Ports", "clicked ${name.text} $portConfig")
+            Log.d("DataType", "clicked ${name.text} $portConfig")
         }
     }
 
     fun bind(portConfig: PortConfig, startAligned: Boolean) {
         this.portConfig = portConfig
-        name.setText(portConfig.name)
+        val dataType = portConfig.dataType
+        name.setText(dataType.name)
         if (startAligned) {
             name.gravity = Gravity.START or Gravity.CENTER_VERTICAL
-            name.setCompoundDrawablesWithIntrinsicBounds(portConfig.icon, 0, 0, 0)
+            name.setCompoundDrawablesWithIntrinsicBounds(dataType.icon, 0, 0, 0)
         } else {
             name.gravity = Gravity.END or Gravity.CENTER_VERTICAL
-            name.setCompoundDrawablesWithIntrinsicBounds(0, 0, portConfig.icon, 0)
+            name.setCompoundDrawablesWithIntrinsicBounds(0, 0, dataType.icon, 0)
         }
     }
 
@@ -203,8 +209,8 @@ class NodeAdapter : RecyclerView.Adapter<NodeViewHolder>() {
         holder.bind(nodes[position])
     }
 
-    fun addNode(nodeConfig: NodeConfig) {
-        nodes.add(nodeConfig)
+    fun addNode(node: NodeConfig) {
+        nodes.add(node)
         if (nodes.size > 1) {
             notifyItemChanged(nodes.size - 2)
         }
@@ -214,11 +220,17 @@ class NodeAdapter : RecyclerView.Adapter<NodeViewHolder>() {
     fun moveNode(fromPos: Int, toPos: Int) {
         nodes.add(toPos, nodes.removeAt(fromPos))
         notifyItemMoved(fromPos, toPos)
+
+        if (fromPos == 0 || toPos == 0) {
+            // redraw dividers :/
+            notifyItemChanged(fromPos)
+            notifyItemChanged(toPos)
+        }
     }
 }
 
 class AddNodeAdapter(
-    private val itemClick: (NodeConfig) -> Unit
+    private val itemClick: (NodeType) -> Unit
 ) : RecyclerView.Adapter<AddNodeViewHolder>() {
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): AddNodeViewHolder {
@@ -227,7 +239,7 @@ class AddNodeAdapter(
         return AddNodeViewHolder(view, itemClick)
     }
 
-    override fun getItemCount(): Int = NodeConfig.SIZE
+    override fun getItemCount(): Int = NodeType.SIZE
 
     override fun onBindViewHolder(holder: AddNodeViewHolder, position: Int) {
         holder.onBind(TYPES[position])
@@ -235,37 +247,37 @@ class AddNodeAdapter(
 
     companion object {
         private val TYPES = listOf(
-            NodeConfig.Camera(),
-            NodeConfig.Microphone(),
-            NodeConfig.Image(),
-            NodeConfig.AudioFile(),
-            NodeConfig.VideoFile(),
-            NodeConfig.ColorFilter(),
-            NodeConfig.ShaderFilter(),
-            NodeConfig.Screen,
-            NodeConfig.Speakers
+            NodeType.Camera,
+            NodeType.Microphone,
+            NodeType.Image,
+            NodeType.AudioFile,
+            NodeType.VideoFile,
+            NodeType.ColorFilter,
+            NodeType.ShaderFilter,
+            NodeType.Screen,
+            NodeType.Speakers
         )
     }
 }
 
 class AddNodeViewHolder(
     itemView: View,
-    itemClick: (NodeConfig) -> Unit
+    itemClick: (NodeType) -> Unit
 ) : RecyclerView.ViewHolder(itemView) {
     private val textView = itemView.findViewById<TextView>(R.id.text)
     private val iconView = itemView.findViewById<ImageView>(R.id.icon)
-    private var nodeConfig: NodeConfig? = null
+    private var node: NodeType? = null
 
     init {
         itemView.setOnClickListener {
-            nodeConfig?.let { nt -> itemClick.invoke(nt) }
+            node?.let { nt -> itemClick.invoke(nt) }
         }
     }
 
-    fun onBind(nodeConfig: NodeConfig) {
-        this.nodeConfig = nodeConfig
-        textView.setText(nodeConfig.name)
-        iconView.setImageResource(nodeConfig.icon)
+    fun onBind(node: NodeType) {
+        this.node = node
+        textView.setText(node.name)
+        iconView.setImageResource(node.icon)
     }
 
     companion object {

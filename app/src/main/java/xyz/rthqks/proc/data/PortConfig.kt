@@ -1,14 +1,27 @@
 package xyz.rthqks.proc.data
 
-import androidx.annotation.DrawableRes
-import androidx.annotation.StringRes
-import xyz.rthqks.proc.R
+import androidx.room.Entity
+import androidx.room.ForeignKey
+import androidx.room.Index
 
-sealed class PortConfig(
-    @StringRes val name: Int,
-    @DrawableRes val icon: Int
-) {
-    class Surface : PortConfig(R.string.name_data_type_surface, R.drawable.ic_image)
-    class Texture : PortConfig(R.string.name_data_type_texture, R.drawable.ic_texture)
-    class AudioBuffer : PortConfig(R.string.name_data_type_audio_buffer, R.drawable.ic_audio)
-}
+@Entity(
+    indices = [
+        Index("nodeId")
+    ],
+    primaryKeys = ["graphId", "nodeId", "id"],
+    foreignKeys = [
+        ForeignKey(
+            entity = NodeConfig::class,
+            childColumns = ["nodeId"],
+            parentColumns = ["id"],
+            onDelete = ForeignKey.CASCADE
+        )
+    ]
+)
+data class PortConfig(
+    val id: Int,
+    val graphId: Int,
+    val nodeId: Int,
+    val direction: Int,
+    val dataType: DataType
+)

@@ -1,8 +1,8 @@
 package xyz.rthqks.proc.ui
 
 import android.content.Intent
-import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
+import androidx.appcompat.app.AppCompatActivity
 import kotlinx.android.synthetic.main.activity_graph_list.*
 import xyz.rthqks.proc.R
 
