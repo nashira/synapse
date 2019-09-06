@@ -9,6 +9,7 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.ImageView
 import android.widget.TextView
+import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.ViewModelProviders
 import androidx.recyclerview.widget.GridLayoutManager
@@ -52,6 +53,7 @@ class GraphEditActivity : DaggerAppCompatActivity() {
         bottom_sheet.layoutManager = GridLayoutManager(this, 4)
         bottom_sheet.adapter = AddNodeAdapter {
             Log.d(TAG, "clicked ${getText(it.name)}")
+            viewModel.addNodeType(it)
 //            nodeAdapter.addNode(it)
             behavior.state = BottomSheetBehavior.STATE_HIDDEN
         }
@@ -94,6 +96,12 @@ class GraphEditActivity : DaggerAppCompatActivity() {
         })
 
         touchHelper.attachToRecyclerView(recycler_view)
+
+        viewModel.graphChannel.observe(this, Observer {
+            Log.d(TAG, it.toString())
+            Log.d(TAG, it.nodes.toString())
+            Log.d(TAG, it.edges.toString())
+        })
     }
 
     companion object {

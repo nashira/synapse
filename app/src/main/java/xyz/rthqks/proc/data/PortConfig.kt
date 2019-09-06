@@ -6,9 +6,10 @@ import androidx.room.Index
 
 @Entity(
     indices = [
-        Index("nodeId")
+        Index("nodeId"),
+        Index("graphId")
     ],
-    primaryKeys = ["graphId", "nodeId", "id"],
+    primaryKeys = ["id", "nodeId", "graphId"],
     foreignKeys = [
         ForeignKey(
             entity = NodeConfig::class,
@@ -24,4 +25,9 @@ data class PortConfig(
     val nodeId: Int,
     val direction: Int,
     val dataType: DataType
-)
+) {
+    companion object {
+        const val DIRECTION_INPUT = 0
+        const val DIRECTION_OUTPUT = 1
+    }
+}

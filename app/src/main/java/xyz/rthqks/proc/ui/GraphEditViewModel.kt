@@ -1,6 +1,7 @@
 package xyz.rthqks.proc.ui
 
 import android.util.Log
+import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.Job
@@ -9,12 +10,19 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.selects.select
+import xyz.rthqks.proc.data.GraphConfig
+import xyz.rthqks.proc.data.NodeType
 import javax.inject.Inject
 
 class GraphEditViewModel @Inject constructor() : ViewModel() {
     private val test: Job
+    private val graph = GraphConfig(0, "Test")
+    val graphChannel = MutableLiveData<GraphConfig>()
+
 
     init {
+        graphChannel.value = graph
+
         test = viewModelScope.launch {
             val a = Channel<Int>(1)
             val b = Channel<Int>(1)
@@ -46,6 +54,11 @@ class GraphEditViewModel @Inject constructor() : ViewModel() {
 
     fun stop() {
         test.cancel()
+    }
+
+    fun addNodeType(nodeType: NodeType) {
+        graph.addNodeType(nodeType)
+        graphChannel.value = graph
     }
 
     companion object {

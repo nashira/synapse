@@ -9,6 +9,7 @@ import androidx.room.TypeConverters
         GraphConfig::class,
         NodeConfig::class,
         PortConfig::class,
+        EdgeConfig::class,
         PropertyConfig::class
     ],
     version = ProcDb.VERSION,
