@@ -1,0 +1,40 @@
+<resources>
+    <string name="app_name">Proc</string>
+    <string name="title_activity_graph_edit">Edit Graph</string>
+    <string name="property_name_sample_rate">Sample Rate</string>
+    <string name="property_label_sample_rate_16000">16000</string>
+    <string name="property_label_sample_rate_22050">22050</string>
+    <string name="property_label_sample_rate_32000">32000</string>
+    <string name="property_label_sample_rate_44100">44100</string>
+    <string name="property_label_sample_rate_48000">48000</string>
+    <string name="property_label_encoding_PCM_16BIT">PCM 16</string>
+    <string name="property_label_encoding_PCM_8BIT">PCM 8</string>
+    <string name="property_label_encoding_PCM_FLOAT">PCM Float</string>
+    <string name="property_name_audio_encoding">Audio Encoding</string>
+    <string name="property_name_audio_channels">Audio Channels</string>
+    <string name="property_label_channel_default">Default</string>
+    <string name="property_label_channel_mono">Mono</string>
+    <string name="property_label_channel_stereo">Stereo</string>
+    <string name="property_label_audio_source_default">Default</string>
+    <string name="property_label_audio_source_mic">Mic</string>
+    <string name="property_label_audio_source_camcorder">Camcorder</string>
+    <string name="property_label_audio_source_voice_communication">Voice Communication</string>
+    <string name="property_label_audio_source_voice_recognition">Voice Recognition</string>
+
+    <string name="name_node_type_camera">Camera</string>
+    <string name="name_node_type_microphone">Microphone</string>
+    <string name="name_node_type_screen">Screen</string>
+    <string name="name_node_type_speaker">Speakers</string>
+    <string name="name_node_type_image">Image</string>
+    <string name="name_node_type_audio_file">Audio File</string>
+    <string name="name_node_type_video_file">Video File</string>
+    <string name="name_node_type_color_filter">Color Filter</string>
+    <string name="name_node_type_shader_filter">Shader Filter</string>
+    <string name="name_data_type_audio_buffer">Audio Buffer</string>
+    <string name="name_data_type_surface">Surface</string>
+    <string name="name_data_type_texture">Texture</string>
+    <string name="todo_content_description">image</string>
+    <string name="heading_node_inputs">Inputs</string>
+    <string name="heading_node_outputs">Outputs</string>
+    <string name="node_edit_properties">Properties</string>
+</resources>
