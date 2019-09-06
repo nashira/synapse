@@ -9,6 +9,7 @@ import android.widget.TextView
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.ViewModelProviders
 import androidx.recyclerview.widget.GridLayoutManager
+import androidx.recyclerview.widget.ItemTouchHelper
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.google.android.material.bottomsheet.BottomSheetBehavior
@@ -70,6 +71,25 @@ class GraphEditActivity : DaggerAppCompatActivity() {
         })
 
         recycler_view.adapter = nodeAdapter
+        val touchHelper = ItemTouchHelper(object : ItemTouchHelper.SimpleCallback(
+            ItemTouchHelper.UP or ItemTouchHelper.DOWN,
+            0
+        ) {
+            override fun onMove(
+                recyclerView: RecyclerView,
+                viewHolder: RecyclerView.ViewHolder,
+                target: RecyclerView.ViewHolder
+            ): Boolean {
+                val fromPos = viewHolder.adapterPosition
+                val toPos = target.adapterPosition
+                nodeAdapter.moveNode(fromPos, toPos)
+                return true
+            }
+
+            override fun onSwiped(viewHolder: RecyclerView.ViewHolder, direction: Int) {}
+        })
+
+        touchHelper.attachToRecyclerView(recycler_view)
     }
 
     companion object {
@@ -127,32 +147,32 @@ class PortsAdapter(
             parent,
             false
         )
-        return PortViewHolder(view, isStartAligned)
+        return PortViewHolder(view)
     }
 
     override fun getItemCount() = ports.size
 
     override fun onBindViewHolder(holder: PortViewHolder, position: Int) {
-        holder.bind(ports[position])
+        holder.bind(ports[position], isStartAligned)
     }
-
 }
 
 class PortViewHolder(
-    itemView: View,
-    private val isStartAligned: Boolean
+    itemView: View
 ) : RecyclerView.ViewHolder(itemView) {
     private val name = itemView.name
+    private var portConfig: PortConfig? = null
 
     init {
         itemView.setOnClickListener {
-            Log.d("Ports", "clicked ${name.text} $itemView")
+            Log.d("Ports", "clicked ${name.text} $portConfig")
         }
     }
 
-    fun bind(portConfig: PortConfig) {
+    fun bind(portConfig: PortConfig, startAligned: Boolean) {
+        this.portConfig = portConfig
         name.setText(portConfig.name)
-        if (isStartAligned) {
+        if (startAligned) {
             name.gravity = Gravity.START or Gravity.CENTER_VERTICAL
             name.setCompoundDrawablesWithIntrinsicBounds(portConfig.icon, 0, 0, 0)
         } else {
@@ -189,6 +209,11 @@ class NodeAdapter : RecyclerView.Adapter<NodeViewHolder>() {
             notifyItemChanged(nodes.size - 2)
         }
         notifyItemInserted(nodes.size - 1)
+    }
+
+    fun moveNode(fromPos: Int, toPos: Int) {
+        nodes.add(toPos, nodes.removeAt(fromPos))
+        notifyItemMoved(fromPos, toPos)
     }
 }
 
