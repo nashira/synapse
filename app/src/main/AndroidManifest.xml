@@ -13,7 +13,7 @@
         android:theme="@style/AppTheme"
         tools:ignore="GoogleAppIndexingWarning">
         <activity
-            android:name="xyz.rthqks.proc.ui.GraphEditActivity"
+            android:name="xyz.rthqks.proc.ui.edit.GraphEditActivity"
             android:label="@string/title_activity_graph_edit"
             android:theme="@style/AppTheme.NoActionBar">
             <intent-filter>

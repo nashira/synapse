@@ -1,9 +1,8 @@
-package xyz.rthqks.proc.ui
+package xyz.rthqks.proc.ui.edit
 
 import android.graphics.Rect
 import android.os.Bundle
 import android.util.Log
-import android.view.Gravity
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -20,11 +19,9 @@ import com.google.android.material.bottomsheet.BottomSheetBehavior
 import dagger.android.support.DaggerAppCompatActivity
 import kotlinx.android.synthetic.main.activity_graph_edit.*
 import kotlinx.android.synthetic.main.content_edit_graph.*
-import kotlinx.android.synthetic.main.node_edit_item.view.*
 import xyz.rthqks.proc.R
-import xyz.rthqks.proc.data.NodeConfig
 import xyz.rthqks.proc.data.NodeType
-import xyz.rthqks.proc.data.PortConfig
+import xyz.rthqks.proc.logic.GraphConfigEditor
 import javax.inject.Inject
 import kotlin.math.round
 
@@ -41,6 +38,18 @@ class GraphEditActivity : DaggerAppCompatActivity() {
         setSupportActionBar(toolbar)
         viewModel = ViewModelProviders.of(this, viewModelFactory)[GraphEditViewModel::class.java]
 
+
+        viewModel.graphChannel.observe(this, Observer {
+            Log.d(TAG, it.toString())
+            Log.d(TAG, it.nodes.toString())
+            Log.d(TAG, it.edges.toString())
+            setupUI(it)
+        })
+    }
+
+    private fun setupUI(graphEditor: GraphConfigEditor) {
+        val nodeAdapter = NodeAdapter(graphEditor)
+
         val behavior = BottomSheetBehavior.from(bottom_sheet)
         behavior.state = BottomSheetBehavior.STATE_HIDDEN
 
@@ -48,13 +57,11 @@ class GraphEditActivity : DaggerAppCompatActivity() {
             behavior.state = BottomSheetBehavior.STATE_EXPANDED
         }
 
-        val nodeAdapter = NodeAdapter()
-
         bottom_sheet.layoutManager = GridLayoutManager(this, 4)
         bottom_sheet.adapter = AddNodeAdapter {
             Log.d(TAG, "clicked ${getText(it.name)}")
             viewModel.addNodeType(it)
-//            nodeAdapter.addNode(it)
+            nodeAdapter.onNodeAdded()
             behavior.state = BottomSheetBehavior.STATE_HIDDEN
         }
 
@@ -70,7 +77,8 @@ class GraphEditActivity : DaggerAppCompatActivity() {
                 state: RecyclerView.State
             ) {
                 outRect.top = if (parent.getChildLayoutPosition(view) > 0) 0 else dp8
-                outRect.bottom = if (parent.getChildAdapterPosition(view) == nodeAdapter.itemCount - 1) dp84 else dp8
+                outRect.bottom =
+                    if (parent.getChildAdapterPosition(view) == nodeAdapter.itemCount - 1) dp84 else dp8
                 outRect.left = dp8
                 outRect.right = dp8
             }
@@ -96,144 +104,10 @@ class GraphEditActivity : DaggerAppCompatActivity() {
         })
 
         touchHelper.attachToRecyclerView(recycler_view)
-
-        viewModel.graphChannel.observe(this, Observer {
-            Log.d(TAG, it.toString())
-            Log.d(TAG, it.nodes.toString())
-            Log.d(TAG, it.edges.toString())
-        })
     }
 
     companion object {
         private val TAG = GraphEditActivity::class.java.simpleName
-    }
-}
-
-class NodeViewHolder(
-    itemView: View,
-    viewPool: RecyclerView.RecycledViewPool
-) :
-    RecyclerView.ViewHolder(itemView) {
-    private val name = itemView.name
-    private val inputMenu = itemView.inputs_menu
-    private val outputMenu = itemView.outputs_menu
-    private val inputAdapter = PortsAdapter(true)
-    private val outputAdapter = PortsAdapter(false)
-
-    init {
-        inputMenu.setRecycledViewPool(viewPool)
-        outputMenu.setRecycledViewPool(viewPool)
-
-        inputMenu.layoutManager =
-            LinearLayoutManager(itemView.context)
-        outputMenu.layoutManager =
-            LinearLayoutManager(itemView.context)
-
-        inputMenu.adapter = inputAdapter
-        outputMenu.adapter = outputAdapter
-    }
-
-    fun bind(node: NodeConfig) {
-        val nodeType = node.type
-        name.setText(nodeType.name)
-        name.setCompoundDrawablesWithIntrinsicBounds(nodeType.icon, 0, 0, 0)
-
-        inputAdapter.setPorts(node.inputs)
-        outputAdapter.setPorts(node.outputs)
-    }
-}
-
-class PortsAdapter(
-    private val isStartAligned: Boolean
-) : RecyclerView.Adapter<PortViewHolder>() {
-    private val ports = mutableListOf<PortConfig>()
-
-    fun setPorts(ports: List<PortConfig>) {
-        this.ports.clear()
-        this.ports.addAll(ports)
-        notifyDataSetChanged()
-    }
-
-    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): PortViewHolder {
-        val view = LayoutInflater.from(parent.context).inflate(
-            R.layout.port_config_item,
-            parent,
-            false
-        )
-        return PortViewHolder(view)
-    }
-
-    override fun getItemCount() = ports.size
-
-    override fun onBindViewHolder(holder: PortViewHolder, position: Int) {
-        holder.bind(ports[position], isStartAligned)
-    }
-}
-
-class PortViewHolder(
-    itemView: View
-) : RecyclerView.ViewHolder(itemView) {
-    private val name = itemView.name
-    private var portConfig: PortConfig? = null
-
-    init {
-        itemView.setOnClickListener {
-            Log.d("DataType", "clicked ${name.text} $portConfig")
-        }
-    }
-
-    fun bind(portConfig: PortConfig, startAligned: Boolean) {
-        this.portConfig = portConfig
-        val dataType = portConfig.dataType
-        name.setText(dataType.name)
-        if (startAligned) {
-            name.gravity = Gravity.START or Gravity.CENTER_VERTICAL
-            name.setCompoundDrawablesWithIntrinsicBounds(dataType.icon, 0, 0, 0)
-        } else {
-            name.gravity = Gravity.END or Gravity.CENTER_VERTICAL
-            name.setCompoundDrawablesWithIntrinsicBounds(0, 0, dataType.icon, 0)
-        }
-    }
-
-}
-
-class NodeAdapter : RecyclerView.Adapter<NodeViewHolder>() {
-
-    private val nodes = mutableListOf<NodeConfig>()
-    private val viewPool = RecyclerView.RecycledViewPool()
-
-    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): NodeViewHolder {
-        val view = LayoutInflater.from(parent.context).inflate(
-            R.layout.node_edit_item,
-            parent,
-            false
-        )
-        return NodeViewHolder(view, viewPool)
-    }
-
-    override fun getItemCount(): Int = nodes.size
-
-    override fun onBindViewHolder(holder: NodeViewHolder, position: Int) {
-        holder.bind(nodes[position])
-    }
-
-    fun addNode(node: NodeConfig) {
-        nodes.add(node)
-        if (nodes.size > 1) {
-            notifyItemChanged(nodes.size - 2)
-        }
-        notifyItemInserted(nodes.size - 1)
-    }
-
-    fun moveNode(fromPos: Int, toPos: Int) {
-        nodes.add(toPos, nodes.removeAt(fromPos))
-        notifyItemMoved(fromPos, toPos)
-
-        if (fromPos == 0 || toPos == 0) {
-            // redraw dividers :/
-            notifyItemChanged(fromPos)
-            notifyItemChanged(toPos)
-        }
     }
 }
 

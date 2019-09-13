@@ -5,6 +5,7 @@ import android.os.Bundle
 import androidx.appcompat.app.AppCompatActivity
 import kotlinx.android.synthetic.main.activity_graph_list.*
 import xyz.rthqks.proc.R
+import xyz.rthqks.proc.ui.edit.GraphEditActivity
 
 class GraphListActivity : AppCompatActivity() {
 

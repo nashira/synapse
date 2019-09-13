@@ -2,7 +2,7 @@ package xyz.rthqks.proc.inject
 
 import dagger.Module
 import dagger.android.ContributesAndroidInjector
-import xyz.rthqks.proc.ui.GraphEditActivity
+import xyz.rthqks.proc.ui.edit.GraphEditActivity
 
 @Module
 abstract class AppModule {

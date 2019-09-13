@@ -1,4 +1,4 @@
-package xyz.rthqks.proc.ui
+package xyz.rthqks.proc.inject
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
@@ -6,7 +6,7 @@ import dagger.Binds
 import dagger.MapKey
 import dagger.Module
 import dagger.multibindings.IntoMap
-import xyz.rthqks.proc.inject.ActivityScope
+import xyz.rthqks.proc.ui.edit.GraphEditViewModel
 import javax.inject.Inject
 import javax.inject.Provider
 import kotlin.reflect.KClass

@@ -13,8 +13,4 @@ data class GraphConfig(
     val nodes = mutableListOf<NodeConfig>()
     @Ignore
     val edges = mutableListOf<EdgeConfig>()
-
-    fun addNodeType(nodeType: NodeType) {
-        nodes.add(NodeConfig(0, id, nodeType))
-    }
 }
