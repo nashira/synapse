@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">Proc</string>
+    <string name="app_name">Synapse</string>
     <string name="title_activity_graph_edit">Edit Graph</string>
     <string name="property_name_sample_rate">Sample Rate</string>
     <string name="property_label_sample_rate_16000">16000</string>

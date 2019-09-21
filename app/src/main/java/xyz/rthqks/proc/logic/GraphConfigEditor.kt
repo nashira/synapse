@@ -13,7 +13,7 @@ class GraphConfigEditor(private val graphConfig: GraphConfig) {
 
     fun addNodeType(nodeType: NodeType) {
         val nodeConfig = NodeConfig(nodes.size, graphConfig.id, nodeType)
-        nextPortId += nodeConfig.createPorts(nextPortId)
+        nodeConfig.createPorts()
         nodes.add(nodeConfig)
     }
 
@@ -63,7 +63,7 @@ class GraphConfigEditor(private val graphConfig: GraphConfig) {
             portConfig.isConnectedTo(selectedPort) -> PortState.EligibleToDisconnect
             selectedPort?.dataType == portConfig.dataType
                     && selectedPort?.direction != portConfig.direction
-                    && selectedPort?.nodeId != portConfig.nodeId-> PortState.EligibleToConnect
+                    && selectedPort?.nodeId != portConfig.nodeId -> PortState.EligibleToConnect
             else -> PortState.Unconnected
         }
     }
@@ -108,7 +108,23 @@ class GraphConfigEditor(private val graphConfig: GraphConfig) {
         return nodeId != other.nodeId
                 && dataType == other.dataType
                 && direction != other.direction
-//                && !isConnected
-//                && !other.isConnected
+                && !isConnectedTo(other)
+    }
+
+    private fun NodeConfig.createPorts() {
+        type.inputs.forEach { dataType ->
+            inputs.add(PortConfig(nextPortId++, graphId, id, PortConfig.DIRECTION_INPUT, dataType))
+        }
+        type.outputs.forEach { dataType ->
+            outputs.add(
+                PortConfig(
+                    nextPortId++,
+                    graphId,
+                    id,
+                    PortConfig.DIRECTION_OUTPUT,
+                    dataType
+                )
+            )
+        }
     }
 }

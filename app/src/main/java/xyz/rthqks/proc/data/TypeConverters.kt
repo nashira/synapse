@@ -2,7 +2,6 @@ package xyz.rthqks.proc.data
 
 import androidx.room.TypeConverter
 
-
 class DbConverters {
     @TypeConverter
     fun fromNodeType(nodeType: NodeType): String =
