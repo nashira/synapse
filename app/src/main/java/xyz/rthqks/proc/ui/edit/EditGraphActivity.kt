@@ -1,6 +1,5 @@
 package xyz.rthqks.proc.ui.edit
 
-import android.graphics.Rect
 import android.os.Bundle
 import android.util.Log
 import android.view.LayoutInflater
@@ -8,102 +7,47 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.ImageView
 import android.widget.TextView
-import androidx.lifecycle.Observer
+import androidx.fragment.app.commit
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.ViewModelProviders
 import androidx.recyclerview.widget.GridLayoutManager
-import androidx.recyclerview.widget.ItemTouchHelper
-import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.google.android.material.bottomsheet.BottomSheetBehavior
 import dagger.android.support.DaggerAppCompatActivity
 import kotlinx.android.synthetic.main.activity_graph_edit.*
-import kotlinx.android.synthetic.main.content_edit_graph.*
 import xyz.rthqks.proc.R
 import xyz.rthqks.proc.data.NodeType
-import xyz.rthqks.proc.logic.GraphConfigEditor
 import javax.inject.Inject
-import kotlin.math.round
 
 
 class GraphEditActivity : DaggerAppCompatActivity() {
 
     @Inject
     lateinit var viewModelFactory: ViewModelProvider.Factory
-    private lateinit var viewModel: GraphEditViewModel
+    private lateinit var graphViewModel: EditGraphViewModel
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_graph_edit)
         setSupportActionBar(toolbar)
-        viewModel = ViewModelProviders.of(this, viewModelFactory)[GraphEditViewModel::class.java]
+        graphViewModel = ViewModelProviders.of(this, viewModelFactory)[EditGraphViewModel::class.java]
 
-
-        viewModel.graphChannel.observe(this, Observer {
-            Log.d(TAG, it.toString())
-            Log.d(TAG, it.nodes.toString())
-            Log.d(TAG, it.edges.toString())
-            setupUI(it)
-        })
-    }
-
-    private fun setupUI(graphEditor: GraphConfigEditor) {
-        val nodeAdapter = NodeAdapter(graphEditor)
-
+        savedInstanceState ?: run {
+            supportFragmentManager.commit {
+                add(R.id.content, EditGraphFragment())
+            }
+        }
         val behavior = BottomSheetBehavior.from(bottom_sheet)
         behavior.state = BottomSheetBehavior.STATE_HIDDEN
-
         button_add_node.setOnClickListener { view ->
             behavior.state = BottomSheetBehavior.STATE_EXPANDED
         }
-
         bottom_sheet.layoutManager = GridLayoutManager(this, 4)
         bottom_sheet.adapter = AddNodeAdapter {
             Log.d(TAG, "clicked ${getText(it.name)}")
-            viewModel.addNodeType(it)
-            nodeAdapter.onNodeAdded()
+            graphViewModel.addNodeType(it)
             behavior.state = BottomSheetBehavior.STATE_HIDDEN
         }
-
-        val nodeLayoutManager = LinearLayoutManager(this)
-        val dp8 = round(resources.displayMetrics.density * 8).toInt()
-        val dp84 = round(resources.displayMetrics.density * 84).toInt()
-        recycler_view.layoutManager = nodeLayoutManager
-        recycler_view.addItemDecoration(object : RecyclerView.ItemDecoration() {
-            override fun getItemOffsets(
-                outRect: Rect,
-                view: View,
-                parent: RecyclerView,
-                state: RecyclerView.State
-            ) {
-                outRect.top = if (parent.getChildLayoutPosition(view) > 0) 0 else dp8
-                outRect.bottom =
-                    if (parent.getChildAdapterPosition(view) == nodeAdapter.itemCount - 1) dp84 else dp8
-                outRect.left = dp8
-                outRect.right = dp8
-            }
-        })
-
-        recycler_view.adapter = nodeAdapter
-        val touchHelper = ItemTouchHelper(object : ItemTouchHelper.SimpleCallback(
-            ItemTouchHelper.UP or ItemTouchHelper.DOWN,
-            0
-        ) {
-            override fun onMove(
-                recyclerView: RecyclerView,
-                viewHolder: RecyclerView.ViewHolder,
-                target: RecyclerView.ViewHolder
-            ): Boolean {
-                val fromPos = viewHolder.adapterPosition
-                val toPos = target.adapterPosition
-                nodeAdapter.moveNode(fromPos, toPos)
-                return true
-            }
-
-            override fun onSwiped(viewHolder: RecyclerView.ViewHolder, direction: Int) {}
-        })
-
-        touchHelper.attachToRecyclerView(recycler_view)
     }
 
     companion object {

@@ -16,7 +16,7 @@
         android:drawableTint="@color/grey"
         android:gravity="center_vertical"
         android:textAppearance="@style/TextAppearance.AppCompat.Medium"
-        app:layout_constraintBottom_toBottomOf="@id/button_settings"
+        app:layout_constraintBottom_toBottomOf="@id/button_properties"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
         tools:drawableStart="@drawable/ic_mic"
@@ -24,7 +24,7 @@
 
     <Button
         android:text="@string/node_edit_properties"
-        android:id="@+id/button_settings"
+        android:id="@+id/button_properties"
         style="@style/Widget.AppCompat.Button.Borderless"
         android:textAllCaps="false"
         android:layout_width="wrap_content"

@@ -6,7 +6,7 @@ import dagger.Binds
 import dagger.MapKey
 import dagger.Module
 import dagger.multibindings.IntoMap
-import xyz.rthqks.proc.ui.edit.GraphEditViewModel
+import xyz.rthqks.proc.ui.edit.EditGraphViewModel
 import javax.inject.Inject
 import javax.inject.Provider
 import kotlin.reflect.KClass
@@ -31,8 +31,8 @@ abstract class ViewModelModule {
 
     @Binds
     @IntoMap
-    @ViewModelKey(GraphEditViewModel::class)
-    internal abstract fun postListViewModel(viewModel: GraphEditViewModel): ViewModel
+    @ViewModelKey(EditGraphViewModel::class)
+    internal abstract fun postListViewModel(graphViewModel: EditGraphViewModel): ViewModel
 
     //Add more ViewModels here
 }

@@ -14,6 +14,7 @@ class GraphConfigEditor(private val graphConfig: GraphConfig) {
     fun addNodeType(nodeType: NodeType) {
         val nodeConfig = NodeConfig(nodes.size, graphConfig.id, nodeType)
         nodeConfig.createPorts()
+        nodeConfig.createProperties()
         nodes.add(nodeConfig)
     }
 
@@ -127,4 +128,12 @@ class GraphConfigEditor(private val graphConfig: GraphConfig) {
             )
         }
     }
+
+    private fun NodeConfig.createProperties() {
+        type.properties.forEach {
+            properties.add(PropertyConfig(it.key, id, it.value.default.toString()))
+        }
+    }
+
+    fun getNode(nodeId: Int): NodeConfig = nodes[nodeId]
 }

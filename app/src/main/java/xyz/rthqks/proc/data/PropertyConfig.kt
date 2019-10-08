@@ -7,11 +7,10 @@ import androidx.room.Index
     indices = [
         Index("nodeId")
     ],
-    primaryKeys = ["id", "nodeId"]
+    primaryKeys = ["key", "nodeId"]
 )
 data class PropertyConfig(
-    val id: Int,
-    val nodeId: Int,
     val key: String,
+    val nodeId: Int,
     val value: String
 )

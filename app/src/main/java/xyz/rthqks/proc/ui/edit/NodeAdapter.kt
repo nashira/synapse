@@ -12,14 +12,15 @@ import kotlinx.android.synthetic.main.node_edit_item.view.*
 import xyz.rthqks.proc.R
 import xyz.rthqks.proc.data.NodeConfig
 import xyz.rthqks.proc.data.PortConfig
-import xyz.rthqks.proc.logic.GraphConfigEditor
 
 
 class NodeAdapter(
-    private var graphConfig: GraphConfigEditor
+    private val graphViewModel: EditGraphViewModel
 ) : RecyclerView.Adapter<NodeViewHolder>() {
 
     private val viewPool = RecyclerView.RecycledViewPool()
+    private val graphConfig = graphViewModel.graphConfigEditor
+    var onEditNodeProperties: ((NodeConfig) -> Unit)? = null
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): NodeViewHolder {
         val view = LayoutInflater.from(parent.context).inflate(
@@ -27,7 +28,9 @@ class NodeAdapter(
             parent,
             false
         )
-        return NodeViewHolder(view, viewPool, graphConfig, this)
+        return NodeViewHolder(view, viewPool, graphViewModel) {
+            onEditNodeProperties?.invoke(it)
+        }
     }
 
     override fun getItemCount(): Int = graphConfig.nodes.size
@@ -64,15 +67,17 @@ class NodeAdapter(
 class NodeViewHolder(
     itemView: View,
     viewPool: RecyclerView.RecycledViewPool,
-    private val graphEditor: GraphConfigEditor,
-    private val nodeAdapter: NodeAdapter
+    private val graphViewModel: EditGraphViewModel,
+    private val onEditNodeProperties: ((NodeConfig) -> Unit)
 ) :
     RecyclerView.ViewHolder(itemView) {
     private val name = itemView.name
+    private val propertiesButton = itemView.button_properties
     private val inputMenu = itemView.inputs_menu
     private val outputMenu = itemView.outputs_menu
     private val inputAdapter = PortsAdapter(true)
     private val outputAdapter = PortsAdapter(false)
+    private var nodeConfig: NodeConfig? = null
 
     init {
         inputMenu.setRecycledViewPool(viewPool)
@@ -83,9 +88,14 @@ class NodeViewHolder(
 
         inputMenu.adapter = inputAdapter
         outputMenu.adapter = outputAdapter
+
+        propertiesButton.setOnClickListener {
+            nodeConfig?.let { n -> onEditNodeProperties.invoke(n) }
+        }
     }
 
     fun bind(node: NodeConfig) {
+        nodeConfig = node
         val nodeType = node.type
         name.setText(nodeType.name)
         name.setCompoundDrawablesWithIntrinsicBounds(nodeType.icon, 0, 0, 0)
@@ -132,15 +142,15 @@ class NodeViewHolder(
         init {
             itemView.setOnClickListener { _ ->
                 portConfig?.let { it ->
-                    graphEditor.setSelectedPort(portConfig)
-                    nodeAdapter.notifyDataSetChanged()
+                    graphViewModel.setSelectedPort(it)
+//                    nodeAdapter.notifyDataSetChanged()
                     when (it.direction) {
                         PortConfig.DIRECTION_INPUT -> {
-                            val openPorts = graphEditor.getOpenOutputsForType(it.dataType)
+                            val openPorts = graphViewModel.getOpenOutputsForType(it.dataType)
                             Log.d(TAG, openPorts.toString())
                         }
                         PortConfig.DIRECTION_OUTPUT -> {
-                            val openPorts = graphEditor.getOpenInputsForType(it.dataType)
+                            val openPorts = graphViewModel.getOpenInputsForType(it.dataType)
                             Log.d(TAG, openPorts.toString())
                         }
                     }
@@ -160,8 +170,8 @@ class NodeViewHolder(
                 name.gravity = Gravity.END or Gravity.CENTER_VERTICAL
                 name.setCompoundDrawablesWithIntrinsicBounds(0, 0, dataType.icon, 0)
             }
-            Log.d(TAG, "port ${portConfig.id} ${graphEditor.getPortState(portConfig)}")
-            when(graphEditor.getPortState(portConfig)) {
+            Log.d(TAG, "port ${portConfig.id} ${graphViewModel.getPortState(portConfig)}")
+            when(graphViewModel.getPortState(portConfig)) {
                 PortState.Unconnected -> itemView.setBackgroundColor(Color.BLACK)
                 PortState.Connected -> itemView.setBackgroundColor(Color.BLUE)
                 PortState.SelectedUnconnected -> itemView.setBackgroundColor(Color.CYAN)

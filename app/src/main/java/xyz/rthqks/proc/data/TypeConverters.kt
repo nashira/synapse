@@ -6,7 +6,7 @@ class DbConverters {
     @TypeConverter
     fun fromNodeType(nodeType: NodeType): String =
         when (nodeType) {
-            NodeType.Camera -> "camera"
+            NodeType.Camera -> CAMERA
             NodeType.Microphone -> "microphone"
             NodeType.Image -> "image"
             NodeType.AudioFile -> "audio_file"
@@ -20,7 +20,7 @@ class DbConverters {
     @TypeConverter
     fun toNodeType(string: String): NodeType =
         when (string) {
-            "camera" -> NodeType.Camera
+            CAMERA -> NodeType.Camera
             "microphone" -> NodeType.Microphone
             "image" -> NodeType.Image
             "audio_file" -> NodeType.AudioFile
@@ -48,4 +48,8 @@ class DbConverters {
             "audio_buffer" -> DataType.AudioBuffer
             else -> throw IllegalArgumentException("unknown data type: $string")
         }
+
+    companion object {
+        private const val CAMERA = "camera"
+    }
 }
