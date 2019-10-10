@@ -12,6 +12,7 @@
     <string name="property_label_encoding_PCM_FLOAT">PCM Float</string>
     <string name="property_name_audio_encoding">Audio Encoding</string>
     <string name="property_name_audio_channels">Audio Channels</string>
+    <string name="property_name_audio_source">Audio Source</string>
     <string name="property_label_channel_default">Default</string>
     <string name="property_label_channel_mono">Mono</string>
     <string name="property_label_channel_stereo">Stereo</string>
@@ -37,4 +38,6 @@
     <string name="heading_node_inputs">Inputs</string>
     <string name="heading_node_outputs">Outputs</string>
     <string name="node_edit_properties">Properties</string>
+    <string name="menu_view_graph">View</string>
+    <string name="menu_delete_graph">Delete</string>
 </resources>
