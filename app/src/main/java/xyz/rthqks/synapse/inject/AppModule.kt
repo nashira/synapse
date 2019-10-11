@@ -6,13 +6,14 @@ import androidx.room.RoomDatabase
 import dagger.Module
 import dagger.Provides
 import dagger.android.ContributesAndroidInjector
+import xyz.rthqks.synapse.SynapseApp
 import xyz.rthqks.synapse.data.SynapseDao
 import xyz.rthqks.synapse.data.SynapseDb
 import xyz.rthqks.synapse.ui.edit.GraphEditActivity
 import xyz.rthqks.synapse.ui.exec.ExecGraphActivity
 import javax.inject.Singleton
 
-@Module(includes = [DataModule::class])
+@Module(includes = [MainModule::class, DataModule::class])
 abstract class AppModule {
 
     @ActivityScope
@@ -22,6 +23,14 @@ abstract class AppModule {
     @ActivityScope
     @ContributesAndroidInjector(modules = [ActivityModule::class])
     abstract fun contributeExecGraphActivity(): ExecGraphActivity
+}
+
+@Module
+class MainModule {
+
+    @Provides
+    @Singleton
+    fun provideContext(app: SynapseApp): Context = app
 }
 
 @Module

@@ -4,15 +4,15 @@ import androidx.room.Entity
 import androidx.room.Index
 
 @Entity(
-    primaryKeys = ["fromId", "toId", "fromNodeId", "toNodeId"],
+    primaryKeys = ["graphId", "fromKey", "toKey", "fromNodeId", "toNodeId"],
     indices = [
-        Index("fromNodeId"),
-        Index("toNodeId")
+        Index("graphId")
     ]
 )
 data class EdgeConfig(
+    val graphId: Int,
     val fromNodeId: Int,
-    val fromId: Int,
+    val fromKey: String,
     val toNodeId: Int,
-    val toId: Int
+    val toKey: String
 )

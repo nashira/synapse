@@ -32,23 +32,6 @@ class DbConverters {
             else -> throw IllegalArgumentException("unknown node type: $string")
         }
 
-    @TypeConverter
-    fun fromDataType(dataType: DataType): String =
-        when (dataType) {
-            DataType.Surface -> "surface"
-            DataType.Texture -> "texture"
-            DataType.AudioBuffer -> "audio_buffer"
-        }
-
-    @TypeConverter
-    fun toDataType(string: String): DataType =
-        when (string) {
-            "surface" -> DataType.Surface
-            "texture" -> DataType.Texture
-            "audio_buffer" -> DataType.AudioBuffer
-            else -> throw IllegalArgumentException("unknown data type: $string")
-        }
-
     companion object {
         private const val CAMERA = "camera"
     }

@@ -7,35 +7,37 @@ class GraphConfigEditor(private val graphConfig: GraphConfig) {
 
     val nodes = graphConfig.nodes
     val edges = graphConfig.edges
-    private var nextPortId: Int = 0
-    private val edgeMap = mutableMapOf<Int, EdgeConfig>()
+    private val edgeMap = mutableMapOf<PortKey, EdgeConfig>()
     private var selectedPort: PortConfig? = null
 
     fun addNodeType(nodeType: NodeType) {
         val nodeConfig = NodeConfig(nodes.size, graphConfig.id, nodeType)
-        nodeConfig.createPorts()
         nodeConfig.createProperties()
         nodes.add(nodeConfig)
     }
 
     private fun addEdge(from: PortConfig, to: PortConfig) {
-        val edgeConfig = EdgeConfig(from.nodeId, from.id, to.nodeId, to.id)
+        val edgeConfig =
+            EdgeConfig(graphConfig.id, from.key.nodeId, from.key.key, to.key.nodeId, to.key.key)
         edges.add(edgeConfig)
-        edgeMap[from.id] = edgeConfig
-        edgeMap[to.id] = edgeConfig
+        edgeMap[from.key] = edgeConfig
+        edgeMap[to.key] = edgeConfig
     }
 
     private fun removeEdge(from: PortConfig, to: PortConfig) {
-        edgeMap.remove(from.id)
-        edgeMap.remove(to.id)
-        edges.removeAll { it.fromId == from.id && it.toId == to.id }
+        edgeMap.remove(from.key)
+        edgeMap.remove(to.key)
+        edges.removeAll { it.fromKey == from.key.key && it.toKey == to.key.key }
     }
 
     private fun clearEdges(portConfig: PortConfig) {
-        edgeMap[portConfig.id]?.let {
-            edges.removeAll { it.fromId == portConfig.id || it.toId == portConfig.id }
-            edgeMap.remove(it.fromId)
-            edgeMap.remove(it.toId)
+        edgeMap[portConfig.key]?.let {
+            edges.removeAll {
+                (it.fromKey == portConfig.key.key && portConfig.key.direction == PortType.OUTPUT)
+                        || (it.toKey == portConfig.key.key && portConfig.key.direction == PortType.INPUT)
+            }
+            edgeMap.remove(PortKey(it.fromNodeId, it.fromKey, PortType.OUTPUT))
+            edgeMap.remove(PortKey(it.toNodeId, it.toKey, PortType.INPUT))
         }
     }
 
@@ -62,30 +64,30 @@ class GraphConfigEditor(private val graphConfig: GraphConfig) {
             selectedPort == null && portConfig.isConnected -> PortState.Connected
             selectedPort == null && !portConfig.isConnected -> PortState.Unconnected
             portConfig.isConnectedTo(selectedPort) -> PortState.EligibleToDisconnect
-            selectedPort?.dataType == portConfig.dataType
-                    && selectedPort?.direction != portConfig.direction
-                    && selectedPort?.nodeId != portConfig.nodeId -> PortState.EligibleToConnect
+            selectedPort!!.type::class == portConfig.type::class
+                    && selectedPort?.key?.direction != portConfig.key.direction
+                    && selectedPort?.key?.nodeId != portConfig.key.nodeId -> PortState.EligibleToConnect
             else -> PortState.Unconnected
         }
     }
 
-    fun getOpenInputsForType(dataType: DataType): List<PortConfig> {
+    fun getOpenInputsForType(portConfig: PortConfig): List<PortConfig> {
         val ports = mutableListOf<PortConfig>()
         nodes.forEach { node ->
             ports += node.inputs.filter { input ->
-                !edgeMap.containsKey(input.id) && input.dataType == dataType
+                !edgeMap.containsKey(input.key) && input.type::class == portConfig::class
             }
 
         }
         return ports
     }
 
-    fun getOpenOutputsForType(dataType: DataType): List<PortConfig> {
+    fun getOpenOutputsForType(portConfig: PortConfig): List<PortConfig> {
         val ports = mutableListOf<PortConfig>()
         nodes.forEach { node ->
             ports += node.outputs.filter { output ->
-                !edgeMap.containsKey(output.id) &&
-                        output.dataType == dataType
+                !edgeMap.containsKey(output.key) &&
+                        output.type::class == portConfig::class
             }
 
         }
@@ -93,40 +95,23 @@ class GraphConfigEditor(private val graphConfig: GraphConfig) {
     }
 
     private val PortConfig.isConnected: Boolean
-        get() = edgeMap.containsKey(id)
+        get() = edgeMap.containsKey(key)
 
     private fun PortConfig.isConnectedTo(portConfig: PortConfig?): Boolean {
         val other = portConfig ?: return false
 
-        return edgeMap[id]?.let {
-            (it.fromId == id && it.toId == other.id) ||
-                    (it.fromId == other.id && it.toId == id)
+        return edgeMap[key]?.let {
+            (it.fromKey == key.key && it.toKey == other.key.key) ||
+                    (it.fromKey == other.key.key && it.toKey == key.key)
         } ?: false
     }
 
     private fun PortConfig.canConnectTo(portConfig: PortConfig?): Boolean {
         val other = portConfig ?: return false
-        return nodeId != other.nodeId
-                && dataType == other.dataType
-                && direction != other.direction
+        return key.nodeId != other.key.nodeId
+                && type::class == other.type::class
+                && key.direction != other.key.direction
                 && !isConnectedTo(other)
-    }
-
-    private fun NodeConfig.createPorts() {
-        type.inputs.forEach { dataType ->
-            inputs.add(PortConfig(nextPortId++, graphId, id, PortConfig.DIRECTION_INPUT, dataType))
-        }
-        type.outputs.forEach { dataType ->
-            outputs.add(
-                PortConfig(
-                    nextPortId++,
-                    graphId,
-                    id,
-                    PortConfig.DIRECTION_OUTPUT,
-                    dataType
-                )
-            )
-        }
     }
 
     private fun NodeConfig.createProperties() {

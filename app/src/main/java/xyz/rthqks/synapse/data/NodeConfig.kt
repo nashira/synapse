@@ -21,9 +21,9 @@ data class NodeConfig(
     val type: NodeType
 ) {
     @Ignore
-    val inputs = mutableListOf<PortConfig>()
+    val inputs = type.inputs.map { PortConfig(PortKey(id, it.key, it.direction), it) }
     @Ignore
-    val outputs = mutableListOf<PortConfig>()
+    val outputs = type.outputs.map { PortConfig(PortKey(id, it.key, it.direction), it) }
     @Ignore
     val properties = mutableListOf<PropertyConfig>()
 }

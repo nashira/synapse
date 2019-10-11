@@ -12,6 +12,7 @@ import kotlinx.android.synthetic.main.node_edit_item.view.*
 import xyz.rthqks.synapse.R
 import xyz.rthqks.synapse.data.NodeConfig
 import xyz.rthqks.synapse.data.PortConfig
+import xyz.rthqks.synapse.data.PortType
 
 
 class NodeAdapter(
@@ -144,13 +145,13 @@ class NodeViewHolder(
                 portConfig?.let { it ->
                     graphViewModel.setSelectedPort(it)
 //                    nodeAdapter.notifyDataSetChanged()
-                    when (it.direction) {
-                        PortConfig.DIRECTION_INPUT -> {
-                            val openPorts = graphViewModel.getOpenOutputsForType(it.dataType)
+                    when (it.type.direction) {
+                        PortType.INPUT -> {
+                            val openPorts = graphViewModel.getOpenOutputsForType(it)
                             Log.d(TAG, openPorts.toString())
                         }
-                        PortConfig.DIRECTION_OUTPUT -> {
-                            val openPorts = graphViewModel.getOpenInputsForType(it.dataType)
+                        PortType.OUTPUT -> {
+                            val openPorts = graphViewModel.getOpenInputsForType(it)
                             Log.d(TAG, openPorts.toString())
                         }
                     }
@@ -161,7 +162,7 @@ class NodeViewHolder(
 
         fun bind(portConfig: PortConfig, startAligned: Boolean) {
             this.portConfig = portConfig
-            val dataType = portConfig.dataType
+            val dataType = portConfig.type
             name.setText(dataType.name)
             if (startAligned) {
                 name.gravity = Gravity.START or Gravity.CENTER_VERTICAL
@@ -170,7 +171,7 @@ class NodeViewHolder(
                 name.gravity = Gravity.END or Gravity.CENTER_VERTICAL
                 name.setCompoundDrawablesWithIntrinsicBounds(0, 0, dataType.icon, 0)
             }
-            Log.d(TAG, "port ${portConfig.id} ${graphViewModel.getPortState(portConfig)}")
+            Log.d(TAG, "port ${portConfig.key} ${graphViewModel.getPortState(portConfig)}")
             when(graphViewModel.getPortState(portConfig)) {
                 PortState.Unconnected -> itemView.setBackgroundColor(Color.BLACK)
                 PortState.Connected -> itemView.setBackgroundColor(Color.BLUE)

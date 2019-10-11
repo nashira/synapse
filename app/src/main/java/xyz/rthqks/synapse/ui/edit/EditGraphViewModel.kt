@@ -1,12 +1,18 @@
 package xyz.rthqks.synapse.ui.edit
 
+import android.util.Log
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import xyz.rthqks.synapse.data.*
 import xyz.rthqks.synapse.logic.GraphConfigEditor
 import javax.inject.Inject
 
-class EditGraphViewModel @Inject constructor() : ViewModel() {
+class EditGraphViewModel @Inject constructor(
+    private val dao: SynapseDao
+) : ViewModel() {
 
     val onAddNodeClicked = MutableLiveData<Unit>()
     val graph = GraphConfig(0, "Test")
@@ -17,10 +23,13 @@ class EditGraphViewModel @Inject constructor() : ViewModel() {
 
     init {
         graphChannel.value = graphConfigEditor
-    }
+        Log.d(TAG, dao.toString())
 
-    fun stop() {
-
+        viewModelScope.launch(Dispatchers.Default) {
+//            val graph = dao.getGraphs()
+            Log.d(TAG, graph.toString())
+            dao.saveGraph(graph)
+        }
     }
 
     fun addNodeType(nodeType: NodeType) {
@@ -35,9 +44,9 @@ class EditGraphViewModel @Inject constructor() : ViewModel() {
         onPortSelected.value = Unit
     }
 
-    fun getOpenOutputsForType(dataType: DataType) = graphConfigEditor.getOpenOutputsForType(dataType)
+    fun getOpenOutputsForType(portConfig: PortConfig) = graphConfigEditor.getOpenOutputsForType(portConfig)
 
-    fun getOpenInputsForType(dataType: DataType) = graphConfigEditor.getOpenInputsForType(dataType)
+    fun getOpenInputsForType(portConfig: PortConfig) = graphConfigEditor.getOpenInputsForType(portConfig)
 
     fun getNode(nodeId: Int): NodeConfig = graphConfigEditor.getNode(nodeId)
 

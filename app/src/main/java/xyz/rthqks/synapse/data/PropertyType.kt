@@ -79,12 +79,12 @@ object PropertyType {
         R.drawable.ic_equalizer
     )
 
-    private val map = mapOf<String, Property>(
-        AUDIO_SAMPLE_RATE.key to AUDIO_SAMPLE_RATE,
-        AUDIO_ENCODING.key to AUDIO_ENCODING,
-        AUDIO_CHANNEL.key to AUDIO_CHANNEL,
-        AUDIO_SOURCE.key to AUDIO_SOURCE
-    )
-
-    operator fun get(string: String): Property? = map[string]
+//    private val map = mapOf<String, Property>(
+//        AUDIO_SAMPLE_RATE.key to AUDIO_SAMPLE_RATE,
+//        AUDIO_ENCODING.key to AUDIO_ENCODING,
+//        AUDIO_CHANNEL.key to AUDIO_CHANNEL,
+//        AUDIO_SOURCE.key to AUDIO_SOURCE
+//    )
+//
+//    operator fun get(string: String): Property? = map[string]
 }

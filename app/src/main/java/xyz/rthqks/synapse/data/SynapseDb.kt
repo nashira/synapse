@@ -8,7 +8,6 @@ import androidx.room.TypeConverters
     entities = [
         GraphConfig::class,
         NodeConfig::class,
-        PortConfig::class,
         EdgeConfig::class,
         PropertyConfig::class
     ],
