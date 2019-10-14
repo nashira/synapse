@@ -42,4 +42,6 @@
     <string name="menu_delete_graph">Delete</string>
     <string name="edit_graph_name">Graph Name</string>
     <string name="title_graph_list">Graphs</string>
+    <string name="confirm_delete">Delete</string>
+    <string name="confirm">Confirm</string>
 </resources>

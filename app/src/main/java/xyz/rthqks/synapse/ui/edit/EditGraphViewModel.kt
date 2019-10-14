@@ -6,6 +6,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 import xyz.rthqks.synapse.data.*
 import xyz.rthqks.synapse.logic.GraphConfigEditor
 import javax.inject.Inject
@@ -57,16 +58,20 @@ class EditGraphViewModel @Inject constructor(
     fun getPortState(portConfig: PortConfig) = graphConfigEditor.getPortState(portConfig)
 
     fun setSelectedPort(portConfig: PortConfig) {
-        val changed = graphConfigEditor.setSelectedPort(portConfig)
-        if (changed) {
-//            dao.insertEdges(graphConfigEditor.edges)
-        }
+        val (added, removed) = graphConfigEditor.setSelectedPort(portConfig)
+        Log.d(TAG, "added: $added")
+        Log.d(TAG, "removed: $removed")
         onPortSelected.value = Unit
+
+        viewModelScope.launch(Dispatchers.IO) {
+            added?.let {
+                dao.insertEdge(it)
+            }
+            if (removed.isNotEmpty()) {
+                dao.deleteEdges(removed)
+            }
+        }
     }
-
-    fun getOpenOutputsForType(portConfig: PortConfig) = graphConfigEditor.getOpenOutputsForType(portConfig)
-
-    fun getOpenInputsForType(portConfig: PortConfig) = graphConfigEditor.getOpenInputsForType(portConfig)
 
     fun getNode(nodeId: Int): NodeConfig = graphConfigEditor.getNode(nodeId)
     fun setGraphName(name: String) {
@@ -81,6 +86,12 @@ class EditGraphViewModel @Inject constructor(
         viewModelScope.launch(Dispatchers.IO) {
             dao.insertProperty(property)
             Log.d(TAG, "saved: $graph")
+        }
+    }
+
+    fun deleteGraph() {
+        runBlocking(Dispatchers.IO) {
+            dao.deleteFullGraph(graph)
         }
     }
 

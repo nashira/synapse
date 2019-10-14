@@ -1,9 +1,6 @@
 package xyz.rthqks.synapse.data
 
-import androidx.room.Dao
-import androidx.room.Insert
-import androidx.room.OnConflictStrategy
-import androidx.room.Query
+import androidx.room.*
 
 @Dao
 abstract class SynapseDao {
@@ -24,16 +21,31 @@ abstract class SynapseDao {
     abstract suspend fun getProperties(nodeId: Int): List<PropertyConfig>
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
-    abstract fun insertGraph(graph: GraphConfig): Long
+    abstract suspend fun insertGraph(graph: GraphConfig): Long
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
-    abstract fun insertNode(node: NodeConfig): Long
+    abstract suspend fun insertNode(node: NodeConfig): Long
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
-    abstract fun insertProperties(properties: List<PropertyConfig>)
+    abstract suspend fun insertEdge(edgeConfig: EdgeConfig): Long
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
-    abstract fun insertProperty(property: PropertyConfig)
+    abstract suspend fun insertProperties(properties: List<PropertyConfig>)
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    abstract suspend fun insertProperty(property: PropertyConfig)
+
+    @Delete
+    abstract suspend fun deleteGraph(graph: GraphConfig)
+
+    @Delete
+    abstract suspend fun deleteNodes(nodes: List<NodeConfig>)
+
+    @Delete
+    abstract suspend fun deleteEdges(edges: List<EdgeConfig>)
+
+    @Delete
+    abstract suspend fun deleteProperties(properties: List<PropertyConfig>)
 
     suspend fun getFullGraph(graphId: Int): GraphConfig {
         val graph = getGraph(graphId)
@@ -45,4 +57,12 @@ abstract class SynapseDao {
         return graph
     }
 
+    suspend fun deleteFullGraph(graph: GraphConfig) {
+        graph.nodes.forEach {
+            deleteProperties(it.properties)
+        }
+        deleteEdges(graph.edges)
+        deleteNodes(graph.nodes)
+        deleteGraph(graph)
+    }
 }

@@ -16,6 +16,7 @@ import androidx.lifecycle.ViewModelProviders
 import androidx.recyclerview.widget.ItemTouchHelper
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import com.google.android.material.snackbar.Snackbar
 import dagger.android.support.DaggerFragment
 import kotlinx.android.synthetic.main.fragment_edit_graph.*
 import xyz.rthqks.synapse.R
@@ -64,6 +65,15 @@ class EditGraphFragment : DaggerFragment() {
                         val intent = ExecGraphActivity.getIntent(it, graphViewModel.graph.id)
                         it.startActivity(intent)
                     }
+                }
+                R.id.delete -> {
+                    val snackbar =
+                        Snackbar.make(container, R.string.confirm_delete, Snackbar.LENGTH_LONG)
+                    snackbar.setAction(R.string.confirm) {
+                        graphViewModel.deleteGraph()
+                        activity?.finish()
+                    }
+                    snackbar.show()
                 }
             }
             true
