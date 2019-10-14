@@ -15,26 +15,43 @@ class EditGraphViewModel @Inject constructor(
 ) : ViewModel() {
 
     val onAddNodeClicked = MutableLiveData<Unit>()
-    val graph = GraphConfig(0, "Test")
-    val graphConfigEditor = GraphConfigEditor(graph)
+    lateinit var graph: GraphConfig
+    lateinit var graphConfigEditor: GraphConfigEditor
     val graphChannel = MutableLiveData<GraphConfigEditor>()
     val onNodeAdded = MutableLiveData<Unit>()
     val onPortSelected = MutableLiveData<Unit>()
 
-    init {
-        graphChannel.value = graphConfigEditor
-        Log.d(TAG, dao.toString())
+    fun setGraphId(graphId: Int) {
+        if (graphId == -1) {
+            graph = GraphConfig(0, "Graph")
+            graphConfigEditor = GraphConfigEditor(graph)
 
-        viewModelScope.launch(Dispatchers.Default) {
-//            val graph = dao.getGraphs()
-            Log.d(TAG, graph.toString())
-            dao.saveGraph(graph)
+            Log.d(TAG, dao.toString())
+
+            viewModelScope.launch(Dispatchers.IO) {
+                val rowId = dao.insertGraph(graph)
+                graph.id = rowId.toInt()
+                Log.d(TAG, "created: $graph")
+                graphChannel.postValue(graphConfigEditor)
+            }
+        } else {
+            viewModelScope.launch(Dispatchers.IO) {
+                graph = dao.getGraph(graphId)
+                graphConfigEditor = GraphConfigEditor(graph)
+
+                Log.d(TAG, "loaded: $graph")
+                graphChannel.postValue(graphConfigEditor)
+            }
         }
     }
 
     fun addNodeType(nodeType: NodeType) {
-        graphConfigEditor.addNodeType(nodeType)
+        val node = graphConfigEditor.addNodeType(nodeType)
         onNodeAdded.value = Unit
+        viewModelScope.launch(Dispatchers.IO) {
+            dao.insertProperties(node.properties)
+            dao.insertNode(node)
+        }
     }
 
     fun getPortState(portConfig: PortConfig) = graphConfigEditor.getPortState(portConfig)
@@ -49,6 +66,20 @@ class EditGraphViewModel @Inject constructor(
     fun getOpenInputsForType(portConfig: PortConfig) = graphConfigEditor.getOpenInputsForType(portConfig)
 
     fun getNode(nodeId: Int): NodeConfig = graphConfigEditor.getNode(nodeId)
+    fun setGraphName(name: String) {
+        graph.name = name
+        viewModelScope.launch(Dispatchers.IO) {
+            dao.insertGraph(graph)
+            Log.d(TAG, "saved: $graph")
+        }
+    }
+
+    fun saveProperty(property: PropertyConfig) {
+        viewModelScope.launch(Dispatchers.IO) {
+            dao.insertProperty(property)
+            Log.d(TAG, "saved: $graph")
+        }
+    }
 
     companion object {
         private val TAG = EditGraphViewModel::class.java.simpleName

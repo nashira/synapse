@@ -1,16 +1,18 @@
 package xyz.rthqks.synapse.data
 
 import androidx.room.Entity
+import androidx.room.ForeignKey
 import androidx.room.Index
 
 @Entity(
     indices = [
-        Index("nodeId")
+        Index("graphId", "nodeId", "key", unique = true)
     ],
-    primaryKeys = ["key", "nodeId"]
+    primaryKeys = ["graphId", "nodeId", "key"]
 )
 data class PropertyConfig(
-    val key: String,
+    val graphId: Int,
     val nodeId: Int,
+    val key: String,
     var value: String
 )

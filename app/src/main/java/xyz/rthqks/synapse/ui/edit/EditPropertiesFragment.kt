@@ -43,7 +43,7 @@ class EditPropertiesFragment : DaggerFragment() {
         val node = graphViewModel.getNode(nodeId)
         toolbar.setTitle(node.type.name)
         recycler_view.layoutManager = LinearLayoutManager(context)
-        recycler_view.adapter = PropertyAdapter(node)
+        recycler_view.adapter = PropertyAdapter(node, graphViewModel)
     }
 
     companion object {
@@ -60,14 +60,15 @@ class EditPropertiesFragment : DaggerFragment() {
 }
 
 class PropertyAdapter(
-    private val nodeConfig: NodeConfig
+    private val nodeConfig: NodeConfig,
+    private val viewModel: EditGraphViewModel
 ) : RecyclerView.Adapter<PropertyViewHolder>() {
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): PropertyViewHolder {
         val view = LayoutInflater.from(parent.context)
             .inflate(viewType, parent, false)
         return when (viewType) {
-            R.layout.property_item_discrete -> DiscretePropertyViewHolder(view)
+            R.layout.property_item_discrete -> DiscretePropertyViewHolder(view, viewModel)
             else -> error("unknown property type: $viewType")
         }
     }
@@ -98,7 +99,10 @@ abstract class PropertyViewHolder(itemView: View) : RecyclerView.ViewHolder(item
     abstract fun bind(property: Property, config: PropertyConfig)
 }
 
-class DiscretePropertyViewHolder(itemView: View) : PropertyViewHolder(itemView) {
+class DiscretePropertyViewHolder(
+    itemView: View,
+    private  val viewModel: EditGraphViewModel
+) : PropertyViewHolder(itemView) {
     private val arrayAdapter: ArrayAdapter<String> =
         ArrayAdapter(itemView.context, android.R.layout.simple_spinner_item)
 
@@ -119,8 +123,11 @@ class DiscretePropertyViewHolder(itemView: View) : PropertyViewHolder(itemView) 
                 position: Int,
                 id: Long
             ) {
-                property?.values?.get(position)?.let {
-                    config?.value = it.toString()
+                property?.values?.get(position)?.let { value ->
+                    config?.let {
+                        it.value = value.toString()
+                        viewModel.saveProperty(it)
+                    }
                 }
             }
 

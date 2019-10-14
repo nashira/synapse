@@ -12,15 +12,15 @@ import kotlinx.android.synthetic.main.node_edit_item.view.*
 import xyz.rthqks.synapse.R
 import xyz.rthqks.synapse.data.NodeConfig
 import xyz.rthqks.synapse.data.PortConfig
-import xyz.rthqks.synapse.data.PortType
+import xyz.rthqks.synapse.logic.GraphConfigEditor
 
 
 class NodeAdapter(
     private val graphViewModel: EditGraphViewModel
 ) : RecyclerView.Adapter<NodeViewHolder>() {
 
+    private var graphConfig: GraphConfigEditor? = null
     private val viewPool = RecyclerView.RecycledViewPool()
-    private val graphConfig = graphViewModel.graphConfigEditor
     var onEditNodeProperties: ((NodeConfig) -> Unit)? = null
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): NodeViewHolder {
@@ -34,17 +34,22 @@ class NodeAdapter(
         }
     }
 
-    override fun getItemCount(): Int = graphConfig.nodes.size
+    override fun getItemCount(): Int = graphConfig?.nodes?.size ?: 0
 
     override fun onBindViewHolder(holder: NodeViewHolder, position: Int) {
-        graphConfig.nodes.let {
+        graphConfig?.nodes?.let {
             holder.bind(it[position])
         }
     }
 
+    fun setGraphEditor(graphConfigEditor: GraphConfigEditor) {
+        graphConfig = graphConfigEditor
+        notifyDataSetChanged()
+    }
+
     fun moveNode(fromPos: Int, toPos: Int) {
-        graphConfig.nodes.removeAt(fromPos).let {
-            graphConfig.nodes.add(toPos, it)
+        graphConfig?.nodes?.removeAt(fromPos)?.let {
+            graphConfig?.nodes?.add(toPos, it)
             notifyItemMoved(fromPos, toPos)
         }
 
@@ -56,7 +61,7 @@ class NodeAdapter(
     }
 
     fun onNodeAdded() {
-        graphConfig.nodes.size.let {
+        graphConfig?.nodes?.size?.let {
             notifyItemInserted(it - 1)
             if (it > 1) {
                 notifyItemChanged(it - 2)
@@ -145,16 +150,16 @@ class NodeViewHolder(
                 portConfig?.let { it ->
                     graphViewModel.setSelectedPort(it)
 //                    nodeAdapter.notifyDataSetChanged()
-                    when (it.type.direction) {
-                        PortType.INPUT -> {
-                            val openPorts = graphViewModel.getOpenOutputsForType(it)
-                            Log.d(TAG, openPorts.toString())
-                        }
-                        PortType.OUTPUT -> {
-                            val openPorts = graphViewModel.getOpenInputsForType(it)
-                            Log.d(TAG, openPorts.toString())
-                        }
-                    }
+//                    when (it.type.direction) {
+//                        PortType.INPUT -> {
+//                            val openPorts = graphViewModel.getOpenOutputsForType(it)
+//                            Log.d(TAG, openPorts.toString())
+//                        }
+//                        PortType.OUTPUT -> {
+//                            val openPorts = graphViewModel.getOpenInputsForType(it)
+//                            Log.d(TAG, openPorts.toString())
+//                        }
+//                    }
                     null
                 }
             }

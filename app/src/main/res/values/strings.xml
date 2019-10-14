@@ -40,4 +40,6 @@
     <string name="node_edit_properties">Properties</string>
     <string name="menu_view_graph">View</string>
     <string name="menu_delete_graph">Delete</string>
+    <string name="edit_graph_name">Graph Name</string>
+    <string name="title_graph_list">Graphs</string>
 </resources>

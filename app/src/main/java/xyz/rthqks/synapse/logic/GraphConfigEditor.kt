@@ -3,17 +3,18 @@ package xyz.rthqks.synapse.logic
 import xyz.rthqks.synapse.data.*
 import xyz.rthqks.synapse.ui.edit.PortState
 
-class GraphConfigEditor(private val graphConfig: GraphConfig) {
+class GraphConfigEditor(val graphConfig: GraphConfig) {
 
     val nodes = graphConfig.nodes
     val edges = graphConfig.edges
     private val edgeMap = mutableMapOf<PortKey, EdgeConfig>()
     private var selectedPort: PortConfig? = null
 
-    fun addNodeType(nodeType: NodeType) {
+    fun addNodeType(nodeType: NodeType): NodeConfig {
         val nodeConfig = NodeConfig(nodes.size, graphConfig.id, nodeType)
         nodeConfig.createProperties()
         nodes.add(nodeConfig)
+        return nodeConfig
     }
 
     private fun addEdge(from: PortConfig, to: PortConfig) {
@@ -94,6 +95,8 @@ class GraphConfigEditor(private val graphConfig: GraphConfig) {
         return ports
     }
 
+    fun getNode(nodeId: Int): NodeConfig = nodes[nodeId]
+
     private val PortConfig.isConnected: Boolean
         get() = edgeMap.containsKey(key)
 
@@ -101,8 +104,8 @@ class GraphConfigEditor(private val graphConfig: GraphConfig) {
         val other = portConfig ?: return false
 
         return edgeMap[key]?.let {
-            (it.fromKey == key.key && it.toKey == other.key.key) ||
-                    (it.fromKey == other.key.key && it.toKey == key.key)
+            (it.from == key && it.to == other.key) ||
+                    (it.from == other.key && it.to == key)
         } ?: false
     }
 
@@ -116,9 +119,11 @@ class GraphConfigEditor(private val graphConfig: GraphConfig) {
 
     private fun NodeConfig.createProperties() {
         type.properties.forEach {
-            properties.add(PropertyConfig(it.key, id, it.value.default.toString()))
+            properties.add(PropertyConfig(graphId, id, it.key, it.value.default.toString()))
         }
     }
 
-    fun getNode(nodeId: Int): NodeConfig = nodes[nodeId]
+    private val EdgeConfig.from get() = PortKey(fromNodeId, fromKey, PortType.OUTPUT)
+
+    private val EdgeConfig.to get() = PortKey(toNodeId, toKey, PortType.INPUT)
 }

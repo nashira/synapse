@@ -1,5 +1,7 @@
 package xyz.rthqks.synapse.ui.edit
 
+import android.app.Activity
+import android.content.Intent
 import android.os.Bundle
 import android.util.Log
 import android.view.LayoutInflater
@@ -30,14 +32,17 @@ class GraphEditActivity : DaggerAppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_graph_edit)
-//        setSupportActionBar(toolbar)
+
+        val graphId = intent.getIntExtra(GRAPH_ID, -1)
         graphViewModel = ViewModelProviders.of(this, viewModelFactory)[EditGraphViewModel::class.java]
+        graphViewModel.setGraphId(graphId)
 
         savedInstanceState ?: run {
             supportFragmentManager.commit {
                 add(R.id.content, EditGraphFragment())
             }
         }
+
         val behavior = BottomSheetBehavior.from(bottom_sheet)
         behavior.state = BottomSheetBehavior.STATE_HIDDEN
         bottom_sheet.layoutManager = GridLayoutManager(this, 4)
@@ -54,6 +59,13 @@ class GraphEditActivity : DaggerAppCompatActivity() {
 
     companion object {
         private val TAG = GraphEditActivity::class.java.simpleName
+        private const val GRAPH_ID = "graph_id"
+
+        fun getIntent(activity: Activity, graphId: Int = -1): Intent {
+            return Intent(activity, GraphEditActivity::class.java).also {
+                it.putExtra(GRAPH_ID, graphId)
+            }
+        }
     }
 }
 

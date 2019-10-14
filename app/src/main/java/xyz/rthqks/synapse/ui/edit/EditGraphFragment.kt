@@ -1,12 +1,14 @@
 package xyz.rthqks.synapse.ui.edit
 
-import android.content.Intent
+import android.app.Activity
 import android.graphics.Rect
 import android.os.Bundle
 import android.util.Log
+import android.view.KeyEvent
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.view.inputmethod.InputMethodManager
 import androidx.fragment.app.commit
 import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModelProvider
@@ -21,10 +23,12 @@ import xyz.rthqks.synapse.ui.exec.ExecGraphActivity
 import javax.inject.Inject
 import kotlin.math.round
 
+
 class EditGraphFragment : DaggerFragment() {
     @Inject
     lateinit var viewModelFactory: ViewModelProvider.Factory
     private lateinit var graphViewModel: EditGraphViewModel
+    private lateinit var nodeAdapter: NodeAdapter
 
 
     override fun onActivityCreated(savedInstanceState: Bundle?) {
@@ -33,14 +37,13 @@ class EditGraphFragment : DaggerFragment() {
         graphViewModel =
             ViewModelProviders.of(activity!!, viewModelFactory)[EditGraphViewModel::class.java]
 
-//        graphViewModel.graphChannel.observe(this, Observer {
-//            Log.d(TAG, it.toString())
-//            Log.d(TAG, it.nodes.toString())
-//            Log.d(TAG, it.edges.toString())
-//            setupUi(it)
-//        })
-
         setupUi()
+
+        graphViewModel.graphChannel.observe(this, Observer {
+            Log.d(TAG, it.toString())
+            nodeAdapter.setGraphEditor(it)
+            edit_title.setText(it.graphConfig.name)
+        })
     }
 
     override fun onCreateView(
@@ -58,12 +61,28 @@ class EditGraphFragment : DaggerFragment() {
             when (it.itemId) {
                 R.id.view -> {
                     activity?.let {
-                        it.startActivity(Intent(it, ExecGraphActivity::class.java))
+                        val intent = ExecGraphActivity.getIntent(it, graphViewModel.graph.id)
+                        it.startActivity(intent)
                     }
                 }
             }
             true
         }
+
+        edit_title.setOnKeyListener(object : View.OnKeyListener {
+            override fun onKey(v: View, keyCode: Int, event: KeyEvent): Boolean {
+                if (event.action == KeyEvent.ACTION_DOWN && keyCode == KeyEvent.KEYCODE_ENTER) {
+                    val imm =
+                        context!!.getSystemService(Activity.INPUT_METHOD_SERVICE) as InputMethodManager
+
+                    imm.hideSoftInputFromWindow(v.windowToken, 0)
+                    v.clearFocus()
+                    graphViewModel.setGraphName(edit_title.text.toString())
+                    return true
+                }
+                return false
+            }
+        })
     }
 
     private fun setupUi() {
@@ -71,7 +90,7 @@ class EditGraphFragment : DaggerFragment() {
             graphViewModel.onAddNodeClicked.value = Unit
         }
 
-        val nodeAdapter = NodeAdapter(graphViewModel)
+        nodeAdapter = NodeAdapter(graphViewModel)
         val nodeLayoutManager = LinearLayoutManager(context)
         val dp8 = round(resources.displayMetrics.density * 8).toInt()
         val dp84 = round(resources.displayMetrics.density * 84).toInt()

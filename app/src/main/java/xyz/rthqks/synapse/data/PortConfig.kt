@@ -5,6 +5,7 @@ data class PortConfig(
     val type: PortType
 )
 
+// TODO: find a way to make this fit better
 data class PortKey(
     val nodeId: Int,
     val key: String,

@@ -3,20 +3,13 @@ package xyz.rthqks.synapse.data
 import androidx.room.*
 
 @Entity(
+    primaryKeys = ["graphId", "id"],
     indices = [
-        Index("graphId")
-    ],
-    foreignKeys = [
-        ForeignKey(
-            entity = GraphConfig::class,
-            childColumns = ["graphId"],
-            parentColumns = ["id"],
-            onDelete = ForeignKey.CASCADE
-        )
+        Index("graphId", "id", unique = true)
     ]
 )
 data class NodeConfig(
-    @PrimaryKey val id: Int,
+    val id: Int,
     val graphId: Int,
     val type: NodeType
 ) {

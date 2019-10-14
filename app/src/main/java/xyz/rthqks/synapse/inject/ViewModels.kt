@@ -6,6 +6,7 @@ import dagger.Binds
 import dagger.MapKey
 import dagger.Module
 import dagger.multibindings.IntoMap
+import xyz.rthqks.synapse.ui.browse.GraphListViewModel
 import xyz.rthqks.synapse.ui.edit.EditGraphViewModel
 import javax.inject.Inject
 import javax.inject.Provider
@@ -32,7 +33,10 @@ abstract class ViewModelModule {
     @Binds
     @IntoMap
     @ViewModelKey(EditGraphViewModel::class)
-    internal abstract fun postListViewModel(graphViewModel: EditGraphViewModel): ViewModel
+    internal abstract fun provideEditGraphViewModel(graphViewModel: EditGraphViewModel): ViewModel
 
-    //Add more ViewModels here
+    @Binds
+    @IntoMap
+    @ViewModelKey(GraphListViewModel::class)
+    internal abstract fun provideGraphListViewModel(graphListViewModel: GraphListViewModel): ViewModel
 }
