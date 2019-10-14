@@ -36,7 +36,7 @@ class EditGraphViewModel @Inject constructor(
             }
         } else {
             viewModelScope.launch(Dispatchers.IO) {
-                graph = dao.getGraph(graphId)
+                graph = dao.getFullGraph(graphId)
                 graphConfigEditor = GraphConfigEditor(graph)
 
                 Log.d(TAG, "loaded: $graph")
@@ -57,7 +57,10 @@ class EditGraphViewModel @Inject constructor(
     fun getPortState(portConfig: PortConfig) = graphConfigEditor.getPortState(portConfig)
 
     fun setSelectedPort(portConfig: PortConfig) {
-        graphConfigEditor.setSelectedPort(portConfig)
+        val changed = graphConfigEditor.setSelectedPort(portConfig)
+        if (changed) {
+//            dao.insertEdges(graphConfigEditor.edges)
+        }
         onPortSelected.value = Unit
     }
 

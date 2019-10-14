@@ -10,6 +10,13 @@ class GraphConfigEditor(val graphConfig: GraphConfig) {
     private val edgeMap = mutableMapOf<PortKey, EdgeConfig>()
     private var selectedPort: PortConfig? = null
 
+    init {
+        edges.forEach {
+            edgeMap[it.from] = it
+            edgeMap[it.to] = it
+        }
+    }
+
     fun addNodeType(nodeType: NodeType): NodeConfig {
         val nodeConfig = NodeConfig(nodes.size, graphConfig.id, nodeType)
         nodeConfig.createProperties()
@@ -42,20 +49,25 @@ class GraphConfigEditor(val graphConfig: GraphConfig) {
         }
     }
 
-    fun setSelectedPort(portConfig: PortConfig?) {
+    fun setSelectedPort(portConfig: PortConfig?): Boolean {
         selectedPort?.let {
             when {
                 it.canConnectTo(portConfig) -> {
                     clearEdges(it)
                     clearEdges(portConfig!!)
-                    addEdge(it, portConfig!!)
+                    if (it.key.direction == PortType.OUTPUT) {
+                        addEdge(it, portConfig!!)
+                    } else {
+                        addEdge(portConfig!!, it)
+                    }
                 }
                 it.isConnectedTo(portConfig) -> removeEdge(it, portConfig!!)
             }
             selectedPort = null
-            return
+            return true
         }
         selectedPort = portConfig
+        return false
     }
 
     fun getPortState(portConfig: PortConfig): PortState {
@@ -65,9 +77,7 @@ class GraphConfigEditor(val graphConfig: GraphConfig) {
             selectedPort == null && portConfig.isConnected -> PortState.Connected
             selectedPort == null && !portConfig.isConnected -> PortState.Unconnected
             portConfig.isConnectedTo(selectedPort) -> PortState.EligibleToDisconnect
-            selectedPort!!.type::class == portConfig.type::class
-                    && selectedPort?.key?.direction != portConfig.key.direction
-                    && selectedPort?.key?.nodeId != portConfig.key.nodeId -> PortState.EligibleToConnect
+            selectedPort!!.canConnectTo(portConfig) -> PortState.EligibleToConnect
             else -> PortState.Unconnected
         }
     }
