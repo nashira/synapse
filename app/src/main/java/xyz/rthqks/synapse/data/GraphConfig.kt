@@ -13,4 +13,8 @@ data class GraphConfig(
     val nodes = mutableListOf<NodeConfig>()
     @Ignore
     val edges = mutableListOf<EdgeConfig>()
+
+    override fun toString(): String {
+        return "GraphConfig(id=$id, name='$name', nodes=$nodes, edges=$edges)"
+    }
 }

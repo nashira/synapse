@@ -19,4 +19,7 @@ data class NodeConfig(
     val outputs = type.outputs.map { PortConfig(PortKey(id, it.key, it.direction), it) }
     @Ignore
     val properties = mutableListOf<PropertyConfig>()
+
+    fun getIntProperty(property: Property): Int =
+        properties.first { it.key == property.key }.value.toInt()
 }

@@ -38,9 +38,9 @@ class EditGraphViewModel @Inject constructor(
         } else {
             viewModelScope.launch(Dispatchers.IO) {
                 graph = dao.getFullGraph(graphId)
-                graphConfigEditor = GraphConfigEditor(graph)
-
                 Log.d(TAG, "loaded: $graph")
+
+                graphConfigEditor = GraphConfigEditor(graph)
                 graphChannel.postValue(graphConfigEditor)
             }
         }
@@ -74,6 +74,7 @@ class EditGraphViewModel @Inject constructor(
     }
 
     fun getNode(nodeId: Int): NodeConfig = graphConfigEditor.getNode(nodeId)
+
     fun setGraphName(name: String) {
         graph.name = name
         viewModelScope.launch(Dispatchers.IO) {
@@ -85,7 +86,7 @@ class EditGraphViewModel @Inject constructor(
     fun saveProperty(property: PropertyConfig) {
         viewModelScope.launch(Dispatchers.IO) {
             dao.insertProperty(property)
-            Log.d(TAG, "saved: $graph")
+            Log.d(TAG, "saved: $property")
         }
     }
 
