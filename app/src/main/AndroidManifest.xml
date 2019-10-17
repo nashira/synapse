@@ -3,6 +3,8 @@
     xmlns:tools="http://schemas.android.com/tools"
     package="xyz.rthqks.synapse">
 
+    <uses-permission android:name="android.permission.RECORD_AUDIO" />
+
     <application
         android:name="xyz.rthqks.synapse.SynapseApp"
         android:allowBackup="true"

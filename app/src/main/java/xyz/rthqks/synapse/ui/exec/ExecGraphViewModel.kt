@@ -7,6 +7,7 @@ import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import xyz.rthqks.synapse.core.Graph
 import xyz.rthqks.synapse.data.GraphConfig
@@ -27,6 +28,9 @@ class ExecGraphViewModel @Inject constructor(
             Log.d(TAG, "loaded graph: $graphConfig")
             graph = Graph(context, graphConfig)
             graph.initialize()
+            graph.start()
+            delay(15000)
+            graph.stop()
         }
     }
 

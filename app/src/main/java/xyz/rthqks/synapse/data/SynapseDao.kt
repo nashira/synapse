@@ -17,8 +17,8 @@ abstract class SynapseDao {
     @Query("SELECT * FROM EdgeConfig WHERE graphId = :graphId")
     abstract suspend fun getEdges(graphId: Int): List<EdgeConfig>
 
-    @Query("SELECT * FROM PropertyConfig WHERE nodeId = :nodeId")
-    abstract suspend fun getProperties(nodeId: Int): List<PropertyConfig>
+    @Query("SELECT * FROM PropertyConfig WHERE graphId = :graphId AND nodeId = :nodeId")
+    abstract suspend fun getProperties(graphId: Int, nodeId: Int): List<PropertyConfig>
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     abstract suspend fun insertGraph(graph: GraphConfig): Long
@@ -52,7 +52,7 @@ abstract class SynapseDao {
         graph.nodes.addAll(getNodes(graphId))
         graph.edges.addAll(getEdges(graphId))
         graph.nodes.forEach {
-            it.properties.addAll(getProperties(it.id))
+            it.properties.addAll(getProperties(graphId, it.id))
         }
         return graph
     }

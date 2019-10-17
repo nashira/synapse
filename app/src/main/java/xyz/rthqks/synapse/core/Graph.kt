@@ -2,6 +2,10 @@ package xyz.rthqks.synapse.core
 
 import android.content.Context
 import android.util.Log
+import xyz.rthqks.synapse.core.edge.AudioBuffer
+import xyz.rthqks.synapse.core.edge.AudioBufferConnection
+import xyz.rthqks.synapse.core.node.AudioPlayerNode
+import xyz.rthqks.synapse.core.node.AudioSourceNode
 import xyz.rthqks.synapse.data.GraphConfig
 import xyz.rthqks.synapse.data.NodeType
 import xyz.rthqks.synapse.data.PortType
@@ -16,6 +20,7 @@ class Graph(
     private val connections = mutableListOf<Connection<Any>>()
 
     fun initialize() {
+
         graphConfig.nodes.forEach {
             val node = when (it.type) {
                 NodeType.Camera -> TODO()
@@ -36,11 +41,15 @@ class Graph(
             nodes[it.id] = node
         }
 
+        nodes.forEach {
+            it.value.initialize()
+        }
+
         graphConfig.edges.forEach { edge ->
             Log.d(TAG, "edge: $edge")
             val fromConfig = graphConfig.nodes.first { it.id == edge.fromNodeId }
             val toConfig = graphConfig.nodes.first { it.id == edge.toNodeId }
-            val dataType = fromConfig.type.inputs.first { it.key == edge.fromKey }
+            val dataType = fromConfig.type.outputs.first { it.key == edge.fromKey }
 
             val from = nodes[edge.fromNodeId]!!
             val to = nodes[edge.toNodeId]!!
@@ -51,9 +60,25 @@ class Graph(
                 is PortType.Surface -> TODO()
                 is PortType.Texture -> TODO()
                 is PortType.AudioBuffer -> {
-//                    val connection = AudioBufferConnection()
+                    val connection = AudioBufferConnection()
+                    from.output(edge.fromKey, connection)
+                    to.input(edge.toKey, connection)
                 }
             }
+        }
+    }
+
+    fun start() {
+        nodes.forEach {
+            Log.d(TAG, "start ${it.value}")
+            it.value.start()
+        }
+    }
+
+    fun stop() {
+        nodes.forEach {
+            Log.d(TAG, "stop ${it.value}")
+            it.value.stop()
         }
     }
 
