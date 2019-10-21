@@ -12,7 +12,6 @@ import androidx.lifecycle.ViewModelProviders
 import dagger.android.support.DaggerAppCompatActivity
 import kotlinx.android.synthetic.main.activity_exec_graph.*
 import xyz.rthqks.synapse.R
-import xyz.rthqks.synapse.ui.edit.EditGraphViewModel
 import javax.inject.Inject
 
 class ExecGraphActivity : DaggerAppCompatActivity() {

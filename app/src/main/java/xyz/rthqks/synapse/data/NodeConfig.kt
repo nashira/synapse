@@ -1,6 +1,8 @@
 package xyz.rthqks.synapse.data
 
-import androidx.room.*
+import androidx.room.Entity
+import androidx.room.Ignore
+import androidx.room.Index
 
 @Entity(
     primaryKeys = ["graphId", "id"],

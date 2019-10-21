@@ -3,9 +3,6 @@ package xyz.rthqks.synapse
 import kotlinx.coroutines.*
 import org.junit.Assert.assertEquals
 import org.junit.Test
-import java.lang.Exception
-import java.lang.RuntimeException
-import kotlin.concurrent.timer
 
 /**
  * Example local unit test, which will execute on the development machine (host).

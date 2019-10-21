@@ -2,10 +2,8 @@ package xyz.rthqks.synapse.ui.exec
 
 import android.content.Context
 import android.util.Log
-import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
-import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.*
 import xyz.rthqks.synapse.core.Graph
 import xyz.rthqks.synapse.data.GraphConfig

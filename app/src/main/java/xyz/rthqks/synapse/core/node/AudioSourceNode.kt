@@ -2,15 +2,14 @@ package xyz.rthqks.synapse.core.node
 
 import android.media.AudioFormat
 import android.media.AudioRecord
-import android.media.AudioTrack
 import android.util.Log
-import kotlinx.coroutines.*
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.launch
 import xyz.rthqks.synapse.core.Connection
 import xyz.rthqks.synapse.core.Node
 import xyz.rthqks.synapse.core.edge.AudioBufferConnection
 import xyz.rthqks.synapse.data.PortType
-import java.lang.IllegalStateException
-import java.util.concurrent.atomic.AtomicBoolean
 
 class AudioSourceNode(
     private val sampleRate: Int,
