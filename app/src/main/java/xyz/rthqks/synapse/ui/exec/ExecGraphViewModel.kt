@@ -6,9 +6,7 @@ import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.launch
+import kotlinx.coroutines.*
 import xyz.rthqks.synapse.core.Graph
 import xyz.rthqks.synapse.data.GraphConfig
 import xyz.rthqks.synapse.data.SynapseDao
@@ -20,18 +18,51 @@ class ExecGraphViewModel @Inject constructor(
 ) : ViewModel() {
     val graphLoaded = MutableLiveData<GraphConfig>()
     private lateinit var graph: Graph
+    private var initJob: Job? = null
+    private var startJob: Job? = null
+    private var stopJob: Job? = null
+    private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
 
     fun loadGraph(graphId: Int) {
-        viewModelScope.launch(Dispatchers.IO) {
+        initJob = scope.launch {
             val graphConfig = dao.getFullGraph(graphId)
             graphLoaded.postValue(graphConfig)
             Log.d(TAG, "loaded graph: $graphConfig")
             graph = Graph(context, graphConfig)
+            Log.d(TAG, "initialize")
             graph.initialize()
-            graph.start()
-            delay(15000)
-            graph.stop()
+            Log.d(TAG, "initialized")
         }
+    }
+
+    fun startExecution() {
+        startJob = scope.launch {
+            initJob?.join()
+            Log.d(TAG, "starting")
+            graph.start()
+            Log.d(TAG, "done starting")
+        }
+    }
+
+    fun stopExecution() {
+        stopJob = scope.launch {
+//        runBlocking {
+            Log.d(TAG, "stopping")
+            startJob?.join()
+            graph.stop()
+            Log.d(TAG, "done stopping")
+        }
+    }
+
+    override fun onCleared() {
+        scope.launch {
+            Log.d(TAG, "release")
+            stopJob?.join()
+            graph.release()
+            scope.cancel()
+            Log.d(TAG, "released")
+        }
+        super.onCleared()
     }
 
     companion object {

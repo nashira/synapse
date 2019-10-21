@@ -4,58 +4,75 @@ import android.media.AudioAttributes
 import android.media.AudioFormat
 import android.media.AudioTrack
 import android.util.Log
-import kotlinx.coroutines.*
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.launch
 import xyz.rthqks.synapse.core.Connection
 import xyz.rthqks.synapse.core.Node
 import xyz.rthqks.synapse.core.edge.AudioBufferConnection
 import xyz.rthqks.synapse.data.PortType
 
-class AudioPlayerNode: Node() {
-    private val scope = CoroutineScope(Dispatchers.Default + SupervisorJob())
+class AudioPlayerNode : Node() {
     private var audioTrack: AudioTrack? = null
     private lateinit var audioFormat: AudioFormat
     private var connection: AudioBufferConnection? = null
     private var bufferSize = 0
     private var playJob: Job? = null
+    private var running = false
 
-    override fun initialize() {
+    override suspend fun initialize() {
     }
 
-    override fun start() {
-        audioTrack?.play()
-        playJob = scope.launch {
+    override suspend fun start() = coroutineScope {
+        playJob = launch {
+            val connection = connection ?: return@launch
+
+            running = true
+            audioTrack?.play()
             var numFrames = 0
-            while (true) {
-                connection?.acquire()?.let {
-                    if (it.eos) {
-                        return@launch
-                    }
-                    it.buffer.position(0)
-                    val write = audioTrack?.write(it.buffer, it.buffer.capacity(), AudioTrack.WRITE_BLOCKING)
-                    connection?.release(it)
+            while (running) {
+                val audioBuffer = connection.acquire()
+                if (audioBuffer.eos) {
+                    Log.d(TAG, "got EOS")
+                    running = false
+                } else {
+                    val write = audioTrack?.write(
+                        audioBuffer.buffer,
+                        audioBuffer.buffer.remaining(),
+                        AudioTrack.WRITE_BLOCKING
+                    )
                     numFrames++
-                    Log.d(TAG, "written $write frames $numFrames")
+//                    Log.d(TAG, "written $write frames $numFrames")
+
                 }
+                connection.release(audioBuffer)
             }
+            Log.d(TAG, "wrote frames $numFrames")
         }
     }
 
-    override fun stop() {
-        scope.launch {
-            playJob?.join()
-            audioTrack?.stop()
-        }
+    override suspend fun stop() {
+        playJob?.join()
+        audioTrack?.stop()
+//        TODO: make fail-safe with timeout, maybe on release instead
+//        try {
+//            withTimeout(1000) {
+//                playJob?.join()
+//            }
+//        } finally {
+//            audioTrack?.stop()
+//        }
     }
 
-    override fun release() {
+    override suspend fun release() {
         audioTrack?.release()
     }
 
-    override fun <T> output(key: String, connection: Connection<T>) {
+    override suspend fun <T> output(key: String, connection: Connection<T>) {
         throw IllegalStateException("no outputs: $this")
     }
 
-    override fun <T> input(key: String, connection: Connection<T>) {
+    override suspend fun <T> input(key: String, connection: Connection<T>) {
         if (key == PortType.AUDIO_1) {
             this.connection = connection as AudioBufferConnection
             audioFormat = connection.audioFormat

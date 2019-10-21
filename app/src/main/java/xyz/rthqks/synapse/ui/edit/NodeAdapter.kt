@@ -96,7 +96,7 @@ class NodeViewHolder(
         outputMenu.adapter = outputAdapter
 
         propertiesButton.setOnClickListener {
-            nodeConfig?.let { n -> onEditNodeProperties.invoke(n) }
+            nodeConfig?.let { n -> onEditNodeProperties(n) }
         }
     }
 

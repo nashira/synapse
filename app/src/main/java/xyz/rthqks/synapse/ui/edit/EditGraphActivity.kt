@@ -110,7 +110,7 @@ class AddNodeViewHolder(
 
     init {
         itemView.setOnClickListener {
-            node?.let { nt -> itemClick.invoke(nt) }
+            node?.let { nt -> itemClick(nt) }
         }
     }
 

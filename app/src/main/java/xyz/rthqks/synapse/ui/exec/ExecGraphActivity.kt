@@ -29,7 +29,9 @@ class ExecGraphActivity : DaggerAppCompatActivity() {
         val graphId = intent.getIntExtra(GRAPH_ID, -1)
         Log.d(TAG, "graphid: $graphId")
 
-        viewModel.loadGraph(graphId)
+        savedInstanceState ?: run {
+            viewModel.loadGraph(graphId)
+        }
 
         viewModel.graphLoaded.observe(this, Observer {
             toolbar.title = it.name
@@ -54,6 +56,16 @@ class ExecGraphActivity : DaggerAppCompatActivity() {
                 Log.d(TAG, "surfaceCreated: $holder")
             }
         })
+    }
+
+    override fun onStart() {
+        super.onStart()
+        viewModel.startExecution()
+    }
+
+    override fun onStop() {
+        super.onStop()
+        viewModel.stopExecution()
     }
 
     companion object {
