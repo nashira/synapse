@@ -50,7 +50,7 @@ class EditGraphViewModel @Inject constructor(
         val node = graphConfigEditor.addNodeType(nodeType)
         onNodeAdded.value = Unit
         viewModelScope.launch(Dispatchers.IO) {
-            dao.insertProperties(node.properties)
+            dao.insertProperties(node.properties.values)
             dao.insertNode(node)
         }
     }

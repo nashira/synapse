@@ -15,7 +15,9 @@ import dagger.android.support.DaggerFragment
 import kotlinx.android.synthetic.main.fragment_edit_properties.*
 import kotlinx.android.synthetic.main.property_item_discrete.view.*
 import xyz.rthqks.synapse.R
-import xyz.rthqks.synapse.data.*
+import xyz.rthqks.synapse.data.NodeConfig
+import xyz.rthqks.synapse.data.PropertyConfig
+import xyz.rthqks.synapse.data.PropertyType
 import javax.inject.Inject
 
 class EditPropertiesFragment : DaggerFragment() {
@@ -64,6 +66,8 @@ class PropertyAdapter(
     private val nodeConfig: NodeConfig,
     private val viewModel: EditGraphViewModel
 ) : RecyclerView.Adapter<PropertyViewHolder>() {
+    val properties = nodeConfig.properties.values.toList()
+    val propertyTypes = nodeConfig.type.properties.values.toList()
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): PropertyViewHolder {
         val view = LayoutInflater.from(parent.context)
@@ -77,15 +81,15 @@ class PropertyAdapter(
     override fun getItemCount(): Int = nodeConfig.properties.size
 
     override fun onBindViewHolder(holder: PropertyViewHolder, position: Int) {
-        val config = nodeConfig.properties[position]
-        val property = nodeConfig.getPropertyType(position)
+        val config = properties[position]
+        val property = propertyTypes[position]
         Log.d(TAG, "binding $property")
         holder.bind(property, config)
     }
 
     override fun getItemViewType(position: Int): Int {
-        return when (nodeConfig.getPropertyType(position)) {
-            is DiscreteProperty -> R.layout.property_item_discrete
+        return when (propertyTypes[position]) {
+            is PropertyType.Discrete<*> -> R.layout.property_item_discrete
             else -> R.layout.frame_layout
         }
     }
@@ -97,7 +101,7 @@ class PropertyAdapter(
 
 
 abstract class PropertyViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
-    abstract fun bind(property: Property, config: PropertyConfig)
+    abstract fun bind(property: PropertyType<*>, config: PropertyConfig)
 }
 
 class DiscretePropertyViewHolder(
@@ -107,7 +111,7 @@ class DiscretePropertyViewHolder(
     private val arrayAdapter: ArrayAdapter<String> =
         ArrayAdapter(itemView.context, android.R.layout.simple_spinner_item)
 
-    private var property: DiscreteProperty? = null
+    private var property: PropertyType.Discrete<*>? = null
     private var config: PropertyConfig? = null
 
     init {
@@ -135,8 +139,8 @@ class DiscretePropertyViewHolder(
         }
     }
 
-    override fun bind(property: Property, config: PropertyConfig) {
-        this.property = property as DiscreteProperty
+    override fun bind(property: PropertyType<*>, config: PropertyConfig) {
+        this.property = property as PropertyType.Discrete
         this.config = config
         itemView.name.setText(property.name)
         arrayAdapter.clear()
@@ -145,19 +149,12 @@ class DiscretePropertyViewHolder(
     }
 }
 
-private fun DiscreteProperty.indexOf(value: String): Int {
-    val parsed = when (type) {
-        ValueType.Int -> value.toInt()
-        ValueType.Long -> value.toLong()
-        ValueType.Float -> value.toFloat()
-        ValueType.Double -> value.toDouble()
-        ValueType.String -> value
-    }
-
-    return values.indexOf(parsed)
+private fun PropertyType.Discrete<*>.indexOf(value: String): Int {
+        val v = fromString(value)
+        return values.indexOf(v)
 }
-
-private fun NodeConfig.getPropertyType(position: Int): Property {
-    val config = properties[position]
-    return type.properties.getValue(config.key)
-}
+//
+//private fun NodeConfig.getPropertyType(position: Int): PropertyType {
+//    val config = properties[position]
+//    return type.properties.getValue(config.key)
+//}

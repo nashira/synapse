@@ -149,17 +149,6 @@ class NodeViewHolder(
             itemView.setOnClickListener { _ ->
                 portConfig?.let { it ->
                     graphViewModel.setSelectedPort(it)
-//                    nodeAdapter.notifyDataSetChanged()
-//                    when (it.type.direction) {
-//                        PortType.INPUT -> {
-//                            val openPorts = graphViewModel.getOpenOutputsForType(it)
-//                            Log.d(TAG, openPorts.toString())
-//                        }
-//                        PortType.OUTPUT -> {
-//                            val openPorts = graphViewModel.getOpenInputsForType(it)
-//                            Log.d(TAG, openPorts.toString())
-//                        }
-//                    }
                     null
                 }
             }

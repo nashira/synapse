@@ -20,8 +20,18 @@ data class NodeConfig(
     @Ignore
     val outputs = type.outputs.map { PortConfig(PortKey(id, it.key, it.direction), it) }
     @Ignore
-    val properties = mutableListOf<PropertyConfig>()
+    val properties = mutableMapOf<Key<*>, PropertyConfig>()
 
-    fun getIntProperty(property: Property): Int =
-        properties.first { it.key == property.key }.value.toInt()
+    operator fun <T> get(key: Key<T>): T {
+        val p = properties[key]!!
+        val type = PropertyType[key]!!
+        @Suppress("UNCHECKED_CAST")
+        return type.fromString(p.value)
+    }
+
+    operator fun <T> set(key: Key<T>, value: T) {
+        @Suppress("UNCHECKED_CAST")
+        val p = properties[key] as PropertyConfig
+        p.value = value.toString()
+    }
 }

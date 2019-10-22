@@ -8,26 +8,28 @@ sealed class NodeType(
     @StringRes val name: Int,
     @DrawableRes val icon: Int,
     ports: List<PortType>,
-    propertyList: List<Property>
+    propertyList: List<PropertyType<*>>
 ) {
     val inputs: List<PortType> = ports.filter { it.direction == PortType.INPUT }
     val outputs: List<PortType> = ports.filter { it.direction == PortType.OUTPUT }
-    val properties: Map<String, Property> = propertyList.map { Pair(it.key, it) }.toMap()
+    val properties: Map<Key<*>, PropertyType<*>> = propertyList.map { Pair(it.key, it) }.toMap()
 
     object Camera : NodeType(
         R.string.name_node_type_camera, R.drawable.ic_camera,
         listOf(PortType.Surface(PortType.SURFACE_1, PortType.OUTPUT)),
-        emptyList()
+        emptyList(
+
+        )
     )
 
     object Microphone : NodeType(
         R.string.name_node_type_microphone, R.drawable.ic_mic,
         listOf(PortType.AudioBuffer(PortType.AUDIO_1, PortType.OUTPUT)),
         listOf(
-            PropertyType.AUDIO_CHANNEL,
-            PropertyType.AUDIO_ENCODING,
-            PropertyType.AUDIO_SAMPLE_RATE,
-            PropertyType.AUDIO_SOURCE
+            PropertyType.AudioChannel,
+            PropertyType.AudioEncoding,
+            PropertyType.AudioSampleRate,
+            PropertyType.AudioSource
         )
     )
 

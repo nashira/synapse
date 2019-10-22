@@ -14,4 +14,6 @@ data class PropertyConfig(
     val nodeId: Int,
     val key: String,
     var value: String
-)
+) {
+//    val typeKey: PropertyType<*> = PropertyType[Key[key]]
+}

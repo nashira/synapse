@@ -30,7 +30,7 @@ abstract class SynapseDao {
     abstract suspend fun insertEdge(edgeConfig: EdgeConfig): Long
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
-    abstract suspend fun insertProperties(properties: List<PropertyConfig>)
+    abstract suspend fun insertProperties(properties: Collection<PropertyConfig>)
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     abstract suspend fun insertProperty(property: PropertyConfig)
@@ -39,27 +39,27 @@ abstract class SynapseDao {
     abstract suspend fun deleteGraph(graph: GraphConfig)
 
     @Delete
-    abstract suspend fun deleteNodes(nodes: List<NodeConfig>)
+    abstract suspend fun deleteNodes(nodes: Collection<NodeConfig>)
 
     @Delete
     abstract suspend fun deleteEdges(edges: List<EdgeConfig>)
 
     @Delete
-    abstract suspend fun deleteProperties(properties: List<PropertyConfig>)
+    abstract suspend fun deleteProperties(properties: Collection<PropertyConfig>)
 
     suspend fun getFullGraph(graphId: Int): GraphConfig {
         val graph = getGraph(graphId)
         graph.nodes.addAll(getNodes(graphId))
         graph.edges.addAll(getEdges(graphId))
         graph.nodes.forEach {
-            it.properties.addAll(getProperties(graphId, it.id))
+            it.properties.putAll(getProperties(graphId, it.id).map { Key[it.key]!! to it })
         }
         return graph
     }
 
     suspend fun deleteFullGraph(graph: GraphConfig) {
         graph.nodes.forEach {
-            deleteProperties(it.properties)
+            deleteProperties(it.properties.values)
         }
         deleteEdges(graph.edges)
         deleteNodes(graph.nodes)

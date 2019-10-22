@@ -2,12 +2,52 @@ package xyz.rthqks.synapse.data
 
 import android.media.AudioFormat
 import android.media.MediaRecorder
+import androidx.annotation.DrawableRes
+import androidx.annotation.StringRes
 import xyz.rthqks.synapse.R
 
-object PropertyType {
-    val AUDIO_SAMPLE_RATE = DiscreteProperty(
-        "audio_sample_rate",
-        ValueType.Int,
+@Suppress("LeakingThis")
+sealed class PropertyType<T>(
+    val key: Key<T>,
+    val default: T,
+    @StringRes val name: Int = 0,
+    @DrawableRes val icon: Int = 0
+) {
+    init {
+        PropertyType[key] = this
+    }
+
+    abstract fun fromString(string: String): T
+
+    abstract class Discrete<T>(
+        key: Key<T>,
+        default: T,
+        val values: List<T>,
+        val labels: List<Int>,
+        @StringRes name: Int = 0,
+        @DrawableRes icon: Int = 0
+    ) : PropertyType<T>(key, default, name, icon)
+
+    abstract class DiscreteInt(
+        key: Key<Int>,
+        default: Int,
+        values: List<Int>,
+        labels: List<Int>,
+        @StringRes name: Int = 0,
+        @DrawableRes icon: Int = 0
+    ) : Discrete<Int>(
+        key,
+        default,
+        values,
+        labels,
+        name,
+        icon
+    ) {
+        override fun fromString(string: String): Int = string.toInt()
+    }
+
+    object AudioSampleRate : DiscreteInt(
+        Key.AudioSampleRate,
         44100,
         listOf(16000, 22050, 32000, 44100, 48000),
         listOf(
@@ -21,9 +61,8 @@ object PropertyType {
         R.drawable.ic_equalizer
     )
 
-    val AUDIO_ENCODING = DiscreteProperty(
-        "audio_encoding",
-        ValueType.Int,
+    object AudioEncoding : DiscreteInt(
+        Key.AudioEncoding,
         AudioFormat.ENCODING_PCM_16BIT,
         listOf(
             AudioFormat.ENCODING_PCM_16BIT,
@@ -39,9 +78,8 @@ object PropertyType {
         R.drawable.ic_equalizer
     )
 
-    val AUDIO_CHANNEL = DiscreteProperty(
-        "audio_channel",
-        ValueType.Int,
+    object AudioChannel : DiscreteInt(
+        Key.AudioChannel,
         AudioFormat.CHANNEL_IN_DEFAULT,
         listOf(
             AudioFormat.CHANNEL_IN_DEFAULT,
@@ -57,9 +95,8 @@ object PropertyType {
         R.drawable.ic_equalizer
     )
 
-    val AUDIO_SOURCE = DiscreteProperty(
-        "audio_source",
-        ValueType.Int,
+    object AudioSource : DiscreteInt(
+        Key.AudioSource,
         MediaRecorder.AudioSource.DEFAULT,
         listOf(
             MediaRecorder.AudioSource.DEFAULT,
@@ -79,12 +116,18 @@ object PropertyType {
         R.drawable.ic_equalizer
     )
 
-//    private val map = mapOf<String, Property>(
-//        AUDIO_SAMPLE_RATE.key to AUDIO_SAMPLE_RATE,
-//        AUDIO_ENCODING.key to AUDIO_ENCODING,
-//        AUDIO_CHANNEL.key to AUDIO_CHANNEL,
-//        AUDIO_SOURCE.key to AUDIO_SOURCE
-//    )
-//
-//    operator fun get(string: String): Property? = map[string]
+    companion object {
+        private val map = mutableMapOf<Key<*>, PropertyType<*>>()
+
+        operator fun <E> get(key: Key<E>): PropertyType<E>? {
+            val p = map[key]
+            @Suppress("UNCHECKED_CAST")
+            return p as PropertyType<E>?
+        }
+
+        operator fun <E> set(key: Key<E>, value: PropertyType<E>?) {
+            @Suppress("UNCHECKED_CAST")
+            map[key] = value as PropertyType<*>
+        }
+    }
 }

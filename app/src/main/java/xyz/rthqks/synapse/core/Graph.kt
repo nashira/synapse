@@ -7,9 +7,9 @@ import xyz.rthqks.synapse.core.edge.AudioBufferConnection
 import xyz.rthqks.synapse.core.node.AudioPlayerNode
 import xyz.rthqks.synapse.core.node.AudioSourceNode
 import xyz.rthqks.synapse.data.GraphConfig
+import xyz.rthqks.synapse.data.Key
 import xyz.rthqks.synapse.data.NodeType
 import xyz.rthqks.synapse.data.PortType
-import xyz.rthqks.synapse.data.PropertyType
 
 class Graph(
     private val context: Context,
@@ -26,10 +26,10 @@ class Graph(
             val node = when (it.type) {
                 NodeType.Camera -> TODO()
                 NodeType.Microphone -> AudioSourceNode(
-                    it.getIntProperty(PropertyType.AUDIO_SAMPLE_RATE),
-                    it.getIntProperty(PropertyType.AUDIO_CHANNEL),
-                    it.getIntProperty(PropertyType.AUDIO_ENCODING),
-                    it.getIntProperty(PropertyType.AUDIO_SOURCE)
+                    it[Key.AudioSampleRate],
+                    it[Key.AudioChannel],
+                    it[Key.AudioEncoding],
+                    it[Key.AudioSource]
                 )
                 NodeType.Image -> TODO()
                 NodeType.AudioFile -> TODO()
@@ -50,8 +50,8 @@ class Graph(
 
         graphConfig.edges.map { edge ->
             Log.d(TAG, "edge: $edge")
-            val fromConfig = graphConfig.nodes.first { it.id == edge.fromNodeId }
-            val toConfig = graphConfig.nodes.first { it.id == edge.toNodeId }
+            val fromConfig = graphConfig.nodes[edge.fromNodeId]!!
+//            val toConfig = graphConfig.nodes[edge.toNodeId]!!
             val dataType = fromConfig.type.outputs.first { it.key == edge.fromKey }
 
             val from = nodes[edge.fromNodeId]!!
@@ -108,7 +108,6 @@ class Graph(
             }
         }
     }
-
 
     private suspend fun parallel(block: suspend (node: Node) -> Unit) {
         nodes.forEach { scope.launch { block(it.value) } }

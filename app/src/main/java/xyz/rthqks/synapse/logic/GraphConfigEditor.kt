@@ -80,7 +80,7 @@ class GraphConfigEditor(val graphConfig: GraphConfig) {
     }
 
 
-    fun getNode(nodeId: Int): NodeConfig = nodes[nodeId]
+    fun getNode(nodeId: Int): NodeConfig = nodes[nodeId]!!
 
     private val PortConfig.isConnected: Boolean
         get() = edges.any {
@@ -106,8 +106,8 @@ class GraphConfigEditor(val graphConfig: GraphConfig) {
     }
 
     private fun NodeConfig.createProperties() {
-        type.properties.forEach {
-            properties.add(PropertyConfig(graphId, id, it.key, it.value.default.toString()))
+        type.properties.values.forEach {
+            properties[it.key] = PropertyConfig(graphId, id, it.key.name, it.default.toString())
         }
     }
 
