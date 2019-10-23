@@ -3,14 +3,12 @@ package xyz.rthqks.synapse.core
 import android.content.Context
 import android.util.Log
 import kotlinx.coroutines.*
-import xyz.rthqks.synapse.core.edge.AudioBufferConnection
 import xyz.rthqks.synapse.core.node.AudioPlayerNode
 import xyz.rthqks.synapse.core.node.AudioSourceNode
 import xyz.rthqks.synapse.core.node.CameraNode
 import xyz.rthqks.synapse.data.GraphData
 import xyz.rthqks.synapse.data.Key
 import xyz.rthqks.synapse.data.NodeType
-import xyz.rthqks.synapse.data.PortType
 
 class Graph(
     private val context: Context,
@@ -26,7 +24,7 @@ class Graph(
         graphData.nodes.forEach {
             val node = when (it.type) {
                 NodeType.Camera -> CameraNode(
-                    context,
+                    CameraManager(context),
                     it[Key.CameraFacing],
                     it[Key.CameraCaptureSize],
                     it[Key.CameraFrameRate]
@@ -65,14 +63,8 @@ class Graph(
 
             Log.d(TAG, "from: $from to $to")
 
-            when (dataType) {
-                is PortType.Surface -> TODO()
-                is PortType.Texture -> TODO()
-                is PortType.AudioBuffer -> {
-                    val connection = AudioBufferConnection()
-                    from.output(edge.fromKey, connection)
-                    to.input(edge.toKey, connection)
-                }
+            from.output(edge.fromKey)?.let {
+                to.input(edge.toKey, it)
             }
         }
 

@@ -44,7 +44,6 @@ class ExecGraphViewModel @Inject constructor(
 
     fun stopExecution() {
         stopJob = scope.launch {
-//        runBlocking {
             Log.d(TAG, "stopping")
             startJob?.join()
             graph.stop()

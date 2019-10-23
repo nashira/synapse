@@ -9,13 +9,13 @@ import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
 import xyz.rthqks.synapse.core.Connection
 import xyz.rthqks.synapse.core.Node
-import xyz.rthqks.synapse.core.edge.AudioBufferConnection
+import xyz.rthqks.synapse.core.edge.AudioConnection
 import xyz.rthqks.synapse.data.PortType
 
 class AudioPlayerNode : Node() {
     private var audioTrack: AudioTrack? = null
     private lateinit var audioFormat: AudioFormat
-    private var connection: AudioBufferConnection? = null
+    private var connection: AudioConnection? = null
     private var bufferSize = 0
     private var playJob: Job? = null
     private var running = false
@@ -68,13 +68,13 @@ class AudioPlayerNode : Node() {
         audioTrack?.release()
     }
 
-    override suspend fun <T> output(key: String, connection: Connection<T>) {
+    override suspend fun output(key: String): Connection<*> {
         throw IllegalStateException("no outputs: $this")
     }
 
     override suspend fun <T> input(key: String, connection: Connection<T>) {
         if (key == PortType.AUDIO_1) {
-            this.connection = connection as AudioBufferConnection
+            this.connection = connection as AudioConnection
             audioFormat = connection.audioFormat
             bufferSize = connection.bufferSize
             createAudioTrack()
