@@ -37,6 +37,7 @@ class ExecGraphActivity : DaggerAppCompatActivity() {
         })
 
         surface_view.holder.setFormat(PixelFormat.RGB_888)
+
         surface_view.holder.addCallback(object : SurfaceHolder.Callback {
             override fun surfaceChanged(
                 holder: SurfaceHolder?,

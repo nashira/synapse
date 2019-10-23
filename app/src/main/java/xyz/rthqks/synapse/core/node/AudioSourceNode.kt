@@ -6,6 +6,7 @@ import android.util.Log
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withTimeout
 import xyz.rthqks.synapse.core.Connection
 import xyz.rthqks.synapse.core.Node
 import xyz.rthqks.synapse.core.edge.AudioConnection
@@ -53,6 +54,7 @@ class AudioSourceNode(
             var numFrames = 0
             while (running) {
                 connection?.dequeue()?.let {
+                    it.eos = false
                     it.frame = numFrames
                     it.buffer.position(0)
                     val read =
