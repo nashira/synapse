@@ -16,7 +16,7 @@ class EditGraphViewModel @Inject constructor(
 ) : ViewModel() {
 
     val onAddNodeClicked = MutableLiveData<Unit>()
-    lateinit var graph: GraphConfig
+    lateinit var graph: GraphData
     lateinit var graphConfigEditor: GraphConfigEditor
     val graphChannel = MutableLiveData<GraphConfigEditor>()
     val onNodeAdded = MutableLiveData<Unit>()
@@ -24,7 +24,7 @@ class EditGraphViewModel @Inject constructor(
 
     fun setGraphId(graphId: Int) {
         if (graphId == -1) {
-            graph = GraphConfig(0, "Graph")
+            graph = GraphData(0, "Graph")
             graphConfigEditor = GraphConfigEditor(graph)
 
             Log.d(TAG, dao.toString())

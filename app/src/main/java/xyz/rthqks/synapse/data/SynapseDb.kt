@@ -6,7 +6,7 @@ import androidx.room.TypeConverters
 
 @Database(
     entities = [
-        GraphConfig::class,
+        GraphData::class,
         NodeConfig::class,
         EdgeConfig::class,
         PropertyConfig::class

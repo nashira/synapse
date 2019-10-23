@@ -4,6 +4,7 @@ import androidx.room.Entity
 import androidx.room.Index
 
 @Entity(
+    tableName = "edge",
     primaryKeys = ["graphId", "fromKey", "toKey", "fromNodeId", "toNodeId"],
     indices = [
         Index("graphId")

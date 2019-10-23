@@ -17,6 +17,7 @@ sealed class Key<T>(
 
     object CameraFacing: Key<Int>("camera_device")
     object CameraCaptureSize : Key<Size>("camera_capture_size")
+    object CameraFrameRate : Key<Int>("camera_frame_rate")
 
     companion object {
         private val map = mutableMapOf<String, Key<*>>()
@@ -25,6 +26,4 @@ sealed class Key<T>(
             map[name] = key
         }
     }
-
-
 }

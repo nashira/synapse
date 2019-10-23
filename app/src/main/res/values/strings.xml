@@ -50,4 +50,9 @@
     <string name="property_label_camera_capture_size_1080">1080p</string>
     <string name="property_label_camera_capture_size_720">720p</string>
     <string name="property_name_camera_capture_size">Camera capture size</string>
+    <string name="property_label_camera_fps_15">15</string>
+    <string name="property_label_camera_fps_20">20</string>
+    <string name="property_label_camera_fps_30">30</string>
+    <string name="property_label_camera_fps_60">60</string>
+    <string name="property_name_camera_frame_rate">Frame Rate (fps)</string>
 </resources>

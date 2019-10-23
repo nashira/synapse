@@ -14,7 +14,7 @@ import dagger.android.support.DaggerAppCompatActivity
 import kotlinx.android.synthetic.main.activity_graph_list.*
 import kotlinx.android.synthetic.main.graph_list_item.view.*
 import xyz.rthqks.synapse.R
-import xyz.rthqks.synapse.data.GraphConfig
+import xyz.rthqks.synapse.data.GraphData
 import xyz.rthqks.synapse.ui.edit.GraphEditActivity
 import javax.inject.Inject
 
@@ -48,16 +48,6 @@ class GraphListActivity : DaggerAppCompatActivity() {
                 GraphEditActivity.getIntent(this, it.id)
             )
         }
-
-//
-//        val manager = getSystemService(CameraManager::class.java)!!
-//        val ids = manager.cameraIdList
-//        ids.forEach { id ->
-//            val characteristics = manager.getCameraCharacteristics(id)
-//            characteristics.keys.forEach {
-//                Log.d("CameraFacing", "id: $id $it = ${characteristics[it]}")
-//            }
-//        }
     }
 
     override fun onResume() {
@@ -71,8 +61,8 @@ class GraphListActivity : DaggerAppCompatActivity() {
 }
 
 class GraphAdapter : RecyclerView.Adapter<GraphViewHolder>() {
-    private val graphs = mutableListOf<GraphConfig>()
-    private var itemClickListener: ((GraphConfig) -> Unit)? = null
+    private val graphs = mutableListOf<GraphData>()
+    private var itemClickListener: ((GraphData) -> Unit)? = null
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): GraphViewHolder {
         val view = LayoutInflater.from(parent.context)
@@ -88,23 +78,23 @@ class GraphAdapter : RecyclerView.Adapter<GraphViewHolder>() {
         holder.bind(graphs[position])
     }
 
-    fun setGraphs(list: List<GraphConfig>) {
+    fun setGraphs(list: List<GraphData>) {
         graphs.clear()
         graphs.addAll(list)
         notifyDataSetChanged()
     }
 
-    fun onItemClick(function: (GraphConfig) -> Unit) {
+    fun onItemClick(function: (GraphData) -> Unit) {
         itemClickListener = function
     }
 }
 
 class GraphViewHolder(
     itemView: View,
-    itemClick: (GraphConfig) -> Unit
+    itemClick: (GraphData) -> Unit
 ) : RecyclerView.ViewHolder(itemView) {
     private val name = itemView.name
-    private var graph: GraphConfig? = null
+    private var graph: GraphData? = null
 
     init {
         itemView.setOnClickListener {
@@ -113,8 +103,8 @@ class GraphViewHolder(
         }
     }
 
-    fun bind(graphConfig: GraphConfig) {
-        graph = graphConfig
-        name.text = graphConfig.name
+    fun bind(graphData: GraphData) {
+        graph = graphData
+        name.text = graphData.name
     }
 }

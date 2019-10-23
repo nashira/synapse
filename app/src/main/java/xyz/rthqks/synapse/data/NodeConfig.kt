@@ -5,6 +5,7 @@ import androidx.room.Ignore
 import androidx.room.Index
 
 @Entity(
+    tableName = "node",
     primaryKeys = ["graphId", "id"],
     indices = [
         Index("graphId", "id", unique = true)

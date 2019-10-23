@@ -136,6 +136,7 @@ class DiscretePropertyViewHolder(
 
                 property?.values?.get(position)?.let { value ->
                     config?.let {
+
                         it.value = PropertyType.toString(property!!.key, value)
                         viewModel.saveProperty(it)
                     }

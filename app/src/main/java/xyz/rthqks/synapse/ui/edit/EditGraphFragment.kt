@@ -43,7 +43,7 @@ class EditGraphFragment : DaggerFragment() {
         graphViewModel.graphChannel.observe(this, Observer {
             Log.d(TAG, it.toString())
             nodeAdapter.setGraphEditor(it)
-            edit_title.setText(it.graphConfig.name)
+            edit_title.setText(it.graphData.name)
         })
     }
 

@@ -4,6 +4,7 @@ import androidx.room.Entity
 import androidx.room.Index
 
 @Entity(
+    tableName = "property",
     indices = [
         Index("graphId", "nodeId", "type", unique = true)
     ],

@@ -164,6 +164,20 @@ sealed class PropertyType<T : Any>(
         R.drawable.ic_camera
     )
 
+    object CameraFrameRate : DiscreteInt(
+        Key.CameraFrameRate,
+        30,
+        listOf(15, 20, 30, 60),
+        listOf(
+            R.string.property_label_camera_fps_15,
+            R.string.property_label_camera_fps_20,
+            R.string.property_label_camera_fps_30,
+            R.string.property_label_camera_fps_60
+        ),
+        R.string.property_name_camera_frame_rate,
+        R.drawable.ic_camera
+    )
+
     companion object {
         private val map = mutableMapOf<Key<*>, PropertyType<*>>()
         val gson = Gson()
@@ -198,8 +212,12 @@ sealed class PropertyType<T : Any>(
             Key.CameraCaptureSize -> (value as? Size)?.let {
                 CameraCaptureSize.toString(it)
             }
-        } ?: ""
+            Key.CameraFrameRate ->  (value as? Int)?.let {
+                CameraFrameRate.toString(it)
+            }
+        } ?: error("can't convert $value with key $key")
 
+//        fun <T : Any> foo(key: Key<T>, value: T): String = PropertyType[key].toString(value)
 //        fun <T : Any> fromString(key: Key<T>, value: String): T = PropertyType[key].fromString(value)
     }
 }

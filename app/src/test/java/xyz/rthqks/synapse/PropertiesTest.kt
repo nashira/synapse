@@ -77,3 +77,11 @@ sealed class Key<E>(
 //        }
 //    }
 }
+
+//class K<T>
+//class V<T>
+//
+//class P<T> {
+//    val k: K<T> = K()
+//    var v: V<T> = V()
+//}

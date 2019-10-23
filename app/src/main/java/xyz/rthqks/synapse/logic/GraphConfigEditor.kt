@@ -3,14 +3,14 @@ package xyz.rthqks.synapse.logic
 import xyz.rthqks.synapse.data.*
 import xyz.rthqks.synapse.ui.edit.PortState
 
-class GraphConfigEditor(val graphConfig: GraphConfig) {
+class GraphConfigEditor(val graphData: GraphData) {
 
-    val nodes = graphConfig.nodes
-    val edges = graphConfig.edges.toMutableSet()
+    val nodes = graphData.nodes
+    val edges = graphData.edges.toMutableSet()
     private var selectedPort: PortConfig? = null
 
     fun addNodeType(nodeType: NodeType): NodeConfig {
-        val nodeConfig = NodeConfig(nodes.size, graphConfig.id, nodeType)
+        val nodeConfig = NodeConfig(nodes.size, graphData.id, nodeType)
         nodeConfig.createProperties()
         nodes.add(nodeConfig)
         return nodeConfig
@@ -112,7 +112,7 @@ class GraphConfigEditor(val graphConfig: GraphConfig) {
     }
 
     private fun PortConfig.edgeTo(other: PortConfig): EdgeConfig =
-        EdgeConfig(graphConfig.id, key.nodeId, key.key, other.key.nodeId, other.key.key)
+        EdgeConfig(graphData.id, key.nodeId, key.key, other.key.nodeId, other.key.key)
 
 
     private val EdgeConfig.from get() = PortKey(fromNodeId, fromKey, PortType.OUTPUT)

@@ -6,14 +6,15 @@ import kotlinx.coroutines.*
 import xyz.rthqks.synapse.core.edge.AudioBufferConnection
 import xyz.rthqks.synapse.core.node.AudioPlayerNode
 import xyz.rthqks.synapse.core.node.AudioSourceNode
-import xyz.rthqks.synapse.data.GraphConfig
+import xyz.rthqks.synapse.core.node.CameraNode
+import xyz.rthqks.synapse.data.GraphData
 import xyz.rthqks.synapse.data.Key
 import xyz.rthqks.synapse.data.NodeType
 import xyz.rthqks.synapse.data.PortType
 
 class Graph(
     private val context: Context,
-    private val graphConfig: GraphConfig
+    private val graphData: GraphData
 ) {
     private val scope = CoroutineScope(SupervisorJob())
     private val glDispatcher = newSingleThreadContext("Dispatchers.GL")
@@ -22,9 +23,14 @@ class Graph(
 
     suspend fun initialize() {
 
-        graphConfig.nodes.forEach {
+        graphData.nodes.forEach {
             val node = when (it.type) {
-                NodeType.Camera -> TODO()
+                NodeType.Camera -> CameraNode(
+                    context,
+                    it[Key.CameraFacing],
+                    it[Key.CameraCaptureSize],
+                    it[Key.CameraFrameRate]
+                )
                 NodeType.Microphone -> AudioSourceNode(
                     it[Key.AudioSampleRate],
                     it[Key.AudioChannel],
@@ -42,16 +48,16 @@ class Graph(
             nodes[it.id] = node
         }
 
-        parallelJoin {
+        parallelJoin(nodes.values) {
             Log.d(TAG, "initialize ${it}")
             it.initialize()
             Log.d(TAG, "initialize complete ${it}")
         }
 
-        graphConfig.edges.map { edge ->
+        parallelJoin(graphData.edges) { edge ->
             Log.d(TAG, "edge: $edge")
-            val fromConfig = graphConfig.nodes[edge.fromNodeId]!!
-//            val toConfig = graphConfig.nodes[edge.toNodeId]!!
+            val fromConfig = graphData.nodes[edge.fromNodeId]!!
+//            val toConfig = graphData.nodes[edge.toNodeId]!!
             val dataType = fromConfig.type.outputs.first { it.key == edge.fromKey }
 
             val from = nodes[edge.fromNodeId]!!
@@ -69,11 +75,12 @@ class Graph(
                 }
             }
         }
+
         logCoroutineInfo(scope.coroutineContext[Job])
     }
 
     suspend fun start() {
-        parallel {
+        parallel(nodes.values) {
             Log.d(TAG, "start ${it}")
             it.start()
             Log.d(TAG, "start complete ${it}")
@@ -83,7 +90,7 @@ class Graph(
     }
 
     suspend fun stop() {
-        parallelJoin {
+        parallelJoin(nodes.values) {
             Log.d(TAG, "stop ${it}")
             it.stop()
             Log.d(TAG, "stop complete ${it}")
@@ -92,7 +99,7 @@ class Graph(
     }
 
     suspend fun release() {
-        parallelJoin {
+        parallelJoin(nodes.values) {
             Log.d(TAG, "release ${it}")
             it.release()
             Log.d(TAG, "release complete ${it}")
@@ -109,12 +116,12 @@ class Graph(
         }
     }
 
-    private suspend fun parallel(block: suspend (node: Node) -> Unit) {
-        nodes.forEach { scope.launch { block(it.value) } }
+    private suspend fun <T> parallel(items: Iterable<T>, block: suspend (item: T) -> Unit) {
+        items.forEach { scope.launch { block(it) } }
     }
 
-    private suspend fun parallelJoin(block: suspend (node: Node) -> Unit) {
-        nodes.map { scope.launch { block(it.value) } }.forEach { it.join() }
+    private suspend fun <T> parallelJoin(items: Iterable<T>, block: suspend (item: T) -> Unit) {
+        items.map { scope.launch { block(it) } }.forEach { it.join() }
     }
 
     companion object {

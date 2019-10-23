@@ -4,8 +4,8 @@ import androidx.room.Entity
 import androidx.room.Ignore
 import androidx.room.PrimaryKey
 
-@Entity
-data class GraphConfig(
+@Entity(tableName = "graph")
+data class GraphData(
     @PrimaryKey(autoGenerate = true) var id: Int,
     var name: String
 ) {
@@ -15,6 +15,6 @@ data class GraphConfig(
     val edges = mutableListOf<EdgeConfig>()
 
     override fun toString(): String {
-        return "GraphConfig(id=$id, name='$name', nodes=$nodes, edges=$edges)"
+        return "GraphData(id=$id, name='$name', nodes=$nodes, edges=$edges)"
     }
 }
