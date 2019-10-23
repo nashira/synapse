@@ -22,16 +22,9 @@ data class NodeConfig(
     @Ignore
     val properties = mutableMapOf<Key<*>, PropertyConfig>()
 
-    operator fun <T> get(key: Key<T>): T {
+    operator fun <T : Any> get(key: Key<T>): T {
         val p = properties[key]!!
-        val type = PropertyType[key]!!
-        @Suppress("UNCHECKED_CAST")
+        val type = PropertyType[key]
         return type.fromString(p.value)
-    }
-
-    operator fun <T> set(key: Key<T>, value: T) {
-        @Suppress("UNCHECKED_CAST")
-        val p = properties[key] as PropertyConfig
-        p.value = value.toString()
     }
 }

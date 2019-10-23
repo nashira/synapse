@@ -89,7 +89,7 @@ class PropertyAdapter(
 
     override fun getItemViewType(position: Int): Int {
         return when (propertyTypes[position]) {
-            is PropertyType.Discrete<*> -> R.layout.property_item_discrete
+            is PropertyType.Discrete -> R.layout.property_item_discrete
             else -> R.layout.frame_layout
         }
     }
@@ -113,6 +113,7 @@ class DiscretePropertyViewHolder(
 
     private var property: PropertyType.Discrete<*>? = null
     private var config: PropertyConfig? = null
+    private var suppressSave = false
 
     init {
         arrayAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
@@ -128,14 +129,18 @@ class DiscretePropertyViewHolder(
                 position: Int,
                 id: Long
             ) {
+                if (suppressSave) {
+                    suppressSave = false
+                    return
+                }
+
                 property?.values?.get(position)?.let { value ->
                     config?.let {
-                        it.value = value.toString()
+                        it.value = PropertyType.toString(property!!.key, value)
                         viewModel.saveProperty(it)
                     }
                 }
             }
-
         }
     }
 
@@ -145,7 +150,12 @@ class DiscretePropertyViewHolder(
         itemView.name.setText(property.name)
         arrayAdapter.clear()
         arrayAdapter.addAll(property.labels.map { itemView.context.getString(it) })
+        suppressSave = true
         itemView.value.setSelection(property.indexOf(config.value))
+    }
+
+    companion object {
+        private val TAG = DiscretePropertyViewHolder::class.java.simpleName
     }
 }
 
@@ -153,8 +163,3 @@ private fun PropertyType.Discrete<*>.indexOf(value: String): Int {
         val v = fromString(value)
         return values.indexOf(v)
 }
-//
-//private fun NodeConfig.getPropertyType(position: Int): PropertyType {
-//    val config = properties[position]
-//    return type.properties.getValue(config.key)
-//}

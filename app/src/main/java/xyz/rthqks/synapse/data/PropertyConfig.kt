@@ -5,15 +5,13 @@ import androidx.room.Index
 
 @Entity(
     indices = [
-        Index("graphId", "nodeId", "key", unique = true)
+        Index("graphId", "nodeId", "type", unique = true)
     ],
-    primaryKeys = ["graphId", "nodeId", "key"]
+    primaryKeys = ["graphId", "nodeId", "type"]
 )
 data class PropertyConfig(
     val graphId: Int,
     val nodeId: Int,
-    val key: String,
+    val type: String,
     var value: String
-) {
-//    val typeKey: PropertyType<*> = PropertyType[Key[key]]
-}
+)

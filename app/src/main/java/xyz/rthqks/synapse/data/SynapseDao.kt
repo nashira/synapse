@@ -52,7 +52,7 @@ abstract class SynapseDao {
         graph.nodes.addAll(getNodes(graphId))
         graph.edges.addAll(getEdges(graphId))
         graph.nodes.forEach {
-            it.properties.putAll(getProperties(graphId, it.id).map { Key[it.key]!! to it })
+            it.properties.putAll(getProperties(graphId, it.id).map { Key[it.type]!! to it })
         }
         return graph
     }

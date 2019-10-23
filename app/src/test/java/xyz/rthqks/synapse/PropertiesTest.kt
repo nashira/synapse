@@ -71,9 +71,9 @@ sealed class Key<E>(
 //        operator fun <E> set(name: String, property: Pty<E>) {
 //            nameMap[name] = property
 //        }
-//        operator fun <E> get(key: Key<E>) = keyMap[key]
-//        operator fun <E> set(key: Key<E>, property: Pty<E>) {
-//            keyMap[key] = property
+//        operator fun <E> get(type: Key<E>) = keyMap[type]
+//        operator fun <E> set(type: Key<E>, property: Pty<E>) {
+//            keyMap[type] = property
 //        }
 //    }
 }

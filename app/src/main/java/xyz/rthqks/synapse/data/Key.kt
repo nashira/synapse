@@ -1,5 +1,7 @@
 package xyz.rthqks.synapse.data
 
+import android.util.Size
+
 @Suppress("LeakingThis")
 sealed class Key<T>(
     val name: String
@@ -13,6 +15,9 @@ sealed class Key<T>(
     object AudioSampleRate : Key<Int>("audio_sample_rate")
     object AudioSource : Key<Int>("audio_source")
 
+    object CameraFacing: Key<Int>("camera_device")
+    object CameraCaptureSize : Key<Size>("camera_capture_size")
+
     companion object {
         private val map = mutableMapOf<String, Key<*>>()
         operator fun get(name: String) = map[name]
@@ -20,4 +25,6 @@ sealed class Key<T>(
             map[name] = key
         }
     }
+
+
 }

@@ -107,7 +107,7 @@ class GraphConfigEditor(val graphConfig: GraphConfig) {
 
     private fun NodeConfig.createProperties() {
         type.properties.values.forEach {
-            properties[it.key] = PropertyConfig(graphId, id, it.key.name, it.default.toString())
+            properties[it.key] = PropertyConfig(graphId, id, it.key.name, PropertyType.toString(it.key, it.default))
         }
     }
 

@@ -48,6 +48,16 @@ class GraphListActivity : DaggerAppCompatActivity() {
                 GraphEditActivity.getIntent(this, it.id)
             )
         }
+
+//
+//        val manager = getSystemService(CameraManager::class.java)!!
+//        val ids = manager.cameraIdList
+//        ids.forEach { id ->
+//            val characteristics = manager.getCameraCharacteristics(id)
+//            characteristics.keys.forEach {
+//                Log.d("CameraFacing", "id: $id $it = ${characteristics[it]}")
+//            }
+//        }
     }
 
     override fun onResume() {

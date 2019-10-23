@@ -44,4 +44,10 @@
     <string name="title_graph_list">Graphs</string>
     <string name="confirm_delete">Delete</string>
     <string name="confirm">Confirm</string>
+    <string name="property_name_camera_device">Camera Device</string>
+    <string name="property_label_camera_lens_facing_front">Front</string>
+    <string name="property_label_camera_lens_facing_back">Back</string>
+    <string name="property_label_camera_capture_size_1080">1080p</string>
+    <string name="property_label_camera_capture_size_720">720p</string>
+    <string name="property_name_camera_capture_size">Camera capture size</string>
 </resources>
