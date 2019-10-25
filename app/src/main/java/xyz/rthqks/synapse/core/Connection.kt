@@ -1,5 +1,6 @@
 package xyz.rthqks.synapse.core
 
+import android.os.SystemClock
 import android.util.Log
 import kotlinx.coroutines.channels.Channel
 
@@ -11,6 +12,7 @@ abstract class Connection<T>(
     private var bufferCount = 0
     private var lastDequeueTime = 0L
     private var lastAcquireTime = 0L
+    private var fps = 0f
 
     suspend fun queue(item: T) {
 //        val time = (SystemClock.elapsedRealtimeNanos() - lastDequeueTime) / 1000
@@ -28,8 +30,12 @@ abstract class Connection<T>(
 
 //        val elapsedRealtimeNanos = SystemClock.elapsedRealtimeNanos()
 //        val time = (elapsedRealtimeNanos - lastDequeueTime) / 1000
-//        Log.d(TAG, "round trip time: $time, fps: ${1_000_000.0 / time}")
 //        lastDequeueTime = elapsedRealtimeNanos
+//
+//        val newFps = 1_000_000f / time
+//        val beta = 0.9f
+//        fps = fps * beta + (1f - beta) * newFps
+//        Log.d(TAG, "round trip time: $time, fps: $fps")
         return buffer
     }
 

@@ -4,21 +4,19 @@ import android.content.Context
 import android.util.Log
 import android.view.SurfaceView
 import kotlinx.coroutines.*
-import xyz.rthqks.synapse.core.node.AudioPlayerNode
-import xyz.rthqks.synapse.core.node.AudioSourceNode
-import xyz.rthqks.synapse.core.node.CameraNode
-import xyz.rthqks.synapse.core.node.SurfaceViewNode
+import xyz.rthqks.synapse.core.node.*
 import xyz.rthqks.synapse.data.GraphData
 import xyz.rthqks.synapse.data.Key
 import xyz.rthqks.synapse.data.NodeType
+import java.util.concurrent.Executors
 
 class Graph(
     private val context: Context,
     private val graphData: GraphData
 ) {
-    private val dispatcher = newFixedThreadPoolContext(8, "ExecGraph")
+    private val dispatcher = Executors.newFixedThreadPool(8).asCoroutineDispatcher()
     private val scope = CoroutineScope(SupervisorJob() + dispatcher)
-    private val glDispatcher = newSingleThreadContext("Dispatchers.GL")
+    private val glDispatcher = Executors.newSingleThreadExecutor().asCoroutineDispatcher()
     private val nodes = mutableMapOf<Int, Node>()
     private val connections = mutableListOf<Connection<Any>>()
 
@@ -42,7 +40,7 @@ class Graph(
                 NodeType.Image -> TODO()
                 NodeType.AudioFile -> TODO()
                 NodeType.VideoFile -> TODO()
-                NodeType.ColorFilter -> TODO()
+                NodeType.LutFilter -> LutNode()
                 NodeType.ShaderFilter -> TODO()
                 NodeType.Speakers -> AudioPlayerNode()
                 NodeType.Screen -> SurfaceViewNode(
@@ -101,6 +99,7 @@ class Graph(
         }
         glDispatcher.close()
         dispatcher.close()
+        scope.cancel()
         logCoroutineInfo(scope.coroutineContext[Job])
     }
 

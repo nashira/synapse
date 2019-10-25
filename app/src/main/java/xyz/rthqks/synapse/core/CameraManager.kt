@@ -6,8 +6,12 @@ import android.hardware.camera2.*
 import android.os.Handler
 import android.os.HandlerThread
 import android.util.Log
+import android.util.Range
 import android.view.Surface
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.runBlocking
+import kotlin.coroutines.Continuation
 import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException
 import kotlin.coroutines.suspendCoroutine
@@ -21,6 +25,7 @@ class CameraManager(
     private lateinit var handler: Handler
     private var camera: CameraDevice? = null
     private var session: CameraCaptureSession? = null
+    private var startContinuation: Continuation<Unit>? = null
 
     fun initialize() {
         thread.start()
@@ -31,35 +36,50 @@ class CameraManager(
         ids.forEach { id ->
             val characteristics = manager.getCameraCharacteristics(id)
             cameraMap[id] = characteristics
-
 //            characteristics.keys.forEach {
 //                Log.d(TAG, "id: $id $it = ${characteristics[it]}")
 //            }
-            val facing = characteristics[CameraCharacteristics.LENS_FACING]
         }
     }
 
     suspend fun start(surface: Surface, facing: Int, fps: Int, onFrame: suspend () -> Unit) {
-        val id = "0" // get id from params
+        val id = findCameraId(facing, fps)
         val c = openCamera(id)
         val s = createSession(c, surface)
         camera = c
         session = s
         val request = c.createCaptureRequest(CameraDevice.TEMPLATE_RECORD).also {
             it.addTarget(surface)
+            it.set(CaptureRequest.CONTROL_AE_TARGET_FPS_RANGE, Range(fps, fps))
         }.build()
-        startRequest(s, request, onFrame)
+        coroutineScope {
+            suspendCoroutine<Unit> {
+                startContinuation = it
+                startRequest(s, request, onFrame, this)
+            }
+        }
     }
 
     fun stop() {
         Log.d(TAG, "stop")
         session?.close()
         camera?.close()
+        startContinuation?.resume(Unit)
     }
 
     fun release() {
         Log.d(TAG, "release")
         thread.quitSafely()
+    }
+
+    private fun findCameraId(facing: Int, fps: Int): String {
+        cameraMap.forEach {
+            val face = it.value[CameraCharacteristics.LENS_FACING]
+            if (face == facing) {
+                return it.key
+            }
+        }
+        return "0"
     }
 
     @SuppressLint("MissingPermission")
@@ -91,7 +111,7 @@ class CameraManager(
                 override fun onConfigureFailed(session: CameraCaptureSession) {
                     it.resumeWithException(
                         RuntimeException(
-                            "can't create session camera: $cameraDevice surface: $surface"
+                            "can't create session, camera: $cameraDevice surface: $surface"
                         )
                     )
                 }
@@ -108,7 +128,8 @@ class CameraManager(
     private fun startRequest(
         session: CameraCaptureSession,
         request: CaptureRequest,
-        onFrame: suspend () -> Unit
+        onFrame: suspend () -> Unit,
+        scope: CoroutineScope
     ) {
         session.setRepeatingRequest(request, object : CameraCaptureSession.CaptureCallback() {
             override fun onCaptureCompleted(
@@ -116,7 +137,7 @@ class CameraManager(
                 request: CaptureRequest,
                 result: TotalCaptureResult
             ) {
-                runBlocking {
+                runBlocking(scope.coroutineContext) {
                     onFrame()
                 }
             }

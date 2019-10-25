@@ -20,7 +20,6 @@ class CameraNode(
     private val frameRate: Int
 ) : Node() {
     private var connection: SurfaceConnection? = null
-    private var surface: Surface? = null
     private var startJob: Job? = null
     private var frameCount = 0
 
@@ -29,8 +28,8 @@ class CameraNode(
     }
 
     override suspend fun start() = coroutineScope {
-        val surface = surface ?: return@coroutineScope
         val connection = connection ?: return@coroutineScope
+        val surface = connection.getSurface()
         frameCount = 0
         startJob = launch(CoroutineName(TAG)) {
             cameraManager.start(surface, facing, frameRate) {
@@ -62,9 +61,7 @@ class CameraNode(
     override suspend fun output(key: String): Connection<*>? = when (key) {
         PortType.SURFACE_1 -> SurfaceConnection().also {
             connection = it
-            it.configure(size) {
-                surface = it
-            }
+            it.configure(size)
         }
         else -> null
     }

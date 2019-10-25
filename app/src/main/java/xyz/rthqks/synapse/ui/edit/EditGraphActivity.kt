@@ -93,7 +93,7 @@ class AddNodeAdapter(
             NodeType.Image,
             NodeType.AudioFile,
             NodeType.VideoFile,
-            NodeType.ColorFilter,
+            NodeType.LutFilter,
             NodeType.ShaderFilter,
             NodeType.Screen,
             NodeType.Speakers

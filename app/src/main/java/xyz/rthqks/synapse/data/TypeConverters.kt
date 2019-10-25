@@ -14,7 +14,7 @@ class DbConverters {
             NodeType.Image.key -> NodeType.Image
             NodeType.AudioFile.key -> NodeType.AudioFile
             NodeType.VideoFile.key -> NodeType.VideoFile
-            NodeType.ColorFilter.key -> NodeType.ColorFilter
+            NodeType.LutFilter.key -> NodeType.LutFilter
             NodeType.ShaderFilter.key -> NodeType.ShaderFilter
             NodeType.Speakers.key -> NodeType.Speakers
             NodeType.Screen.key -> NodeType.Screen

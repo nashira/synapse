@@ -29,7 +29,7 @@
     <string name="name_node_type_image">Image</string>
     <string name="name_node_type_audio_file">Audio File</string>
     <string name="name_node_type_video_file">Video File</string>
-    <string name="name_node_type_color_filter">Color Filter</string>
+    <string name="name_node_type_color_filter">LUT Filter</string>
     <string name="name_node_type_shader_filter">Shader Filter</string>
     <string name="name_data_type_audio_buffer">Audio Buffer</string>
     <string name="name_data_type_surface">Surface</string>

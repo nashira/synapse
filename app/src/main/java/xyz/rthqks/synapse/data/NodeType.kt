@@ -60,8 +60,8 @@ sealed class NodeType(
         emptyList()
     )
 
-    object ColorFilter : NodeType(
-        "color_filter",
+    object LutFilter : NodeType(
+        "lut_filter",
         R.string.name_node_type_color_filter, R.drawable.ic_tune,
         listOf(
             PortType.Surface(PortType.SURFACE_1, PortType.INPUT),

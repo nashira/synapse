@@ -5,7 +5,12 @@ import android.util.Log
 import android.view.Surface
 import android.view.SurfaceHolder
 import android.view.SurfaceView
+import androidx.constraintlayout.widget.ConstraintLayout
+import androidx.constraintlayout.widget.ConstraintSet
+import androidx.constraintlayout.widget.Constraints
+import kotlinx.android.synthetic.main.activity_exec_graph.view.*
 import kotlinx.coroutines.*
+import xyz.rthqks.synapse.R
 import xyz.rthqks.synapse.core.Connection
 import xyz.rthqks.synapse.core.Node
 import xyz.rthqks.synapse.core.edge.SurfaceConnection
@@ -17,9 +22,8 @@ import kotlin.coroutines.suspendCoroutine
 class SurfaceViewNode(
     private val surfaceView: SurfaceView
 ) : Node() {
-    private lateinit var connection: SurfaceConnection
+    private var connection: SurfaceConnection? = null
     private var surface: Surface? = null
-    private var surfaceContinuation: Continuation<Surface>? = null
     private var running: Boolean = false
     private var playJob: Job? = null
 
@@ -28,7 +32,7 @@ class SurfaceViewNode(
         surfaceView.holder.setFormat(PixelFormat.RGB_888)
 
         Log.d(TAG, "adding callback ${surfaceView.holder.surface}")
-        surface = surfaceView.holder.surface
+        setSurface(surfaceView.holder.surface)
 
         surfaceView.holder.addCallback(object : SurfaceHolder.Callback {
             override fun surfaceChanged(
@@ -38,14 +42,12 @@ class SurfaceViewNode(
                 height: Int
             ) {
                 Log.d(TAG, "surfaceChanged: $holder $format $width $height")
-                surface = holder!!.surface
-                surfaceContinuation?.resume(surface!!)
-                surfaceContinuation = null
+                setSurface(holder!!.surface)
             }
 
             override fun surfaceDestroyed(holder: SurfaceHolder?) {
-                surface = null
                 Log.d(TAG, "surfaceDestroyed: $holder")
+                setSurface(null)
             }
 
             override fun surfaceCreated(holder: SurfaceHolder?) {
@@ -55,9 +57,9 @@ class SurfaceViewNode(
     }
 
     override suspend fun start() = coroutineScope {
-        playJob = launch {
-            val connection = connection
+        val connection = connection ?: return@coroutineScope
 
+        playJob = launch {
             running = true
             var numFrames = 0
             while (running) {
@@ -94,18 +96,22 @@ class SurfaceViewNode(
                 this.connection = connection as SurfaceConnection
                 withContext(Dispatchers.Main) {
                     surfaceView.holder.setFixedSize(connection.size.width, connection.size.height)
+                    ConstraintSet().also {
+                        val constraintLayout = surfaceView.parent as ConstraintLayout
+                        it.clone(constraintLayout)
+                        it.setDimensionRatio(R.id.surface_view, "${connection.size.height}:${connection.size.width}")
+                        it.applyTo(constraintLayout)
+                    }
                 }
-                connection.setSurface(ensureSurface())
+                setSurface(surface)
             }
         }
     }
 
-    private suspend fun ensureSurface(): Surface {
+    private fun setSurface(surface: Surface?) {
         Log.d(TAG, "ensureSurface $surface")
-        return surface?.let { it } ?: suspendCoroutine {
-            Log.d(TAG, "ensureSurface $surface")
-            surfaceContinuation = it
-        }
+        this.surface = surface
+        connection?.setSurface(surface)
     }
 
     companion object {
