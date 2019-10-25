@@ -15,7 +15,7 @@ sealed class Key<T>(
     object AudioSampleRate : Key<Int>("audio_sample_rate")
     object AudioSource : Key<Int>("audio_source")
 
-    object CameraFacing: Key<Int>("camera_device")
+    object CameraFacing: Key<Int>("camera_facing")
     object CameraCaptureSize : Key<Size>("camera_capture_size")
     object CameraFrameRate : Key<Int>("camera_frame_rate")
 

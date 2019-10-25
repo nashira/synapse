@@ -2,6 +2,7 @@ package xyz.rthqks.synapse.ui.exec
 
 import android.content.Context
 import android.util.Log
+import android.view.SurfaceView
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import kotlinx.coroutines.*
@@ -14,6 +15,7 @@ class ExecGraphViewModel @Inject constructor(
     private val context: Context,
     private val dao: SynapseDao
 ) : ViewModel() {
+    private lateinit var surfaceView: SurfaceView
     val graphLoaded = MutableLiveData<GraphData>()
     private lateinit var graph: Graph
     private var initJob: Job? = null
@@ -27,6 +29,9 @@ class ExecGraphViewModel @Inject constructor(
             graphLoaded.postValue(graphConfig)
             Log.d(TAG, "loaded graph: $graphConfig")
             graph = Graph(context, graphConfig)
+
+            graph.tmp_SetSurfaceView(surfaceView)
+
             Log.d(TAG, "initialize")
             graph.initialize()
             Log.d(TAG, "initialized")
@@ -60,6 +65,10 @@ class ExecGraphViewModel @Inject constructor(
             Log.d(TAG, "released")
         }
         super.onCleared()
+    }
+
+    fun setSurfaceView(surfaceView: SurfaceView) {
+        this.surfaceView = surfaceView
     }
 
     companion object {

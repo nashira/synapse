@@ -1,7 +1,9 @@
 package xyz.rthqks.synapse.core.node
 
+import android.util.Log
 import android.util.Size
 import android.view.Surface
+import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
@@ -10,7 +12,6 @@ import xyz.rthqks.synapse.core.Connection
 import xyz.rthqks.synapse.core.Node
 import xyz.rthqks.synapse.core.edge.SurfaceConnection
 import xyz.rthqks.synapse.data.PortType
-import kotlin.coroutines.coroutineContext
 
 class CameraNode(
     private val cameraManager: CameraManager,
@@ -21,6 +22,7 @@ class CameraNode(
     private var connection: SurfaceConnection? = null
     private var surface: Surface? = null
     private var startJob: Job? = null
+    private var frameCount = 0
 
     override suspend fun initialize() {
         cameraManager.initialize()
@@ -29,10 +31,11 @@ class CameraNode(
     override suspend fun start() = coroutineScope {
         val surface = surface ?: return@coroutineScope
         val connection = connection ?: return@coroutineScope
-        var frameCount = 0
-        startJob = launch {
+        frameCount = 0
+        startJob = launch(CoroutineName(TAG)) {
             cameraManager.start(surface, facing, frameRate) {
                 val frame = connection.dequeue()
+                frame.eos = false
                 frame.count = frameCount++
                 connection.queue(frame)
             }
@@ -42,6 +45,14 @@ class CameraNode(
     override suspend fun stop() {
         cameraManager.stop()
         startJob?.join()
+
+        Log.d(TAG, "sent frames $frameCount")
+
+        connection?.dequeue()?.let {
+            Log.d(TAG, "sending EOS")
+            it.eos = true
+            connection?.queue(it)
+        }
     }
 
     override suspend fun release() {
@@ -59,7 +70,7 @@ class CameraNode(
     }
 
     override suspend fun <T> input(key: String, connection: Connection<T>) {
-
+        throw IllegalStateException("$TAG has no inputs")
     }
 
     companion object {

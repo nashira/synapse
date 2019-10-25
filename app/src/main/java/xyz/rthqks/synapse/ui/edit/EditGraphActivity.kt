@@ -33,11 +33,12 @@ class GraphEditActivity : DaggerAppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_graph_edit)
 
-        val graphId = intent.getIntExtra(GRAPH_ID, -1)
         graphViewModel = ViewModelProviders.of(this, viewModelFactory)[EditGraphViewModel::class.java]
-        graphViewModel.setGraphId(graphId)
 
         savedInstanceState ?: run {
+            val graphId = intent.getIntExtra(GRAPH_ID, -1)
+            graphViewModel.setGraphId(graphId)
+
             supportFragmentManager.commit {
                 add(R.id.content, EditGraphFragment())
             }

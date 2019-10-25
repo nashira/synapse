@@ -2,7 +2,6 @@ package xyz.rthqks.synapse.core
 
 import android.util.Log
 import kotlinx.coroutines.channels.Channel
-import kotlinx.coroutines.withTimeout
 
 abstract class Connection<T>(
     private val bufferSize: Int = BUFFER_SIZE

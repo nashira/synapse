@@ -6,7 +6,6 @@ import android.util.Log
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withTimeout
 import xyz.rthqks.synapse.core.Connection
 import xyz.rthqks.synapse.core.Node
 import xyz.rthqks.synapse.core.edge.AudioConnection
@@ -48,23 +47,26 @@ class AudioSourceNode(
     }
 
     override suspend fun start() = coroutineScope {
+        val connection = connection ?: return@coroutineScope
+
         recordJob = launch {
             recorder.startRecording()
             running = true
             var numFrames = 0
             while (running) {
-                connection?.dequeue()?.let {
-                    it.eos = false
-                    it.frame = numFrames
-                    it.buffer.position(0)
-                    val read =
-                        recorder.read(it.buffer, it.buffer.capacity(), AudioRecord.READ_BLOCKING)
-                    it.buffer.limit(read)
-                    connection?.queue(it)
-                    numFrames++
+                val audioEvent = connection.dequeue()
+                audioEvent.eos = false
+                audioEvent.frame = numFrames
+                audioEvent.buffer.position(0)
+                val read = recorder.read(
+                    audioEvent.buffer,
+                    audioEvent.buffer.capacity(),
+                    AudioRecord.READ_BLOCKING
+                )
+                audioEvent.buffer.limit(read)
+                connection.queue(audioEvent)
+                numFrames++
 //                Log.d(TAG, "read $read frames $numFrames")
-                }
-//                yield()
             }
             Log.d(TAG, "read frames $numFrames")
         }

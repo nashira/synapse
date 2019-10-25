@@ -44,6 +44,7 @@ class DataModule {
     @Provides
     fun provideSynapseDb(context: Context): SynapseDb {
         return Room.databaseBuilder(context, SynapseDb::class.java, SynapseDb.NAME)
+            .fallbackToDestructiveMigration()
             .build()
     }
 

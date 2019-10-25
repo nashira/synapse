@@ -8,8 +8,6 @@ import android.os.HandlerThread
 import android.util.Log
 import android.view.Surface
 import kotlinx.coroutines.runBlocking
-import kotlinx.coroutines.withContext
-import kotlin.coroutines.coroutineContext
 import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException
 import kotlin.coroutines.suspendCoroutine
@@ -34,9 +32,9 @@ class CameraManager(
             val characteristics = manager.getCameraCharacteristics(id)
             cameraMap[id] = characteristics
 
-            characteristics.keys.forEach {
-                Log.d(TAG, "id: $id $it = ${characteristics[it]}")
-            }
+//            characteristics.keys.forEach {
+//                Log.d(TAG, "id: $id $it = ${characteristics[it]}")
+//            }
             val facing = characteristics[CameraCharacteristics.LENS_FACING]
         }
     }
@@ -50,16 +48,17 @@ class CameraManager(
         val request = c.createCaptureRequest(CameraDevice.TEMPLATE_RECORD).also {
             it.addTarget(surface)
         }.build()
-
         startRequest(s, request, onFrame)
     }
 
     fun stop() {
+        Log.d(TAG, "stop")
         session?.close()
         camera?.close()
     }
 
     fun release() {
+        Log.d(TAG, "release")
         thread.quitSafely()
     }
 

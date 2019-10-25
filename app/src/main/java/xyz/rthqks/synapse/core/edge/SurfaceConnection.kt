@@ -5,7 +5,7 @@ import android.view.Surface
 import xyz.rthqks.synapse.core.Connection
 
 class SurfaceConnection(bufferSize: Int = BUFFER_SIZE) : Connection<SurfaceEvent>(bufferSize) {
-    private lateinit var size: Size
+    lateinit var size: Size
     private lateinit var onSurface: (Surface) -> Unit
     override suspend fun createBuffer(): SurfaceEvent = SurfaceEvent()
 

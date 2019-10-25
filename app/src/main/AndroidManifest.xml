@@ -28,7 +28,9 @@
             </intent-filter>
         </activity>
 
-        <activity android:name="xyz.rthqks.synapse.ui.exec.ExecGraphActivity" />
+        <activity
+            android:name="xyz.rthqks.synapse.ui.exec.ExecGraphActivity"
+            android:screenOrientation="portrait" />
     </application>
 
 </manifest>

@@ -66,8 +66,11 @@ sealed class PropertyType<T : Any>(
         name,
         icon
     ) {
-        override fun fromString(string: String): Size = gson.fromJson(string, Size::class.java)
-        override fun toString(value: Size): String = gson.toJson(value)
+        override fun fromString(string: String): Size = string.split(':').let {
+            Size(it[0].toInt(), it[1].toInt())
+        }
+
+        override fun toString(value: Size): String = "${value.width}:${value.height}"
     }
 
     object AudioSampleRate : DiscreteInt(
@@ -155,10 +158,11 @@ sealed class PropertyType<T : Any>(
     object CameraCaptureSize : DiscreteSize(
         Key.CameraCaptureSize,
         Size(1920, 1080),
-        listOf(Size(1920, 1080), Size(1280, 720)),
+        listOf(Size(1920, 1080), Size(1280, 720), Size(640, 480)),
         listOf(
             R.string.property_label_camera_capture_size_1080,
-            R.string.property_label_camera_capture_size_720
+            R.string.property_label_camera_capture_size_720,
+            R.string.property_label_camera_capture_size_480
         ),
         R.string.property_name_camera_capture_size,
         R.drawable.ic_camera
@@ -212,7 +216,7 @@ sealed class PropertyType<T : Any>(
             Key.CameraCaptureSize -> (value as? Size)?.let {
                 CameraCaptureSize.toString(it)
             }
-            Key.CameraFrameRate ->  (value as? Int)?.let {
+            Key.CameraFrameRate -> (value as? Int)?.let {
                 CameraFrameRate.toString(it)
             }
         } ?: error("can't convert $value with key $key")

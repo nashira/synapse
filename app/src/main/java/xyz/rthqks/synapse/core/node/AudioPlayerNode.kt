@@ -24,9 +24,9 @@ class AudioPlayerNode : Node() {
     }
 
     override suspend fun start() = coroutineScope {
-        playJob = launch {
-            val connection = connection ?: return@launch
+        val connection = connection ?: return@coroutineScope
 
+        playJob = launch {
             running = true
             audioTrack?.play()
             var numFrames = 0

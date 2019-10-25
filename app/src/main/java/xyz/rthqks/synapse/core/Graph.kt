@@ -2,10 +2,12 @@ package xyz.rthqks.synapse.core
 
 import android.content.Context
 import android.util.Log
+import android.view.SurfaceView
 import kotlinx.coroutines.*
 import xyz.rthqks.synapse.core.node.AudioPlayerNode
 import xyz.rthqks.synapse.core.node.AudioSourceNode
 import xyz.rthqks.synapse.core.node.CameraNode
+import xyz.rthqks.synapse.core.node.SurfaceViewNode
 import xyz.rthqks.synapse.data.GraphData
 import xyz.rthqks.synapse.data.Key
 import xyz.rthqks.synapse.data.NodeType
@@ -14,13 +16,15 @@ class Graph(
     private val context: Context,
     private val graphData: GraphData
 ) {
-    private val scope = CoroutineScope(SupervisorJob())
+    private val dispatcher = newFixedThreadPoolContext(8, "ExecGraph")
+    private val scope = CoroutineScope(SupervisorJob() + dispatcher)
     private val glDispatcher = newSingleThreadContext("Dispatchers.GL")
     private val nodes = mutableMapOf<Int, Node>()
     private val connections = mutableListOf<Connection<Any>>()
 
-    suspend fun initialize() {
+    private lateinit var surfaceView: SurfaceView
 
+    suspend fun initialize() {
         graphData.nodes.forEach {
             val node = when (it.type) {
                 NodeType.Camera -> CameraNode(
@@ -41,7 +45,9 @@ class Graph(
                 NodeType.ColorFilter -> TODO()
                 NodeType.ShaderFilter -> TODO()
                 NodeType.Speakers -> AudioPlayerNode()
-                NodeType.Screen -> TODO()
+                NodeType.Screen -> SurfaceViewNode(
+                    surfaceView
+                )
             }
             nodes[it.id] = node
         }
@@ -54,9 +60,6 @@ class Graph(
 
         parallelJoin(graphData.edges) { edge ->
             Log.d(TAG, "edge: $edge")
-            val fromConfig = graphData.nodes[edge.fromNodeId]!!
-//            val toConfig = graphData.nodes[edge.toNodeId]!!
-            val dataType = fromConfig.type.outputs.first { it.key == edge.fromKey }
 
             val from = nodes[edge.fromNodeId]!!
             val to = nodes[edge.toNodeId]!!
@@ -96,6 +99,8 @@ class Graph(
             it.release()
             Log.d(TAG, "release complete ${it}")
         }
+        glDispatcher.close()
+        dispatcher.close()
         logCoroutineInfo(scope.coroutineContext[Job])
     }
 
@@ -114,6 +119,10 @@ class Graph(
 
     private suspend fun <T> parallelJoin(items: Iterable<T>, block: suspend (item: T) -> Unit) {
         items.map { scope.launch { block(it) } }.forEach { it.join() }
+    }
+
+    fun tmp_SetSurfaceView(surfaceView: SurfaceView) {
+        this.surfaceView = surfaceView
     }
 
     companion object {

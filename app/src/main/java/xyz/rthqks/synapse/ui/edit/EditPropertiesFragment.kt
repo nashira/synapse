@@ -15,6 +15,7 @@ import dagger.android.support.DaggerFragment
 import kotlinx.android.synthetic.main.fragment_edit_properties.*
 import kotlinx.android.synthetic.main.property_item_discrete.view.*
 import xyz.rthqks.synapse.R
+import xyz.rthqks.synapse.data.Key
 import xyz.rthqks.synapse.data.NodeConfig
 import xyz.rthqks.synapse.data.PropertyConfig
 import xyz.rthqks.synapse.data.PropertyType
@@ -67,7 +68,7 @@ class PropertyAdapter(
     private val viewModel: EditGraphViewModel
 ) : RecyclerView.Adapter<PropertyViewHolder>() {
     val properties = nodeConfig.properties.values.toList()
-    val propertyTypes = nodeConfig.type.properties.values.toList()
+    val propertyTypes = properties.map { PropertyType[Key[it.type] as Key<Any>] }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): PropertyViewHolder {
         val view = LayoutInflater.from(parent.context)
