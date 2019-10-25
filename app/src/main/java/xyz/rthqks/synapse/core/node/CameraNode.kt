@@ -54,7 +54,6 @@ class CameraNode(
     }
 
     override suspend fun release() {
-        cameraManager.release()
     }
 
     override suspend fun output(key: String): Connection<*>? = when (key) {

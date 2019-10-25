@@ -3,33 +3,27 @@ package xyz.rthqks.synapse.core.edge
 import android.util.Size
 import android.view.Surface
 import xyz.rthqks.synapse.core.Connection
-import kotlin.coroutines.Continuation
-import kotlin.coroutines.resume
-import kotlin.coroutines.suspendCoroutine
+import xyz.rthqks.synapse.util.SuspendableGet
 
 class SurfaceConnection(bufferSize: Int = BUFFER_SIZE) : Connection<SurfaceEvent>(bufferSize) {
-    lateinit var size: Size
-    private var surface: Surface? = null
-    private var surfaceContinuation: Continuation<Surface>? = null
+    private var size = SuspendableGet<Size>()
+    private var surface = SuspendableGet<Surface>()
 
-    override suspend fun createBuffer(): SurfaceEvent = SurfaceEvent()
+    override suspend fun createItem(): SurfaceEvent = SurfaceEvent()
 
     fun configure(size: Size) {
-        this.size = size
+        this.size.set(size)
     }
 
     fun setSurface(surface: Surface?) {
-        this.surface = surface
+        this.surface.set(surface)
+    }
 
-        surface?.let {
-            surfaceContinuation?.resume(surface)
-            surfaceContinuation = null
-        }
+    suspend fun getSize(): Size {
+        return size.get()
     }
 
     suspend fun getSurface(): Surface {
-        return surface ?: suspendCoroutine {
-            surfaceContinuation = it
-        }
+        return surface.get()
     }
 }

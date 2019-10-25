@@ -37,7 +37,7 @@ class SurfaceViewNode(
                 height: Int
             ) {
                 Log.d(TAG, "surfaceChanged: $holder $format $width $height")
-                setSurface(holder!!.surface)
+
             }
 
             override fun surfaceDestroyed(holder: SurfaceHolder?) {
@@ -47,6 +47,7 @@ class SurfaceViewNode(
 
             override fun surfaceCreated(holder: SurfaceHolder?) {
                 Log.d(TAG, "surfaceCreated: $holder")
+                setSurface(holder!!.surface)
             }
         })
     }
@@ -89,12 +90,13 @@ class SurfaceViewNode(
         when (key) {
             PortType.SURFACE_1 -> {
                 this.connection = connection as SurfaceConnection
+                val size = connection.getSize()
                 withContext(Dispatchers.Main) {
-                    surfaceView.holder.setFixedSize(connection.size.width, connection.size.height)
+                    surfaceView.holder.setFixedSize(size.width, size.height)
                     ConstraintSet().also {
                         val constraintLayout = surfaceView.parent as ConstraintLayout
                         it.clone(constraintLayout)
-                        it.setDimensionRatio(R.id.surface_view, "${connection.size.height}:${connection.size.width}")
+                        it.setDimensionRatio(R.id.surface_view, "${size.height}:${size.width}")
                         it.applyTo(constraintLayout)
                     }
                 }
@@ -104,7 +106,7 @@ class SurfaceViewNode(
     }
 
     private fun setSurface(surface: Surface?) {
-        Log.d(TAG, "ensureSurface $surface")
+        Log.d(TAG, "setSurface $surface")
         this.surface = surface
         connection?.setSurface(surface)
     }

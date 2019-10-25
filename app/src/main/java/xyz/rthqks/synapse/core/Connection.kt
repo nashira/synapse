@@ -8,7 +8,7 @@ abstract class Connection<T>(
 ) {
     private val produceChannel: Channel<T> = Channel(bufferSize)
     private val returnChannel: Channel<T> = Channel(bufferSize)
-    private var bufferCount = 0
+    private var itemsCreatedCount = 0
     private var lastDequeueTime = 0L
     private var lastAcquireTime = 0L
     private var fps = 0f
@@ -21,10 +21,10 @@ abstract class Connection<T>(
 
     suspend fun dequeue(): T {
         val buffer = returnChannel.poll()
-            ?: if (bufferCount < bufferSize) {
-                Log.d(TAG, "createBuffer $bufferCount")
-                bufferCount += 1
-                createBuffer()
+            ?: if (itemsCreatedCount < bufferSize) {
+                Log.d(TAG, "createItem $itemsCreatedCount")
+                itemsCreatedCount += 1
+                createItem()
             } else returnChannel.receive()
 
 //        val elapsedRealtimeNanos = SystemClock.elapsedRealtimeNanos()
@@ -50,7 +50,7 @@ abstract class Connection<T>(
         returnChannel.send(item)
     }
 
-    protected abstract suspend fun createBuffer(): T
+    protected abstract suspend fun createItem(): T
 
     companion object {
         private val TAG = Connection::class.java.simpleName

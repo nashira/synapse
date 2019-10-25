@@ -4,6 +4,7 @@ import android.content.Context
 import android.util.Log
 import android.view.SurfaceView
 import kotlinx.coroutines.*
+import xyz.rthqks.synapse.core.gl.GlesManager
 import xyz.rthqks.synapse.core.node.*
 import xyz.rthqks.synapse.data.GraphData
 import xyz.rthqks.synapse.data.Key
@@ -16,17 +17,21 @@ class Graph(
 ) {
     private val dispatcher = Executors.newFixedThreadPool(8).asCoroutineDispatcher()
     private val scope = CoroutineScope(SupervisorJob() + dispatcher)
-    private val glDispatcher = Executors.newSingleThreadExecutor().asCoroutineDispatcher()
+    private val glesManager = GlesManager()
+    private val cameraManager = CameraManager(context)
     private val nodes = mutableMapOf<Int, Node>()
     private val connections = mutableListOf<Connection<Any>>()
 
     private lateinit var surfaceView: SurfaceView
 
     suspend fun initialize() {
+
+        glesManager.initialize()
+
         graphData.nodes.forEach {
             val node = when (it.type) {
                 NodeType.Camera -> CameraNode(
-                    CameraManager(context),
+                    cameraManager,
                     it[Key.CameraFacing],
                     it[Key.CameraCaptureSize],
                     it[Key.CameraFrameRate]
@@ -40,7 +45,7 @@ class Graph(
                 NodeType.Image -> TODO()
                 NodeType.AudioFile -> TODO()
                 NodeType.VideoFile -> TODO()
-                NodeType.LutFilter -> LutNode()
+                NodeType.LutFilter -> LutNode(glesManager)
                 NodeType.ShaderFilter -> TODO()
                 NodeType.Speakers -> AudioPlayerNode()
                 NodeType.Screen -> SurfaceViewNode(
@@ -57,16 +62,14 @@ class Graph(
         }
 
         parallelJoin(graphData.edges) { edge ->
-            Log.d(TAG, "edge: $edge")
-
             val from = nodes[edge.fromNodeId]!!
             val to = nodes[edge.toNodeId]!!
 
-            Log.d(TAG, "from: $from to $to")
-
+            Log.d(TAG, "connect $edge")
             from.output(edge.fromKey)?.let {
                 to.input(edge.toKey, it)
             }
+            Log.d(TAG, "connect complete $edge")
         }
 
         logCoroutineInfo(scope.coroutineContext[Job])
@@ -97,9 +100,9 @@ class Graph(
             it.release()
             Log.d(TAG, "release complete ${it}")
         }
-        glDispatcher.close()
+        cameraManager.release()
+        glesManager.release()
         dispatcher.close()
-        scope.cancel()
         logCoroutineInfo(scope.coroutineContext[Job])
     }
 

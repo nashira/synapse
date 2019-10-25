@@ -8,7 +8,7 @@ class AudioConnection(bufferSize: Int = BUFFER_SIZE) : Connection<AudioEvent>(bu
     lateinit var audioFormat: AudioFormat
     var bufferSize = 0
 
-    override suspend fun createBuffer(): AudioEvent = AudioEvent(bufferSize)
+    override suspend fun createItem(): AudioEvent = AudioEvent(bufferSize)
 
     fun configure(audioFormat: AudioFormat, bufferSize: Int) {
         this.audioFormat = audioFormat
