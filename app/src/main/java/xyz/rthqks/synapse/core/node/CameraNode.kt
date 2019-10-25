@@ -2,7 +2,6 @@ package xyz.rthqks.synapse.core.node
 
 import android.util.Log
 import android.util.Size
-import android.view.Surface
 import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.coroutineScope

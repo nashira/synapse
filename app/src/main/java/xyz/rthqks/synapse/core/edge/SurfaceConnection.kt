@@ -3,7 +3,6 @@ package xyz.rthqks.synapse.core.edge
 import android.util.Size
 import android.view.Surface
 import xyz.rthqks.synapse.core.Connection
-import java.util.concurrent.atomic.AtomicReference
 import kotlin.coroutines.Continuation
 import kotlin.coroutines.resume
 import kotlin.coroutines.suspendCoroutine

@@ -1,6 +1,5 @@
 package xyz.rthqks.synapse.core
 
-import android.os.SystemClock
 import android.util.Log
 import kotlinx.coroutines.channels.Channel
 

@@ -7,17 +7,12 @@ import android.view.SurfaceHolder
 import android.view.SurfaceView
 import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.constraintlayout.widget.ConstraintSet
-import androidx.constraintlayout.widget.Constraints
-import kotlinx.android.synthetic.main.activity_exec_graph.view.*
 import kotlinx.coroutines.*
 import xyz.rthqks.synapse.R
 import xyz.rthqks.synapse.core.Connection
 import xyz.rthqks.synapse.core.Node
 import xyz.rthqks.synapse.core.edge.SurfaceConnection
 import xyz.rthqks.synapse.data.PortType
-import kotlin.coroutines.Continuation
-import kotlin.coroutines.resume
-import kotlin.coroutines.suspendCoroutine
 
 class SurfaceViewNode(
     private val surfaceView: SurfaceView
