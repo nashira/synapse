@@ -42,7 +42,7 @@ class CameraManager(
         }
     }
 
-    suspend fun start(surface: Surface, facing: Int, fps: Int, onFrame: suspend () -> Unit) {
+    suspend fun start(surface: Surface, facing: Int, fps: Int, onFrame: suspend CoroutineScope.() -> Unit) {
         val id = findCameraId(facing, fps)
         val c = openCamera(id)
         val s = createSession(c, surface)
@@ -128,7 +128,7 @@ class CameraManager(
     private fun startRequest(
         session: CameraCaptureSession,
         request: CaptureRequest,
-        onFrame: suspend () -> Unit,
+        onFrame: suspend CoroutineScope.() -> Unit,
         scope: CoroutineScope
     ) {
         session.setRepeatingRequest(request, object : CameraCaptureSession.CaptureCallback() {
@@ -137,9 +137,7 @@ class CameraManager(
                 request: CaptureRequest,
                 result: TotalCaptureResult
             ) {
-                runBlocking(scope.coroutineContext) {
-                    onFrame()
-                }
+                runBlocking(scope.coroutineContext, onFrame)
             }
         }, handler)
     }

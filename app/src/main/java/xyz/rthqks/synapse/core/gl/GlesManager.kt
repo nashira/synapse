@@ -1,22 +1,102 @@
 package xyz.rthqks.synapse.core.gl
 
+import android.content.Context
+import android.opengl.GLES32
+import android.util.Log
+import android.view.Surface
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.asCoroutineDispatcher
 import kotlinx.coroutines.withContext
 import java.util.concurrent.Executors
 
-class GlesManager {
+class GlesManager(
+    private val context: Context
+) {
     private val dispatcher = Executors.newSingleThreadExecutor().asCoroutineDispatcher()
     private lateinit var eglCore: EglCore
     private lateinit var eglSurface: OffscreenSurface
 
-    suspend fun initialize() = withContext(dispatcher) {
+    // use to wrap calls that need an OpenGL context
+    suspend fun <T> withGlContext(block: suspend CoroutineScope.(GlesManager) -> T) =
+        withContext(dispatcher) { block(this@GlesManager) }
+
+    fun initialize() {
         eglCore = EglCore(null, EglCore.FLAG_TRY_GLES3)
         eglSurface = OffscreenSurface(eglCore, 1, 1)
     }
 
-    suspend fun release() = withContext(dispatcher) {
+    fun release() {
         eglSurface.release()
         eglCore.release()
         dispatcher.close()
+    }
+
+    fun createWindowSurface(surface: Surface): WindowSurface =
+        WindowSurface(eglCore, surface, true)
+
+    fun createProgram(vertex: String, fragment: String): GlProgram {
+        val vertexShader: Int = createShader(GLES32.GL_VERTEX_SHADER, vertex)
+        val fragmentShader: Int = createShader(GLES32.GL_FRAGMENT_SHADER, fragment)
+
+        val program = GLES32.glCreateProgram().also {
+            GLES32.glAttachShader(it, vertexShader)
+            GLES32.glAttachShader(it, fragmentShader)
+            GLES32.glLinkProgram(it)
+            GLES32.glDeleteShader(vertexShader)
+            GLES32.glDeleteShader(fragmentShader)
+        }
+
+        Log.d(TAG, "created program: $program")
+        return GlProgram(program)
+    }
+
+    fun createTexture(
+        target: Int = GLES32.GL_TEXTURE_2D,
+        repeat: Int = GLES32.GL_REPEAT,
+        filter: Int = GLES32.GL_LINEAR
+    ): Int {
+        val textureHandle = IntArray(1)
+
+        GLES32.glGenTextures(1, textureHandle, 0)
+
+        if (textureHandle[0] != 0) {
+
+            GLES32.glBindTexture(target, textureHandle[0])
+
+            GLES32.glTexParameteri(target, GLES32.GL_TEXTURE_MIN_FILTER, filter)
+            GLES32.glTexParameteri(target, GLES32.GL_TEXTURE_MAG_FILTER, filter)
+
+            GLES32.glTexParameterf(target, GLES32.GL_TEXTURE_WRAP_S, repeat.toFloat())
+            GLES32.glTexParameterf(target, GLES32.GL_TEXTURE_WRAP_T, repeat.toFloat())
+
+            GLES32.glBindTexture(target, 0)
+        } else {
+            throw RuntimeException("Error creating texture.")
+        }
+
+        return textureHandle[0]
+    }
+
+    private fun createShader(type: Int, source: String): Int =
+        GLES32.glCreateShader(type).also { shader ->
+            GLES32.glShaderSource(shader, source)
+            GLES32.glCompileShader(shader)
+            Log.d(TAG, GLES32.glGetShaderInfoLog(shader))
+        }
+
+    fun releaseTexture(inputTexture: Int) {
+        GLES32.glDeleteTextures(1, intArrayOf(inputTexture), 0)
+    }
+
+    fun releaseProgram(program: GlProgram) {
+        GLES32.glDeleteProgram(program.programId)
+    }
+
+    fun makeCurrent() {
+        eglSurface.makeCurrent()
+    }
+
+    companion object {
+        private val TAG = GlesManager::class.java.simpleName
     }
 }

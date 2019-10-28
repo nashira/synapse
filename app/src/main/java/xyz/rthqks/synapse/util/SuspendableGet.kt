@@ -16,6 +16,8 @@ class SuspendableGet<T> {
         }
     }
 
+    fun has(): Boolean = item != null
+
     suspend fun get(): T = item ?: suspendCoroutine {
         continuation = it
     }

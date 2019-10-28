@@ -37,7 +37,7 @@ class SurfaceViewNode(
                 height: Int
             ) {
                 Log.d(TAG, "surfaceChanged: $holder $format $width $height")
-
+                setSurface(holder!!.surface)
             }
 
             override fun surfaceDestroyed(holder: SurfaceHolder?) {
@@ -47,7 +47,6 @@ class SurfaceViewNode(
 
             override fun surfaceCreated(holder: SurfaceHolder?) {
                 Log.d(TAG, "surfaceCreated: $holder")
-                setSurface(holder!!.surface)
             }
         })
     }

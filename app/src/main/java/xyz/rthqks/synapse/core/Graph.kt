@@ -4,6 +4,7 @@ import android.content.Context
 import android.util.Log
 import android.view.SurfaceView
 import kotlinx.coroutines.*
+import xyz.rthqks.synapse.assets.AssetManager
 import xyz.rthqks.synapse.core.gl.GlesManager
 import xyz.rthqks.synapse.core.node.*
 import xyz.rthqks.synapse.data.GraphData
@@ -17,8 +18,9 @@ class Graph(
 ) {
     private val dispatcher = Executors.newFixedThreadPool(8).asCoroutineDispatcher()
     private val scope = CoroutineScope(SupervisorJob() + dispatcher)
-    private val glesManager = GlesManager()
+    private val glesManager = GlesManager(context)
     private val cameraManager = CameraManager(context)
+    private val assetManager = AssetManager(context)
     private val nodes = mutableMapOf<Int, Node>()
     private val connections = mutableListOf<Connection<Any>>()
 
@@ -26,7 +28,8 @@ class Graph(
 
     suspend fun initialize() {
 
-        glesManager.initialize()
+        cameraManager.initialize()
+        glesManager.withGlContext { it.initialize() }
 
         graphData.nodes.forEach {
             val node = when (it.type) {
@@ -45,7 +48,7 @@ class Graph(
                 NodeType.Image -> TODO()
                 NodeType.AudioFile -> TODO()
                 NodeType.VideoFile -> TODO()
-                NodeType.LutFilter -> LutNode(glesManager)
+                NodeType.LutFilter -> LutNode(glesManager, assetManager)
                 NodeType.ShaderFilter -> TODO()
                 NodeType.Speakers -> AudioPlayerNode()
                 NodeType.Screen -> SurfaceViewNode(
@@ -101,14 +104,17 @@ class Graph(
             Log.d(TAG, "release complete ${it}")
         }
         cameraManager.release()
-        glesManager.release()
+        glesManager.withGlContext {
+            it.release()
+        }
+
         dispatcher.close()
         logCoroutineInfo(scope.coroutineContext[Job])
     }
 
     private fun logCoroutineInfo(job: Job?, indent: String = "") {
         job?.let {
-            Log.d(TAG, "coroutine ${it[CoroutineName]}: $indent${it.children.count()}")
+            Log.d(TAG, "coroutine $indent${it.children.count()}")
             it.children.forEach {
                 logCoroutineInfo(it, "$indent  ")
             }

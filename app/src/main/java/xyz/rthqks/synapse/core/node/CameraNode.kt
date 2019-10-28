@@ -2,7 +2,6 @@ package xyz.rthqks.synapse.core.node
 
 import android.util.Log
 import android.util.Size
-import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
@@ -23,14 +22,14 @@ class CameraNode(
     private var frameCount = 0
 
     override suspend fun initialize() {
-        cameraManager.initialize()
+
     }
 
     override suspend fun start() = coroutineScope {
         val connection = connection ?: return@coroutineScope
         val surface = connection.getSurface()
         frameCount = 0
-        startJob = launch(CoroutineName(TAG)) {
+        startJob = launch {
             cameraManager.start(surface, facing, frameRate) {
                 val frame = connection.dequeue()
                 frame.eos = false

@@ -19,6 +19,8 @@ class SurfaceConnection(bufferSize: Int = BUFFER_SIZE) : Connection<SurfaceEvent
         this.surface.set(surface)
     }
 
+    fun hasSurface() = surface.has()
+
     suspend fun getSize(): Size {
         return size.get()
     }
