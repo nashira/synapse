@@ -17,7 +17,10 @@ class Graph(
     private val graphData: GraphData
 ) {
     private val dispatcher = Executors.newFixedThreadPool(8).asCoroutineDispatcher()
-    private val scope = CoroutineScope(SupervisorJob() + dispatcher)
+    private val exceptionHandler = CoroutineExceptionHandler { context, throwable ->
+        Log.d(TAG, "error", throwable)
+    }
+    private val scope = CoroutineScope(SupervisorJob() + dispatcher + exceptionHandler)
     private val glesManager = GlesManager(context)
     private val cameraManager = CameraManager(context)
     private val assetManager = AssetManager(context)

@@ -1,6 +1,5 @@
 package xyz.rthqks.synapse.core.node
 
-import android.graphics.PixelFormat
 import android.util.Log
 import android.view.Surface
 import android.view.SurfaceHolder
@@ -24,7 +23,7 @@ class SurfaceViewNode(
 
     override suspend fun initialize() {
         Log.d(TAG, "setting format")
-        surfaceView.holder.setFormat(PixelFormat.RGB_888)
+//        surfaceView.holder.setFormat(PixelFormat.RGB_888)
 
         Log.d(TAG, "adding callback ${surfaceView.holder.surface}")
         setSurface(surfaceView.holder.surface)

@@ -65,6 +65,7 @@ class CameraManager(
         session?.close()
         camera?.close()
         startContinuation?.resume(Unit)
+        Log.d(TAG, "stopped")
     }
 
     fun release() {
@@ -137,7 +138,9 @@ class CameraManager(
                 request: CaptureRequest,
                 result: TotalCaptureResult
             ) {
+//                Log.d(TAG, "run blocking ${Thread.currentThread().name}")
                 runBlocking(scope.coroutineContext, onFrame)
+//                Log.d(TAG, "done blocking")
             }
         }, handler)
     }

@@ -34,7 +34,7 @@ class GlesManager(
     fun createWindowSurface(surface: Surface): WindowSurface =
         WindowSurface(eglCore, surface, true)
 
-    fun createProgram(vertex: String, fragment: String): GlProgram {
+    fun createProgram(vertex: String, fragment: String): Program {
         val vertexShader: Int = createShader(GLES32.GL_VERTEX_SHADER, vertex)
         val fragmentShader: Int = createShader(GLES32.GL_FRAGMENT_SHADER, fragment)
 
@@ -42,12 +42,18 @@ class GlesManager(
             GLES32.glAttachShader(it, vertexShader)
             GLES32.glAttachShader(it, fragmentShader)
             GLES32.glLinkProgram(it)
-            GLES32.glDeleteShader(vertexShader)
-            GLES32.glDeleteShader(fragmentShader)
+            val linkStatus = IntArray(1)
+            GLES32.glGetProgramiv(it, GLES32.GL_LINK_STATUS, linkStatus, 0)
+            if (linkStatus[0] != GLES32.GL_TRUE) {
+                Log.e(TAG, "Could not link program: ")
+                Log.e(TAG, GLES32.glGetProgramInfoLog(it))
+            }
+//            GLES32.glDeleteShader(vertexShader)
+//            GLES32.glDeleteShader(fragmentShader)
         }
 
         Log.d(TAG, "created program: $program")
-        return GlProgram(program)
+        return Program(program)
     }
 
     fun createTexture(
@@ -79,6 +85,7 @@ class GlesManager(
 
     private fun createShader(type: Int, source: String): Int =
         GLES32.glCreateShader(type).also { shader ->
+            Log.d(TAG, "created shader $shader")
             GLES32.glShaderSource(shader, source)
             GLES32.glCompileShader(shader)
             Log.d(TAG, GLES32.glGetShaderInfoLog(shader))
@@ -88,7 +95,7 @@ class GlesManager(
         GLES32.glDeleteTextures(1, intArrayOf(inputTexture), 0)
     }
 
-    fun releaseProgram(program: GlProgram) {
+    fun releaseProgram(program: Program) {
         GLES32.glDeleteProgram(program.programId)
     }
 
