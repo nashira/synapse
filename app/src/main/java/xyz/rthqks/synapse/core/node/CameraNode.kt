@@ -22,7 +22,6 @@ class CameraNode(
     private var surfaceRotation = 0
     private var connection: SurfaceConnection? = null
     private var startJob: Job? = null
-    private var frameCount = 0
 
     override suspend fun initialize() {
         val conf = cameraManager.resolve(facing, requestedSize, frameRate)
@@ -35,12 +34,16 @@ class CameraNode(
     override suspend fun start() = coroutineScope {
         val connection = connection ?: return@coroutineScope
         val surface = connection.getSurface()
-        frameCount = 0
         startJob = launch {
-            cameraManager.start(cameraId, surface, frameRate) {
+            cameraManager.start(cameraId, surface, frameRate) { count, timestamp, eos ->
+                if (eos) {
+                    Log.d(TAG, "sending EOS")
+                    Log.d(TAG, "sent frames $count")
+                }
                 val frame = connection.dequeue()
-                frame.eos = false
-                frame.count = frameCount++
+                frame.eos = eos
+                frame.count = count
+                frame.timestamp = timestamp
                 connection.queue(frame)
             }
         }
@@ -49,21 +52,13 @@ class CameraNode(
     override suspend fun stop() {
         cameraManager.stop()
         startJob?.join()
-
-        Log.d(TAG, "sent frames $frameCount")
-
-        connection?.dequeue()?.let {
-            Log.d(TAG, "sending EOS")
-            it.eos = true
-            connection?.queue(it)
-        }
     }
 
     override suspend fun release() {
     }
 
     override suspend fun output(key: String): Connection<*>? = when (key) {
-        PortType.SURFACE_1 -> SurfaceConnection().also {
+        PortType.SURFACE_1 -> SurfaceConnection(1).also {
             connection = it
             it.configure(size, surfaceRotation)
         }

@@ -12,7 +12,7 @@ import android.view.Surface
 import android.view.WindowManager
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.coroutineScope
-import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.launch
 import kotlin.coroutines.Continuation
 import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException
@@ -30,6 +30,7 @@ class CameraManager(
     private var camera: CameraDevice? = null
     private var session: CameraCaptureSession? = null
     private var startContinuation: Continuation<Unit>? = null
+    private var isEos: Boolean = false
 
     fun initialize() {
         thread.start()
@@ -47,10 +48,7 @@ class CameraManager(
             val characteristics = manager.getCameraCharacteristics(id)
             cameraMap[id] = characteristics
             val orientation = characteristics[CameraCharacteristics.SENSOR_ORIENTATION]
-            Log.d(TAG, "id: $id orientation $orientation")
-//            characteristics.keys.forEach {
-//                Log.d(TAG, "id: $id $it = ${characteristics[it]}")
-//            }
+//            Log.d(TAG, "id: $id orientation $orientation")
         }
     }
 
@@ -58,7 +56,7 @@ class CameraManager(
         cameraId: String,
         surface: Surface,
         fps: Int,
-        onFrame: suspend CoroutineScope.() -> Unit
+        onFrame: suspend (Long, Long, Boolean) -> Unit
     ) {
         val c = openCamera(cameraId)
         val s = createSession(c, surface)
@@ -78,9 +76,7 @@ class CameraManager(
 
     fun stop() {
         Log.d(TAG, "stop")
-        session?.close()
-        camera?.close()
-        startContinuation?.resume(Unit)
+        isEos = true
         Log.d(TAG, "stopped")
     }
 
@@ -109,11 +105,16 @@ class CameraManager(
 
             override fun onDisconnected(camera: CameraDevice) {
                 Log.d(TAG, "onDisconnected")
+                camera.close()
             }
 
             override fun onError(camera: CameraDevice, error: Int) {
                 Log.d(TAG, "onError")
                 it.resumeWithException(RuntimeException("camera open exception: $error"))
+            }
+
+            override fun onClosed(camera: CameraDevice) {
+                startContinuation?.resume(Unit)
             }
         }, handler)
     }
@@ -145,7 +146,7 @@ class CameraManager(
     private fun startRequest(
         session: CameraCaptureSession,
         request: CaptureRequest,
-        onFrame: suspend CoroutineScope.() -> Unit,
+        onFrame: suspend (Long, Long, Boolean) -> Unit,
         scope: CoroutineScope
     ) {
         session.setRepeatingRequest(request, object : CameraCaptureSession.CaptureCallback() {
@@ -155,8 +156,16 @@ class CameraManager(
                 result: TotalCaptureResult
             ) {
 //                Log.d(TAG, "run blocking ${Thread.currentThread().name}")
-                runBlocking(scope.coroutineContext, onFrame)
-//                Log.d(TAG, "done blocking")
+//                runBlocking(scope.coroutineContext) {
+                if (isEos) {
+                    Log.d(TAG, "got eos")
+                    camera?.close()
+                }
+
+                scope.launch {
+                    val time = result[CaptureResult.SENSOR_TIMESTAMP]!!
+                    onFrame(result.frameNumber, time, isEos)
+                }
             }
         }, handler)
     }

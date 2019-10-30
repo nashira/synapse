@@ -15,6 +15,7 @@ import xyz.rthqks.synapse.assets.AssetManager
 import xyz.rthqks.synapse.core.Connection
 import xyz.rthqks.synapse.core.Node
 import xyz.rthqks.synapse.core.edge.SurfaceConnection
+import xyz.rthqks.synapse.core.edge.SurfaceEvent
 import xyz.rthqks.synapse.core.gl.*
 import xyz.rthqks.synapse.data.PortType
 import xyz.rthqks.synapse.util.SuspendableGet
@@ -73,6 +74,16 @@ class LutNode(
     override suspend fun start() = coroutineScope {
         val output = outputConnection ?: return@coroutineScope
 
+        updateOutputSurface(output)
+
+        startJob = launch {
+            suspendCoroutine<Unit> {
+                setOnFrameAvailableListener(this, it)
+            }
+        }
+    }
+
+    private suspend fun updateOutputSurface(output: SurfaceConnection) {
         val surface = output.getSurface()
         if (outputSurfaceWindow?.surface != surface) {
             Log.d(TAG, "creating output surface")
@@ -80,12 +91,6 @@ class LutNode(
                 it.makeCurrent()
                 outputSurfaceWindow?.release()
                 outputSurfaceWindow = it.createWindowSurface(surface)
-            }
-        }
-
-        startJob = launch {
-            suspendCoroutine<Unit> {
-                setOnFrameAvailableListener(this, it)
             }
         }
     }
@@ -106,36 +111,45 @@ class LutNode(
         val input = inputConnection ?: error("input connection missing")
         val output = outputConnection ?: error("output connection missing")
 
-        val inEvent = input.acquire()
+        var inEvent = input.acquire()
 //        Log.d(TAG, "onFrame ${inEvent.count}")
-        if (inEvent.eos) {
-            Log.d(TAG, "got EOS")
-            input.release(inEvent)
-            inputSurfaceTexture?.setOnFrameAvailableListener(null)
-            glesManager.withGlContext {
-                outputSurfaceWindow?.makeCurrent()
-                outputSurfaceWindow?.swapBuffers()
-            }
-            continuation.resume(Unit)
-            return
-        }
 
-        val outEvent = output.dequeue()
-        outEvent.eos = false
-        outEvent.count = inEvent.count
+        var outEvent: SurfaceEvent
 
         glesManager.withGlContext {
             outputSurfaceWindow?.makeCurrent()
             surfaceTexture.updateTexImage()
-            if (output.hasSurface()) {
-                GLES32.glUseProgram(program.programId)
-                executeGl()
+            while (surfaceTexture.timestamp > inEvent.timestamp && !inEvent.eos) {
+                Log.d(TAG, "skipped frame! ${surfaceTexture.timestamp} ${inEvent.timestamp}")
+                input.release(inEvent)
+                inEvent = input.acquire()
+            }
+
+            outEvent = output.dequeue()
+            outEvent.eos = inEvent.eos
+            outEvent.count = inEvent.count
+            outEvent.timestamp = inEvent.timestamp
+
+            input.release(inEvent)
+
+            if (output.hasSurface() || outEvent.eos) {
+                if (output.hasSurface()) {
+                    GLES32.glUseProgram(program.programId)
+                    executeGl()
+                }
+                // swap to send eos
+                outputSurfaceWindow?.setPresentationTime(surfaceTexture.timestamp)
                 outputSurfaceWindow?.swapBuffers()
             }
-        }
 
-        input.release(inEvent)
-        output.queue(outEvent)
+            output.queue(outEvent)
+
+            if (outEvent.eos) {
+                Log.d(TAG, "got EOS")
+                inputSurfaceTexture?.setOnFrameAvailableListener(null)
+                continuation.resume(Unit)
+            }
+        }
     }
 
     private suspend fun executeGl() {
@@ -154,12 +168,12 @@ class LutNode(
 
     override suspend fun stop() {
         startJob?.join()
-        outputConnection?.let { output ->
-            val outEvent = output.dequeue()
-            outEvent.eos = true
-            Log.d(TAG, "sending EOS")
-            output.queue(outEvent)
-        }
+//        outputConnection?.let { output ->
+//            val outEvent = output.dequeue()
+//            outEvent.eos = true
+//            Log.d(TAG, "sending EOS")
+//            output.queue(outEvent)
+//        }
     }
 
     override suspend fun release() {
