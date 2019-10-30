@@ -2,6 +2,7 @@ package xyz.rthqks.synapse.core.gl
 
 import android.content.Context
 import android.opengl.GLES32
+import android.opengl.Matrix
 import android.util.Log
 import android.view.Surface
 import kotlinx.coroutines.CoroutineScope
@@ -105,5 +106,6 @@ class GlesManager(
 
     companion object {
         private val TAG = GlesManager::class.java.simpleName
+        val IDENTITY = FloatArray(16).also { Matrix.setIdentityM(it, 0) }
     }
 }

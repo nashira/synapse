@@ -7,7 +7,9 @@ import android.os.Handler
 import android.os.HandlerThread
 import android.util.Log
 import android.util.Range
+import android.util.Size
 import android.view.Surface
+import android.view.WindowManager
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.runBlocking
@@ -16,6 +18,7 @@ import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException
 import kotlin.coroutines.suspendCoroutine
 
+
 class CameraManager(
     private val context: Context
 ) {
@@ -23,6 +26,7 @@ class CameraManager(
     private val cameraMap = mutableMapOf<String, CameraCharacteristics>()
     private val thread = HandlerThread(TAG)
     private lateinit var handler: Handler
+    private var displayRotation = 0
     private var camera: CameraDevice? = null
     private var session: CameraCaptureSession? = null
     private var startContinuation: Continuation<Unit>? = null
@@ -31,20 +35,32 @@ class CameraManager(
         thread.start()
         handler = Handler(thread.looper)
 
+        val display =
+            (context.getSystemService(Context.WINDOW_SERVICE) as WindowManager).defaultDisplay
+        Log.d(TAG, "display.rotation ${display.rotation}")
+
+        displayRotation = display.rotation
+
         manager = context.getSystemService(android.hardware.camera2.CameraManager::class.java)!!
         val ids = manager.cameraIdList
         ids.forEach { id ->
             val characteristics = manager.getCameraCharacteristics(id)
             cameraMap[id] = characteristics
+            val orientation = characteristics[CameraCharacteristics.SENSOR_ORIENTATION]
+            Log.d(TAG, "id: $id orientation $orientation")
 //            characteristics.keys.forEach {
 //                Log.d(TAG, "id: $id $it = ${characteristics[it]}")
 //            }
         }
     }
 
-    suspend fun start(surface: Surface, facing: Int, fps: Int, onFrame: suspend CoroutineScope.() -> Unit) {
-        val id = findCameraId(facing, fps)
-        val c = openCamera(id)
+    suspend fun start(
+        cameraId: String,
+        surface: Surface,
+        fps: Int,
+        onFrame: suspend CoroutineScope.() -> Unit
+    ) {
+        val c = openCamera(cameraId)
         val s = createSession(c, surface)
         camera = c
         session = s
@@ -145,7 +161,24 @@ class CameraManager(
         }, handler)
     }
 
+    fun resolve(facing: Int, size: Size, frameRate: Int): Conf {
+        val id = findCameraId(facing, frameRate)
+        val characteristics = cameraMap[id]!!
+        val orientation = characteristics[CameraCharacteristics.SENSOR_ORIENTATION] ?: 0
+        val surfaceRotation = ORIENTATIONS[displayRotation] ?: 0
+        val rotation = (surfaceRotation + orientation + 270) % 360
+        return Conf(id, size, frameRate, rotation)
+    }
+
     companion object {
         private val TAG = CameraManager::class.java.simpleName
+        private val ORIENTATIONS = mapOf(
+            Surface.ROTATION_0 to 90,
+            Surface.ROTATION_90 to 0,
+            Surface.ROTATION_180 to 270,
+            Surface.ROTATION_270 to 180
+        )
     }
+
+    data class Conf(val id: String, val size: Size, val fps: Int, val rotation: Int)
 }

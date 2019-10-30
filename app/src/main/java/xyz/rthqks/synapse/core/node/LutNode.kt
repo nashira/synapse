@@ -26,11 +26,11 @@ class LutNode(
     private val glesManager: GlesManager,
     private val assetManager: AssetManager
 ) : Node() {
-    //    private var size: Size = Size(0, 0)
     private var outputConnection: SurfaceConnection? = null
     private var inputConnection: SurfaceConnection? = null
     private var startJob: Job? = null
     private val suspendSize = SuspendableGet<Size>()
+    private var inputRotation = 0
     private var inputSurface: Surface? = null
     private var inputSurfaceTexture: SurfaceTexture? = null
     private var outputSurfaceWindow: WindowSurface? = null
@@ -60,7 +60,7 @@ class LutNode(
             inputTexture = it.createTexture(
                 GLES11Ext.GL_TEXTURE_EXTERNAL_OES,
                 GLES32.GL_CLAMP_TO_EDGE,
-                GLES32.GL_NEAREST
+                GLES32.GL_LINEAR
             )
 
             programVao = Quad.createVao()
@@ -112,6 +112,10 @@ class LutNode(
             Log.d(TAG, "got EOS")
             input.release(inEvent)
             inputSurfaceTexture?.setOnFrameAvailableListener(null)
+            glesManager.withGlContext {
+                outputSurfaceWindow?.makeCurrent()
+                outputSurfaceWindow?.swapBuffers()
+            }
             continuation.resume(Unit)
             return
         }
@@ -144,7 +148,6 @@ class LutNode(
         program.bindUniforms()
 
         GLES32.glBindVertexArray(programVao)
-//        Quad.createVao()
 
         GLES32.glDrawArrays(GLES32.GL_TRIANGLE_STRIP, 0, 4)
     }
@@ -173,7 +176,7 @@ class LutNode(
         PortType.SURFACE_1 -> {
             SurfaceConnection().also { connection ->
                 outputConnection = connection
-                connection.configure(suspendSize.get())
+                connection.configure(suspendSize.get(), 0)
             }
         }
         else -> null
@@ -185,10 +188,30 @@ class LutNode(
                 connection as SurfaceConnection
                 inputConnection = connection
                 val size = connection.getSize()
-                suspendSize.set(size)
+                val rotation = connection.getRotation()
+                val rotatedSize =
+                    if (rotation == 90 || rotation == 270)
+                        Size(size.height, size.width) else size
+
+                suspendSize.set(rotatedSize)
+                inputRotation = rotation
 
                 connection.setSurface(inputSurface)
                 inputSurfaceTexture?.setDefaultBufferSize(size.width, size.height)
+
+                val matrix = program.getUniform(Uniform.Type.Mat4, "vertex_matrix0")
+                program.setUniform(Uniform.Type.Mat4, "vertex_matrix0", matrix)
+                Matrix.rotateM(
+                    matrix,
+                    0,
+                    GlesManager.IDENTITY,
+                    0,
+                    inputRotation.toFloat(),
+                    0f,
+                    0f,
+                    -1f
+                )
+                Log.d(TAG, "mat ${matrix?.joinToString()}")
             }
         }
     }

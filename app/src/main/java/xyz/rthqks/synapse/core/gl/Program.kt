@@ -18,7 +18,7 @@ class Program(
         uniforms[name] = Uniform(type, name, location, data)
     }
 
-    fun <T> setUniform(type: Uniform.Type<T>, name: String, data: T) {
+    fun <T> setUniform(type: Uniform.Type<T>, name: String, data: T?) {
         @Suppress("UNCHECKED_CAST")
         val uniform = uniforms[name] as Uniform<T>
         uniform.data = data

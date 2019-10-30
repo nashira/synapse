@@ -14,15 +14,22 @@ import xyz.rthqks.synapse.data.PortType
 class CameraNode(
     private val cameraManager: CameraManager,
     private val facing: Int,
-    private val size: Size,
+    private val requestedSize: Size,
     private val frameRate: Int
 ) : Node() {
+    private lateinit var size: Size
+    private lateinit var cameraId: String
+    private var surfaceRotation = 0
     private var connection: SurfaceConnection? = null
     private var startJob: Job? = null
     private var frameCount = 0
 
     override suspend fun initialize() {
-
+        val conf = cameraManager.resolve(facing, requestedSize, frameRate)
+        Log.d(TAG, conf.toString())
+        cameraId = conf.id
+        size = conf.size
+        surfaceRotation = conf.rotation
     }
 
     override suspend fun start() = coroutineScope {
@@ -30,7 +37,7 @@ class CameraNode(
         val surface = connection.getSurface()
         frameCount = 0
         startJob = launch {
-            cameraManager.start(surface, facing, frameRate) {
+            cameraManager.start(cameraId, surface, frameRate) {
                 val frame = connection.dequeue()
                 frame.eos = false
                 frame.count = frameCount++
@@ -58,7 +65,7 @@ class CameraNode(
     override suspend fun output(key: String): Connection<*>? = when (key) {
         PortType.SURFACE_1 -> SurfaceConnection().also {
             connection = it
-            it.configure(size)
+            it.configure(size, surfaceRotation)
         }
         else -> null
     }

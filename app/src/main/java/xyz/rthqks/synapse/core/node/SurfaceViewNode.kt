@@ -1,6 +1,7 @@
 package xyz.rthqks.synapse.core.node
 
 import android.util.Log
+import android.util.Size
 import android.view.Surface
 import android.view.SurfaceHolder
 import android.view.SurfaceView
@@ -89,12 +90,14 @@ class SurfaceViewNode(
             PortType.SURFACE_1 -> {
                 this.connection = connection as SurfaceConnection
                 val size = connection.getSize()
+                val rotation = connection.getRotation()
                 withContext(Dispatchers.Main) {
                     surfaceView.holder.setFixedSize(size.width, size.height)
                     ConstraintSet().also {
                         val constraintLayout = surfaceView.parent as ConstraintLayout
                         it.clone(constraintLayout)
-                        it.setDimensionRatio(R.id.surface_view, "${size.height}:${size.width}")
+                        val outSize = if (rotation == 90 || rotation == 270) Size(size.height, size.width) else size
+                        it.setDimensionRatio(R.id.surface_view, "${outSize.width}:${outSize.height}")
                         it.applyTo(constraintLayout)
                     }
                 }
