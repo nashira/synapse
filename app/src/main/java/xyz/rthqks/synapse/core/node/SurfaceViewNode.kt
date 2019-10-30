@@ -27,6 +27,7 @@ class SurfaceViewNode(
 //        surfaceView.holder.setFormat(PixelFormat.RGB_888)
 
         Log.d(TAG, "adding callback ${surfaceView.holder.surface}")
+
         setSurface(surfaceView.holder.surface)
 
         surfaceView.holder.addCallback(object : SurfaceHolder.Callback {

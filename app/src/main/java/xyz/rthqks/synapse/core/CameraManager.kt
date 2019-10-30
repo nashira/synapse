@@ -58,6 +58,7 @@ class CameraManager(
         fps: Int,
         onFrame: suspend (Long, Long, Boolean) -> Unit
     ) {
+        isEos = false
         val c = openCamera(cameraId)
         val s = createSession(c, surface)
         camera = c
@@ -106,6 +107,7 @@ class CameraManager(
             override fun onDisconnected(camera: CameraDevice) {
                 Log.d(TAG, "onDisconnected")
                 camera.close()
+                it.resumeWithException(RuntimeException("camera open exception: disconnected"))
             }
 
             override fun onError(camera: CameraDevice, error: Int) {
@@ -114,6 +116,7 @@ class CameraManager(
             }
 
             override fun onClosed(camera: CameraDevice) {
+                Log.d(TAG, "onClosed")
                 startContinuation?.resume(Unit)
             }
         }, handler)
@@ -159,6 +162,7 @@ class CameraManager(
 //                runBlocking(scope.coroutineContext) {
                 if (isEos) {
                     Log.d(TAG, "got eos")
+                    session.close()
                     camera?.close()
                 }
 

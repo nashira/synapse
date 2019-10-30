@@ -3,6 +3,8 @@ package xyz.rthqks.synapse.core.gl
 import android.content.Context
 import android.opengl.GLES32
 import android.opengl.Matrix
+import android.os.Handler
+import android.os.HandlerThread
 import android.util.Log
 import android.view.Surface
 import kotlinx.coroutines.CoroutineScope
@@ -14,26 +16,34 @@ class GlesManager(
     private val context: Context
 ) {
     private val dispatcher = Executors.newSingleThreadExecutor().asCoroutineDispatcher()
+    private val thread = HandlerThread("BackgroundHandler")
+    private lateinit var handler: Handler
     private lateinit var eglCore: EglCore
     private lateinit var eglSurface: OffscreenSurface
+    private var quadVao = 0
+
+    val backgroundHandler: Handler get() = handler
 
     // use to wrap calls that need an OpenGL context
     suspend fun <T> withGlContext(block: suspend CoroutineScope.(GlesManager) -> T) =
         withContext(dispatcher) { block(this@GlesManager) }
 
     fun initialize() {
+        thread.start()
+        handler = Handler(thread.looper)
         eglCore = EglCore(null, EglCore.FLAG_TRY_GLES3)
         eglSurface = OffscreenSurface(eglCore, 1, 1)
     }
 
     fun release() {
+        thread.quitSafely()
         eglSurface.release()
         eglCore.release()
         dispatcher.close()
     }
 
     fun createWindowSurface(surface: Surface): WindowSurface =
-        WindowSurface(eglCore, surface, true)
+        WindowSurface(eglCore, surface, false)
 
     fun createProgram(vertex: String, fragment: String): Program {
         val vertexShader: Int = createShader(GLES32.GL_VERTEX_SHADER, vertex)
@@ -102,6 +112,13 @@ class GlesManager(
 
     fun makeCurrent() {
         eglSurface.makeCurrent()
+    }
+
+    fun quadVao(): Int {
+        if (quadVao == 0) {
+            quadVao = Quad.createVao()
+        }
+        return quadVao
     }
 
     companion object {

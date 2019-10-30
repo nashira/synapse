@@ -15,8 +15,10 @@ import xyz.rthqks.synapse.assets.AssetManager
 import xyz.rthqks.synapse.core.Connection
 import xyz.rthqks.synapse.core.Node
 import xyz.rthqks.synapse.core.edge.SurfaceConnection
-import xyz.rthqks.synapse.core.edge.SurfaceEvent
-import xyz.rthqks.synapse.core.gl.*
+import xyz.rthqks.synapse.core.gl.GlesManager
+import xyz.rthqks.synapse.core.gl.Program
+import xyz.rthqks.synapse.core.gl.Uniform
+import xyz.rthqks.synapse.core.gl.WindowSurface
 import xyz.rthqks.synapse.data.PortType
 import xyz.rthqks.synapse.util.SuspendableGet
 import kotlin.coroutines.Continuation
@@ -55,7 +57,6 @@ class LutNode(
                 Matrix.setIdentityM(
                     getUniform(Uniform.Type.Mat4, "vertex_matrix0"), 0
                 )
-                Log.d(TAG, "mat ${getUniform(Uniform.Type.Mat4, "vertex_matrix0")?.joinToString()}")
             }
 
             inputTexture = it.createTexture(
@@ -64,7 +65,7 @@ class LutNode(
                 GLES32.GL_LINEAR
             )
 
-            programVao = Quad.createVao()
+            programVao = it.quadVao()
         }
 
         inputSurfaceTexture = SurfaceTexture(inputTexture)
@@ -75,6 +76,7 @@ class LutNode(
         val output = outputConnection ?: return@coroutineScope
 
         updateOutputSurface(output)
+        inputConnection?.setSurface(inputSurface)
 
         startJob = launch {
             suspendCoroutine<Unit> {
@@ -85,13 +87,11 @@ class LutNode(
 
     private suspend fun updateOutputSurface(output: SurfaceConnection) {
         val surface = output.getSurface()
-        if (outputSurfaceWindow?.surface != surface) {
-            Log.d(TAG, "creating output surface")
-            glesManager.withGlContext {
-                it.makeCurrent()
-                outputSurfaceWindow?.release()
-                outputSurfaceWindow = it.createWindowSurface(surface)
-            }
+        Log.d(TAG, "creating output surface")
+        glesManager.withGlContext {
+            it.makeCurrent()
+            outputSurfaceWindow?.release()
+            outputSurfaceWindow = it.createWindowSurface(surface)
         }
     }
 
@@ -99,61 +99,65 @@ class LutNode(
         scope: CoroutineScope,
         continuation: Continuation<Unit>
     ) {
-        Log.d(TAG, "setOnFrameAvailableListener")
-        inputSurfaceTexture?.setOnFrameAvailableListener { st ->
+        Log.d(TAG, "setOnFrameAvailableListener $inputSurfaceTexture")
+        inputSurfaceTexture?.setOnFrameAvailableListener({ st ->
+//            Log.d(TAG, "onFrameAvailable")
             scope.launch {
                 onFrame(st, continuation)
             }
-        }
+        }, glesManager.backgroundHandler)
     }
 
     private suspend fun onFrame(surfaceTexture: SurfaceTexture, continuation: Continuation<Unit>) {
         val input = inputConnection ?: error("input connection missing")
         val output = outputConnection ?: error("output connection missing")
 
+//        Log.d(TAG, "onFrame ********")
         var inEvent = input.acquire()
 //        Log.d(TAG, "onFrame ${inEvent.count}")
-
-        var outEvent: SurfaceEvent
 
         glesManager.withGlContext {
             outputSurfaceWindow?.makeCurrent()
             surfaceTexture.updateTexImage()
-            while (surfaceTexture.timestamp > inEvent.timestamp && !inEvent.eos) {
-                Log.d(TAG, "skipped frame! ${surfaceTexture.timestamp} ${inEvent.timestamp}")
-                input.release(inEvent)
-                inEvent = input.acquire()
-            }
-
-            outEvent = output.dequeue()
-            outEvent.eos = inEvent.eos
-            outEvent.count = inEvent.count
-            outEvent.timestamp = inEvent.timestamp
-
+        }
+        while (surfaceTexture.timestamp > inEvent.timestamp && !inEvent.eos) {
+            Log.d(TAG, "skipped frame! ${inEvent.count} ${surfaceTexture.timestamp} ${inEvent.timestamp}")
             input.release(inEvent)
+            inEvent = input.acquire()
+        }
 
-            if (output.hasSurface() || outEvent.eos) {
+        val outEvent = output.dequeue()
+        outEvent.eos = inEvent.eos
+        outEvent.count = inEvent.count
+        outEvent.timestamp = inEvent.timestamp
+
+        input.release(inEvent)
+
+        if (output.hasSurface() || outEvent.eos) {
+            glesManager.withGlContext {
                 if (output.hasSurface()) {
-                    GLES32.glUseProgram(program.programId)
                     executeGl()
                 }
-                // swap to send eos
+                // swap to send frame/eos
                 outputSurfaceWindow?.setPresentationTime(surfaceTexture.timestamp)
                 outputSurfaceWindow?.swapBuffers()
             }
+        }
 
-            output.queue(outEvent)
+        output.queue(outEvent)
 
-            if (outEvent.eos) {
-                Log.d(TAG, "got EOS")
-                inputSurfaceTexture?.setOnFrameAvailableListener(null)
-                continuation.resume(Unit)
-            }
+        if (outEvent.eos) {
+            Log.d(TAG, "got EOS")
+            inputSurfaceTexture?.setOnFrameAvailableListener(null)
+            inputConnection?.setSurface(null)
+            continuation.resume(Unit)
+            startJob?.cancel()
         }
     }
 
     private suspend fun executeGl() {
         val size = suspendSize.get()
+        GLES32.glUseProgram(program.programId)
         GLES32.glViewport(0, 0, size.width, size.height)
 
         GLES32.glActiveTexture(GLES32.GL_TEXTURE0)
