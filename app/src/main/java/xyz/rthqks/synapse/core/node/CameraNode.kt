@@ -58,7 +58,7 @@ class CameraNode(
     }
 
     override suspend fun output(key: String): Connection<*>? = when (key) {
-        PortType.SURFACE_1 -> SurfaceConnection(1).also {
+        PortType.SURFACE_1 -> SurfaceConnection().also {
             connection = it
             it.configure(size, surfaceRotation)
         }
