@@ -23,9 +23,6 @@ class SurfaceViewNode(
     private var playJob: Job? = null
 
     override suspend fun initialize() {
-        Log.d(TAG, "setting format")
-//        surfaceView.holder.setFormat(PixelFormat.RGB_888)
-
         Log.d(TAG, "adding callback ${surfaceView.holder.surface}")
 
         setSurface(surfaceView.holder.surface)

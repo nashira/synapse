@@ -15,10 +15,7 @@ import xyz.rthqks.synapse.assets.AssetManager
 import xyz.rthqks.synapse.core.Connection
 import xyz.rthqks.synapse.core.Node
 import xyz.rthqks.synapse.core.edge.SurfaceConnection
-import xyz.rthqks.synapse.core.gl.GlesManager
-import xyz.rthqks.synapse.core.gl.Program
-import xyz.rthqks.synapse.core.gl.Uniform
-import xyz.rthqks.synapse.core.gl.WindowSurface
+import xyz.rthqks.synapse.core.gl.*
 import xyz.rthqks.synapse.data.PortType
 import xyz.rthqks.synapse.util.SuspendableGet
 import kotlin.coroutines.Continuation
@@ -37,19 +34,18 @@ class GlNode(
     private var inputSurface: Surface? = null
     private var inputSurfaceTexture: SurfaceTexture? = null
     private var outputSurfaceWindow: WindowSurface? = null
-
+    private val mesh = Quad()
     private lateinit var program: Program
-    private var inputTexture = 0
-    private var programVao = 0
+
+    fun fragmentFileName() = "lut.frag"
+    fun onProgramCreated() {}
 
     override suspend fun initialize() {
         val vertexSource = assetManager.readTextAsset("vertex_texture.vert")
-        val fragmentSource = assetManager.readTextAsset("lut.frag")
+        val fragmentSource = assetManager.readTextAsset(fragmentFileName())
         glesManager.withGlContext {
             it.makeCurrent()
             program = it.createProgram(vertexSource, fragmentSource).apply {
-                addUniform(Uniform.Type.Integer, "input_texture0", 0)
-
                 addUniform(
                     Uniform.Type.Mat4,
                     "vertex_matrix0",
@@ -58,18 +54,20 @@ class GlNode(
                     Uniform.Type.Mat4,
                     "texture_matrix0",
                     FloatArray(16).also { Matrix.setIdentityM(it, 0) })
+
+                addTexture("input_texture0",
+                    GLES32.GL_TEXTURE0,
+                    GLES11Ext.GL_TEXTURE_EXTERNAL_OES,
+                    GLES32.GL_CLAMP_TO_EDGE,
+                    GLES32.GL_LINEAR)
             }
 
-            inputTexture = it.createTexture(
-                GLES11Ext.GL_TEXTURE_EXTERNAL_OES,
-                GLES32.GL_CLAMP_TO_EDGE,
-                GLES32.GL_LINEAR
-            )
-
-            programVao = it.quadVao()
+            mesh.initialize()
+            onProgramCreated()
         }
 
-        inputSurfaceTexture = SurfaceTexture(inputTexture)
+        val texture = program.getTexture("input_texture0")
+        inputSurfaceTexture = SurfaceTexture(texture.id)
         inputSurface = Surface(inputSurfaceTexture)
     }
 
@@ -102,10 +100,11 @@ class GlNode(
     ) {
         Log.d(TAG, "setOnFrameAvailableListener $inputSurfaceTexture")
 
-        var textureMatrix = program.getUniform(Uniform.Type.Mat4, "texture_matrix0")
-        program.markDirty("texture_matrix0")
+        val uniform = program.getUniform(Uniform.Type.Mat4, "texture_matrix0")
+        var textureMatrix = uniform.data
+        uniform.dirty = true
         inputSurfaceTexture?.setOnFrameAvailableListener({ st ->
-//            Log.d(TAG, "onFrameAvailable")
+            //            Log.d(TAG, "onFrameAvailable")
             scope.launch {
                 onFrame(st, continuation, textureMatrix)
                 textureMatrix = null
@@ -121,14 +120,13 @@ class GlNode(
         val input = inputConnection ?: error("input connection missing")
         val output = outputConnection ?: error("output connection missing")
 
-//        Log.d(TAG, "onFrame ********")
         var inEvent = input.acquire()
-//        Log.d(TAG, "onFrame ${inEvent.count}")
 
         glesManager.withGlContext {
             outputSurfaceWindow?.makeCurrent()
             surfaceTexture.updateTexImage()
         }
+
         while (surfaceTexture.timestamp > inEvent.timestamp && !inEvent.eos) {
             Log.d(
                 TAG,
@@ -170,14 +168,11 @@ class GlNode(
         GLES32.glUseProgram(program.programId)
         GLES32.glViewport(0, 0, size.width, size.height)
 
-        GLES32.glActiveTexture(GLES32.GL_TEXTURE0)
-        GLES32.glBindTexture(GLES11Ext.GL_TEXTURE_EXTERNAL_OES, inputTexture)
+        program.bindTextures()
 
         program.bindUniforms()
 
-        GLES32.glBindVertexArray(programVao)
-
-        GLES32.glDrawArrays(GLES32.GL_TRIANGLE_STRIP, 0, 4)
+        mesh.execute()
     }
 
     override suspend fun stop() {
@@ -189,8 +184,7 @@ class GlNode(
         inputSurface?.release()
         outputSurfaceWindow?.release()
         glesManager.withGlContext {
-            it.releaseTexture(inputTexture)
-            it.releaseProgram(program)
+            program.release()
         }
     }
 
@@ -198,9 +192,7 @@ class GlNode(
         PortType.SURFACE_1 -> {
             SurfaceConnection().also { connection ->
                 outputConnection = connection
-                Log.d(TAG, "output ${Thread.currentThread().name} $this")
                 connection.configure(suspendSize.get(), 0)
-                Log.d(TAG, "output ${Thread.currentThread().name} $this")
             }
         }
         else -> null
@@ -211,7 +203,6 @@ class GlNode(
             PortType.SURFACE_1 -> {
                 connection as SurfaceConnection
                 inputConnection = connection
-                Log.d(TAG, "input ${Thread.currentThread().name} $this")
                 val size = connection.getSize()
                 val rotation = connection.getRotation()
                 val rotatedSize =

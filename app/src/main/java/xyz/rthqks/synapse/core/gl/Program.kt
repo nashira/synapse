@@ -4,9 +4,11 @@ import android.opengl.GLES32
 import android.util.Log
 
 class Program(
+    private val glesManager: GlesManager,
     val programId: Int
 ) {
     private val uniforms = mutableMapOf<String, Uniform<*>>()
+    private val textures = mutableMapOf<String, Texture>()
 
     fun initialize() {
 
@@ -18,21 +20,9 @@ class Program(
         uniforms[name] = Uniform(type, name, location, data)
     }
 
-    fun <T> setUniform(type: Uniform.Type<T>, name: String, data: T?) {
+    fun <T> getUniform(type: Uniform.Type<T>, name: String): Uniform<T> {
         @Suppress("UNCHECKED_CAST")
-        val uniform = uniforms[name] as Uniform<T>
-        uniform.data = data
-        uniform.dirty = true
-    }
-
-    fun markDirty(name: String) {
-        uniforms[name]?.dirty = true
-    }
-
-    fun <T> getUniform(type: Uniform.Type<T>, name: String): T? {
-        @Suppress("UNCHECKED_CAST")
-        val uniform = uniforms[name] as Uniform<T>
-        return uniform.data
+        return uniforms[name] as Uniform<T>
     }
 
     fun bindUniforms() {
@@ -58,6 +48,32 @@ class Program(
 
             }
         }
+    }
+
+    fun addTexture(name: String, unit: Int, target: Int, repeat: Int, filter: Int) {
+        val id = glesManager.createTexture(target, repeat, filter)
+        val texture = Texture(id, target, unit)
+        textures[name] = texture
+        addUniform(Uniform.Type.Integer, name, GLES32.GL_TEXTURE0 - unit)
+    }
+
+    fun getTexture(name: String) = textures[name]!!
+
+    fun bindTextures() {
+        textures.forEach {
+            val texture = it.value
+            GLES32.glActiveTexture(texture.unit)
+            GLES32.glBindTexture(texture.target, texture.id)
+        }
+    }
+
+    fun release() {
+        textures.forEach {
+            val t = it.value
+            glesManager.releaseTexture(t.id)
+        }
+        glesManager.releaseProgram(programId)
+
     }
 
     companion object {

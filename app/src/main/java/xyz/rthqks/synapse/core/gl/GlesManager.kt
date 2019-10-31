@@ -20,18 +20,17 @@ class GlesManager(
     private lateinit var handler: Handler
     private lateinit var eglCore: EglCore
     private lateinit var eglSurface: OffscreenSurface
-    private var quadVao = 0
 
     val backgroundHandler: Handler get() = handler
 
     // use to wrap calls that need an OpenGL context
-    suspend fun <T> withGlContext(block: suspend CoroutineScope.(GlesManager) -> T) =
+    suspend fun <T> withGlContext(block: suspend CoroutineScope.(GlesManager) -> T): T =
         withContext(dispatcher) { block(this@GlesManager) }
 
     fun initialize() {
         thread.start()
         handler = Handler(thread.looper)
-        eglCore = EglCore(null, EglCore.FLAG_TRY_GLES3)
+        eglCore = EglCore(null, EglCore.FLAG_TRY_GLES3 or EglCore.FLAG_RECORDABLE)
         eglSurface = OffscreenSurface(eglCore, 1, 1)
     }
 
@@ -64,7 +63,7 @@ class GlesManager(
         }
 
         Log.d(TAG, "created program: $program")
-        return Program(program)
+        return Program(this, program)
     }
 
     fun createTexture(
@@ -106,19 +105,12 @@ class GlesManager(
         GLES32.glDeleteTextures(1, intArrayOf(inputTexture), 0)
     }
 
-    fun releaseProgram(program: Program) {
-        GLES32.glDeleteProgram(program.programId)
+    fun releaseProgram(programId: Int) {
+        GLES32.glDeleteProgram(programId)
     }
 
     fun makeCurrent() {
         eglSurface.makeCurrent()
-    }
-
-    fun quadVao(): Int {
-        if (quadVao == 0) {
-            quadVao = Quad.createVao()
-        }
-        return quadVao
     }
 
     companion object {

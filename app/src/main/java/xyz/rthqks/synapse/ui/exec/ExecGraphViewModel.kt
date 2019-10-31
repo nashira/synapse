@@ -3,6 +3,7 @@ package xyz.rthqks.synapse.ui.exec
 import android.content.Context
 import android.util.Log
 import android.view.SurfaceView
+import android.widget.Toast
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import kotlinx.coroutines.*
@@ -64,6 +65,7 @@ class ExecGraphViewModel @Inject constructor(
                 stopJob?.join()
             } ?: run {
                 Log.w(TAG, "timeout waiting for stop")
+                Toast.makeText(context, "TIMEOUT", Toast.LENGTH_LONG).show()
             }
             graph.release()
             scope.cancel()
