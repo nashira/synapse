@@ -38,12 +38,12 @@ class SurfaceViewNode(
                 height: Int
             ) {
                 Log.d(TAG, "surfaceChanged: $holder $format $width $height")
-                setSurface(holder!!.surface)
+                runBlocking { setSurface(holder!!.surface) }
             }
 
             override fun surfaceDestroyed(holder: SurfaceHolder?) {
                 Log.d(TAG, "surfaceDestroyed: $holder")
-                setSurface(null)
+                runBlocking { setSurface(null) }
             }
 
             override fun surfaceCreated(holder: SurfaceHolder?) {
@@ -107,7 +107,7 @@ class SurfaceViewNode(
         }
     }
 
-    private fun setSurface(surface: Surface?) {
+    private suspend fun setSurface(surface: Surface?) {
         Log.d(TAG, "setSurface $surface")
         this.surface = surface
         connection?.setSurface(surface)

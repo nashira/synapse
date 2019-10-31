@@ -51,7 +51,7 @@ class Graph(
                 NodeType.Image -> TODO()
                 NodeType.AudioFile -> TODO()
                 NodeType.VideoFile -> TODO()
-                NodeType.LutFilter -> LutNode(glesManager, assetManager)
+                NodeType.LutFilter -> GlNode(glesManager, assetManager)
                 NodeType.ShaderFilter -> TODO()
                 NodeType.Speakers -> AudioPlayerNode()
                 NodeType.Screen -> SurfaceViewNode(
@@ -112,6 +112,7 @@ class Graph(
         }
 
         dispatcher.close()
+        scope.cancel()
         logCoroutineInfo(scope.coroutineContext[Job])
     }
 

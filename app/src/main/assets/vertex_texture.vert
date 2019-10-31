@@ -10,5 +10,5 @@ out vec2 texture_coords0;
 
 void main() {
     gl_Position = vertex_matrix0 * vec4(vertex_coords0_a, 0.0, 1.0);
-    texture_coords0 = (texture_matrix0 * vec4(texture_coords0_a, 0.0, 0.0)).xy;
+    texture_coords0 = (texture_matrix0 * vec4(texture_coords0_a, 0.0, 1.0)).xy;
 }

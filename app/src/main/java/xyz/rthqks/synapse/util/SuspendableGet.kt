@@ -1,24 +1,28 @@
 package xyz.rthqks.synapse.util
 
-import kotlin.coroutines.Continuation
-import kotlin.coroutines.resume
-import kotlin.coroutines.suspendCoroutine
+import kotlinx.coroutines.sync.Mutex
 
 class SuspendableGet<T> {
-    private var continuation: Continuation<T>? = null
     private var item: T? = null
+    private val mutex = Mutex(true)
 
-    fun set(item: T?) {
+    suspend fun set(item: T?) {
+        if (!mutex.isLocked) {
+            mutex.lock()
+        }
         this.item = item
+
         item?.let {
-            continuation?.resume(it)
-            continuation = null
+            mutex.unlock()
         }
     }
 
     fun has(): Boolean = item != null
 
-    suspend fun get(): T = item ?: suspendCoroutine {
-        continuation = it
+    suspend fun get(): T {
+        mutex.lock()
+        val t = item
+        mutex.unlock()
+        return  t!!
     }
 }

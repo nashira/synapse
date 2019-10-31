@@ -25,6 +25,10 @@ class Program(
         uniform.dirty = true
     }
 
+    fun markDirty(name: String) {
+        uniforms[name]?.dirty = true
+    }
+
     fun <T> getUniform(type: Uniform.Type<T>, name: String): T? {
         @Suppress("UNCHECKED_CAST")
         val uniform = uniforms[name] as Uniform<T>
@@ -35,7 +39,7 @@ class Program(
         uniforms.forEach {
             val uniform = it.value
             if (uniform.dirty) {
-                Log.d(TAG, "binding uniform $programId ${uniform.name} ${uniform.data}")
+//                Log.d(TAG, "binding uniform $programId ${uniform.name} ${uniform.data}")
                 uniform.dirty = false
                 when (uniform.type) {
                     Uniform.Type.Integer -> GLES32.glUniform1i(

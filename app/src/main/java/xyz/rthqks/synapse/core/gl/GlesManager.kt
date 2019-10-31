@@ -59,8 +59,8 @@ class GlesManager(
                 Log.e(TAG, "Could not link program: ")
                 Log.e(TAG, GLES32.glGetProgramInfoLog(it))
             }
-//            GLES32.glDeleteShader(vertexShader)
-//            GLES32.glDeleteShader(fragmentShader)
+            GLES32.glDeleteShader(vertexShader)
+            GLES32.glDeleteShader(fragmentShader)
         }
 
         Log.d(TAG, "created program: $program")

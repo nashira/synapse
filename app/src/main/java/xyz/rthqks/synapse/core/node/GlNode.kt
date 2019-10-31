@@ -25,7 +25,7 @@ import kotlin.coroutines.Continuation
 import kotlin.coroutines.resume
 import kotlin.coroutines.suspendCoroutine
 
-class LutNode(
+class GlNode(
     private val glesManager: GlesManager,
     private val assetManager: AssetManager
 ) : Node() {
@@ -43,20 +43,21 @@ class LutNode(
     private var programVao = 0
 
     override suspend fun initialize() {
-        val vertexSource = assetManager.readTextAsset("lut.vert")
+        val vertexSource = assetManager.readTextAsset("vertex_texture.vert")
         val fragmentSource = assetManager.readTextAsset("lut.frag")
         glesManager.withGlContext {
             it.makeCurrent()
             program = it.createProgram(vertexSource, fragmentSource).apply {
                 addUniform(Uniform.Type.Integer, "input_texture0", 0)
-                addUniform(Uniform.Type.Mat4, "vertex_matrix0", FloatArray(16))
-                addUniform(Uniform.Type.Mat4, "texture_matrix0", FloatArray(16))
-                Matrix.setIdentityM(
-                    getUniform(Uniform.Type.Mat4, "texture_matrix0"), 0
-                )
-                Matrix.setIdentityM(
-                    getUniform(Uniform.Type.Mat4, "vertex_matrix0"), 0
-                )
+
+                addUniform(
+                    Uniform.Type.Mat4,
+                    "vertex_matrix0",
+                    FloatArray(16).also { Matrix.setIdentityM(it, 0) })
+                addUniform(
+                    Uniform.Type.Mat4,
+                    "texture_matrix0",
+                    FloatArray(16).also { Matrix.setIdentityM(it, 0) })
             }
 
             inputTexture = it.createTexture(
@@ -100,15 +101,23 @@ class LutNode(
         continuation: Continuation<Unit>
     ) {
         Log.d(TAG, "setOnFrameAvailableListener $inputSurfaceTexture")
+
+        var textureMatrix = program.getUniform(Uniform.Type.Mat4, "texture_matrix0")
+        program.markDirty("texture_matrix0")
         inputSurfaceTexture?.setOnFrameAvailableListener({ st ->
 //            Log.d(TAG, "onFrameAvailable")
             scope.launch {
-                onFrame(st, continuation)
+                onFrame(st, continuation, textureMatrix)
+                textureMatrix = null
             }
         }, glesManager.backgroundHandler)
     }
 
-    private suspend fun onFrame(surfaceTexture: SurfaceTexture, continuation: Continuation<Unit>) {
+    private suspend fun onFrame(
+        surfaceTexture: SurfaceTexture,
+        continuation: Continuation<Unit>,
+        textureMatrix: FloatArray?
+    ) {
         val input = inputConnection ?: error("input connection missing")
         val output = outputConnection ?: error("output connection missing")
 
@@ -121,7 +130,10 @@ class LutNode(
             surfaceTexture.updateTexImage()
         }
         while (surfaceTexture.timestamp > inEvent.timestamp && !inEvent.eos) {
-            Log.d(TAG, "skipped frame! ${inEvent.count} ${surfaceTexture.timestamp} ${inEvent.timestamp}")
+            Log.d(
+                TAG,
+                "skipped frame! ${inEvent.count} ${surfaceTexture.timestamp} ${inEvent.timestamp}"
+            )
             input.release(inEvent)
             inEvent = input.acquire()
         }
@@ -133,12 +145,10 @@ class LutNode(
 
         input.release(inEvent)
 
-        if (output.hasSurface() || outEvent.eos) {
+        if (output.hasSurface()) {
+            textureMatrix?.let { inputSurfaceTexture?.getTransformMatrix(it) }
             glesManager.withGlContext {
-                if (output.hasSurface()) {
-                    executeGl()
-                }
-                // swap to send frame/eos
+                executeGl()
                 outputSurfaceWindow?.setPresentationTime(surfaceTexture.timestamp)
                 outputSurfaceWindow?.swapBuffers()
             }
@@ -172,12 +182,6 @@ class LutNode(
 
     override suspend fun stop() {
         startJob?.join()
-//        outputConnection?.let { output ->
-//            val outEvent = output.dequeue()
-//            outEvent.eos = true
-//            Log.d(TAG, "sending EOS")
-//            output.queue(outEvent)
-//        }
     }
 
     override suspend fun release() {
@@ -194,7 +198,9 @@ class LutNode(
         PortType.SURFACE_1 -> {
             SurfaceConnection().also { connection ->
                 outputConnection = connection
+                Log.d(TAG, "output ${Thread.currentThread().name} $this")
                 connection.configure(suspendSize.get(), 0)
+                Log.d(TAG, "output ${Thread.currentThread().name} $this")
             }
         }
         else -> null
@@ -202,9 +208,10 @@ class LutNode(
 
     override suspend fun <T> input(key: String, connection: Connection<T>) {
         when (key) {
-            PortType.SURFACE_1 -> coroutineScope {
+            PortType.SURFACE_1 -> {
                 connection as SurfaceConnection
                 inputConnection = connection
+                Log.d(TAG, "input ${Thread.currentThread().name} $this")
                 val size = connection.getSize()
                 val rotation = connection.getRotation()
                 val rotatedSize =
@@ -216,25 +223,11 @@ class LutNode(
 
                 connection.setSurface(inputSurface)
                 inputSurfaceTexture?.setDefaultBufferSize(size.width, size.height)
-
-                val matrix = program.getUniform(Uniform.Type.Mat4, "vertex_matrix0")
-                program.setUniform(Uniform.Type.Mat4, "vertex_matrix0", matrix)
-                Matrix.rotateM(
-                    matrix,
-                    0,
-                    GlesManager.IDENTITY,
-                    0,
-                    inputRotation.toFloat(),
-                    0f,
-                    0f,
-                    -1f
-                )
-                Log.d(TAG, "mat ${matrix?.joinToString()}")
             }
         }
     }
 
     companion object {
-        private val TAG = LutNode::class.java.simpleName
+        private val TAG = GlNode::class.java.simpleName
     }
 }

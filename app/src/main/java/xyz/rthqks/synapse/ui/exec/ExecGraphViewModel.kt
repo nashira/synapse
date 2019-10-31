@@ -41,6 +41,7 @@ class ExecGraphViewModel @Inject constructor(
     fun startExecution() {
         startJob = scope.launch {
             initJob?.join()
+            stopJob?.join()
             Log.d(TAG, "starting")
             graph.start()
             Log.d(TAG, "done starting")
@@ -59,7 +60,11 @@ class ExecGraphViewModel @Inject constructor(
     override fun onCleared() {
         scope.launch {
             Log.d(TAG, "release")
-            stopJob?.join()
+            withTimeoutOrNull(1000) {
+                stopJob?.join()
+            } ?: run {
+                Log.w(TAG, "timeout waiting for stop")
+            }
             graph.release()
             scope.cancel()
             Log.d(TAG, "released")

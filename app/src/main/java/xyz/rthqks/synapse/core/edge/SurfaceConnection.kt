@@ -12,26 +12,18 @@ class SurfaceConnection(bufferSize: Int = BUFFER_SIZE) : Connection<SurfaceEvent
 
     override suspend fun createItem(): SurfaceEvent = SurfaceEvent()
 
-    fun configure(size: Size, rotation: Int) {
+    suspend fun configure(size: Size, rotation: Int) {
         this.size.set(size)
         this.rotation.set(rotation)
     }
 
-    fun setSurface(surface: Surface?) {
-        this.surface.set(surface)
-    }
+    suspend fun setSurface(surface: Surface?) = this.surface.set(surface)
 
     fun hasSurface() = surface.has()
 
-    suspend fun getSize(): Size {
-        return size.get()
-    }
+    suspend fun getSize(): Size = size.get()
 
-    suspend fun getRotation(): Int {
-        return rotation.get()
-    }
+    suspend fun getRotation(): Int = rotation.get()
 
-    suspend fun getSurface(): Surface {
-        return surface.get()
-    }
+    suspend fun getSurface(): Surface = surface.get()
 }
