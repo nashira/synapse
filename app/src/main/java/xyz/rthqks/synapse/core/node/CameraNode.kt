@@ -2,6 +2,7 @@ package xyz.rthqks.synapse.core.node
 
 import android.util.Log
 import android.util.Size
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
@@ -38,17 +39,19 @@ class CameraNode(
             cameraManager.start(cameraId, surface, frameRate) { count, timestamp, eos ->
                 if (eos) {
                     Log.d(TAG, "sending EOS")
+                    Log.d(TAG, "sent frames $count")
                 }
                 val frame = connection.dequeue()
                 frame.eos = eos
                 frame.count = count
                 frame.timestamp = timestamp
                 connection.queue(frame)
-                if (eos) {
-                    Log.d(TAG, "sent frames $count")
-                }
             }
         }
+    }
+
+    suspend fun foo(scope: CoroutineScope) {
+
     }
 
     override suspend fun stop() {

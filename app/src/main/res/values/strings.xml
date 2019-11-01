@@ -56,4 +56,5 @@
     <string name="property_label_camera_fps_60">60</string>
     <string name="property_name_camera_frame_rate">Frame Rate (fps)</string>
     <string name="property_label_camera_capture_size_480">640x480</string>
+    <string name="name_node_type_audio_waveform">Audio Waveform</string>
 </resources>

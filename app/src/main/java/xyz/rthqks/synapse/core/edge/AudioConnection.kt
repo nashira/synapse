@@ -6,13 +6,13 @@ import xyz.rthqks.synapse.core.Connection
 
 class AudioConnection(bufferSize: Int = BUFFER_SIZE) : Connection<AudioEvent>(bufferSize) {
     lateinit var audioFormat: AudioFormat
-    var bufferSize = 0
+    var audioBufferSize = 0
 
-    override suspend fun createItem(): AudioEvent = AudioEvent(bufferSize)
+    override suspend fun createItem(): AudioEvent = AudioEvent(audioBufferSize)
 
     fun configure(audioFormat: AudioFormat, bufferSize: Int) {
         this.audioFormat = audioFormat
-        this.bufferSize = bufferSize
+        this.audioBufferSize = bufferSize
         Log.d(TAG, "configure size $bufferSize")
     }
 

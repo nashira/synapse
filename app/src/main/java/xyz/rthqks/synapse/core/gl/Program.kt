@@ -2,6 +2,7 @@ package xyz.rthqks.synapse.core.gl
 
 import android.opengl.GLES32
 import android.util.Log
+import java.nio.ByteBuffer
 
 class Program {
     private val uniforms = mutableMapOf<String, Uniform<*>>()
@@ -84,7 +85,7 @@ class Program {
     }
 
     fun release() {
-        val ts = textures.map{ it.value.id }.toIntArray()
+        val ts = textures.map { it.value.id }.toIntArray()
         GLES32.glDeleteTextures(ts.size, ts, 0)
         GLES32.glDeleteProgram(programId)
 
@@ -124,6 +125,62 @@ class Program {
             GLES32.glCompileShader(shader)
             Log.d(TAG, GLES32.glGetShaderInfoLog(shader))
         }
+
+    fun initTextureData(
+        name: String,
+        level: Int,
+        internalFormat: Int,
+        width: Int,
+        height: Int,
+        format: Int,
+        type: Int,
+        buffer: ByteBuffer?
+    ) {
+
+        val texture = textures[name]!!
+        GLES32.glActiveTexture(texture.unit)
+        GLES32.glBindTexture(texture.target, texture.id)
+        GLES32.glTexImage2D(
+            texture.target,
+            level,
+            internalFormat,
+            width,
+            height,
+            0,
+            format,
+            type,
+            buffer
+        )
+        GLES32.glBindTexture(texture.target, 0)
+    }
+
+    fun updateTextureData(
+        name: String,
+        level: Int,
+        xoffset: Int,
+        yoffset: Int,
+        width: Int,
+        height: Int,
+        format: Int,
+        type: Int,
+        buffer: ByteBuffer
+    ) {
+        val texture = textures[name]!!
+        GLES32.glActiveTexture(texture.unit)
+        GLES32.glBindTexture(texture.target, texture.id)
+        GLES32.glTexSubImage2D(
+            texture.target,
+            level,
+            xoffset,
+            yoffset,
+            width,
+            height,
+            format,
+            type,
+            buffer
+        )
+        GLES32.glBindTexture(texture.target, 0)
+    }
 
     companion object {
         private val TAG = Program::class.java.simpleName

@@ -16,6 +16,29 @@ class ExampleUnitTest {
     }
 
     @Test
+    fun joinFromOtherScope() {
+        val parentJob = Job()
+        val scope1 = CoroutineScope(Job())
+        val scope2 = CoroutineScope(parentJob)
+        val job1 = scope1.launch {
+            foo(scope2)
+        }
+        runBlocking {
+            println("*******")
+            job1.join()
+            println("^^^^^^^")
+            parentJob.join()
+        }
+    }
+
+    suspend fun foo(scope: CoroutineScope) {
+        val job1 = scope.launch { delay(1000); println("scope2 job1") }
+        val job2 = scope.launch { delay(3000); println("scope2 job2") }
+        job1.join()
+    }
+
+
+    @Test
     fun coroutine() {
         val job1 = Job()
         val scope1 = CoroutineScope(job1)

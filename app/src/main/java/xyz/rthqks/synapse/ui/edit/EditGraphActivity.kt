@@ -80,7 +80,7 @@ class AddNodeAdapter(
         return AddNodeViewHolder(view, itemClick)
     }
 
-    override fun getItemCount(): Int = NodeType.SIZE
+    override fun getItemCount(): Int = TYPES.size
 
     override fun onBindViewHolder(holder: AddNodeViewHolder, position: Int) {
         holder.onBind(TYPES[position])
@@ -90,11 +90,12 @@ class AddNodeAdapter(
         private val TYPES = listOf(
             NodeType.Camera,
             NodeType.Microphone,
-            NodeType.Image,
-            NodeType.AudioFile,
-            NodeType.VideoFile,
+            NodeType.AudioWaveform,
+//            NodeType.Image,
+//            NodeType.AudioFile,
+//            NodeType.VideoFile,
             NodeType.LutFilter,
-            NodeType.ShaderFilter,
+//            NodeType.ShaderFilter,
             NodeType.Screen,
             NodeType.Speakers
         )

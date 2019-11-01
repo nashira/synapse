@@ -48,6 +48,7 @@ class Graph(
                     it[Key.AudioEncoding],
                     it[Key.AudioSource]
                 )
+                NodeType.AudioWaveform -> AudioWaveformNode(glesManager, assetManager)
                 NodeType.Image -> TODO()
                 NodeType.AudioFile -> TODO()
                 NodeType.VideoFile -> TODO()

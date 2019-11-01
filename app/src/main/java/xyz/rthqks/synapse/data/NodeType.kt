@@ -38,6 +38,16 @@ sealed class NodeType(
         )
     )
 
+    object AudioWaveform : NodeType(
+        "audio_waveform",
+        R.string.name_node_type_audio_waveform, R.drawable.ic_audio,
+        listOf(
+            PortType.AudioBuffer(PortType.AUDIO_1, PortType.INPUT),
+            PortType.Surface(PortType.SURFACE_1, PortType.OUTPUT)
+        ),
+        emptyList()
+    )
+
     object Image : NodeType(
         "image",
         R.string.name_node_type_image, R.drawable.ic_image,

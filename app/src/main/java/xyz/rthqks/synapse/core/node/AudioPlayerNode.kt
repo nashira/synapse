@@ -54,14 +54,6 @@ class AudioPlayerNode : Node() {
     override suspend fun stop() {
         playJob?.join()
         audioTrack?.stop()
-//        TODO: make fail-safe with timeout, maybe on release instead
-//        try {
-//            withTimeout(1000) {
-//                playJob?.join()
-//            }
-//        } finally {
-//            audioTrack?.stop()
-//        }
     }
 
     override suspend fun release() {
@@ -76,7 +68,7 @@ class AudioPlayerNode : Node() {
         if (key == PortType.AUDIO_1) {
             this.connection = connection as AudioConnection
             audioFormat = connection.audioFormat
-            bufferSize = connection.bufferSize
+            bufferSize = connection.audioBufferSize
             createAudioTrack()
         }
     }
