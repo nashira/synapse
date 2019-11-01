@@ -21,7 +21,7 @@ class Graph(
         Log.d(TAG, "error", throwable)
     }
     private val scope = CoroutineScope(SupervisorJob() + dispatcher + exceptionHandler)
-    private val glesManager = GlesManager(context)
+    private val glesManager = GlesManager()
     private val cameraManager = CameraManager(context)
     private val assetManager = AssetManager(context)
     private val nodes = mutableMapOf<Int, Node>()

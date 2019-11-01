@@ -1,20 +1,15 @@
 package xyz.rthqks.synapse.core.gl
 
-import android.content.Context
-import android.opengl.GLES32
 import android.opengl.Matrix
 import android.os.Handler
 import android.os.HandlerThread
-import android.util.Log
 import android.view.Surface
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.asCoroutineDispatcher
 import kotlinx.coroutines.withContext
 import java.util.concurrent.Executors
 
-class GlesManager(
-    private val context: Context
-) {
+class GlesManager {
     private val dispatcher = Executors.newSingleThreadExecutor().asCoroutineDispatcher()
     private val thread = HandlerThread("BackgroundHandler")
     private lateinit var handler: Handler

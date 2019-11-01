@@ -45,6 +45,13 @@ class ExecGraphViewModel @Inject constructor(
             stopJob?.join()
             Log.d(TAG, "starting")
             graph.start()
+            // right now start launches coroutines and does not join them.
+            // there is a period after start during which calling stop
+            // will result in hung coroutines.
+            // this delay will not block any threads, it will simply keep
+            // startJob active to allow for the nodes to settle
+            // TODO: have start not return until it would be safe to call stop
+            delay(250)
             Log.d(TAG, "done starting")
         }
     }
