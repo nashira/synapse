@@ -158,9 +158,9 @@ class CameraManager(
                 request: CaptureRequest,
                 result: TotalCaptureResult
             ) {
-//                Log.d(TAG, "run blocking ${Thread.currentThread().name}")
-//                runBlocking(scope.coroutineContext) {
-                if (isEos) {
+                val eos = isEos
+
+                if (eos) {
                     Log.d(TAG, "got eos")
                     session.close()
                     camera?.close()
@@ -168,7 +168,7 @@ class CameraManager(
 
                 scope.launch {
                     val time = result[CaptureResult.SENSOR_TIMESTAMP]!!
-                    onFrame(result.frameNumber, time, isEos)
+                    onFrame(result.frameNumber, time, eos)
                 }
             }
         }, handler)

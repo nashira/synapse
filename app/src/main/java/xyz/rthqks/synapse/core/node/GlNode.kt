@@ -35,7 +35,7 @@ class GlNode(
     private var inputSurfaceTexture: SurfaceTexture? = null
     private var outputSurfaceWindow: WindowSurface? = null
     private val mesh = Quad()
-    private lateinit var program: Program
+    private val program = Program()
 
     fun fragmentFileName() = "lut.frag"
     fun onProgramCreated() {}
@@ -45,7 +45,8 @@ class GlNode(
         val fragmentSource = assetManager.readTextAsset(fragmentFileName())
         glesManager.withGlContext {
             it.makeCurrent()
-            program = it.createProgram(vertexSource, fragmentSource).apply {
+            program.apply {
+                initialize(vertexSource, fragmentSource)
                 addUniform(
                     Uniform.Type.Mat4,
                     "vertex_matrix0",
@@ -55,11 +56,13 @@ class GlNode(
                     "texture_matrix0",
                     FloatArray(16).also { Matrix.setIdentityM(it, 0) })
 
-                addTexture("input_texture0",
+                addTexture(
+                    "input_texture0",
                     GLES32.GL_TEXTURE0,
                     GLES11Ext.GL_TEXTURE_EXTERNAL_OES,
                     GLES32.GL_CLAMP_TO_EDGE,
-                    GLES32.GL_LINEAR)
+                    GLES32.GL_LINEAR
+                )
             }
 
             mesh.initialize()
@@ -67,6 +70,7 @@ class GlNode(
         }
 
         val texture = program.getTexture("input_texture0")
+        Log.d(TAG, "texture id $texture")
         inputSurfaceTexture = SurfaceTexture(texture.id)
         inputSurface = Surface(inputSurfaceTexture)
     }
@@ -184,6 +188,7 @@ class GlNode(
         inputSurface?.release()
         outputSurfaceWindow?.release()
         glesManager.withGlContext {
+            mesh.release()
             program.release()
         }
     }

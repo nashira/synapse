@@ -35,7 +35,7 @@ open class Mesh(
                 attribute.index,
                 attribute.size,
                 attribute.type,
-                false,
+                attribute.normalized,
                 attribute.stride,
                 attribute.offset
             )
@@ -59,23 +59,26 @@ open class Mesh(
     }
 
     fun addBuffer(name: String, data: ByteBuffer, target: Int, usage: Int): Buffer {
-
         val bufferId = IntArray(1)
         GLES32.glGenBuffers(1, bufferId, 0)
-        GLES32.glBindBuffer(target, bufferId[0])
-        data.position(0)
-        GLES32.glBufferData(
-            target,
-            data.capacity(),
-            data,
-            usage
-        )
-        GLES32.glBindBuffer(target, 0)
         val buffer = Buffer(data, target, usage, bufferId[0])
         buffers[name] = buffer
         buffersById[buffer.id] = buffer
         Log.d(TAG, "addBuffer $buffer")
+        bufferData(buffer)
         return buffer
+    }
+
+    fun bufferData(buffer: Buffer) {
+        buffer.data.position(0)
+        GLES32.glBindBuffer(buffer.target, buffer.id)
+        GLES32.glBufferData(
+            buffer.target,
+            buffer.data.capacity(),
+            buffer.data,
+            buffer.usage
+        )
+        GLES32.glBindBuffer(buffer.target, 0)
     }
 
     fun addAttribute(
@@ -116,5 +119,6 @@ data class Attribute(
     val stride: Int,
     val offset: Int,
     val index: Int,
+    val normalized: Boolean = false,
     val divisor: Int = -1
 )
