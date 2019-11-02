@@ -108,8 +108,8 @@ class NodeViewHolder(
 
         inputAdapter.setPorts(node.inputs)
         outputAdapter.setPorts(node.outputs)
-        itemView.header_input.visibility = if (node.inputs.isEmpty()) View.GONE else View.VISIBLE
-        itemView.header_output.visibility = if (node.outputs.isEmpty()) View.GONE else View.VISIBLE
+        itemView.header_input.visibility = if (node.inputs.isEmpty()) View.INVISIBLE else View.VISIBLE
+        itemView.header_output.visibility = if (node.outputs.isEmpty()) View.INVISIBLE else View.VISIBLE
     }
 
     inner class PortsAdapter(
@@ -167,7 +167,7 @@ class NodeViewHolder(
             }
             Log.d(TAG, "port ${portConfig.key} ${graphViewModel.getPortState(portConfig)}")
             when(graphViewModel.getPortState(portConfig)) {
-                PortState.Unconnected -> itemView.setBackgroundColor(Color.BLACK)
+                PortState.Unconnected -> itemView.setBackgroundColor(Color.TRANSPARENT)
                 PortState.Connected -> itemView.setBackgroundColor(Color.BLUE)
                 PortState.SelectedUnconnected -> itemView.setBackgroundColor(Color.CYAN)
                 PortState.SelectedConnected -> itemView.setBackgroundColor(Color.MAGENTA)

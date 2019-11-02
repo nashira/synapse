@@ -33,8 +33,21 @@ class AudioWaveformNode(
     private val program = Program()
 
     override suspend fun initialize() {
+
+    }
+
+    private suspend fun createProgram() {
         val vertexSource = assetManager.readTextAsset("vertex_texture.vert")
-        val fragmentSource = assetManager.readTextAsset("audio_waveform.frag")
+        val fragmentSource = assetManager.readTextAsset("audio_waveform.frag").let {
+            if (audioFormat.encoding == AudioFormat.ENCODING_PCM_16BIT) {
+                it.replace("#{INT_TEXTURE}", "#define INT_TEXTURE")
+            } else {
+                it
+            }
+        }
+
+        Log.d(TAG, "frag $fragmentSource")
+
         glesManager.withGlContext {
             it.makeCurrent()
             program.apply {
@@ -194,6 +207,8 @@ class AudioWaveformNode(
             inputConnection = connection as AudioConnection
             audioFormat = connection.audioFormat
             bufferSize = connection.audioBufferSize
+
+            createProgram()
 
             val uniform = program.getUniform(Uniform.Type.Integer, "isSigned")
             uniform.data = if (audioFormat.encoding == AudioFormat.ENCODING_PCM_8BIT) 0 else 1
