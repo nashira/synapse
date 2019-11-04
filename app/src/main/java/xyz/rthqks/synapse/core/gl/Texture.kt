@@ -9,9 +9,14 @@ class Texture(
     val repeat: Int,
     val filter: Int
 ) {
-
     var id: Int = 0
         private set
+
+    var width: Int = 0
+    var height: Int = 0
+    var internalFormat: Int = 0
+    var format: Int = 0
+    var type: Int = 0
 
     fun initialize() {
         val textureHandle = IntArray(1)
@@ -47,8 +52,13 @@ class Texture(
         height: Int,
         format: Int,
         type: Int,
-        buffer: ByteBuffer?
+        buffer: java.nio.Buffer?
     ) {
+        this.width = width
+        this.height = height
+        this.internalFormat = internalFormat
+        this.format = format
+        this.type = type
 
         GLES32.glActiveTexture(unit)
         GLES32.glBindTexture(target, id)
@@ -72,9 +82,7 @@ class Texture(
         yoffset: Int,
         width: Int,
         height: Int,
-        format: Int,
-        type: Int,
-        buffer: ByteBuffer
+        buffer: java.nio.Buffer
     ) {
         GLES32.glActiveTexture(unit)
         GLES32.glBindTexture(target, id)

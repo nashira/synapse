@@ -18,7 +18,10 @@ sealed class NodeType(
     object Camera : NodeType(
         "camera",
         R.string.name_node_type_camera, R.drawable.ic_camera,
-        listOf(PortType.Surface(PortType.SURFACE_1, PortType.OUTPUT)),
+        listOf(
+            PortType.Surface(PortType.SURFACE_1, PortType.OUTPUT),
+            PortType.Texture(PortType.TEXTURE_1, PortType.OUTPUT)
+        ),
         listOf(
             PropertyType.CameraFacing,
             PropertyType.CameraCaptureSize,

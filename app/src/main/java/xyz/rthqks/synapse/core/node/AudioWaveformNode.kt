@@ -52,7 +52,6 @@ class AudioWaveformNode(
         }
 
         glesManager.withGlContext {
-            it.makeCurrent()
             texture.initialize()
             mesh.initialize()
 
@@ -102,7 +101,7 @@ class AudioWaveformNode(
 
                 if (output.hasSurface()) {
                     glesManager.withGlContext {
-                        outputSurfaceWindow?.makeCurrent()
+
                         glViewport(0, 0, 1080, 1080)
                         glUseProgram(program.programId)
 
@@ -141,7 +140,6 @@ class AudioWaveformNode(
         }
 
         glesManager.withGlContext {
-            outputSurfaceWindow?.makeCurrent()
             if (buffer == null) {
                 texture.initData(
                     0,
@@ -159,8 +157,6 @@ class AudioWaveformNode(
                     0,
                     width,
                     1,
-                    format,
-                    type,
                     buffer
                 )
             }
@@ -171,9 +167,9 @@ class AudioWaveformNode(
         val surface = output.getSurface()
         Log.d(TAG, "creating output surface")
         glesManager.withGlContext {
-            it.makeCurrent()
             outputSurfaceWindow?.release()
             outputSurfaceWindow = it.createWindowSurface(surface)
+            outputSurfaceWindow?.makeCurrent()
         }
     }
 
@@ -184,6 +180,7 @@ class AudioWaveformNode(
     override suspend fun release() {
         outputSurfaceWindow?.release()
         glesManager.withGlContext {
+            texture.release()
             mesh.release()
             program.release()
         }

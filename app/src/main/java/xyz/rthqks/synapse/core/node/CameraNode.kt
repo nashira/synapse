@@ -9,6 +9,7 @@ import xyz.rthqks.synapse.core.CameraManager
 import xyz.rthqks.synapse.core.Connection
 import xyz.rthqks.synapse.core.Node
 import xyz.rthqks.synapse.core.edge.SurfaceConnection
+import xyz.rthqks.synapse.core.edge.TextureConnection
 import xyz.rthqks.synapse.data.PortType
 
 class CameraNode(
@@ -20,7 +21,8 @@ class CameraNode(
     private lateinit var size: Size
     private lateinit var cameraId: String
     private var surfaceRotation = 0
-    private var connection: SurfaceConnection? = null
+    private var surfaceConnection: SurfaceConnection? = null
+    private var textureConnection: TextureConnection? = null
     private var startJob: Job? = null
 
     override suspend fun initialize() {
@@ -32,7 +34,7 @@ class CameraNode(
     }
 
     override suspend fun start() = coroutineScope {
-        val connection = connection ?: return@coroutineScope
+        val connection = surfaceConnection ?: return@coroutineScope
         val surface = connection.getSurface()
         startJob = launch {
             cameraManager.start(cameraId, surface, frameRate) { count, timestamp, eos ->
@@ -59,8 +61,11 @@ class CameraNode(
 
     override suspend fun output(key: String): Connection<*>? = when (key) {
         PortType.SURFACE_1 -> SurfaceConnection().also {
-            connection = it
+            surfaceConnection = it
             it.configure(size, surfaceRotation)
+        }
+        PortType.TEXTURE_1 -> TextureConnection().also {
+            textureConnection = it
         }
         else -> null
     }

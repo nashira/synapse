@@ -27,6 +27,7 @@ class GlesManager {
         handler = Handler(thread.looper)
         eglCore = EglCore(null, EglCore.FLAG_TRY_GLES3 or EglCore.FLAG_RECORDABLE)
         eglSurface = OffscreenSurface(eglCore, 1, 1)
+        eglSurface.makeCurrent()
     }
 
     fun release() {
@@ -38,10 +39,6 @@ class GlesManager {
 
     fun createWindowSurface(surface: Surface): WindowSurface =
         WindowSurface(eglCore, surface, false)
-
-    fun makeCurrent() {
-        eglSurface.makeCurrent()
-    }
 
     companion object {
         private val TAG = GlesManager::class.java.simpleName

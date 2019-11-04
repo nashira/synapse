@@ -52,7 +52,6 @@ class GlNode(
         val vertexSource = assetManager.readTextAsset("vertex_texture.vert")
         val fragmentSource = assetManager.readTextAsset(fragmentFileName())
         glesManager.withGlContext {
-            it.makeCurrent()
             texture.initialize()
             mesh.initialize()
 
@@ -72,7 +71,6 @@ class GlNode(
             onProgramCreated()
         }
 
-        val texture = program.getTexture("input_texture0")
         Log.d(TAG, "texture id $texture")
         inputSurfaceTexture = SurfaceTexture(texture.id)
         inputSurface = Surface(inputSurfaceTexture)
@@ -95,9 +93,9 @@ class GlNode(
         val surface = output.getSurface()
         Log.d(TAG, "creating output surface")
         glesManager.withGlContext {
-            it.makeCurrent()
             outputSurfaceWindow?.release()
             outputSurfaceWindow = it.createWindowSurface(surface)
+            outputSurfaceWindow?.makeCurrent()
         }
     }
 
@@ -130,7 +128,6 @@ class GlNode(
         var inEvent = input.acquire()
 
         glesManager.withGlContext {
-            outputSurfaceWindow?.makeCurrent()
             surfaceTexture.updateTexImage()
         }
 
@@ -191,6 +188,7 @@ class GlNode(
         inputSurface?.release()
         outputSurfaceWindow?.release()
         glesManager.withGlContext {
+            texture.release()
             mesh.release()
             program.release()
         }
