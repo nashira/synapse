@@ -23,8 +23,8 @@ class Quad : Mesh(
         floatBuffer = byteBuffer
             .asFloatBuffer()
             .put(FULL_RECTANGLE_COORDS)
-//        floatBuffer.position(0)
 
+        byteBuffer.position(0)
         buffer = addBuffer("main", byteBuffer, GLES32.GL_ARRAY_BUFFER, GLES32.GL_STATIC_DRAW)
         addAttribute("vertex", buffer.id, 2, GLES32.GL_FLOAT, 16, 0, 0)
         addAttribute("texture", buffer.id, 2, GLES32.GL_FLOAT, 16, 8, 1)

@@ -2,7 +2,6 @@ package xyz.rthqks.synapse.core.gl
 
 import android.opengl.GLES32
 import android.util.Log
-import java.nio.ByteBuffer
 
 class Program {
     private val uniforms = mutableMapOf<String, Uniform<*>>()
@@ -67,11 +66,9 @@ class Program {
         }
     }
 
-    fun addTexture(name: String, unit: Int, target: Int, repeat: Int, filter: Int) {
-        val id = createTexture(target, repeat, filter)
-        val texture = Texture(id, target, unit)
+    fun addTexture(name: String, texture: Texture) {
         textures[name] = texture
-        addUniform(Uniform.Type.Integer, name, GLES32.GL_TEXTURE0 - unit)
+        addUniform(Uniform.Type.Integer, name, GLES32.GL_TEXTURE0 - texture.unit)
     }
 
     fun getTexture(name: String) = textures[name]!!
@@ -85,37 +82,8 @@ class Program {
     }
 
     fun release() {
-        val ts = textures.map { it.value.id }.toIntArray()
-        GLES32.glDeleteTextures(ts.size, ts, 0)
         GLES32.glDeleteProgram(programId)
 
-    }
-
-    private fun createTexture(
-        target: Int = GLES32.GL_TEXTURE_2D,
-        repeat: Int = GLES32.GL_REPEAT,
-        filter: Int = GLES32.GL_LINEAR
-    ): Int {
-        val textureHandle = IntArray(1)
-
-        GLES32.glGenTextures(1, textureHandle, 0)
-
-        if (textureHandle[0] != 0) {
-
-            GLES32.glBindTexture(target, textureHandle[0])
-
-            GLES32.glTexParameteri(target, GLES32.GL_TEXTURE_MIN_FILTER, filter)
-            GLES32.glTexParameteri(target, GLES32.GL_TEXTURE_MAG_FILTER, filter)
-
-            GLES32.glTexParameterf(target, GLES32.GL_TEXTURE_WRAP_S, repeat.toFloat())
-            GLES32.glTexParameterf(target, GLES32.GL_TEXTURE_WRAP_T, repeat.toFloat())
-
-            GLES32.glBindTexture(target, 0)
-        } else {
-            throw RuntimeException("Error creating texture.")
-        }
-
-        return textureHandle[0]
     }
 
     private fun createShader(type: Int, source: String): Int =
@@ -125,62 +93,6 @@ class Program {
             GLES32.glCompileShader(shader)
             Log.d(TAG, GLES32.glGetShaderInfoLog(shader))
         }
-
-    fun initTextureData(
-        name: String,
-        level: Int,
-        internalFormat: Int,
-        width: Int,
-        height: Int,
-        format: Int,
-        type: Int,
-        buffer: ByteBuffer?
-    ) {
-
-        val texture = textures[name]!!
-        GLES32.glActiveTexture(texture.unit)
-        GLES32.glBindTexture(texture.target, texture.id)
-        GLES32.glTexImage2D(
-            texture.target,
-            level,
-            internalFormat,
-            width,
-            height,
-            0,
-            format,
-            type,
-            buffer
-        )
-        GLES32.glBindTexture(texture.target, 0)
-    }
-
-    fun updateTextureData(
-        name: String,
-        level: Int,
-        xoffset: Int,
-        yoffset: Int,
-        width: Int,
-        height: Int,
-        format: Int,
-        type: Int,
-        buffer: ByteBuffer
-    ) {
-        val texture = textures[name]!!
-        GLES32.glActiveTexture(texture.unit)
-        GLES32.glBindTexture(texture.target, texture.id)
-        GLES32.glTexSubImage2D(
-            texture.target,
-            level,
-            xoffset,
-            yoffset,
-            width,
-            height,
-            format,
-            type,
-            buffer
-        )
-        GLES32.glBindTexture(texture.target, 0)
-    }
 
     companion object {
         private val TAG = Program::class.java.simpleName

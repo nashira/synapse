@@ -5,7 +5,7 @@ import android.view.Surface
 import xyz.rthqks.synapse.core.Connection
 import xyz.rthqks.synapse.util.SuspendableGet
 
-class SurfaceConnection(bufferSize: Int = BUFFER_SIZE) : Connection<SurfaceEvent>(bufferSize) {
+class SurfaceConnection(capacity: Int = CAPACITY) : Connection<SurfaceEvent>(capacity) {
     private var size = SuspendableGet<Size>()
     private var rotation = SuspendableGet<Int>()
     private var surface = SuspendableGet<Surface>()

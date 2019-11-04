@@ -31,6 +31,11 @@ class AudioWaveformNode(
     private var outputSurfaceWindow: WindowSurface? = null
     private val mesh = Quad()
     private val program = Program()
+    private val texture = Texture(
+        GL_TEXTURE_2D,
+        GL_TEXTURE0,
+        GL_CLAMP_TO_EDGE,
+        GL_NEAREST)
 
     override suspend fun initialize() {
 
@@ -46,10 +51,11 @@ class AudioWaveformNode(
             }
         }
 
-        Log.d(TAG, "frag $fragmentSource")
-
         glesManager.withGlContext {
             it.makeCurrent()
+            texture.initialize()
+            mesh.initialize()
+
             program.apply {
                 initialize(vertexSource, fragmentSource)
                 addUniform(
@@ -63,16 +69,8 @@ class AudioWaveformNode(
 
                 addUniform(Uniform.Type.Integer, "isSigned", 0)
 
-                addTexture(
-                    "audio_texture",
-                    GL_TEXTURE0,
-                    GL_TEXTURE_2D,
-                    GL_CLAMP_TO_EDGE,
-                    GL_NEAREST
-                )
+                addTexture("audio_texture", texture)
             }
-
-            mesh.initialize()
         }
     }
 
@@ -84,8 +82,10 @@ class AudioWaveformNode(
 
         startJob = launch {
             running = true
-            var numFrames = 0
+            var numFrames = -1
             while (running) {
+                numFrames++
+
                 val audioBuffer = input.acquire()
                 if (audioBuffer.eos) {
                     Log.d(TAG, "got EOS")
@@ -117,7 +117,6 @@ class AudioWaveformNode(
                     }
                 }
                 output.queue(surfaceEvent)
-                numFrames++
             }
             Log.d(TAG, "wrote frames $numFrames")
         }
@@ -144,8 +143,7 @@ class AudioWaveformNode(
         glesManager.withGlContext {
             outputSurfaceWindow?.makeCurrent()
             if (buffer == null) {
-                program.initTextureData(
-                    "audio_texture",
+                texture.initData(
                     0,
                     internalFormat,
                     width,
@@ -155,8 +153,7 @@ class AudioWaveformNode(
                     buffer
                 )
             } else {
-                program.updateTextureData(
-                    "audio_texture",
+                texture.updateData(
                     0,
                     0,
                     0,

@@ -1,13 +1,12 @@
 package xyz.rthqks.synapse.core
 
-import android.util.Log
 import kotlinx.coroutines.channels.Channel
 
 abstract class Connection<T>(
-    private val bufferSize: Int = BUFFER_SIZE
+    private val capacity: Int = CAPACITY
 ) {
-    private val produceChannel: Channel<T> = Channel(bufferSize)
-    private val returnChannel: Channel<T> = Channel(bufferSize)
+    private val produceChannel: Channel<T> = Channel(capacity)
+    private val returnChannel: Channel<T> = Channel(capacity)
     private var itemsCreatedCount = 0
     private var lastDequeueTime = 0L
     private var lastAcquireTime = 0L
@@ -21,8 +20,8 @@ abstract class Connection<T>(
 
     suspend fun dequeue(): T {
         val buffer = returnChannel.poll()
-            ?: if (itemsCreatedCount < bufferSize) {
-                Log.d(TAG, "createItem $itemsCreatedCount")
+            ?: if (itemsCreatedCount < capacity) {
+//                Log.d(TAG, "createItem $itemsCreatedCount")
                 itemsCreatedCount += 1
                 createItem()
             } else returnChannel.receive()
@@ -54,6 +53,6 @@ abstract class Connection<T>(
 
     companion object {
         private val TAG = Connection::class.java.simpleName
-        const val BUFFER_SIZE = 3
+        const val CAPACITY = 3
     }
 }

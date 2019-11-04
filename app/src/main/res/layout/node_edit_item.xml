@@ -12,7 +12,9 @@
         android:layout_height="48dp"
         android:drawablePadding="8dp"
         android:paddingStart="12dp"
-        android:drawableTint="@color/grey"
+        android:textColor="@color/white"
+        android:textStyle="bold"
+        android:drawableTint="@color/white"
         android:gravity="center_vertical"
         android:textAppearance="@style/TextAppearance.AppCompat.Medium"
         app:layout_constraintBottom_toBottomOf="@id/button_properties"
@@ -33,17 +35,6 @@
         android:drawableTint="@color/white"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
-
-    <View
-        android:layout_width="1dp"
-        android:layout_height="0dp"
-        android:layout_marginBottom="8dp"
-        android:background="@color/white"
-        android:layout_marginTop="16dp"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toStartOf="@id/header_output"
-        app:layout_constraintStart_toEndOf="@id/header_input"
-        app:layout_constraintTop_toBottomOf="@id/name" />
 
     <TextView
         android:id="@+id/header_input"
@@ -70,6 +61,17 @@
         android:text="@string/heading_node_outputs"
         android:textStyle="bold"
         app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toEndOf="@id/header_input"
+        app:layout_constraintTop_toBottomOf="@id/name" />
+
+    <View
+        android:layout_width="1dp"
+        android:layout_height="0dp"
+        android:layout_marginBottom="8dp"
+        android:background="@color/white"
+        android:layout_marginTop="16dp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toStartOf="@id/header_output"
         app:layout_constraintStart_toEndOf="@id/header_input"
         app:layout_constraintTop_toBottomOf="@id/name" />
 

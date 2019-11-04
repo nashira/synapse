@@ -30,12 +30,20 @@ class GlNode(
     private var inputConnection: SurfaceConnection? = null
     private var startJob: Job? = null
     private val suspendSize = SuspendableGet<Size>()
+    private var size: Size? = null
     private var inputRotation = 0
     private var inputSurface: Surface? = null
     private var inputSurfaceTexture: SurfaceTexture? = null
     private var outputSurfaceWindow: WindowSurface? = null
+
     private val mesh = Quad()
     private val program = Program()
+    private val texture = Texture(
+        GLES11Ext.GL_TEXTURE_EXTERNAL_OES,
+        GLES32.GL_TEXTURE0,
+        GLES32.GL_CLAMP_TO_EDGE,
+        GLES32.GL_LINEAR
+    )
 
     fun fragmentFileName() = "lut.frag"
     fun onProgramCreated() {}
@@ -45,6 +53,9 @@ class GlNode(
         val fragmentSource = assetManager.readTextAsset(fragmentFileName())
         glesManager.withGlContext {
             it.makeCurrent()
+            texture.initialize()
+            mesh.initialize()
+
             program.apply {
                 initialize(vertexSource, fragmentSource)
                 addUniform(
@@ -56,16 +67,8 @@ class GlNode(
                     "texture_matrix0",
                     FloatArray(16).also { Matrix.setIdentityM(it, 0) })
 
-                addTexture(
-                    "input_texture0",
-                    GLES32.GL_TEXTURE0,
-                    GLES11Ext.GL_TEXTURE_EXTERNAL_OES,
-                    GLES32.GL_CLAMP_TO_EDGE,
-                    GLES32.GL_LINEAR
-                )
+                addTexture("input_texture0", texture)
             }
-
-            mesh.initialize()
             onProgramCreated()
         }
 
@@ -167,8 +170,8 @@ class GlNode(
         }
     }
 
-    private suspend fun executeGl() {
-        val size = suspendSize.get()
+    private fun executeGl() {
+        val size = size!!
         GLES32.glUseProgram(program.programId)
         GLES32.glViewport(0, 0, size.width, size.height)
 
@@ -214,6 +217,7 @@ class GlNode(
                     if (rotation == 90 || rotation == 270)
                         Size(size.height, size.width) else size
 
+                this.size = rotatedSize
                 suspendSize.set(rotatedSize)
                 inputRotation = rotation
 

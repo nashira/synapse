@@ -2,7 +2,6 @@ package xyz.rthqks.synapse.core.node
 
 import android.util.Log
 import android.util.Size
-import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
@@ -48,10 +47,6 @@ class CameraNode(
                 connection.queue(frame)
             }
         }
-    }
-
-    suspend fun foo(scope: CoroutineScope) {
-
     }
 
     override suspend fun stop() {

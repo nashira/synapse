@@ -1,15 +1,14 @@
 package xyz.rthqks.synapse.core.gl
 
-import android.opengl.GLES32
+import android.opengl.GLES32.*
 import android.util.Log
-import java.nio.ByteBuffer
 
-open class Mesh(
+abstract class Mesh(
     val operation: Int,
     val mode: Int,
     val start: Int,
     val count: Int,
-    val type: Int = GLES32.GL_UNSIGNED_SHORT,
+    val elementType: Int = GL_UNSIGNED_SHORT,
     var instances: Int = 0
 ) {
     var vaoId = 0
@@ -20,8 +19,8 @@ open class Mesh(
 
     open fun initialize() {
         val vao = IntArray(1)
-        GLES32.glGenVertexArrays(1, vao, 0)
-        GLES32.glBindVertexArray(vao[0])
+        glGenVertexArrays(1, vao, 0)
+        glBindVertexArray(vao[0])
         vaoId = vao[0]
         Log.d(TAG, "created vao $vaoId")
 
@@ -29,9 +28,9 @@ open class Mesh(
             val attribute = it.value
             val buffer = buffersById[attribute.bufferId]!!
 
-            GLES32.glBindBuffer(buffer.target, buffer.id)
-            GLES32.glEnableVertexAttribArray(attribute.index)
-            GLES32.glVertexAttribPointer(
+            glBindBuffer(buffer.target, buffer.id)
+            glEnableVertexAttribArray(attribute.index)
+            glVertexAttribPointer(
                 attribute.index,
                 attribute.size,
                 attribute.type,
@@ -40,45 +39,55 @@ open class Mesh(
                 attribute.offset
             )
         }
-        GLES32.glBindVertexArray(0)
+        glBindVertexArray(0)
     }
 
     open fun execute() {
-        GLES32.glBindVertexArray(vaoId)
+        glBindVertexArray(vaoId)
         when (operation) {
-            DRAW_ARRAYS -> GLES32.glDrawArrays(mode, start, count)
-            DRAW_ELEMENTS -> GLES32.glDrawElements(mode, count, type, start)
+            DRAW_ARRAYS -> glDrawArrays(mode, start, count)
+            DRAW_ELEMENTS -> glDrawElements(mode, count, elementType, start)
         }
-        GLES32.glBindVertexArray(0)
+        glBindVertexArray(0)
     }
 
     open fun release() {
         val ids = buffersById.keys.toIntArray()
-        GLES32.glDeleteBuffers(ids.size, ids, 0)
-        GLES32.glDeleteVertexArrays(1, intArrayOf(vaoId), 0)
+        glDeleteBuffers(ids.size, ids, 0)
+        glDeleteVertexArrays(1, intArrayOf(vaoId), 0)
     }
 
-    fun addBuffer(name: String, data: ByteBuffer, target: Int, usage: Int): Buffer {
+    fun addBuffer(name: String, data: java.nio.Buffer, target: Int, usage: Int): Buffer {
         val bufferId = IntArray(1)
-        GLES32.glGenBuffers(1, bufferId, 0)
+        glGenBuffers(1, bufferId, 0)
         val buffer = Buffer(data, target, usage, bufferId[0])
         buffers[name] = buffer
         buffersById[buffer.id] = buffer
         Log.d(TAG, "addBuffer $buffer")
-        bufferData(buffer)
+        initBufferData(buffer, data.capacity())
         return buffer
     }
 
-    fun bufferData(buffer: Buffer) {
-        buffer.data.position(0)
-        GLES32.glBindBuffer(buffer.target, buffer.id)
-        GLES32.glBufferData(
+    fun initBufferData(buffer: Buffer, size: Int) {
+        glBindBuffer(buffer.target, buffer.id)
+        glBufferData(
             buffer.target,
-            buffer.data.capacity(),
+            size,
             buffer.data,
             buffer.usage
         )
-        GLES32.glBindBuffer(buffer.target, 0)
+        glBindBuffer(buffer.target, 0)
+    }
+
+    fun updateBufferData(buffer: Buffer, offset: Int, size: Int) {
+        glBindBuffer(buffer.target, buffer.id)
+        glBufferSubData(
+            buffer.target,
+            offset,
+            size,
+            buffer.data
+        )
+        glBindBuffer(buffer.target, 0)
     }
 
     fun addAttribute(
@@ -106,7 +115,7 @@ open class Mesh(
 }
 
 data class Buffer(
-    val data: ByteBuffer,
+    val data: java.nio.Buffer,
     val target: Int,
     val usage: Int,
     val id: Int

@@ -4,7 +4,7 @@ import android.media.AudioFormat
 import android.util.Log
 import xyz.rthqks.synapse.core.Connection
 
-class AudioConnection(bufferSize: Int = BUFFER_SIZE) : Connection<AudioEvent>(bufferSize) {
+class AudioConnection(bufferSize: Int = CAPACITY) : Connection<AudioEvent>(bufferSize) {
     lateinit var audioFormat: AudioFormat
     var audioBufferSize = 0
 

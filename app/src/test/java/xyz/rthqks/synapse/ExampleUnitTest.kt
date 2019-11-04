@@ -3,6 +3,9 @@ package xyz.rthqks.synapse
 import kotlinx.coroutines.*
 import org.junit.Assert.assertEquals
 import org.junit.Test
+import xyz.rthqks.synapse.core.edge.AudioConnection
+import java.util.concurrent.Executors
+import kotlin.system.measureNanoTime
 
 /**
  * Example local unit test, which will execute on the development machine (host).
@@ -13,6 +16,68 @@ class ExampleUnitTest {
     @Test
     fun addition_isCorrect() {
         assertEquals(4, 2 + 2)
+    }
+    @Test
+    fun channelBenchmark() {
+        val dispatcher = Executors.newFixedThreadPool(8).asCoroutineDispatcher()
+        val scope = CoroutineScope(SupervisorJob() + dispatcher)
+        val connection = AudioConnection()
+
+        runBlocking {
+            delay(1000)
+        }
+        runTest(scope, connection,10000)
+        runTest(scope, connection,100000)
+//        runTest(scope, connection,100000)
+//        runTest(scope, connection,100000)
+    }
+
+    private fun runTest(
+        scope: CoroutineScope,
+        connection: AudioConnection,
+        num: Int
+    ) {
+        val receiveJob = receive(scope, connection)
+
+        val sendJob = send(scope, connection, num)
+
+        runBlocking {
+            val time = measureNanoTime {
+                receiveJob.join()
+                sendJob.join()
+            }
+            println("elapsed $time")
+        }
+    }
+
+    private fun receive(
+        scope: CoroutineScope,
+        connection: AudioConnection
+    ): Job {
+        return scope.launch {
+            var event = connection.acquire()
+            while (!event.eos) {
+                connection.release(event)
+                event = connection.acquire()
+            }
+        }
+    }
+
+    private fun send(
+        scope: CoroutineScope,
+        connection: AudioConnection,
+        num: Int
+    ): Job {
+        return scope.launch {
+            repeat(num) {
+                val event = connection.dequeue()
+                event.eos = false
+                connection.queue(event)
+            }
+            val event = connection.dequeue()
+            event.eos = true
+            connection.queue(event)
+        }
     }
 
     @Test
