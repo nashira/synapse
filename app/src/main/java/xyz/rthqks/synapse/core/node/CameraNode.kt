@@ -1,19 +1,28 @@
 package xyz.rthqks.synapse.core.node
 
+import android.graphics.SurfaceTexture
+import android.opengl.GLES11Ext
+import android.opengl.GLES32.*
 import android.util.Log
 import android.util.Size
+import android.view.Surface
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.sync.Mutex
 import xyz.rthqks.synapse.core.CameraManager
 import xyz.rthqks.synapse.core.Connection
 import xyz.rthqks.synapse.core.Node
 import xyz.rthqks.synapse.core.edge.SurfaceConnection
 import xyz.rthqks.synapse.core.edge.TextureConnection
+import xyz.rthqks.synapse.core.edge.TextureEvent
+import xyz.rthqks.synapse.core.gl.GlesManager
+import xyz.rthqks.synapse.core.gl.Texture
 import xyz.rthqks.synapse.data.PortType
 
 class CameraNode(
     private val cameraManager: CameraManager,
+    private val glesManager: GlesManager,
     private val facing: Int,
     private val requestedSize: Size,
     private val frameRate: Int
@@ -24,6 +33,15 @@ class CameraNode(
     private var surfaceConnection: SurfaceConnection? = null
     private var textureConnection: TextureConnection? = null
     private var startJob: Job? = null
+    private val mutex = Mutex()
+    private var outputSurface: Surface? = null
+    private var outputSurfaceTexture: SurfaceTexture? = null
+    private val outputTexture = Texture(
+        GLES11Ext.GL_TEXTURE_EXTERNAL_OES,
+        GL_TEXTURE0,
+        GL_CLAMP_TO_EDGE,
+        GL_LINEAR
+    )
 
     override suspend fun initialize() {
         val conf = cameraManager.resolve(facing, requestedSize, frameRate)
@@ -33,22 +51,107 @@ class CameraNode(
         surfaceRotation = conf.rotation
     }
 
-    override suspend fun start() = coroutineScope {
+    override suspend fun start() = when {
+        surfaceConnection != null -> startSurface()
+        textureConnection != null -> startTexture()
+        else -> {
+            Log.w(TAG, "no connection, not starting")
+            Unit
+        }
+    }
+
+    private suspend fun startSurface() = coroutineScope {
         val connection = surfaceConnection ?: return@coroutineScope
         val surface = connection.getSurface()
+        mutex.lock()
         startJob = launch {
             cameraManager.start(cameraId, surface, frameRate) { count, timestamp, eos ->
-                if (eos) {
-                    Log.d(TAG, "sending EOS")
-                    Log.d(TAG, "sent frames $count")
+                launch {
+                    val frame = connection.dequeue()
+                    frame.eos = eos
+                    frame.count = count
+                    frame.timestamp = timestamp
+                    connection.queue(frame)
+                    if (eos) {
+                        Log.d(TAG, "sending EOS")
+                        Log.d(TAG, "sent frames $count")
+                        mutex.unlock()
+                    }
                 }
-                val frame = connection.dequeue()
-                frame.eos = eos
-                frame.count = count
-                frame.timestamp = timestamp
-                connection.queue(frame)
             }
+            // lock again to suspend until we unlock on EOS
+            mutex.lock()
+            mutex.unlock()
         }
+    }
+
+    private suspend fun startTexture() = coroutineScope {
+        val connection = textureConnection ?: return@coroutineScope
+        val surface = outputSurface ?: return@coroutineScope
+        mutex.lock()
+
+        startJob = launch {
+
+            cameraManager.start(cameraId, surface, frameRate) { count, timestamp, eos ->
+//                launch {
+//                    val frame = connection.dequeue()
+//                    frame.eos = eos
+//                    frame.count = count
+//                    frame.timestamp = timestamp
+//                    connection.queue(frame)
+//                Log.d(TAG, "camera $timestamp")
+                if (eos) {
+                    Log.d(TAG, "got EOS from cam")
+                    Log.d(TAG, "sent frames $count")
+                    outputSurfaceTexture?.setOnFrameAvailableListener(null)
+
+                    launch {
+                        val event = connection.dequeue()
+                        event.eos = true
+                        connection.queue(event)
+                        mutex.unlock()
+                    }
+                }
+            }
+
+            var copyMatrix = true
+            setOnFrameAvailableListener {
+                launch {
+                    onFrame(connection, it, copyMatrix)
+                    copyMatrix = false
+                }
+            }
+
+            // lock again to suspend until we unlock on EOS
+            mutex.lock()
+            mutex.unlock()
+        }
+    }
+
+    private fun setOnFrameAvailableListener(block: (SurfaceTexture) -> Unit) {
+        Log.d(TAG, "setOnFrameAvailableListener $outputSurfaceTexture")
+//        val uniform = program.getUniform(Uniform.Type.Mat4, "texture_matrix0")
+//        var textureMatrix = uniform.data
+//        uniform.dirty = true
+        outputSurfaceTexture?.setOnFrameAvailableListener(block, glesManager.backgroundHandler)
+    }
+
+    private suspend fun onFrame(
+        connection: TextureConnection,
+        surfaceTexture: SurfaceTexture,
+        copyMatrix: Boolean
+    ) {
+
+        val event = connection.dequeue()
+        glesManager.withGlContext {
+            surfaceTexture.updateTexImage()
+            if (copyMatrix) {
+                surfaceTexture.getTransformMatrix(event.matrix)
+            }
+//            Log.d(TAG, "surface ${surfaceTexture.timestamp}")
+        }
+        event.eos = false
+        connection.queue(event)
     }
 
     override suspend fun stop() {
@@ -57,6 +160,9 @@ class CameraNode(
     }
 
     override suspend fun release() {
+        outputSurface?.release()
+        outputSurfaceTexture?.release()
+        outputTexture.release()
     }
 
     override suspend fun output(key: String): Connection<*>? = when (key) {
@@ -64,8 +170,23 @@ class CameraNode(
             surfaceConnection = it
             it.configure(size, surfaceRotation)
         }
-        PortType.TEXTURE_1 -> TextureConnection().also {
+        PortType.TEXTURE_1 -> TextureConnection(1) {
+            Log.d(TAG, "creating texture event $outputTexture")
+            TextureEvent(outputTexture, FloatArray(16))
+        }.also {
             textureConnection = it
+            glesManager.withGlContext {
+                outputTexture.initialize()
+            }
+            outputSurfaceTexture = SurfaceTexture(outputTexture.id)
+            outputSurface = Surface(outputSurfaceTexture)
+
+            val rotatedSize =
+                if (surfaceRotation == 90 || surfaceRotation == 270)
+                    Size(size.height, size.width) else size
+
+            it.size = rotatedSize
+            outputSurfaceTexture?.setDefaultBufferSize(size.width, size.height)
         }
         else -> null
     }

@@ -77,7 +77,6 @@ sealed class NodeType(
         "lut_filter",
         R.string.name_node_type_color_filter, R.drawable.ic_tune,
         listOf(
-            PortType.Surface(PortType.SURFACE_1, PortType.INPUT),
             PortType.Texture(PortType.TEXTURE_1, PortType.INPUT),
             PortType.Surface(PortType.SURFACE_1, PortType.OUTPUT),
             PortType.Texture(PortType.TEXTURE_1, PortType.OUTPUT)
@@ -109,8 +108,7 @@ sealed class NodeType(
         R.string.name_node_type_screen,
         R.drawable.ic_display,
         listOf(
-            PortType.Surface(PortType.SURFACE_1, PortType.INPUT),
-            PortType.Texture(PortType.TEXTURE_1, PortType.INPUT)
+            PortType.Surface(PortType.SURFACE_1, PortType.INPUT)
         ),
         emptyList()
     )

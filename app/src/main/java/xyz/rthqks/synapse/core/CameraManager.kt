@@ -10,10 +10,6 @@ import android.util.Range
 import android.util.Size
 import android.view.Surface
 import android.view.WindowManager
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.coroutineScope
-import kotlinx.coroutines.launch
-import kotlin.coroutines.Continuation
 import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException
 import kotlin.coroutines.suspendCoroutine
@@ -29,7 +25,6 @@ class CameraManager(
     private var displayRotation = 0
     private var camera: CameraDevice? = null
     private var session: CameraCaptureSession? = null
-    private var startContinuation: Continuation<Unit>? = null
     private var isEos: Boolean = false
 
     fun initialize() {
@@ -56,7 +51,7 @@ class CameraManager(
         cameraId: String,
         surface: Surface,
         fps: Int,
-        onFrame: suspend (Long, Long, Boolean) -> Unit
+        onFrame: ((Long, Long, Boolean) -> Unit)
     ) {
         isEos = false
         val c = openCamera(cameraId)
@@ -67,12 +62,8 @@ class CameraManager(
             it.addTarget(surface)
             it.set(CaptureRequest.CONTROL_AE_TARGET_FPS_RANGE, Range(fps, fps))
         }.build()
-        coroutineScope {
-            suspendCoroutine<Unit> {
-                startContinuation = it
-                startRequest(s, request, onFrame, this)
-            }
-        }
+
+        startRequest(s, request, onFrame)
     }
 
     fun stop() {
@@ -117,7 +108,6 @@ class CameraManager(
 
             override fun onClosed(camera: CameraDevice) {
                 Log.d(TAG, "onClosed")
-                startContinuation?.resume(Unit)
             }
         }, handler)
     }
@@ -149,8 +139,7 @@ class CameraManager(
     private fun startRequest(
         session: CameraCaptureSession,
         request: CaptureRequest,
-        onFrame: suspend (Long, Long, Boolean) -> Unit,
-        scope: CoroutineScope
+        onFrame: ((Long, Long, Boolean) -> Unit)
     ) {
         session.setRepeatingRequest(request, object : CameraCaptureSession.CaptureCallback() {
             override fun onCaptureCompleted(
@@ -166,10 +155,8 @@ class CameraManager(
                     camera?.close()
                 }
 
-                scope.launch {
-                    val time = result[CaptureResult.SENSOR_TIMESTAMP]!!
-                    onFrame(result.frameNumber, time, eos)
-                }
+                val time = result[CaptureResult.SENSOR_TIMESTAMP]!!
+                onFrame.invoke(result.frameNumber, time, eos)
             }
         }, handler)
     }

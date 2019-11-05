@@ -1,7 +1,6 @@
 package xyz.rthqks.synapse.core.gl
 
-import android.opengl.GLES32
-import java.nio.ByteBuffer
+import android.opengl.GLES32.*
 
 class Texture(
     val target: Int,
@@ -21,19 +20,19 @@ class Texture(
     fun initialize() {
         val textureHandle = IntArray(1)
 
-        GLES32.glGenTextures(1, textureHandle, 0)
+        glGenTextures(1, textureHandle, 0)
 
         if (textureHandle[0] != 0) {
 
-            GLES32.glBindTexture(target, textureHandle[0])
+            glBindTexture(target, textureHandle[0])
 
-            GLES32.glTexParameteri(target, GLES32.GL_TEXTURE_MIN_FILTER, filter)
-            GLES32.glTexParameteri(target, GLES32.GL_TEXTURE_MAG_FILTER, filter)
+            glTexParameteri(target, GL_TEXTURE_MIN_FILTER, filter)
+            glTexParameteri(target, GL_TEXTURE_MAG_FILTER, filter)
 
-            GLES32.glTexParameterf(target, GLES32.GL_TEXTURE_WRAP_S, repeat.toFloat())
-            GLES32.glTexParameterf(target, GLES32.GL_TEXTURE_WRAP_T, repeat.toFloat())
+            glTexParameterf(target, GL_TEXTURE_WRAP_S, repeat.toFloat())
+            glTexParameterf(target, GL_TEXTURE_WRAP_T, repeat.toFloat())
 
-            GLES32.glBindTexture(target, 0)
+            glBindTexture(target, 0)
         } else {
             throw RuntimeException("Error creating texture.")
         }
@@ -41,8 +40,13 @@ class Texture(
         id = textureHandle[0]
     }
 
+    fun bind() {
+        glActiveTexture(unit)
+        glBindTexture(target, id)
+    }
+
     fun release() {
-        GLES32.glDeleteTextures(1, intArrayOf(id), 0)
+        glDeleteTextures(1, intArrayOf(id), 0)
     }
 
     fun initData(
@@ -60,9 +64,9 @@ class Texture(
         this.format = format
         this.type = type
 
-        GLES32.glActiveTexture(unit)
-        GLES32.glBindTexture(target, id)
-        GLES32.glTexImage2D(
+        glActiveTexture(unit)
+        glBindTexture(target, id)
+        glTexImage2D(
             target,
             level,
             internalFormat,
@@ -73,7 +77,7 @@ class Texture(
             type,
             buffer
         )
-        GLES32.glBindTexture(target, 0)
+        glBindTexture(target, 0)
     }
 
     fun updateData(
@@ -84,9 +88,9 @@ class Texture(
         height: Int,
         buffer: java.nio.Buffer
     ) {
-        GLES32.glActiveTexture(unit)
-        GLES32.glBindTexture(target, id)
-        GLES32.glTexSubImage2D(
+        glActiveTexture(unit)
+        glBindTexture(target, id)
+        glTexSubImage2D(
             target,
             level,
             xoffset,
@@ -97,6 +101,6 @@ class Texture(
             type,
             buffer
         )
-        GLES32.glBindTexture(target, 0)
+        glBindTexture(target, 0)
     }
 }

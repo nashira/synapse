@@ -38,6 +38,7 @@ class Graph(
             val node = when (it.type) {
                 NodeType.Camera -> CameraNode(
                     cameraManager,
+                    glesManager,
                     it[Key.CameraFacing],
                     it[Key.CameraCaptureSize],
                     it[Key.CameraFrameRate]
