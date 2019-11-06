@@ -5,11 +5,11 @@ import android.util.Log
 import android.view.SurfaceView
 import kotlinx.coroutines.*
 import xyz.rthqks.synapse.assets.AssetManager
-import xyz.rthqks.synapse.core.gl.GlesManager
 import xyz.rthqks.synapse.core.node.*
 import xyz.rthqks.synapse.data.GraphData
 import xyz.rthqks.synapse.data.Key
 import xyz.rthqks.synapse.data.NodeType
+import xyz.rthqks.synapse.gl.GlesManager
 import java.util.concurrent.Executors
 
 class Graph(
@@ -132,7 +132,7 @@ class Graph(
     }
 
     private suspend fun <T> parallelJoin(items: Iterable<T>, block: suspend (item: T) -> Unit) {
-        items.map { scope.launch { block(it) } }.forEach { it.join() }
+        items.map { scope.launch { block(it) } }.joinAll()
     }
 
     fun tmp_SetSurfaceView(surfaceView: SurfaceView) {

@@ -1,4 +1,4 @@
-package xyz.rthqks.synapse.core.gl
+package xyz.rthqks.synapse.gl
 
 import android.opengl.GLES32.*
 
@@ -56,7 +56,7 @@ class Texture(
         height: Int,
         format: Int,
         type: Int,
-        buffer: java.nio.Buffer?
+        buffer: java.nio.Buffer? = null
     ) {
         this.width = width
         this.height = height

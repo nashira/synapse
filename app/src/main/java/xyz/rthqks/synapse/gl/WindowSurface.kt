@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package xyz.rthqks.synapse.core.gl
+package xyz.rthqks.synapse.gl
 
 import android.graphics.SurfaceTexture
 import android.view.Surface

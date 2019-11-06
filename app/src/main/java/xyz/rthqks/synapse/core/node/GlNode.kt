@@ -1,7 +1,6 @@
 package xyz.rthqks.synapse.core.node
 
-import android.opengl.GLES32.glUseProgram
-import android.opengl.GLES32.glViewport
+import android.opengl.GLES32.*
 import android.opengl.Matrix
 import android.util.Log
 import android.util.Size
@@ -10,43 +9,49 @@ import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import xyz.rthqks.synapse.assets.AssetManager
 import xyz.rthqks.synapse.core.Connection
 import xyz.rthqks.synapse.core.Node
 import xyz.rthqks.synapse.core.edge.SurfaceConnection
 import xyz.rthqks.synapse.core.edge.TextureConnection
-import xyz.rthqks.synapse.core.gl.*
+import xyz.rthqks.synapse.core.edge.TextureEvent
 import xyz.rthqks.synapse.data.PortType
+import xyz.rthqks.synapse.gl.*
 
 class GlNode(
     private val glesManager: GlesManager,
     private val assetManager: AssetManager
 ) : Node() {
-    private var outputConnection: SurfaceConnection? = null
     private var inputConnection: TextureConnection? = null
     private var startJob: Job? = null
     private val connectMutex = Mutex(true)
     private var size = Size(0, 0)
+
+    private var outputTextureConnection: TextureConnection? = null
+    private var texture: Texture? = null
+    private var framebuffer: Framebuffer? = null
+
+    private var outputSurfaceConnection: SurfaceConnection? = null
     private var outputSurfaceWindow: WindowSurface? = null
 
     private val mesh = Quad()
     private val program = Program()
-//    private val texture = Texture(
-//        GLES11Ext.GL_TEXTURE_EXTERNAL_OES,
-//        GL_TEXTURE0,
-//        GL_CLAMP_TO_EDGE,
-//        GL_LINEAR
-//    )
-
-    fun fragmentFileName() = "lut.frag"
 
     override suspend fun initialize() {
-        createProgram()
+
     }
 
-    private suspend fun createProgram() {
+    private suspend fun createProgram(oesTexture: Boolean) {
         val vertexSource = assetManager.readTextAsset("vertex_texture.vert")
-        val fragmentSource = assetManager.readTextAsset(fragmentFileName())
+        val fragmentSource = assetManager.readTextAsset("lut.frag").let {
+            if (oesTexture) {
+                it.replace("#{EXT}", "#define EXT")
+            } else {
+                it
+            }
+        }
+
         glesManager.withGlContext {
             //            texture.initialize()
             mesh.initialize()
@@ -72,8 +77,55 @@ class GlNode(
         }
     }
 
-    override suspend fun start() = coroutineScope {
-        val output = outputConnection ?: return@coroutineScope
+    override suspend fun start() = when {
+        outputSurfaceConnection != null -> startSurface()
+        outputTextureConnection != null -> startTexture()
+        else -> {
+            Log.w(TAG, "no connection on start")
+            Unit
+        }
+    }
+
+    private suspend fun startTexture() = coroutineScope {
+        val output = outputTextureConnection ?: return@coroutineScope
+        val input = inputConnection ?: return@coroutineScope
+
+        var copyMatrix = true
+
+        startJob = launch {
+            while (isActive) {
+                val inEvent = input.acquire()
+
+                val outEvent = output.dequeue()
+                outEvent.eos = inEvent.eos
+                outEvent.count = inEvent.count
+                outEvent.timestamp = inEvent.timestamp
+
+
+                if (copyMatrix) {
+                    copyMatrix = false
+                    val uniform = program.getUniform(Uniform.Type.Mat4, "texture_matrix0")
+                    System.arraycopy(inEvent.matrix, 0, uniform.data!!, 0, 16)
+                    uniform.dirty = true
+                }
+                glesManager.withGlContext {
+                    framebuffer?.bind()
+                    executeGl(inEvent.texture)
+                }
+
+                input.release(inEvent)
+                output.queue(outEvent)
+
+                if (outEvent.eos) {
+                    Log.d(TAG, "got EOS")
+                    startJob?.cancel()
+                }
+            }
+        }
+    }
+
+    private suspend fun startSurface() = coroutineScope {
+        val output = outputSurfaceConnection ?: return@coroutineScope
         val input = inputConnection ?: return@coroutineScope
 
         updateOutputSurface(output)
@@ -95,11 +147,11 @@ class GlNode(
                         copyMatrix = false
 
                         val uniform = program.getUniform(Uniform.Type.Mat4, "texture_matrix0")
-                        System.arraycopy(inEvent.matrix, 0, uniform.data, 0, 16)
+                        System.arraycopy(inEvent.matrix, 0, uniform.data!!, 0, 16)
                         uniform.dirty = true
                     }
                     glesManager.withGlContext {
-                        outputSurfaceWindow?.makeCurrent()
+                        glBindFramebuffer(GL_FRAMEBUFFER, 0)
                         executeGl(inEvent.texture)
                         outputSurfaceWindow?.setPresentationTime(inEvent.timestamp)
                         outputSurfaceWindow?.swapBuffers()
@@ -144,20 +196,50 @@ class GlNode(
 
     override suspend fun release() {
         outputSurfaceWindow?.release()
+
         glesManager.withGlContext {
-//            texture.release()
             mesh.release()
             program.release()
+
+            texture?.release()
+            framebuffer?.release()
         }
     }
 
     override suspend fun output(key: String): Connection<*>? = when (key) {
         PortType.SURFACE_1 -> {
             SurfaceConnection().also { connection ->
-                outputConnection = connection
-                connectMutex.lock()
-                connectMutex.unlock()
-                connection.configure(size, 0)
+                outputSurfaceConnection = connection
+                connectMutex.withLock {
+                    connection.configure(size, 0)
+                }
+            }
+        }
+        PortType.TEXTURE_1 -> {
+            TextureConnection {
+                val texture = Texture(
+                    GL_TEXTURE_2D,
+                    GL_TEXTURE0,
+                    GL_CLAMP_TO_EDGE,
+                    GL_LINEAR
+                )
+                val fbo = Framebuffer()
+                this.texture = texture
+                this.framebuffer = fbo
+
+                glesManager.withGlContext {
+                    texture.initialize()
+                    texture.initData(0, GL_RGB8, size.width, size.height, GL_RGB, GL_UNSIGNED_BYTE)
+                    Log.d(TAG, "glGetError() ${glGetError()}")
+
+                    fbo.initialize(texture.id)
+                }
+                TextureEvent(texture, FloatArray(16).also { Matrix.setIdentityM(it, 0) })
+            }.also { connection ->
+                outputTextureConnection = connection
+                connectMutex.withLock {
+                    connection.size = size
+                }
             }
         }
         else -> null
@@ -169,6 +251,7 @@ class GlNode(
                 connection as TextureConnection
                 inputConnection = connection
                 size = connection.size
+                createProgram(connection.isOes)
 
                 connectMutex.unlock()
             }

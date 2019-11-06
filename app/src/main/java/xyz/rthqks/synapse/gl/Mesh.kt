@@ -1,4 +1,4 @@
-package xyz.rthqks.synapse.core.gl
+package xyz.rthqks.synapse.gl
 
 import android.opengl.GLES32.*
 import android.util.Log

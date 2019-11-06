@@ -1,4 +1,4 @@
-package xyz.rthqks.synapse.core.gl
+package xyz.rthqks.synapse.gl
 
 class Uniform<T>(
     val type: Type<T>,

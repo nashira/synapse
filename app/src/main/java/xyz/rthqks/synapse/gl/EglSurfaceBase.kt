@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package xyz.rthqks.synapse.core.gl
+package xyz.rthqks.synapse.gl
 
 import android.opengl.EGL14
 import android.util.Log

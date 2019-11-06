@@ -14,8 +14,8 @@ import xyz.rthqks.synapse.core.Connection
 import xyz.rthqks.synapse.core.Node
 import xyz.rthqks.synapse.core.edge.AudioConnection
 import xyz.rthqks.synapse.core.edge.SurfaceConnection
-import xyz.rthqks.synapse.core.gl.*
 import xyz.rthqks.synapse.data.PortType
+import xyz.rthqks.synapse.gl.*
 import java.nio.ByteBuffer
 
 class AudioWaveformNode(

@@ -1,6 +1,6 @@
 package xyz.rthqks.synapse.core.edge
 
-import xyz.rthqks.synapse.core.gl.Texture
+import xyz.rthqks.synapse.gl.Texture
 
 data class TextureEvent(
     var texture: Texture,

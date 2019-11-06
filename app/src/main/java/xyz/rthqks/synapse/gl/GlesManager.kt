@@ -1,4 +1,4 @@
-package xyz.rthqks.synapse.core.gl
+package xyz.rthqks.synapse.gl
 
 import android.opengl.Matrix
 import android.os.Handler

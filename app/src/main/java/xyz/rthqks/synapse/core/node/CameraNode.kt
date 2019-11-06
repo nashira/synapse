@@ -10,15 +10,16 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import xyz.rthqks.synapse.core.CameraManager
 import xyz.rthqks.synapse.core.Connection
 import xyz.rthqks.synapse.core.Node
 import xyz.rthqks.synapse.core.edge.SurfaceConnection
 import xyz.rthqks.synapse.core.edge.TextureConnection
 import xyz.rthqks.synapse.core.edge.TextureEvent
-import xyz.rthqks.synapse.core.gl.GlesManager
-import xyz.rthqks.synapse.core.gl.Texture
 import xyz.rthqks.synapse.data.PortType
+import xyz.rthqks.synapse.gl.GlesManager
+import xyz.rthqks.synapse.gl.Texture
 
 class CameraNode(
     private val cameraManager: CameraManager,
@@ -123,8 +124,7 @@ class CameraNode(
             }
 
             // lock again to suspend until we unlock on EOS
-            mutex.lock()
-            mutex.unlock()
+            mutex.withLock {  }
         }
     }
 
@@ -186,6 +186,7 @@ class CameraNode(
                     Size(size.height, size.width) else size
 
             it.size = rotatedSize
+            it.isOes = true
             outputSurfaceTexture?.setDefaultBufferSize(size.width, size.height)
         }
         else -> null
