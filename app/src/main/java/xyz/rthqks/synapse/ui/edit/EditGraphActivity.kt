@@ -90,6 +90,7 @@ class AddNodeAdapter(
         private val TYPES = listOf(
             NodeType.Camera,
             NodeType.FrameDifference,
+            NodeType.GrayscaleFilter,
             NodeType.Microphone,
             NodeType.AudioWaveform,
 //            NodeType.Image,

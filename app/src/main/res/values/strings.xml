@@ -58,4 +58,5 @@
     <string name="property_label_camera_capture_size_480">640x480</string>
     <string name="name_node_type_audio_waveform">Audio Waveform</string>
     <string name="name_node_type_frame_difference">Frame Difference</string>
+    <string name="name_node_type_grayscale_filter">Grayscale Filter</string>
 </resources>

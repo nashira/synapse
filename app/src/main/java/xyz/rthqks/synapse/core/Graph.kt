@@ -16,7 +16,7 @@ class Graph(
     private val context: Context,
     private val graphData: GraphData
 ) {
-    private val dispatcher = Executors.newFixedThreadPool(8).asCoroutineDispatcher()
+    private val dispatcher = Executors.newFixedThreadPool(6).asCoroutineDispatcher()
     private val exceptionHandler = CoroutineExceptionHandler { context, throwable ->
         Log.d(TAG, "error", throwable)
     }
@@ -44,6 +44,7 @@ class Graph(
                     it[Key.CameraFrameRate]
                 )
                 NodeType.FrameDifference -> FrameDifferenceNode(glesManager, assetManager)
+                NodeType.GrayscaleFilter -> GrayscaleNode(glesManager, assetManager)
                 NodeType.Microphone -> AudioSourceNode(
                     it[Key.AudioSampleRate],
                     it[Key.AudioChannel],

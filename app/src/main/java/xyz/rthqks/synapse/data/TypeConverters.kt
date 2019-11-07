@@ -11,6 +11,7 @@ class DbConverters {
         when (string) {
             NodeType.Camera.key -> NodeType.Camera
             NodeType.FrameDifference.key -> NodeType.FrameDifference
+            NodeType.GrayscaleFilter.key -> NodeType.GrayscaleFilter
             NodeType.Microphone.key -> NodeType.Microphone
             NodeType.AudioWaveform.key -> NodeType.AudioWaveform
             NodeType.Image.key -> NodeType.Image

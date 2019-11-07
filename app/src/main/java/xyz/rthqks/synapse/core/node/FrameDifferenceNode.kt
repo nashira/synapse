@@ -84,8 +84,6 @@ class FrameDifferenceNode(
 
             framebuffer1.initialize(lastFrameTexture1.id, diffTexture.id)
             framebuffer2.initialize(lastFrameTexture2.id, diffTexture.id)
-//            framebuffer1.initialize(diffTexture.id, lastFrameTexture1.id)
-//            framebuffer2.initialize(diffTexture.id, lastFrameTexture2.id)
         }
     }
 
@@ -100,7 +98,6 @@ class FrameDifferenceNode(
         }
 
         glesManager.withGlContext {
-            //            texture.initialize()
             mesh.initialize()
 
             program.apply {
