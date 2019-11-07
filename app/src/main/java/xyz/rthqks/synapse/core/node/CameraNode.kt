@@ -2,7 +2,8 @@ package xyz.rthqks.synapse.core.node
 
 import android.graphics.SurfaceTexture
 import android.opengl.GLES11Ext
-import android.opengl.GLES32.*
+import android.opengl.GLES32.GL_CLAMP_TO_EDGE
+import android.opengl.GLES32.GL_LINEAR
 import android.util.Log
 import android.util.Size
 import android.view.Surface
@@ -39,7 +40,6 @@ class CameraNode(
     private var outputSurfaceTexture: SurfaceTexture? = null
     private val outputTexture = Texture(
         GLES11Ext.GL_TEXTURE_EXTERNAL_OES,
-        GL_TEXTURE0,
         GL_CLAMP_TO_EDGE,
         GL_LINEAR
     )

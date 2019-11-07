@@ -4,7 +4,6 @@ import android.opengl.GLES32.*
 
 class Texture(
     val target: Int,
-    val unit: Int,
     val repeat: Int,
     val filter: Int
 ) {
@@ -40,7 +39,7 @@ class Texture(
         id = textureHandle[0]
     }
 
-    fun bind() {
+    fun bind(unit: Int) {
         glActiveTexture(unit)
         glBindTexture(target, id)
     }
@@ -64,7 +63,6 @@ class Texture(
         this.format = format
         this.type = type
 
-        glActiveTexture(unit)
         glBindTexture(target, id)
         glTexImage2D(
             target,
@@ -88,7 +86,6 @@ class Texture(
         height: Int,
         buffer: java.nio.Buffer
     ) {
-        glActiveTexture(unit)
         glBindTexture(target, id)
         glTexSubImage2D(
             target,

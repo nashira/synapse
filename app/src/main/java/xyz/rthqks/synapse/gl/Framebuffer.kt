@@ -7,16 +7,29 @@ class Framebuffer {
     var id: Int = 0
         private set
 
-    fun initialize(texture: Int) {
+    fun initialize(vararg textures: Int) {
         val fbo = IntArray(1)
         glGenFramebuffers(1, fbo, 0)
         id = fbo[0]
 
         glBindFramebuffer(GL_FRAMEBUFFER, fbo[0])
-        glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, texture, 0)
+
+        val buffers = mutableListOf<Int>()
+        textures.forEachIndexed { index, i ->
+            glFramebufferTexture2D(
+                GL_FRAMEBUFFER,
+                GL_COLOR_ATTACHMENT0 + index,
+                GL_TEXTURE_2D,
+                i,
+                0
+            )
+            buffers.add(GL_COLOR_ATTACHMENT0 + index)
+        }
+
+        glDrawBuffers(buffers.size, buffers.toIntArray(), 0)
 
         val status = glCheckFramebufferStatus(GL_FRAMEBUFFER)
-        if(status != GL_FRAMEBUFFER_COMPLETE) {
+        if (status != GL_FRAMEBUFFER_COMPLETE) {
             Log.d(TAG, "initialize framebuffer error: $status")
         }
 

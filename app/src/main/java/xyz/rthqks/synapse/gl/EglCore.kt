@@ -299,6 +299,10 @@ class EglCore
         EGLExt.eglPresentationTimeANDROID(mEGLDisplay, eglSurface, nsecs)
     }
 
+    fun setSwapInterval(interval: Int) {
+        EGL14.eglSwapInterval(mEGLDisplay, interval)
+    }
+
     /**
      * Returns true if our context and the specified surface are current.
      */

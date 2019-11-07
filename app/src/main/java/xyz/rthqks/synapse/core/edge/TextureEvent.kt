@@ -2,7 +2,7 @@ package xyz.rthqks.synapse.core.edge
 
 import xyz.rthqks.synapse.gl.Texture
 
-data class TextureEvent(
+class TextureEvent(
     var texture: Texture,
     var matrix: FloatArray,
     var eos: Boolean = false,

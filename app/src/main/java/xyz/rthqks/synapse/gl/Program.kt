@@ -5,10 +5,7 @@ import android.util.Log
 
 class Program {
     private val uniforms = mutableMapOf<String, Uniform<*>>()
-    private val textures = mutableMapOf<String, Texture>()
-
     private val uniformList = mutableListOf<Uniform<*>>()
-    private val textureList = mutableListOf<Texture>()
     var programId: Int = 0
         private set
 
@@ -67,19 +64,6 @@ class Program {
                 }
 
             }
-        }
-    }
-
-    fun addTexture(name: String, texture: Texture) {
-        textures[name] = texture
-        textureList.add(texture)
-        addUniform(Uniform.Type.Integer, name, GLES32.GL_TEXTURE0 - texture.unit)
-    }
-
-    fun bindTextures() {
-        textureList.forEach { texture ->
-            GLES32.glActiveTexture(texture.unit)
-            GLES32.glBindTexture(texture.target, texture.id)
         }
     }
 

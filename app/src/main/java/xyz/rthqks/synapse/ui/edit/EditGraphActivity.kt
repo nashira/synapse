@@ -89,6 +89,7 @@ class AddNodeAdapter(
     companion object {
         private val TYPES = listOf(
             NodeType.Camera,
+            NodeType.FrameDifference,
             NodeType.Microphone,
             NodeType.AudioWaveform,
 //            NodeType.Image,

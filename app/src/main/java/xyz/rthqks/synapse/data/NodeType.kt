@@ -41,6 +41,17 @@ sealed class NodeType(
         )
     )
 
+    object FrameDifference : NodeType(
+        "frame_difference",
+        R.string.name_node_type_frame_difference, R.drawable.ic_difference,
+        listOf(
+            PortType.Texture(PortType.TEXTURE_1, PortType.INPUT),
+            PortType.Texture(PortType.TEXTURE_1, PortType.OUTPUT),
+            PortType.Texture(PortType.TEXTURE_2, PortType.OUTPUT)
+        ),
+        emptyList()
+    )
+
     object AudioWaveform : NodeType(
         "audio_waveform",
         R.string.name_node_type_audio_waveform, R.drawable.ic_audio,

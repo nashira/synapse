@@ -43,6 +43,7 @@ class Graph(
                     it[Key.CameraCaptureSize],
                     it[Key.CameraFrameRate]
                 )
+                NodeType.FrameDifference -> FrameDifferenceNode(glesManager, assetManager)
                 NodeType.Microphone -> AudioSourceNode(
                     it[Key.AudioSampleRate],
                     it[Key.AudioChannel],

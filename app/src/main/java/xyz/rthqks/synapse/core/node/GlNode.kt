@@ -153,7 +153,6 @@ class GlNode(
                     glesManager.withGlContext {
                         glBindFramebuffer(GL_FRAMEBUFFER, 0)
                         executeGl(inEvent.texture)
-                        outputSurfaceWindow?.setPresentationTime(inEvent.timestamp)
                         outputSurfaceWindow?.swapBuffers()
                     }
                 }
@@ -183,7 +182,7 @@ class GlNode(
         glUseProgram(program.programId)
         glViewport(0, 0, size.width, size.height)
 
-        texture.bind()
+        texture.bind(GL_TEXTURE0)
 
         program.bindUniforms()
 
@@ -219,7 +218,6 @@ class GlNode(
             TextureConnection {
                 val texture = Texture(
                     GL_TEXTURE_2D,
-                    GL_TEXTURE0,
                     GL_CLAMP_TO_EDGE,
                     GL_LINEAR
                 )

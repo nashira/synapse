@@ -33,7 +33,6 @@ class AudioWaveformNode(
     private val program = Program()
     private val texture = Texture(
         GL_TEXTURE_2D,
-        GL_TEXTURE0,
         GL_CLAMP_TO_EDGE,
         GL_NEAREST)
 
@@ -68,7 +67,8 @@ class AudioWaveformNode(
 
                 addUniform(Uniform.Type.Integer, "isSigned", 0)
 
-                addTexture("audio_texture", texture)
+                addUniform(Uniform.Type.Integer, "audio_texture", 0)
+
             }
         }
     }
@@ -105,7 +105,7 @@ class AudioWaveformNode(
                         glViewport(0, 0, 1080, 1080)
                         glUseProgram(program.programId)
 
-                        program.bindTextures()
+                        texture.bind(GL_TEXTURE0)
 
                         program.bindUniforms()
 
