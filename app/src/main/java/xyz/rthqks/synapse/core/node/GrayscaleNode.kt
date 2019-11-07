@@ -42,18 +42,34 @@ class GrayscaleNode(
 
     }
 
-    private suspend fun createProgram(oesTexture: Boolean) {
+    private suspend fun createProgram() {
+        val connection = inputConnection ?: error("missing input connection")
+
         val vertexSource = assetManager.readTextAsset("vertex_texture.vert")
         val fragmentSource = assetManager.readTextAsset("grayscale.frag").let {
-            if (oesTexture) {
+            if (connection.isOes) {
                 it.replace("#{EXT}", "#define EXT")
             } else {
                 it
             }
         }
 
+        texture = Texture(
+            GL_TEXTURE_2D,
+            GL_CLAMP_TO_EDGE,
+            GL_LINEAR
+        )
+        framebuffer = Framebuffer()
+
         glesManager.withGlContext {
-            //            texture.initialize()
+            val texture = texture!!
+            val framebuffer = framebuffer!!
+
+            texture.initialize()
+            texture.initData(0, GL_R8, size.width, size.height, GL_RED, GL_UNSIGNED_BYTE)
+            Log.d(TAG, "glGetError() ${glGetError()}")
+
+            framebuffer.initialize(texture.id)
             mesh.initialize()
 
             program.apply {
@@ -215,29 +231,18 @@ class GrayscaleNode(
             }
         }
         PortType.TEXTURE_1 -> {
-            TextureConnection {
-                val texture = Texture(
-                    GL_TEXTURE_2D,
-                    GL_CLAMP_TO_EDGE,
-                    GL_LINEAR
-                )
-                val fbo = Framebuffer()
-                this.texture = texture
-                this.framebuffer = fbo
-
-                glesManager.withGlContext {
-                    texture.initialize()
-                    texture.initData(0, GL_R8, size.width, size.height, GL_RED, GL_UNSIGNED_BYTE)
-                    Log.d(TAG, "glGetError() ${glGetError()}")
-
-                    fbo.initialize(texture.id)
-                }
-                TextureEvent(texture, FloatArray(16).also { Matrix.setIdentityM(it, 0) })
+            connectMutex.withLock {}
+            TextureConnection(
+                GL_TEXTURE_2D,
+                size.width,
+                size.height,
+                GL_R8,
+                GL_RED,
+                GL_UNSIGNED_BYTE
+            ) {
+                TextureEvent(texture!!, FloatArray(16).also { Matrix.setIdentityM(it, 0) })
             }.also { connection ->
                 outputTextureConnection = connection
-                connectMutex.withLock {
-                    connection.size = size
-                }
             }
         }
         else -> null
@@ -248,8 +253,8 @@ class GrayscaleNode(
             PortType.TEXTURE_1 -> {
                 connection as TextureConnection
                 inputConnection = connection
-                size = connection.size.let { Size(it.width/2, it.height/2) }
-                createProgram(connection.isOes)
+                size = connection.size.let { Size(it.width, it.height) }
+                createProgram()
 
                 connectMutex.unlock()
             }

@@ -2,6 +2,7 @@ package xyz.rthqks.synapse.core.node
 
 import android.graphics.SurfaceTexture
 import android.opengl.GLES11Ext
+import android.opengl.GLES32
 import android.opengl.GLES32.GL_CLAMP_TO_EDGE
 import android.opengl.GLES32.GL_LINEAR
 import android.util.Log
@@ -94,7 +95,7 @@ class CameraNode(
         startJob = launch {
 
             cameraManager.start(cameraId, surface, frameRate) { count, timestamp, eos ->
-//                launch {
+                //                launch {
 //                    val frame = connection.dequeue()
 //                    frame.eos = eos
 //                    frame.count = count
@@ -124,7 +125,7 @@ class CameraNode(
             }
 
             // lock again to suspend until we unlock on EOS
-            mutex.withLock {  }
+            mutex.withLock { }
         }
     }
 
@@ -170,11 +171,7 @@ class CameraNode(
             surfaceConnection = it
             it.configure(size, surfaceRotation)
         }
-        PortType.TEXTURE_1 -> TextureConnection(1) {
-            Log.d(TAG, "creating texture event $outputTexture")
-            TextureEvent(outputTexture, FloatArray(16))
-        }.also {
-            textureConnection = it
+        PortType.TEXTURE_1 -> {
             glesManager.withGlContext {
                 outputTexture.initialize()
             }
@@ -185,9 +182,22 @@ class CameraNode(
                 if (surfaceRotation == 90 || surfaceRotation == 270)
                     Size(size.height, size.width) else size
 
-            it.size = rotatedSize
-            it.isOes = true
             outputSurfaceTexture?.setDefaultBufferSize(size.width, size.height)
+
+            TextureConnection(
+                GLES11Ext.GL_TEXTURE_EXTERNAL_OES,
+                rotatedSize.width,
+                rotatedSize.height,
+                GLES32.GL_RGB8,
+                GLES32.GL_RGB,
+                GLES32.GL_UNSIGNED_BYTE
+            ) {
+                Log.d(TAG, "creating texture event $outputTexture")
+                TextureEvent(outputTexture, FloatArray(16))
+            }.also {
+                textureConnection = it
+
+            }
         }
         else -> null
     }

@@ -42,18 +42,42 @@ class GlNode(
 
     }
 
-    private suspend fun createProgram(oesTexture: Boolean) {
+    private suspend fun createProgram() {
+        val connection = inputConnection ?: error("missing input connection")
+
         val vertexSource = assetManager.readTextAsset("vertex_texture.vert")
         val fragmentSource = assetManager.readTextAsset("lut.frag").let {
-            if (oesTexture) {
+            if (connection.isOes) {
                 it.replace("#{EXT}", "#define EXT")
             } else {
                 it
             }
         }
 
+        texture = Texture(
+            GL_TEXTURE_2D,
+            GL_CLAMP_TO_EDGE,
+            GL_LINEAR
+        )
+        framebuffer = Framebuffer()
+
         glesManager.withGlContext {
-            //            texture.initialize()
+            val texture = texture!!
+            val framebuffer = framebuffer!!
+
+            texture.initialize()
+            texture.initData(
+                0,
+                connection.internalFormat,
+                size.width,
+                size.height,
+                connection.format,
+                connection.type
+            )
+            Log.d(TAG, "glGetError() ${glGetError()}")
+
+            framebuffer.initialize(texture.id)
+
             mesh.initialize()
 
             program.apply {
@@ -215,29 +239,20 @@ class GlNode(
             }
         }
         PortType.TEXTURE_1 -> {
-            TextureConnection {
-                val texture = Texture(
-                    GL_TEXTURE_2D,
-                    GL_CLAMP_TO_EDGE,
-                    GL_LINEAR
-                )
-                val fbo = Framebuffer()
-                this.texture = texture
-                this.framebuffer = fbo
+            connectMutex.withLock {}
+            val connection = inputConnection!!
+            TextureConnection(
+                GL_TEXTURE_2D,
+                size.width,
+                size.height,
+                connection.internalFormat,
+                connection.format,
+                connection.type
+            ) {
+                TextureEvent(texture!!, FloatArray(16).also { Matrix.setIdentityM(it, 0) })
+            }.also {
+                outputTextureConnection = it
 
-                glesManager.withGlContext {
-                    texture.initialize()
-                    texture.initData(0, GL_RGB8, size.width, size.height, GL_RGB, GL_UNSIGNED_BYTE)
-                    Log.d(TAG, "glGetError() ${glGetError()}")
-
-                    fbo.initialize(texture.id)
-                }
-                TextureEvent(texture, FloatArray(16).also { Matrix.setIdentityM(it, 0) })
-            }.also { connection ->
-                outputTextureConnection = connection
-                connectMutex.withLock {
-                    connection.size = size
-                }
             }
         }
         else -> null
@@ -249,7 +264,7 @@ class GlNode(
                 connection as TextureConnection
                 inputConnection = connection
                 size = connection.size
-                createProgram(connection.isOes)
+                createProgram()
 
                 connectMutex.unlock()
             }

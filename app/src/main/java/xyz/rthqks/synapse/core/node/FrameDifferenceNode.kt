@@ -56,6 +56,12 @@ class FrameDifferenceNode(
     }
 
     private suspend fun createTextures() {
+        val connection = inputConnection ?: error("missing input connection")
+
+        val intFormat = connection.internalFormat
+        val format = connection.format
+        val type = connection.type
+
         glesManager.withGlContext {
             diffTexture.initialize()
             lastFrameTexture1.initialize()
@@ -69,16 +75,16 @@ class FrameDifferenceNode(
             Log.d(TAG, "1 glGetError() ${glGetError()}")
             lastFrameTexture1.initData(
                 0,
-                GL_RGB8, size.width, size.height,
-                GL_RGB,
-                GL_UNSIGNED_BYTE
+                intFormat, size.width, size.height,
+                format,
+                type
             )
             Log.d(TAG, "2 glGetError() ${glGetError()}")
             lastFrameTexture2.initData(
                 0,
-                GL_RGB8, size.width, size.height,
-                GL_RGB,
-                GL_UNSIGNED_BYTE
+                intFormat, size.width, size.height,
+                format,
+                type
             )
             Log.d(TAG, "3 glGetError() ${glGetError()}")
 
@@ -229,23 +235,36 @@ class FrameDifferenceNode(
 
     override suspend fun output(key: String): Connection<*>? = when (key) {
         PortType.TEXTURE_1 -> {
-            TextureConnection {
+            connectMutex.withLock {}
+            val connection = inputConnection ?: error("missing input connection")
+
+            TextureConnection(
+                GL_TEXTURE_2D,
+                size.width,
+                size.height,
+                connection.internalFormat,
+                connection.format,
+                connection.type
+            ) {
                 TextureEvent(lastFrameTexture1, FloatArray(16).also { Matrix.setIdentityM(it, 0) })
-            }.also { connection ->
-                outputConnection1 = connection
-                connectMutex.withLock {
-                    connection.size = size
-                }
+            }.also {
+                outputConnection1 = it
             }
         }
         PortType.TEXTURE_2 -> {
-            TextureConnection {
+            connectMutex.withLock {}
+
+            TextureConnection(
+                GL_TEXTURE_2D,
+                size.width,
+                size.height,
+                GL_R8,
+                GL_RED,
+                GL_UNSIGNED_BYTE
+            ) {
                 TextureEvent(diffTexture, FloatArray(16).also { Matrix.setIdentityM(it, 0) })
-            }.also { connection ->
-                outputConnection2 = connection
-                connectMutex.withLock {
-                    connection.size = size
-                }
+            }.also {
+                outputConnection2 = it
             }
         }
         else -> null
