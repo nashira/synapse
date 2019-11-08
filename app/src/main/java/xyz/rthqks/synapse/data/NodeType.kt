@@ -63,6 +63,17 @@ sealed class NodeType(
         emptyList()
     )
 
+    object BlurFilter : NodeType(
+        "blur_filter",
+        R.string.name_node_type_blur_filter, R.drawable.ic_blur,
+        listOf(
+            PortType.Texture(PortType.TEXTURE_1, PortType.INPUT),
+            PortType.Surface(PortType.SURFACE_1, PortType.OUTPUT),
+            PortType.Texture(PortType.TEXTURE_1, PortType.OUTPUT)
+        ),
+        emptyList()
+    )
+
     object AudioWaveform : NodeType(
         "audio_waveform",
         R.string.name_node_type_audio_waveform, R.drawable.ic_audio,

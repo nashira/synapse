@@ -59,4 +59,5 @@
     <string name="name_node_type_audio_waveform">Audio Waveform</string>
     <string name="name_node_type_frame_difference">Frame Difference</string>
     <string name="name_node_type_grayscale_filter">Grayscale Filter</string>
+    <string name="name_node_type_blur_filter">Blur Filter</string>
 </resources>

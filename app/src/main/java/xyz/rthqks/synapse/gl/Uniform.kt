@@ -12,5 +12,6 @@ class Uniform<T>(
         object Integer: Type<Int>()
         object Float: Type<Float>()
         object Mat4 : Type<FloatArray>()
+        object Vec2 : Type<FloatArray>()
     }
 }
