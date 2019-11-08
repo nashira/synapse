@@ -92,6 +92,7 @@ class AddNodeAdapter(
             NodeType.FrameDifference,
             NodeType.GrayscaleFilter,
             NodeType.BlurFilter,
+            NodeType.SparkleFilter,
             NodeType.Microphone,
             NodeType.AudioWaveform,
 //            NodeType.Image,

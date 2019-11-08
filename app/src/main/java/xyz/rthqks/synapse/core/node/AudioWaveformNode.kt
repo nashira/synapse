@@ -36,8 +36,19 @@ class AudioWaveformNode(
         GL_CLAMP_TO_EDGE,
         GL_NEAREST)
 
-    override suspend fun initialize() {
+    override suspend fun create() {
 
+    }
+
+    override suspend fun initialize() {
+        createProgram()
+
+        val uniform = program.getUniform(Uniform.Type.Integer, "isSigned")
+        uniform.data = if (audioFormat.encoding == AudioFormat.ENCODING_PCM_8BIT) 0 else 1
+        uniform.dirty
+        Log.d(TAG, "signed ${uniform.data}")
+
+        updateAudioTexture(null)
     }
 
     private suspend fun createProgram() {
@@ -201,15 +212,6 @@ class AudioWaveformNode(
             inputConnection = connection as AudioConnection
             audioFormat = connection.audioFormat
             bufferSize = connection.audioBufferSize
-
-            createProgram()
-
-            val uniform = program.getUniform(Uniform.Type.Integer, "isSigned")
-            uniform.data = if (audioFormat.encoding == AudioFormat.ENCODING_PCM_8BIT) 0 else 1
-            uniform.dirty
-            Log.d(TAG, "signed ${uniform.data}")
-
-            updateAudioTexture(null)
         }
     }
 

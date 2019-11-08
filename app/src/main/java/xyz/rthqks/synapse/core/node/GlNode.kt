@@ -38,13 +38,12 @@ class GlNode(
     private val mesh = Quad()
     private val program = Program()
 
-    override suspend fun initialize() {
+    override suspend fun create() {
 
     }
 
-    private suspend fun createProgram() {
+    override suspend fun initialize() {
         val connection = inputConnection ?: error("missing input connection")
-
         val vertexSource = assetManager.readTextAsset("vertex_texture.vert")
         val fragmentSource = assetManager.readTextAsset("lut.frag").let {
             if (connection.isOes) {
@@ -53,14 +52,12 @@ class GlNode(
                 it
             }
         }
-
         texture = Texture(
             GL_TEXTURE_2D,
             GL_CLAMP_TO_EDGE,
             GL_LINEAR
         )
         framebuffer = Framebuffer()
-
         glesManager.withGlContext {
             val texture = texture!!
             val framebuffer = framebuffer!!
@@ -264,7 +261,6 @@ class GlNode(
                 connection as TextureConnection
                 inputConnection = connection
                 size = connection.size
-                createProgram()
 
                 connectMutex.unlock()
             }

@@ -45,12 +45,16 @@ class CameraNode(
         GL_LINEAR
     )
 
-    override suspend fun initialize() {
+    override suspend fun create() {
         val conf = cameraManager.resolve(facing, requestedSize, frameRate)
         Log.d(TAG, conf.toString())
         cameraId = conf.id
         size = conf.size
         surfaceRotation = conf.rotation
+    }
+
+    override suspend fun initialize() {
+
     }
 
     override suspend fun start() = when {

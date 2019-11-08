@@ -53,10 +53,22 @@ sealed class NodeType(
     )
 
     object GrayscaleFilter : NodeType(
-        "grayscale_fitler",
+        "grayscale_filter",
         R.string.name_node_type_grayscale_filter, R.drawable.ic_tune,
         listOf(
             PortType.Texture(PortType.TEXTURE_1, PortType.INPUT),
+            PortType.Surface(PortType.SURFACE_1, PortType.OUTPUT),
+            PortType.Texture(PortType.TEXTURE_1, PortType.OUTPUT)
+        ),
+        emptyList()
+    )
+
+    object SparkleFilter : NodeType(
+        "sparkle_filter",
+        R.string.name_node_type_sparkle_filter, R.drawable.ic_flare,
+        listOf(
+            PortType.Texture(PortType.TEXTURE_1, PortType.INPUT),
+            PortType.Texture(PortType.TEXTURE_2, PortType.INPUT),
             PortType.Surface(PortType.SURFACE_1, PortType.OUTPUT),
             PortType.Texture(PortType.TEXTURE_1, PortType.OUTPUT)
         ),

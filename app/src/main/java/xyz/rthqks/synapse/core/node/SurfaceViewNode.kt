@@ -22,7 +22,7 @@ class SurfaceViewNode(
     private var running: Boolean = false
     private var playJob: Job? = null
 
-    override suspend fun initialize() {
+    override suspend fun create() {
         Log.d(TAG, "adding callback ${surfaceView.holder.surface}")
 
         setSurface(surfaceView.holder.surface)
@@ -47,6 +47,10 @@ class SurfaceViewNode(
                 Log.d(TAG, "surfaceCreated: $holder")
             }
         })
+    }
+
+    override suspend fun initialize() {
+
     }
 
     override suspend fun start() = coroutineScope {

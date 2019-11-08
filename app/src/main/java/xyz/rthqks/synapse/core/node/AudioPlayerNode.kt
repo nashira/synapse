@@ -20,7 +20,18 @@ class AudioPlayerNode : Node() {
     private var playJob: Job? = null
     private var running = false
 
+    override suspend fun create() {
+    }
+
     override suspend fun initialize() {
+        audioTrack = AudioTrack.Builder()
+            .setAudioAttributes(
+                AudioAttributes.Builder()
+                    .setUsage(AudioAttributes.USAGE_GAME)
+                    .build()
+            ).setAudioFormat(audioFormat)
+            .setBufferSizeInBytes(bufferSize * 2)
+            .build()
     }
 
     override suspend fun start() = coroutineScope {
@@ -69,19 +80,7 @@ class AudioPlayerNode : Node() {
             this.connection = connection as AudioConnection
             audioFormat = connection.audioFormat
             bufferSize = connection.audioBufferSize
-            createAudioTrack()
         }
-    }
-
-    private fun createAudioTrack() {
-        audioTrack = AudioTrack.Builder()
-            .setAudioAttributes(
-                AudioAttributes.Builder()
-                    .setUsage(AudioAttributes.USAGE_GAME)
-                    .build()
-            ).setAudioFormat(audioFormat)
-            .setBufferSizeInBytes(bufferSize * 2)
-            .build()
     }
 
     companion object {

@@ -52,7 +52,15 @@ class FrameDifferenceNode(
 
     private var framebuffer = framebuffer1
 
+    override suspend fun create() {
+    }
+
     override suspend fun initialize() {
+
+        inputConnection?.isOes?.let {
+            createProgram(it)
+            createTextures()
+        }
     }
 
     private suspend fun createTextures() {
@@ -222,14 +230,16 @@ class FrameDifferenceNode(
     }
 
     override suspend fun release() {
-        glesManager.withGlContext {
-            diffTexture.release()
-            lastFrameTexture1.release()
-            lastFrameTexture2.release()
-            framebuffer1.release()
-            framebuffer2.release()
-            mesh.release()
-            program.release()
+        inputConnection?.let {
+            glesManager.withGlContext {
+                diffTexture.release()
+                lastFrameTexture1.release()
+                lastFrameTexture2.release()
+                framebuffer1.release()
+                framebuffer2.release()
+                mesh.release()
+                program.release()
+            }
         }
     }
 
@@ -276,8 +286,6 @@ class FrameDifferenceNode(
                 connection as TextureConnection
                 inputConnection = connection
                 size = connection.size
-                createProgram(connection.isOes)
-                createTextures()
 
                 connectMutex.unlock()
             }

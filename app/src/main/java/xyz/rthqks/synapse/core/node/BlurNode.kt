@@ -44,8 +44,39 @@ class BlurNode(
     private val program1 = Program()
     private val program2 = Program()
 
+    override suspend fun create() {
+
+    }
+
     override suspend fun initialize() {
 
+        inputConnection?.let {
+            texture1 = Texture(
+                GL_TEXTURE_2D,
+                GL_CLAMP_TO_EDGE,
+                GL_LINEAR
+            )
+            framebuffer1 = Framebuffer()
+
+            texture2 = Texture(
+                GL_TEXTURE_2D,
+                GL_CLAMP_TO_EDGE,
+                GL_LINEAR
+            )
+            framebuffer2 = Framebuffer()
+
+            glesManager.withGlContext {
+                mesh.initialize()
+            }
+
+            initializeProgram(program1, texture1, framebuffer1, it.isOes)
+            initializeProgram(program2, texture2, framebuffer2, false)
+
+            when {
+                outputSurfaceConnection != null -> framebuffer = Framebuffer()
+                outputTextureConnection != null -> framebuffer = framebuffer2
+            }
+        }
     }
 
     private suspend fun initializeProgram(program: Program, texture: Texture, framebuffer: Framebuffer, oes: Boolean) {
@@ -244,7 +275,6 @@ class BlurNode(
 
     override suspend fun output(key: String): Connection<*>? = when (key) {
         PortType.SURFACE_1 -> {
-            framebuffer = Framebuffer()
             SurfaceConnection().also { connection ->
                 outputSurfaceConnection = connection
                 connectMutex.withLock {
@@ -254,8 +284,6 @@ class BlurNode(
         }
         PortType.TEXTURE_1 -> {
             connectMutex.withLock {}
-
-            framebuffer = framebuffer2
             val connection = inputConnection!!
             TextureConnection(
                 GL_TEXTURE_2D,
@@ -279,27 +307,6 @@ class BlurNode(
                 connection as TextureConnection
                 inputConnection = connection
                 size = connection.size.let { Size(it.width, it.height) }
-
-                texture1 = Texture(
-                    GL_TEXTURE_2D,
-                    GL_CLAMP_TO_EDGE,
-                    GL_LINEAR
-                )
-                framebuffer1 = Framebuffer()
-
-                texture2 = Texture(
-                    GL_TEXTURE_2D,
-                    GL_CLAMP_TO_EDGE,
-                    GL_LINEAR
-                )
-                framebuffer2 = Framebuffer()
-
-                glesManager.withGlContext {
-                    mesh.initialize()
-                }
-
-                initializeProgram(program1, texture1, framebuffer1, connection.isOes)
-                initializeProgram(program2, texture2, framebuffer2, false)
 
                 connectMutex.unlock()
             }

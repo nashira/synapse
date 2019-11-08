@@ -18,6 +18,7 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:elevation="8dp"
+        android:background="@color/black"
         app:behavior_hideable="true"
         app:behavior_peekHeight="240dp"
         app:behavior_skipCollapsed="true"

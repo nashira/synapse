@@ -25,7 +25,7 @@ class AudioSourceNode(
     private var running = false
 
 
-    override suspend fun initialize() {
+    override suspend fun create() {
         bufferSize = AudioRecord.getMinBufferSize(
             sampleRate,
             channelMask,
@@ -44,6 +44,10 @@ class AudioSourceNode(
             )
             .setBufferSizeInBytes(bufferSize)
             .build()
+    }
+
+    override suspend fun initialize() {
+
     }
 
     override suspend fun start() = coroutineScope {

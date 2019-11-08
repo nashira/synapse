@@ -2,6 +2,7 @@ package xyz.rthqks.synapse.core
 
 abstract class Node {
 
+    abstract suspend fun create()
     abstract suspend fun initialize()
     abstract suspend fun start()
     abstract suspend fun stop()

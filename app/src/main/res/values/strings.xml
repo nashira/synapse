@@ -60,4 +60,5 @@
     <string name="name_node_type_frame_difference">Frame Difference</string>
     <string name="name_node_type_grayscale_filter">Grayscale Filter</string>
     <string name="name_node_type_blur_filter">Blur Filter</string>
+    <string name="name_node_type_sparkle_filter">Sparkle Filter</string>
 </resources>

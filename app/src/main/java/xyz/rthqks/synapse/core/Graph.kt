@@ -46,6 +46,7 @@ class Graph(
                 NodeType.FrameDifference -> FrameDifferenceNode(glesManager, assetManager)
                 NodeType.GrayscaleFilter -> GrayscaleNode(glesManager, assetManager)
                 NodeType.BlurFilter -> BlurNode(glesManager, assetManager)
+                NodeType.SparkleFilter -> SparkleFilterNode(glesManager, assetManager)
                 NodeType.Microphone -> AudioSourceNode(
                     it[Key.AudioSampleRate],
                     it[Key.AudioChannel],
@@ -67,9 +68,9 @@ class Graph(
         }
 
         parallelJoin(nodes.values) {
-            Log.d(TAG, "initialize ${it}")
-            it.initialize()
-            Log.d(TAG, "initialize complete ${it}")
+            Log.d(TAG, "create ${it}")
+            it.create()
+            Log.d(TAG, "create complete ${it}")
         }
 
         parallelJoin(graphData.edges) { edge ->
@@ -81,6 +82,12 @@ class Graph(
                 to.input(edge.toKey, it)
             }
             Log.d(TAG, "connect complete $edge")
+        }
+
+        parallelJoin(nodes.values) {
+            Log.d(TAG, "initialize ${it}")
+            it.initialize()
+            Log.d(TAG, "initialize complete ${it}")
         }
 
         logCoroutineInfo(scope.coroutineContext[Job])

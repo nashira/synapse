@@ -19,7 +19,7 @@ import xyz.rthqks.synapse.core.edge.TextureEvent
 import xyz.rthqks.synapse.data.PortType
 import xyz.rthqks.synapse.gl.*
 
-class GrayscaleNode(
+class SparkleFilterNode(
     private val glesManager: GlesManager,
     private val assetManager: AssetManager
 ) : Node() {
@@ -258,6 +258,6 @@ class GrayscaleNode(
     }
 
     companion object {
-        private val TAG = GrayscaleNode::class.java.simpleName
+        private val TAG = SparkleFilterNode::class.java.simpleName
     }
 }
