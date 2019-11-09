@@ -60,7 +60,10 @@ sealed class NodeType(
             PortType.Surface(PortType.SURFACE_1, PortType.OUTPUT),
             PortType.Texture(PortType.TEXTURE_1, PortType.OUTPUT)
         ),
-        emptyList()
+        listOf(
+            PropertyType.ScaleFactor,
+            PropertyType.AspectRatio
+        )
     )
 
     object OverlayFilter : NodeType(
@@ -83,10 +86,12 @@ sealed class NodeType(
         R.string.name_node_type_blur_filter, R.drawable.ic_blur,
         listOf(
             PortType.Texture(PortType.TEXTURE_1, PortType.INPUT),
-            PortType.Surface(PortType.SURFACE_1, PortType.OUTPUT),
             PortType.Texture(PortType.TEXTURE_1, PortType.OUTPUT)
         ),
-        emptyList()
+        listOf(
+            PropertyType.BlurSize,
+            PropertyType.NumPasses
+        )
     )
 
     object AudioWaveform : NodeType(

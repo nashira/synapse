@@ -19,6 +19,9 @@ sealed class Key<T>(
     object CameraCaptureSize : Key<Size>("camera_capture_size")
     object CameraFrameRate : Key<Int>("camera_frame_rate")
 
+    object BlurSize : Key<Int>("blur_size")
+    object NumPasses : Key<Int>("num_passes")
+
     companion object {
         private val map = mutableMapOf<String, Key<*>>()
         operator fun get(name: String) = map[name]

@@ -61,4 +61,19 @@
     <string name="name_node_type_grayscale_filter">Grayscale Filter</string>
     <string name="name_node_type_blur_filter">Blur Filter</string>
     <string name="name_node_type_overlay_filter">Overlay Filter</string>
+    <string name="property_label_blur_size_5">5x5</string>
+    <string name="property_label_blur_size_9">9x9</string>
+    <string name="property_label_blur_size_13">13x13</string>
+    <string name="property_name_blur_size">Blur Size</string>
+    <string name="property_label_1">1</string>
+    <string name="property_label_2">2</string>
+    <string name="property_label_3">3</string>
+    <string name="property_label_4">4</string>
+    <string name="property_label_5">5</string>
+    <string name="property_label_6">6</string>
+    <string name="property_label_7">7</string>
+    <string name="property_label_8">8</string>
+    <string name="property_label_9">9</string>
+    <string name="property_label_10">10</string>
+    <string name="property_name_num_passes">Number of Passes</string>
 </resources>

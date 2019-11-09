@@ -1,5 +1,6 @@
 package xyz.rthqks.synapse.gl
 
+import android.opengl.GLES32
 import android.opengl.Matrix
 import android.os.Handler
 import android.os.HandlerThread
@@ -28,6 +29,9 @@ class GlesManager {
         eglCore = EglCore(null, EglCore.FLAG_TRY_GLES3 or EglCore.FLAG_RECORDABLE)
         eglSurface = OffscreenSurface(eglCore, 1, 1)
         eglSurface.makeCurrent()
+
+        GLES32.glDisable(GLES32.GL_DEPTH_TEST)
+        GLES32.glDisable(GLES32.GL_CULL_FACE)
     }
 
     fun release() {

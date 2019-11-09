@@ -182,7 +182,67 @@ sealed class PropertyType<T : Any>(
         R.drawable.ic_camera
     )
 
+    object BlurSize: DiscreteInt(
+        Key.BlurSize,
+        9,
+        listOf(5, 9, 13),
+        listOf(
+            R.string.property_label_blur_size_5,
+            R.string.property_label_blur_size_9,
+            R.string.property_label_blur_size_13
+        ),
+        R.string.property_name_blur_size,
+        R.drawable.ic_blur
+    )
+
+    object NumPasses: DiscreteInt(
+        Key.NumPasses,
+        1,
+        listOf(1, 2, 3, 4, 5, 6, 7, 8, 9, 10),
+        listOf(
+            R.string.property_label_1,
+            R.string.property_label_2,
+            R.string.property_label_3,
+            R.string.property_label_4,
+            R.string.property_label_5,
+            R.string.property_label_6,
+            R.string.property_label_7,
+            R.string.property_label_8,
+            R.string.property_label_9,
+            R.string.property_label_10
+        ),
+        R.string.property_name_num_passes,
+        R.drawable.ic_blur
+    )
+
+    object ScaleFactor: DiscreteInt(
+        Key.BlurSize,
+        9,
+        listOf(5, 9, 13),
+        listOf(
+            R.string.property_label_blur_size_5,
+            R.string.property_label_blur_size_9,
+            R.string.property_label_blur_size_13
+        ),
+        R.string.property_name_blur_size,
+        R.drawable.ic_blur
+    )
+
+    object AspectRatio: DiscreteInt(
+        Key.BlurSize,
+        9,
+        listOf(5, 9, 13),
+        listOf(
+            R.string.property_label_blur_size_5,
+            R.string.property_label_blur_size_9,
+            R.string.property_label_blur_size_13
+        ),
+        R.string.property_name_blur_size,
+        R.drawable.ic_blur
+    )
+
     companion object {
+
         private val map = mutableMapOf<Key<*>, PropertyType<*>>()
         val gson = Gson()
 
@@ -218,6 +278,12 @@ sealed class PropertyType<T : Any>(
             }
             Key.CameraFrameRate -> (value as? Int)?.let {
                 CameraFrameRate.toString(it)
+            }
+            Key.BlurSize -> (value as? Int)?.let {
+                BlurSize.toString(it)
+            }
+            Key.NumPasses -> (value as? Int)?.let {
+                NumPasses.toString(it)
             }
         } ?: error("can't convert $value with key $key")
 

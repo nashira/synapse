@@ -1,5 +1,7 @@
 #version 300 es
 
+precision highp float;
+
 uniform mat4 vertex_matrix0;
 uniform mat4 texture_matrix0;
 

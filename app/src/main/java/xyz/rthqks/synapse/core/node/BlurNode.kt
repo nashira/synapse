@@ -13,7 +13,6 @@ import kotlinx.coroutines.sync.withLock
 import xyz.rthqks.synapse.assets.AssetManager
 import xyz.rthqks.synapse.core.Connection
 import xyz.rthqks.synapse.core.Node
-import xyz.rthqks.synapse.core.edge.SurfaceConnection
 import xyz.rthqks.synapse.core.edge.TextureConnection
 import xyz.rthqks.synapse.core.edge.TextureEvent
 import xyz.rthqks.synapse.data.PortType
@@ -21,7 +20,9 @@ import xyz.rthqks.synapse.gl.*
 
 class BlurNode(
     private val glesManager: GlesManager,
-    private val assetManager: AssetManager
+    private val assetManager: AssetManager,
+    private val blurSize: Int = 9,
+    private val passes: Int = 1
 ) : Node() {
     private var inputConnection: TextureConnection? = null
     private var startJob: Job? = null
@@ -34,11 +35,6 @@ class BlurNode(
 
     private lateinit var texture2: Texture
     private lateinit var framebuffer2: Framebuffer
-
-    private lateinit var framebuffer: Framebuffer
-
-    private var outputSurfaceConnection: SurfaceConnection? = null
-    private var outputSurfaceWindow: WindowSurface? = null
 
     private val mesh = Quad()
     private val program1 = Program()
@@ -71,10 +67,10 @@ class BlurNode(
 
             initializeProgram(program1, texture1, framebuffer1, it.isOes)
             initializeProgram(program2, texture2, framebuffer2, false)
-
-            when {
-                outputSurfaceConnection != null -> framebuffer = Framebuffer()
-                outputTextureConnection != null -> framebuffer = framebuffer2
+            program2.getUniform(Uniform.Type.Vec2, "direction").let {
+                val data = it.data!!
+                data[0] = 0f
+                data[1] = 1f
             }
         }
     }
@@ -82,8 +78,14 @@ class BlurNode(
     private suspend fun initializeProgram(program: Program, texture: Texture, framebuffer: Framebuffer, oes: Boolean) {
         val connection = inputConnection ?: error("missing input connection")
 
-        val vertexSource = assetManager.readTextAsset("blur_9.vert")
-        val fragmentSource = assetManager.readTextAsset("blur_9.frag").let {
+        val fragName = when (blurSize) {
+            13 -> "blur_13.frag"
+            5 -> "blur_5.frag"
+            else -> "blur_9.frag"
+        }
+
+        val vertexSource = assetManager.readTextAsset("blur.vert")
+        val fragmentSource = assetManager.readTextAsset(fragName).let {
             if (oes) {
                 it.replace("#{EXT}", "#define EXT")
             } else {
@@ -125,30 +127,21 @@ class BlurNode(
 
                 addUniform(
                     Uniform.Type.Vec2,
-                    "resolution",
+                    "resolution0",
                     floatArrayOf(size.width.toFloat(), size.height.toFloat())
                 )
 
                 addUniform(
                     Uniform.Type.Vec2,
                     "direction",
-                    if (oes) floatArrayOf(1f, 0f) else floatArrayOf(0f, 1f)
+                    floatArrayOf(1f, 0f)
                 )
 
             }
         }
     }
 
-    override suspend fun start() = when {
-        outputSurfaceConnection != null -> startSurface()
-        outputTextureConnection != null -> startTexture()
-        else -> {
-            Log.w(TAG, "no connection on start")
-            Unit
-        }
-    }
-
-    private suspend fun startTexture() = coroutineScope {
+    override suspend fun start() = coroutineScope {
         val output = outputTextureConnection ?: return@coroutineScope
         val input = inputConnection ?: return@coroutineScope
 
@@ -185,59 +178,6 @@ class BlurNode(
         }
     }
 
-    private suspend fun startSurface() = coroutineScope {
-        val output = outputSurfaceConnection ?: return@coroutineScope
-        val input = inputConnection ?: return@coroutineScope
-
-        updateOutputSurface(output)
-
-        var copyMatrix = true
-
-        startJob = launch {
-            while (isActive) {
-                val inEvent = input.acquire()
-
-                val outEvent = output.dequeue()
-                outEvent.eos = inEvent.eos
-                outEvent.count = inEvent.count.toLong()
-                outEvent.timestamp = inEvent.timestamp
-
-
-                if (output.hasSurface()) {
-                    if (copyMatrix) {
-                        copyMatrix = false
-
-                        val uniform = program1.getUniform(Uniform.Type.Mat4, "texture_matrix0")
-                        System.arraycopy(inEvent.matrix, 0, uniform.data!!, 0, 16)
-                        uniform.dirty = true
-                    }
-                    glesManager.withGlContext {
-                        executeGl(inEvent.texture)
-                        outputSurfaceWindow?.swapBuffers()
-                    }
-                }
-
-                input.release(inEvent)
-                output.queue(outEvent)
-
-                if (outEvent.eos) {
-                    Log.d(TAG, "got EOS")
-                    startJob?.cancel()
-                }
-            }
-        }
-    }
-
-    private suspend fun updateOutputSurface(output: SurfaceConnection) {
-        val surface = output.getSurface()
-        Log.d(TAG, "creating output surface")
-        glesManager.withGlContext {
-            outputSurfaceWindow?.release()
-            outputSurfaceWindow = it.createWindowSurface(surface)
-            outputSurfaceWindow?.makeCurrent()
-        }
-    }
-
     private fun executeGl(inputTexture: Texture) {
         glViewport(0, 0, size.width, size.height)
 
@@ -247,11 +187,36 @@ class BlurNode(
         program1.bindUniforms()
         mesh.execute()
 
-        framebuffer.bind()
+        framebuffer2.bind()
         glUseProgram(program2.programId)
         texture1.bind(GL_TEXTURE0)
         program2.bindUniforms()
         mesh.execute()
+
+        for (i in 1 until passes) {
+            framebuffer1.bind()
+            texture2.bind(GL_TEXTURE0)
+            program2.getUniform(Uniform.Type.Vec2, "direction").let {
+                val data = it.data!!
+                data[0] = 1f
+                data[1] = 0f
+                it.dirty = true
+            }
+            program2.bindUniforms()
+            mesh.execute()
+
+            framebuffer2.bind()
+            texture1.bind(GL_TEXTURE0)
+
+            program2.getUniform(Uniform.Type.Vec2, "direction").let {
+                val data = it.data!!
+                data[0] = 0f
+                data[1] = 1f
+                it.dirty = true
+            }
+            program2.bindUniforms()
+            mesh.execute()
+        }
     }
 
     override suspend fun stop() {
@@ -259,8 +224,6 @@ class BlurNode(
     }
 
     override suspend fun release() {
-        outputSurfaceWindow?.release()
-
         glesManager.withGlContext {
             mesh.release()
 
@@ -274,14 +237,6 @@ class BlurNode(
     }
 
     override suspend fun output(key: String): Connection<*>? = when (key) {
-        PortType.SURFACE_1 -> {
-            SurfaceConnection().also { connection ->
-                outputSurfaceConnection = connection
-                connectMutex.withLock {
-                    connection.configure(size, 0)
-                }
-            }
-        }
         PortType.TEXTURE_1 -> {
             connectMutex.withLock {}
             val connection = inputConnection!!
