@@ -19,14 +19,15 @@ import xyz.rthqks.synapse.core.edge.TextureEvent
 import xyz.rthqks.synapse.data.PortType
 import xyz.rthqks.synapse.gl.*
 
-class SparkleFilterNode(
+class OverlayFilterNode(
     private val glesManager: GlesManager,
     private val assetManager: AssetManager
 ) : Node() {
-    private var inputConnection: TextureConnection? = null
     private var startJob: Job? = null
+    private var contentInput: TextureConnection? = null
+    private var maskInput: TextureConnection? = null
+    private var contentSize = Size(0, 0)
     private val connectMutex = Mutex(true)
-    private var size = Size(0, 0)
 
     private var outputTextureConnection: TextureConnection? = null
     private var texture: Texture? = null
@@ -43,9 +44,9 @@ class SparkleFilterNode(
     }
 
     override suspend fun initialize() {
-        val connection = inputConnection ?: error("missing input connection")
-        val vertexSource = assetManager.readTextAsset("vertex_texture.vert")
-        val fragmentSource = assetManager.readTextAsset("grayscale.frag").let {
+        val connection = contentInput ?: error("missing input connection")
+        val vertexSource = assetManager.readTextAsset("overlay_filter.vert")
+        val fragmentSource = assetManager.readTextAsset("overlay_filter.frag").let {
             if (connection.isOes) {
                 it.replace("#{EXT}", "#define EXT")
             } else {
@@ -63,7 +64,14 @@ class SparkleFilterNode(
             val framebuffer = framebuffer!!
 
             texture.initialize()
-            texture.initData(0, GL_R8, size.width, size.height, GL_RED, GL_UNSIGNED_BYTE)
+            texture.initData(
+                0,
+                connection.internalFormat,
+                contentSize.width,
+                contentSize.height,
+                connection.format,
+                connection.type
+            )
             Log.d(TAG, "glGetError() ${glGetError()}")
 
             framebuffer.initialize(texture.id)
@@ -86,6 +94,12 @@ class SparkleFilterNode(
                     0
                 )
 
+                addUniform(
+                    Uniform.Type.Integer,
+                    "input_texture1",
+                    1
+                )
+
             }
         }
     }
@@ -100,33 +114,36 @@ class SparkleFilterNode(
     }
 
     private suspend fun startTexture() = coroutineScope {
-        val output = outputTextureConnection ?: return@coroutineScope
-        val input = inputConnection ?: return@coroutineScope
+        val output = outputTextureConnection ?: error("no output connection")
+        val input = contentInput ?: error("no content connection")
+        val mask = maskInput ?: error("no mask connection")
 
         var copyMatrix = true
 
         startJob = launch {
             while (isActive) {
-                val inEvent = input.acquire()
+                val inEvent1 = input.acquire()
+                val maskEvent = mask.acquire()
 
                 val outEvent = output.dequeue()
-                outEvent.eos = inEvent.eos
-                outEvent.count = inEvent.count
-                outEvent.timestamp = inEvent.timestamp
-
+                outEvent.eos = inEvent1.eos
+                outEvent.count = inEvent1.count
+                outEvent.timestamp = inEvent1.timestamp
 
                 if (copyMatrix) {
                     copyMatrix = false
                     val uniform = program.getUniform(Uniform.Type.Mat4, "texture_matrix0")
-                    System.arraycopy(inEvent.matrix, 0, uniform.data!!, 0, 16)
+                    System.arraycopy(inEvent1.matrix, 0, uniform.data!!, 0, 16)
                     uniform.dirty = true
                 }
                 glesManager.withGlContext {
                     framebuffer?.bind()
-                    executeGl(inEvent.texture)
+                    executeGl(inEvent1.texture, maskEvent.texture)
                 }
 
-                input.release(inEvent)
+                input.release(inEvent1)
+                mask.release(maskEvent)
+
                 output.queue(outEvent)
 
                 if (outEvent.eos) {
@@ -135,11 +152,18 @@ class SparkleFilterNode(
                 }
             }
         }
+
+//        launch(startJob!!) {
+//            while (isActive) {
+//                val inEvent = mask.acquire()
+//            }
+//        }
     }
 
     private suspend fun startSurface() = coroutineScope {
         val output = outputSurfaceConnection ?: return@coroutineScope
-        val input = inputConnection ?: return@coroutineScope
+        val input = contentInput ?: return@coroutineScope
+        val mask = maskInput ?: error("no mask connection")
 
         updateOutputSurface(output)
 
@@ -148,6 +172,7 @@ class SparkleFilterNode(
         startJob = launch {
             while (isActive) {
                 val inEvent = input.acquire()
+                val maskEvent = mask.acquire()
 
                 val outEvent = output.dequeue()
                 outEvent.eos = inEvent.eos
@@ -165,12 +190,13 @@ class SparkleFilterNode(
                     }
                     glesManager.withGlContext {
                         glBindFramebuffer(GL_FRAMEBUFFER, 0)
-                        executeGl(inEvent.texture)
+                        executeGl(inEvent.texture, maskEvent.texture)
                         outputSurfaceWindow?.swapBuffers()
                     }
                 }
 
                 input.release(inEvent)
+                mask.release(maskEvent)
                 output.queue(outEvent)
 
                 if (outEvent.eos) {
@@ -191,11 +217,12 @@ class SparkleFilterNode(
         }
     }
 
-    private fun executeGl(texture: Texture) {
+    private fun executeGl(content: Texture, mask: Texture) {
         glUseProgram(program.programId)
-        glViewport(0, 0, size.width, size.height)
+        glViewport(0, 0, contentSize.width, contentSize.height)
 
-        texture.bind(GL_TEXTURE0)
+        content.bind(GL_TEXTURE0)
+        mask.bind(GL_TEXTURE1)
 
         program.bindUniforms()
 
@@ -223,23 +250,24 @@ class SparkleFilterNode(
             SurfaceConnection().also { connection ->
                 outputSurfaceConnection = connection
                 connectMutex.withLock {
-                    connection.configure(size, 0)
+                    connection.configure(contentSize, 0)
                 }
             }
         }
         PortType.TEXTURE_1 -> {
             connectMutex.withLock {}
+            val connection = contentInput!!
             TextureConnection(
                 GL_TEXTURE_2D,
-                size.width,
-                size.height,
-                GL_R8,
-                GL_RED,
-                GL_UNSIGNED_BYTE
+                contentSize.width,
+                contentSize.height,
+                connection.internalFormat,
+                connection.format,
+                connection.type
             ) {
                 TextureEvent(texture!!, FloatArray(16).also { Matrix.setIdentityM(it, 0) })
-            }.also { connection ->
-                outputTextureConnection = connection
+            }.also {
+                outputTextureConnection = it
             }
         }
         else -> null
@@ -249,15 +277,20 @@ class SparkleFilterNode(
         when (key) {
             PortType.TEXTURE_1 -> {
                 connection as TextureConnection
-                inputConnection = connection
-                size = connection.size.let { Size(it.width, it.height) }
+                contentInput = connection
+                contentSize = connection.size
 
                 connectMutex.unlock()
+            }
+            PortType.TEXTURE_2 -> {
+                connection as TextureConnection
+                maskInput = connection
+//                contentSize = connection.size.let { Size(it.width, it.height) }
             }
         }
     }
 
     companion object {
-        private val TAG = SparkleFilterNode::class.java.simpleName
+        private val TAG = OverlayFilterNode::class.java.simpleName
     }
 }

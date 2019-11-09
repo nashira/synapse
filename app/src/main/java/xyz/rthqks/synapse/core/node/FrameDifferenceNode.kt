@@ -182,6 +182,8 @@ class FrameDifferenceNode(
                     executeGl(inEvent.texture)
                 }
 
+                input.release(inEvent)
+
                 val outTexture: Texture
                 if (framebuffer == framebuffer1) {
                     framebuffer = framebuffer2
@@ -191,8 +193,8 @@ class FrameDifferenceNode(
                     outTexture = lastFrameTexture2
                 }
 
-                input.release(inEvent)
 
+                Log.d(TAG, "send")
                 outEvent1?.let {
                     it.texture = outTexture
                     outputConnection1?.queue(it)

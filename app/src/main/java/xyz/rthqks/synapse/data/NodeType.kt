@@ -63,9 +63,9 @@ sealed class NodeType(
         emptyList()
     )
 
-    object SparkleFilter : NodeType(
-        "sparkle_filter",
-        R.string.name_node_type_sparkle_filter, R.drawable.ic_flare,
+    object OverlayFilter : NodeType(
+        "overlay_filter",
+        R.string.name_node_type_overlay_filter, R.drawable.ic_layers,
         listOf(
             PortType.Texture(PortType.TEXTURE_1, PortType.INPUT),
             PortType.Texture(PortType.TEXTURE_2, PortType.INPUT),
@@ -73,7 +73,10 @@ sealed class NodeType(
             PortType.Texture(PortType.TEXTURE_1, PortType.OUTPUT)
         ),
         emptyList()
-    )
+    ) {
+        const val MASK_TEXTURE = "mask_texture"
+        const val CONTENT_TEXTURE = "content_texture"
+    }
 
     object BlurFilter : NodeType(
         "blur_filter",

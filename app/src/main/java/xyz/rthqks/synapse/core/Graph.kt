@@ -46,7 +46,7 @@ class Graph(
                 NodeType.FrameDifference -> FrameDifferenceNode(glesManager, assetManager)
                 NodeType.GrayscaleFilter -> GrayscaleNode(glesManager, assetManager)
                 NodeType.BlurFilter -> BlurNode(glesManager, assetManager)
-                NodeType.SparkleFilter -> SparkleFilterNode(glesManager, assetManager)
+                NodeType.OverlayFilter -> OverlayFilterNode(glesManager, assetManager)
                 NodeType.Microphone -> AudioSourceNode(
                     it[Key.AudioSampleRate],
                     it[Key.AudioChannel],
