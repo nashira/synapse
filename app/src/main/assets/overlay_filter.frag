@@ -6,7 +6,7 @@
 #extension GL_OES_EGL_image_external_essl3 : require
 #endif
 
-precision highp float;
+precision mediump float;
 
 in vec2 texture_coords0;
 in vec2 texture_coords1;

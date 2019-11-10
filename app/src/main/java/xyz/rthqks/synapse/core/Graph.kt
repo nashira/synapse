@@ -44,9 +44,11 @@ class Graph(
                     it[Key.CameraFrameRate]
                 )
                 NodeType.FrameDifference -> FrameDifferenceNode(glesManager, assetManager)
-                NodeType.GrayscaleFilter -> GrayscaleNode(glesManager, assetManager)
+                NodeType.GrayscaleFilter -> GrayscaleNode(
+                    glesManager, assetManager, it[Key.ScaleFactor]
+                )
                 NodeType.BlurFilter -> BlurNode(
-                    glesManager, assetManager, it[Key.BlurSize], it[Key.NumPasses]
+                    glesManager, assetManager, it[Key.BlurSize], it[Key.NumPasses], it[Key.ScaleFactor]
                 )
                 NodeType.OverlayFilter -> OverlayFilterNode(glesManager, assetManager)
                 NodeType.Microphone -> AudioSourceNode(

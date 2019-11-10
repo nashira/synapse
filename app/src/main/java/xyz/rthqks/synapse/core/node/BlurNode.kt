@@ -22,11 +22,13 @@ class BlurNode(
     private val glesManager: GlesManager,
     private val assetManager: AssetManager,
     private val blurSize: Int = 9,
-    private val passes: Int = 1
+    private val passes: Int = 1,
+    private val scale: Int = 1
 ) : Node() {
     private var inputConnection: TextureConnection? = null
     private var startJob: Job? = null
     private val connectMutex = Mutex(true)
+    private var inputSize = Size(0, 0)
     private var size = Size(0, 0)
 
     private var outputTextureConnection: TextureConnection? = null
@@ -72,10 +74,20 @@ class BlurNode(
                 data[0] = 0f
                 data[1] = 1f
             }
+            program2.getUniform(Uniform.Type.Vec2, "resolution0").let {
+                val data = it.data!!
+                data[0] = size.width.toFloat()
+                data[1] = size.height.toFloat()
+            }
         }
     }
 
-    private suspend fun initializeProgram(program: Program, texture: Texture, framebuffer: Framebuffer, oes: Boolean) {
+    private suspend fun initializeProgram(
+        program: Program,
+        texture: Texture,
+        framebuffer: Framebuffer,
+        oes: Boolean
+    ) {
         val connection = inputConnection ?: error("missing input connection")
 
         val fragName = when (blurSize) {
@@ -128,7 +140,7 @@ class BlurNode(
                 addUniform(
                     Uniform.Type.Vec2,
                     "resolution0",
-                    floatArrayOf(size.width.toFloat(), size.height.toFloat())
+                    floatArrayOf(inputSize.width.toFloat(), inputSize.height.toFloat())
                 )
 
                 addUniform(
@@ -261,7 +273,8 @@ class BlurNode(
             PortType.TEXTURE_1 -> {
                 connection as TextureConnection
                 inputConnection = connection
-                size = connection.size.let { Size(it.width, it.height) }
+                inputSize = connection.size
+                size = Size(inputSize.width / scale, inputSize.height / scale)
 
                 connectMutex.unlock()
             }

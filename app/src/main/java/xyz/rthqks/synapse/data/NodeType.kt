@@ -90,7 +90,8 @@ sealed class NodeType(
         ),
         listOf(
             PropertyType.BlurSize,
-            PropertyType.NumPasses
+            PropertyType.NumPasses,
+            PropertyType.ScaleFactor
         )
     )
 

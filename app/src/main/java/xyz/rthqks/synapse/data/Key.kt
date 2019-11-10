@@ -21,6 +21,7 @@ sealed class Key<T>(
 
     object BlurSize : Key<Int>("blur_size")
     object NumPasses : Key<Int>("num_passes")
+    object ScaleFactor : Key<Int>("scale_factor")
 
     companion object {
         private val map = mutableMapOf<String, Key<*>>()

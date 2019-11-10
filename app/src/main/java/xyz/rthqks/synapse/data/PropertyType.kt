@@ -216,16 +216,18 @@ sealed class PropertyType<T : Any>(
     )
 
     object ScaleFactor: DiscreteInt(
-        Key.BlurSize,
-        9,
-        listOf(5, 9, 13),
+        Key.ScaleFactor,
+        1,
+        listOf(1, 2, 4, 8, 16),
         listOf(
-            R.string.property_label_blur_size_5,
-            R.string.property_label_blur_size_9,
-            R.string.property_label_blur_size_13
+            R.string.property_label_scale_factor_1,
+            R.string.property_label_scale_factor_2,
+            R.string.property_label_scale_factor_4,
+            R.string.property_label_scale_factor_8,
+            R.string.property_label_scale_factor_16
         ),
-        R.string.property_name_blur_size,
-        R.drawable.ic_blur
+        R.string.property_name_scale_factor,
+        R.drawable.ic_photo_size_select
     )
 
     object AspectRatio: DiscreteInt(
@@ -284,6 +286,9 @@ sealed class PropertyType<T : Any>(
             }
             Key.NumPasses -> (value as? Int)?.let {
                 NumPasses.toString(it)
+            }
+            Key.ScaleFactor -> (value as? Int)?.let {
+                ScaleFactor.toString(it)
             }
         } ?: error("can't convert $value with key $key")
 

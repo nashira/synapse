@@ -76,4 +76,10 @@
     <string name="property_label_9">9</string>
     <string name="property_label_10">10</string>
     <string name="property_name_num_passes">Number of Passes</string>
+    <string name="property_label_scale_factor_4">1/4</string>
+    <string name="property_label_scale_factor_2">1/2</string>
+    <string name="property_label_scale_factor_1">1</string>
+    <string name="property_name_scale_factor">Scale Factor</string>
+    <string name="property_label_scale_factor_8">1/8</string>
+    <string name="property_label_scale_factor_16">1/16</string>
 </resources>

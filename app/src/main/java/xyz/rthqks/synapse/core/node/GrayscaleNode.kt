@@ -21,7 +21,8 @@ import xyz.rthqks.synapse.gl.*
 
 class GrayscaleNode(
     private val glesManager: GlesManager,
-    private val assetManager: AssetManager
+    private val assetManager: AssetManager,
+    private val scale: Int
 ) : Node() {
     private var inputConnection: TextureConnection? = null
     private var startJob: Job? = null
@@ -250,7 +251,7 @@ class GrayscaleNode(
             PortType.TEXTURE_1 -> {
                 connection as TextureConnection
                 inputConnection = connection
-                size = connection.size.let { Size(it.width, it.height) }
+                size = connection.size.let { Size(it.width / scale, it.height / scale) }
 
                 connectMutex.unlock()
             }

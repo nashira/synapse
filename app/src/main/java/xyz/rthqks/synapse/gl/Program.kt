@@ -46,7 +46,7 @@ class Program {
     fun bindUniforms() {
         uniformList.forEach { uniform ->
             if (uniform.dirty) {
-                Log.d(TAG, "binding uniform $programId ${uniform.name} ${uniform.data}")
+//                Log.d(TAG, "binding uniform $programId ${uniform.name} ${uniform.data}")
                 uniform.dirty = false
                 when (uniform.type) {
                     Uniform.Type.Integer -> GLES32.glUniform1i(
