@@ -1,5 +1,6 @@
 package xyz.rthqks.synapse.core.edge
 
+import xyz.rthqks.synapse.core.Event
 import xyz.rthqks.synapse.gl.Texture
 
 class TextureEvent(
@@ -8,4 +9,4 @@ class TextureEvent(
     var eos: Boolean = false,
     var count: Int = 0,
     var timestamp: Long = 0
-)
+) : Event()

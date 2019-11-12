@@ -25,7 +25,7 @@ class Graph(
     private val cameraManager = CameraManager(context)
     private val assetManager = AssetManager(context)
     private val nodes = mutableMapOf<Int, Node>()
-    private val connections = mutableListOf<Connection<Any>>()
+    private val connections = mutableListOf<Connection<Event>>()
 
     private lateinit var surfaceView: SurfaceView
 

@@ -1,9 +1,10 @@
 package xyz.rthqks.synapse.core.edge
 
+import xyz.rthqks.synapse.core.Event
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
 
-class AudioEvent(bufferSize: Int) {
+class AudioEvent(bufferSize: Int) : Event() {
     var frame = 0
     var eos = false
     var buffer: ByteBuffer = ByteBuffer.allocateDirect(bufferSize).order(ByteOrder.nativeOrder())

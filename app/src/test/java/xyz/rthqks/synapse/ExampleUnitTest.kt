@@ -3,6 +3,8 @@ package xyz.rthqks.synapse
 import kotlinx.coroutines.*
 import org.junit.Assert.assertEquals
 import org.junit.Test
+import xyz.rthqks.synapse.core.Event
+import xyz.rthqks.synapse.core.MultiConnection
 import xyz.rthqks.synapse.core.edge.AudioConnection
 import java.util.concurrent.Executors
 import kotlin.system.measureNanoTime
@@ -17,6 +19,53 @@ class ExampleUnitTest {
     fun addition_isCorrect() {
         assertEquals(4, 2 + 2)
     }
+
+    @Test
+    fun testMultiChannel() {
+        val scope = CoroutineScope(Job())
+        var startJob: Job
+        var ID = 1
+        val m = MultiConnection(1) { TestEvent(ID++) }
+        runBlocking {
+            startJob = launch {
+                m.start()
+            }
+            val i = m.producer.receive()
+            println("received $i")
+            val c1 = m.consumer()
+            val c2 = m.consumer()
+            val c3 = m.consumer()
+            launch {
+                delay(1000)
+                val d = c1.receive()
+                println("c1 r $d")
+                c1.send(d)
+                println("c1 r done")
+            }
+            launch {
+                val d = c2.receive()
+                c3.receive()
+                c3.send(d)
+                delay(1000)
+                println("c2 r $d")
+                c2.send(d)
+                println("c2 r done")
+            }
+            launch {
+                println("m.p")
+                val d = m.producer.receive()
+                println("m.p $d")
+//                m.prfoducer.send(d)
+                println("m.p done")
+                startJob.cancel()
+            }
+            m.producer.send(i)
+        }
+    }
+
+    data class TestEvent(val id: Int) : Event()
+
+
     @Test
     fun channelBenchmark() {
         val dispatcher = Executors.newFixedThreadPool(8).asCoroutineDispatcher()

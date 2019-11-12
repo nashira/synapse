@@ -10,6 +10,7 @@ import androidx.constraintlayout.widget.ConstraintSet
 import kotlinx.coroutines.*
 import xyz.rthqks.synapse.R
 import xyz.rthqks.synapse.core.Connection
+import xyz.rthqks.synapse.core.Event
 import xyz.rthqks.synapse.core.Node
 import xyz.rthqks.synapse.core.edge.SurfaceConnection
 import xyz.rthqks.synapse.data.PortType
@@ -87,7 +88,7 @@ class SurfaceViewNode(
         throw IllegalStateException("$TAG has no outputs")
     }
 
-    override suspend fun <T> input(key: String, connection: Connection<T>) {
+    override suspend fun <T : Event> input(key: String, connection: Connection<T>) {
         when (key) {
             PortType.SURFACE_1 -> {
                 this.connection = connection as SurfaceConnection

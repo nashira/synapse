@@ -7,6 +7,7 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
 import xyz.rthqks.synapse.core.Connection
+import xyz.rthqks.synapse.core.Event
 import xyz.rthqks.synapse.core.Node
 import xyz.rthqks.synapse.core.edge.AudioConnection
 import xyz.rthqks.synapse.data.PortType
@@ -98,7 +99,7 @@ class AudioSourceNode(
         } else null
     }
 
-    override suspend fun <T> input(key: String, connection: Connection<T>) {
+    override suspend fun <T : Event> input(key: String, connection: Connection<T>) {
         throw IllegalStateException("no inputs: $this")
     }
 

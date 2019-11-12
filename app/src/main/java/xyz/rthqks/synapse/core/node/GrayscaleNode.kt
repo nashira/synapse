@@ -12,6 +12,7 @@ import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import xyz.rthqks.synapse.assets.AssetManager
 import xyz.rthqks.synapse.core.Connection
+import xyz.rthqks.synapse.core.Event
 import xyz.rthqks.synapse.core.Node
 import xyz.rthqks.synapse.core.edge.SurfaceConnection
 import xyz.rthqks.synapse.core.edge.TextureConnection
@@ -246,7 +247,7 @@ class GrayscaleNode(
         else -> null
     }
 
-    override suspend fun <T> input(key: String, connection: Connection<T>) {
+    override suspend fun <T : Event> input(key: String, connection: Connection<T>) {
         when (key) {
             PortType.TEXTURE_1 -> {
                 connection as TextureConnection

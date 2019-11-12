@@ -8,6 +8,7 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
 import xyz.rthqks.synapse.core.Connection
+import xyz.rthqks.synapse.core.Event
 import xyz.rthqks.synapse.core.Node
 import xyz.rthqks.synapse.core.edge.AudioConnection
 import xyz.rthqks.synapse.data.PortType
@@ -75,7 +76,7 @@ class AudioPlayerNode : Node() {
         throw IllegalStateException("no outputs: $this")
     }
 
-    override suspend fun <T> input(key: String, connection: Connection<T>) {
+    override suspend fun <T : Event> input(key: String, connection: Connection<T>) {
         if (key == PortType.AUDIO_1) {
             this.connection = connection as AudioConnection
             audioFormat = connection.audioFormat
