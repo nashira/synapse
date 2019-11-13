@@ -17,9 +17,11 @@ import xyz.rthqks.synapse.core.edge.*
 import xyz.rthqks.synapse.data.PortType
 import xyz.rthqks.synapse.gl.*
 
-class FrameDifferenceNode(
+class MacNode(
     private val glesManager: GlesManager,
-    private val assetManager: AssetManager
+    private val assetManager: AssetManager,
+    private val multiplyFactor: Float,
+    private val accumulateFactor: Float
 ) : Node() {
     private var startJob: Job? = null
     private var size = Size(0, 0)
@@ -27,22 +29,16 @@ class FrameDifferenceNode(
     private var inputChannel: Channel<TextureEvent>? = null
     private val connectMutex = Mutex(true)
 
-    private var outputConnection1: Connection<TextureConfig, TextureEvent>? = null
-    private var outputConnection2: Connection<TextureConfig, TextureEvent>? = null
+    private var outputConnection: Connection<TextureConfig, TextureEvent>? = null
 
     private val mesh = Quad()
     private val program = Program()
-    private val diffTexture = Texture(
+    private val texture1 = Texture(
         GL_TEXTURE_2D,
         GL_CLAMP_TO_EDGE,
         GL_LINEAR
     )
-    private val lastFrameTexture1 = Texture(
-        GL_TEXTURE_2D,
-        GL_CLAMP_TO_EDGE,
-        GL_LINEAR
-    )
-    private val lastFrameTexture2 = Texture(
+    private val texture2 = Texture(
         GL_TEXTURE_2D,
         GL_CLAMP_TO_EDGE,
         GL_LINEAR
@@ -60,13 +56,10 @@ class FrameDifferenceNode(
             createProgram(it)
             createTextures()
         }
-        outputConnection1?.prime(
+        outputConnection?.prime(
             TextureEvent(
-                lastFrameTexture1,
+                texture1,
                 FloatArray(16).also { Matrix.setIdentityM(it, 0) })
-        )
-        outputConnection2?.prime(
-            TextureEvent(diffTexture, FloatArray(16).also { Matrix.setIdentityM(it, 0) })
         )
     }
 
@@ -79,24 +72,16 @@ class FrameDifferenceNode(
         val type = config.type
 
         glesManager.withGlContext {
-            diffTexture.initialize()
-            lastFrameTexture1.initialize()
-            lastFrameTexture2.initialize()
-            diffTexture.initData(
-                0,
-                GL_R8, size.width, size.height,
-                GL_RED,
-                GL_UNSIGNED_BYTE
-            )
-            Log.d(TAG, "1 glGetError() ${glGetError()}")
-            lastFrameTexture1.initData(
+            texture1.initialize()
+            texture2.initialize()
+            texture1.initData(
                 0,
                 intFormat, size.width, size.height,
                 format,
                 type
             )
             Log.d(TAG, "2 glGetError() ${glGetError()}")
-            lastFrameTexture2.initData(
+            texture2.initData(
                 0,
                 intFormat, size.width, size.height,
                 format,
@@ -104,14 +89,14 @@ class FrameDifferenceNode(
             )
             Log.d(TAG, "3 glGetError() ${glGetError()}")
 
-            framebuffer1.initialize(lastFrameTexture1.id, diffTexture.id)
-            framebuffer2.initialize(lastFrameTexture2.id, diffTexture.id)
+            framebuffer1.initialize(texture1.id)
+            framebuffer2.initialize(texture2.id)
         }
     }
 
     private suspend fun createProgram(oesTexture: Boolean) {
-        val vertexSource = assetManager.readTextAsset("frame_difference.vert")
-        val fragmentSource = assetManager.readTextAsset("frame_difference.frag").let {
+        val vertexSource = assetManager.readTextAsset("vertex_texture.vert")
+        val fragmentSource = assetManager.readTextAsset("multiply_accumulate.frag").let {
             if (oesTexture) {
                 it.replace("#{EXT}", "#define EXT")
             } else {
@@ -145,17 +130,17 @@ class FrameDifferenceNode(
                     1
                 )
 
+                addUniform(Uniform.Type.Float, "multiply_factor", multiplyFactor)
+                addUniform(Uniform.Type.Float, "accumulate_factor", accumulateFactor)
+
             }
         }
     }
 
 
     override suspend fun start() = coroutineScope {
-        if (outputConnection1 == null && outputConnection2 == null) {
-            Log.d(TAG, "no outputs, not starting")
-            return@coroutineScope
-        }
         val input = inputChannel ?: return@coroutineScope
+        val output = outputConnection ?: return@coroutineScope
 
         var copyMatrix = true
 
@@ -163,16 +148,7 @@ class FrameDifferenceNode(
             while (isActive) {
                 val inEvent = input.receive()
 
-                val outEvent1 = outputConnection1?.dequeue()
-                val outEvent2 = outputConnection2?.dequeue()
-
-                outEvent1?.apply {
-                    eos = inEvent.eos
-                    count = inEvent.count
-                    timestamp = inEvent.timestamp
-                }
-
-                outEvent2?.apply {
+                val outEvent = output.dequeue().apply {
                     eos = inEvent.eos
                     count = inEvent.count
                     timestamp = inEvent.timestamp
@@ -195,18 +171,16 @@ class FrameDifferenceNode(
                 val outTexture: Texture
                 if (framebuffer == framebuffer1) {
                     framebuffer = framebuffer2
-                    outTexture = lastFrameTexture1
+                    outTexture = texture1
                 } else {
                     framebuffer = framebuffer1
-                    outTexture = lastFrameTexture2
+                    outTexture = texture2
                 }
 
-                outEvent1?.let {
+                outEvent.let {
                     it.texture = outTexture
-                    outputConnection1?.queue(it)
+                    outputConnection?.queue(it)
                 }
-
-                outEvent2?.let { outputConnection2?.queue(it) }
 
                 if (inEvent.eos) {
                     Log.d(TAG, "got EOS")
@@ -223,9 +197,9 @@ class FrameDifferenceNode(
         texture.bind(GL_TEXTURE0)
 
         if (framebuffer == framebuffer1) {
-            lastFrameTexture2.bind(GL_TEXTURE1)
+            texture2.bind(GL_TEXTURE1)
         } else {
-            lastFrameTexture1.bind(GL_TEXTURE1)
+            texture1.bind(GL_TEXTURE1)
         }
 
         program.bindUniforms()
@@ -240,9 +214,8 @@ class FrameDifferenceNode(
     override suspend fun release() {
         inputConnection?.let {
             glesManager.withGlContext {
-                diffTexture.release()
-                lastFrameTexture1.release()
-                lastFrameTexture2.release()
+                texture1.release()
+                texture2.release()
                 framebuffer1.release()
                 framebuffer2.release()
                 mesh.release()
@@ -267,23 +240,7 @@ class FrameDifferenceNode(
                     config.type
                 )
             ).also {
-                outputConnection1 = it
-            }
-        }
-        PortType.TEXTURE_2 -> {
-            connectMutex.withLock {}
-
-            SingleConsumer<TextureConfig, TextureEvent>(
-                TextureConfig(
-                    GL_TEXTURE_2D,
-                    size.width,
-                    size.height,
-                    GL_R8,
-                    GL_RED,
-                    GL_UNSIGNED_BYTE
-                )
-            ).also {
-                outputConnection2 = it
+                outputConnection = it
             }
         }
         else -> null
@@ -302,6 +259,6 @@ class FrameDifferenceNode(
     }
 
     companion object {
-        private val TAG = FrameDifferenceNode::class.java.simpleName
+        private val TAG = MacNode::class.java.simpleName
     }
 }

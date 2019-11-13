@@ -49,11 +49,14 @@ class Program {
 //                Log.d(TAG, "binding uniform $programId ${uniform.name} ${uniform.data}")
                 uniform.dirty = false
                 when (uniform.type) {
-                    Uniform.Type.Integer -> GLES32.glUniform1i(
+                    Uniform.Type.Int -> GLES32.glUniform1i(
                         uniform.location,
                         uniform.data as Int
                     )
-                    Uniform.Type.Float -> TODO()
+                    Uniform.Type.Float -> GLES32.glUniform1f(
+                        uniform.location,
+                        uniform.data as Float
+                    )
                     Uniform.Type.Mat4 -> GLES32.glUniformMatrix4fv(
                         uniform.location,
                         1,

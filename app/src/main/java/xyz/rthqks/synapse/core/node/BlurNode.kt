@@ -136,7 +136,7 @@ class BlurNode(
                     FloatArray(16).also { Matrix.setIdentityM(it, 0) })
 
                 addUniform(
-                    Uniform.Type.Integer,
+                    Uniform.Type.Int,
                     "input_texture0",
                     0
                 )

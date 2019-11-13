@@ -30,4 +30,7 @@ sealed class Key<T>(
             map[name] = key
         }
     }
+
+    object AccumulateFactor : Key<Float>("accumulate_factor")
+    object MultiplyFactor : Key<Float>("multiply_factor")
 }

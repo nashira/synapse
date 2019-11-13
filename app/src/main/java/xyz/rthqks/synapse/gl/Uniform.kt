@@ -9,8 +9,8 @@ class Uniform<T>(
 ) {
 
     sealed class Type<T> {
-        object Integer: Type<Int>()
-        object Float: Type<Float>()
+        object Int: Type<kotlin.Int>()
+        object Float: Type<kotlin.Float>()
         object Mat4 : Type<FloatArray>()
         object Vec2 : Type<FloatArray>()
     }

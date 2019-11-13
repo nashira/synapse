@@ -82,4 +82,18 @@
     <string name="property_name_scale_factor">Scale Factor</string>
     <string name="property_label_scale_factor_8">1/8</string>
     <string name="property_label_scale_factor_16">1/16</string>
+    <string name="name_node_type_multiply_accumulate">Multiply Accumulate</string>
+    <string name="property_label_float_zero">0.0</string>
+    <string name="property_label_float_point_one">0.1</string>
+    <string name="property_label_float_one">1.0</string>
+    <string name="property_label_float_point_two">0.2</string>
+    <string name="property_label_float_point_three">0.3</string>
+    <string name="property_label_float_point_four">0.4</string>
+    <string name="property_label_float_point_five">0.5</string>
+    <string name="property_label_float_point_six">0.6</string>
+    <string name="property_label_float_point_seven">0.7</string>
+    <string name="property_label_float_point_eight">0.8</string>
+    <string name="property_label_float_point_nine">0.9</string>
+    <string name="property_name_multiply_factor">Multiply Factor</string>
+    <string name="property_name_accumulate_factor">Accumulate Factor</string>
 </resources>

@@ -51,6 +51,25 @@ sealed class PropertyType<T : Any>(
         override fun toString(value: Int): String = value.toString()
     }
 
+    abstract class DiscreteFloat(
+        key: Key<Float>,
+        default: Float,
+        values: List<Float>,
+        labels: List<Int>,
+        @StringRes name: Int = 0,
+        @DrawableRes icon: Int = 0
+    ) : Discrete<Float>(
+        key,
+        default,
+        values,
+        labels,
+        name,
+        icon
+    ) {
+        override fun fromString(string: String): Float = string.toFloat()
+        override fun toString(value: Float): String = value.toString()
+    }
+
     abstract class DiscreteSize(
         key: Key<Size>,
         default: Size,
@@ -182,7 +201,7 @@ sealed class PropertyType<T : Any>(
         R.drawable.ic_camera
     )
 
-    object BlurSize: DiscreteInt(
+    object BlurSize : DiscreteInt(
         Key.BlurSize,
         9,
         listOf(5, 9, 13),
@@ -195,7 +214,7 @@ sealed class PropertyType<T : Any>(
         R.drawable.ic_blur
     )
 
-    object NumPasses: DiscreteInt(
+    object NumPasses : DiscreteInt(
         Key.NumPasses,
         1,
         listOf(1, 2, 3, 4, 5, 6, 7, 8, 9, 10),
@@ -215,7 +234,7 @@ sealed class PropertyType<T : Any>(
         R.drawable.ic_blur
     )
 
-    object ScaleFactor: DiscreteInt(
+    object ScaleFactor : DiscreteInt(
         Key.ScaleFactor,
         1,
         listOf(1, 2, 4, 8, 16),
@@ -230,7 +249,7 @@ sealed class PropertyType<T : Any>(
         R.drawable.ic_photo_size_select
     )
 
-    object AspectRatio: DiscreteInt(
+    object AspectRatio : DiscreteInt(
         Key.BlurSize,
         9,
         listOf(5, 9, 13),
@@ -240,6 +259,48 @@ sealed class PropertyType<T : Any>(
             R.string.property_label_blur_size_13
         ),
         R.string.property_name_blur_size,
+        R.drawable.ic_blur
+    )
+
+    object MultiplyFactor : DiscreteFloat(
+        Key.MultiplyFactor,
+        0.9f,
+        listOf(0.0f, 0.1f, 0.2f, 0.3f, 0.4f, 0.5f, 0.6f, 0.7f, 0.8f, 0.9f, 1.0f),
+        listOf(
+            R.string.property_label_float_zero,
+            R.string.property_label_float_point_one,
+            R.string.property_label_float_point_two,
+            R.string.property_label_float_point_three,
+            R.string.property_label_float_point_four,
+            R.string.property_label_float_point_five,
+            R.string.property_label_float_point_six,
+            R.string.property_label_float_point_seven,
+            R.string.property_label_float_point_eight,
+            R.string.property_label_float_point_nine,
+            R.string.property_label_float_one
+        ),
+        R.string.property_name_multiply_factor,
+        R.drawable.ic_blur
+    )
+
+    object AccumulateFactor : DiscreteFloat(
+        Key.AccumulateFactor,
+        0.9f,
+        listOf(0.0f, 0.1f, 0.2f, 0.3f, 0.4f, 0.5f, 0.6f, 0.7f, 0.8f, 0.9f, 1.0f),
+        listOf(
+            R.string.property_label_float_zero,
+            R.string.property_label_float_point_one,
+            R.string.property_label_float_point_two,
+            R.string.property_label_float_point_three,
+            R.string.property_label_float_point_four,
+            R.string.property_label_float_point_five,
+            R.string.property_label_float_point_six,
+            R.string.property_label_float_point_seven,
+            R.string.property_label_float_point_eight,
+            R.string.property_label_float_point_nine,
+            R.string.property_label_float_one
+        ),
+        R.string.property_name_accumulate_factor,
         R.drawable.ic_blur
     )
 
@@ -289,6 +350,12 @@ sealed class PropertyType<T : Any>(
             }
             Key.ScaleFactor -> (value as? Int)?.let {
                 ScaleFactor.toString(it)
+            }
+            Key.AccumulateFactor -> (value as? Float)?.let {
+                AccumulateFactor.toString(it)
+            }
+            Key.MultiplyFactor -> (value as? Float)?.let {
+                MultiplyFactor.toString(it)
             }
         } ?: error("can't convert $value with key $key")
 

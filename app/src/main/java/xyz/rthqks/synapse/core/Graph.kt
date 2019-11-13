@@ -48,7 +48,17 @@ class Graph(
                     glesManager, assetManager, it[Key.ScaleFactor]
                 )
                 NodeType.BlurFilter -> BlurNode(
-                    glesManager, assetManager, it[Key.BlurSize], it[Key.NumPasses], it[Key.ScaleFactor]
+                    glesManager,
+                    assetManager,
+                    it[Key.BlurSize],
+                    it[Key.NumPasses],
+                    it[Key.ScaleFactor]
+                )
+                NodeType.MultiplyAccumulate -> MacNode(
+                    glesManager,
+                    assetManager,
+                    it[Key.MultiplyFactor],
+                    it[Key.AccumulateFactor]
                 )
                 NodeType.OverlayFilter -> OverlayFilterNode(glesManager, assetManager)
                 NodeType.Microphone -> AudioSourceNode(

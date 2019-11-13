@@ -66,6 +66,19 @@ sealed class NodeType(
         )
     )
 
+    object MultiplyAccumulate : NodeType(
+        "multiply_accumulate",
+        R.string.name_node_type_multiply_accumulate, R.drawable.ic_add,
+        listOf(
+            PortType.Texture(PortType.TEXTURE_1, PortType.INPUT),
+            PortType.Texture(PortType.TEXTURE_1, PortType.OUTPUT)
+        ),
+        listOf(
+            PropertyType.MultiplyFactor,
+            PropertyType.AccumulateFactor
+        )
+    )
+
     object OverlayFilter : NodeType(
         "overlay_filter",
         R.string.name_node_type_overlay_filter, R.drawable.ic_layers,

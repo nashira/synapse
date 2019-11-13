@@ -13,6 +13,7 @@ class DbConverters {
             NodeType.FrameDifference.key -> NodeType.FrameDifference
             NodeType.GrayscaleFilter.key -> NodeType.GrayscaleFilter
             NodeType.BlurFilter.key -> NodeType.BlurFilter
+            NodeType.MultiplyAccumulate.key -> NodeType.MultiplyAccumulate
             NodeType.OverlayFilter.key -> NodeType.OverlayFilter
             NodeType.Microphone.key -> NodeType.Microphone
             NodeType.AudioWaveform.key -> NodeType.AudioWaveform

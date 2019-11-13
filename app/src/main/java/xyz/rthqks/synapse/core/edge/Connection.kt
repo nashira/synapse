@@ -24,15 +24,15 @@ class SingleConsumer<C : Config, E : Event>(
         Channel(Channel.UNLIMITED)
     )
 
-    override suspend fun queue(item: E) = duplex.host.send(item)
+    override suspend fun queue(item: E) = duplex.tx.send(item)
 
-    override suspend fun dequeue(): E = duplex.host.receive()
+    override suspend fun dequeue(): E = duplex.rx.receive()
 
-    override fun poll(): E? = duplex.host.poll()
+    override fun poll(): E? = duplex.rx.poll()
 
     override fun consumer(): Channel<E> = duplex.client
 
-    override suspend fun prime(item: E) = duplex.client.send(item)
+    override suspend fun prime(item: E) = duplex.rx.send(item)
 
     companion object {
         private const val TAG = "Connection"
@@ -60,7 +60,7 @@ class MultiConsumer<C : Config, E : Event>(
     override suspend fun queue(item: E) {
         item._counter.set(consumers.size)
         consumers.forEach {
-            it.host.send(item)
+            it.tx.send(item)
         }
     }
 
@@ -68,7 +68,7 @@ class MultiConsumer<C : Config, E : Event>(
         while (true) {
             val item = select<E?> {
                 consumers.forEach {
-                    it.host.onReceive { item ->
+                    it.rx.onReceive { item ->
                         if (item._counter.decrementAndGet() == 0) {
                             item
                         } else {
@@ -85,7 +85,7 @@ class MultiConsumer<C : Config, E : Event>(
 
     override fun poll(): E? {
         consumers.forEach {
-            it.host.poll()?.let { item ->
+            it.rx.poll()?.let { item ->
                 if (item._counter.decrementAndGet() == 0) {
                     return item
                 }
@@ -112,10 +112,9 @@ abstract class Event {
     val _counter = AtomicInteger()
 }
 
-// TODO: use channels directly internally for perf boost?
 class Duplex<E : Event>(
-    val tx: Channel<E>,
-    val rx: Channel<E>
+    internal val tx: Channel<E>,
+    internal val rx: Channel<E>
 ) {
     val host = Simplex(tx, rx)
     val client = Simplex(rx, tx)

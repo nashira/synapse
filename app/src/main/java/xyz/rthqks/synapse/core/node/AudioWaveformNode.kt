@@ -44,7 +44,7 @@ class AudioWaveformNode(
     override suspend fun initialize() {
         createProgram()
 
-        val uniform = program.getUniform(Uniform.Type.Integer, "isSigned")
+        val uniform = program.getUniform(Uniform.Type.Int, "isSigned")
         uniform.data = if (audioFormat.encoding == AudioFormat.ENCODING_PCM_8BIT) 0 else 1
         uniform.dirty
         Log.d(TAG, "signed ${uniform.data}")
@@ -81,9 +81,9 @@ class AudioWaveformNode(
                     "texture_matrix0",
                     FloatArray(16).also { Matrix.setIdentityM(it, 0) })
 
-                addUniform(Uniform.Type.Integer, "isSigned", 0)
+                addUniform(Uniform.Type.Int, "isSigned", 0)
 
-                addUniform(Uniform.Type.Integer, "audio_texture", 0)
+                addUniform(Uniform.Type.Int, "audio_texture", 0)
 
             }
         }
