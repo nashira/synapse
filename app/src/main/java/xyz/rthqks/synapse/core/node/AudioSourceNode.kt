@@ -6,10 +6,8 @@ import android.util.Log
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
-import xyz.rthqks.synapse.core.Connection
-import xyz.rthqks.synapse.core.Event
 import xyz.rthqks.synapse.core.Node
-import xyz.rthqks.synapse.core.edge.AudioConnection
+import xyz.rthqks.synapse.core.edge.*
 import xyz.rthqks.synapse.data.PortType
 
 class AudioSourceNode(
@@ -21,7 +19,8 @@ class AudioSourceNode(
     private lateinit var recorder: AudioRecord
     private lateinit var audioFormat: AudioFormat
     private var bufferSize = 0
-    private var connection: AudioConnection? = null
+    private var itemsCreated = 0
+    private var connection: Connection<AudioConfig, AudioEvent>? = null
     private var recordJob: Job? = null
     private var running = false
 
@@ -48,7 +47,9 @@ class AudioSourceNode(
     }
 
     override suspend fun initialize() {
-
+        connection?.prime(AudioEvent(bufferSize))
+        connection?.prime(AudioEvent(bufferSize))
+        connection?.prime(AudioEvent(bufferSize))
     }
 
     override suspend fun start() = coroutineScope {
@@ -92,14 +93,17 @@ class AudioSourceNode(
         recorder.release()
     }
 
-    override suspend fun output(key: String): Connection<*>? {
-        return if (key == PortType.AUDIO_1) AudioConnection().also {
-            it.configure(audioFormat, bufferSize)
-            connection = it
+    override suspend fun output(key: String): Connection<*, *>? {
+        return if (key == PortType.AUDIO_1) {
+            SingleConsumer<AudioConfig, AudioEvent>(
+                AudioConfig(audioFormat, bufferSize)
+            ).also {
+                connection = it
+            }
         } else null
     }
 
-    override suspend fun <T : Event> input(key: String, connection: Connection<T>) {
+    override suspend fun <C : Config, T : Event> input(key: String, connection: Connection<C, T>) {
         throw IllegalStateException("no inputs: $this")
     }
 

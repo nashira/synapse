@@ -4,19 +4,17 @@ import android.opengl.GLES32.*
 import android.opengl.Matrix
 import android.util.Log
 import android.util.Size
+import android.view.Surface
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import xyz.rthqks.synapse.assets.AssetManager
-import xyz.rthqks.synapse.core.Connection
-import xyz.rthqks.synapse.core.Event
 import xyz.rthqks.synapse.core.Node
-import xyz.rthqks.synapse.core.edge.SurfaceConnection
-import xyz.rthqks.synapse.core.edge.TextureConnection
-import xyz.rthqks.synapse.core.edge.TextureEvent
+import xyz.rthqks.synapse.core.edge.*
 import xyz.rthqks.synapse.data.PortType
 import xyz.rthqks.synapse.gl.*
 
@@ -25,16 +23,17 @@ class GrayscaleNode(
     private val assetManager: AssetManager,
     private val scale: Int
 ) : Node() {
-    private var inputConnection: TextureConnection? = null
+    private var inputChannel: Channel<TextureEvent>? = null
+    private var inputConnection: Connection<TextureConfig, TextureEvent>? = null
     private var startJob: Job? = null
     private val connectMutex = Mutex(true)
     private var size = Size(0, 0)
 
-    private var outputTextureConnection: TextureConnection? = null
+    private var outputTextureConnection: Connection<TextureConfig, TextureEvent>? = null
     private var texture: Texture? = null
     private var framebuffer: Framebuffer? = null
 
-    private var outputSurfaceConnection: SurfaceConnection? = null
+    private var outputSurfaceConnection: Connection<SurfaceConfig, SurfaceEvent>? = null
     private var outputSurfaceWindow: WindowSurface? = null
 
     private val mesh = Quad()
@@ -46,9 +45,10 @@ class GrayscaleNode(
 
     override suspend fun initialize() {
         val connection = inputConnection ?: error("missing input connection")
+        val config = connection.config
         val vertexSource = assetManager.readTextAsset("vertex_texture.vert")
         val fragmentSource = assetManager.readTextAsset("grayscale.frag").let {
-            if (connection.isOes) {
+            if (config.isOes) {
                 it.replace("#{EXT}", "#define EXT")
             } else {
                 it
@@ -90,6 +90,14 @@ class GrayscaleNode(
 
             }
         }
+
+        outputTextureConnection?.prime(
+            TextureEvent(texture!!, FloatArray(16).also { Matrix.setIdentityM(it, 0) })
+        )
+
+        outputSurfaceConnection?.prime(SurfaceEvent())
+        outputSurfaceConnection?.prime(SurfaceEvent())
+        outputSurfaceConnection?.prime(SurfaceEvent())
     }
 
     override suspend fun start() = when {
@@ -103,13 +111,13 @@ class GrayscaleNode(
 
     private suspend fun startTexture() = coroutineScope {
         val output = outputTextureConnection ?: return@coroutineScope
-        val input = inputConnection ?: return@coroutineScope
+        val input = inputChannel ?: return@coroutineScope
 
         var copyMatrix = true
 
         startJob = launch {
             while (isActive) {
-                val inEvent = input.acquire()
+                val inEvent = input.receive()
 
                 val outEvent = output.dequeue()
                 outEvent.eos = inEvent.eos
@@ -128,7 +136,7 @@ class GrayscaleNode(
                     executeGl(inEvent.texture)
                 }
 
-                input.release(inEvent)
+                input.send(inEvent)
                 output.queue(outEvent)
 
                 if (outEvent.eos) {
@@ -141,15 +149,16 @@ class GrayscaleNode(
 
     private suspend fun startSurface() = coroutineScope {
         val output = outputSurfaceConnection ?: return@coroutineScope
-        val input = inputConnection ?: return@coroutineScope
+        val input = inputChannel ?: return@coroutineScope
+        val config = output.config
 
-        updateOutputSurface(output)
+        updateOutputSurface(config.getSurface())
 
         var copyMatrix = true
 
         startJob = launch {
             while (isActive) {
-                val inEvent = input.acquire()
+                val inEvent = input.receive()
 
                 val outEvent = output.dequeue()
                 outEvent.eos = inEvent.eos
@@ -157,7 +166,7 @@ class GrayscaleNode(
                 outEvent.timestamp = inEvent.timestamp
 
 
-                if (output.hasSurface()) {
+                if (config.hasSurface()) {
                     if (copyMatrix) {
                         copyMatrix = false
 
@@ -172,7 +181,7 @@ class GrayscaleNode(
                     }
                 }
 
-                input.release(inEvent)
+                input.send(inEvent)
                 output.queue(outEvent)
 
                 if (outEvent.eos) {
@@ -183,8 +192,7 @@ class GrayscaleNode(
         }
     }
 
-    private suspend fun updateOutputSurface(output: SurfaceConnection) {
-        val surface = output.getSurface()
+    private suspend fun updateOutputSurface(surface: Surface) {
         Log.d(TAG, "creating output surface")
         glesManager.withGlContext {
             outputSurfaceWindow?.release()
@@ -220,39 +228,41 @@ class GrayscaleNode(
         }
     }
 
-    override suspend fun output(key: String): Connection<*>? = when (key) {
+    override suspend fun output(key: String): Connection<*, *>? = when (key) {
         PortType.SURFACE_1 -> {
-            SurfaceConnection().also { connection ->
+            connectMutex.withLock {}
+            SingleConsumer<SurfaceConfig, SurfaceEvent>(
+                SurfaceConfig(size, 0)
+            ).also { connection ->
                 outputSurfaceConnection = connection
-                connectMutex.withLock {
-                    connection.configure(size, 0)
-                }
             }
         }
         PortType.TEXTURE_1 -> {
             connectMutex.withLock {}
-            TextureConnection(
-                GL_TEXTURE_2D,
-                size.width,
-                size.height,
-                GL_R8,
-                GL_RED,
-                GL_UNSIGNED_BYTE
-            ) {
-                TextureEvent(texture!!, FloatArray(16).also { Matrix.setIdentityM(it, 0) })
-            }.also { connection ->
+            val connection = inputConnection!!
+            val config = connection.config
+            SingleConsumer<TextureConfig, TextureEvent>(
+                TextureConfig(
+                    GL_TEXTURE_2D,
+                    size.width,
+                    size.height,
+                    GL_R8,
+                    GL_RED,
+                    GL_UNSIGNED_BYTE
+                )
+            ).also { connection ->
                 outputTextureConnection = connection
             }
         }
         else -> null
     }
 
-    override suspend fun <T : Event> input(key: String, connection: Connection<T>) {
+    override suspend fun <C: Config, T : Event> input(key: String, connection: Connection<C, T>) {
         when (key) {
             PortType.TEXTURE_1 -> {
-                connection as TextureConnection
-                inputConnection = connection
-                size = connection.size.let { Size(it.width / scale, it.height / scale) }
+                inputConnection = connection as Connection<TextureConfig, TextureEvent>
+                inputChannel = connection.consumer()
+                size = connection.config.size.let { Size(it.width / scale, it.height / scale) }
 
                 connectMutex.unlock()
             }

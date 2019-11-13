@@ -8,17 +8,17 @@ import android.view.SurfaceView
 import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.constraintlayout.widget.ConstraintSet
 import kotlinx.coroutines.*
+import kotlinx.coroutines.channels.Channel
 import xyz.rthqks.synapse.R
-import xyz.rthqks.synapse.core.Connection
-import xyz.rthqks.synapse.core.Event
 import xyz.rthqks.synapse.core.Node
-import xyz.rthqks.synapse.core.edge.SurfaceConnection
+import xyz.rthqks.synapse.core.edge.*
 import xyz.rthqks.synapse.data.PortType
 
 class SurfaceViewNode(
     private val surfaceView: SurfaceView
 ) : Node() {
-    private var connection: SurfaceConnection? = null
+    private var channel: Channel<SurfaceEvent>? = null
+    private var connection: Connection<SurfaceConfig, SurfaceEvent>? = null
     private var surface: Surface? = null
     private var running: Boolean = false
     private var playJob: Job? = null
@@ -55,13 +55,13 @@ class SurfaceViewNode(
     }
 
     override suspend fun start() = coroutineScope {
-        val connection = connection ?: return@coroutineScope
+        val connection = channel ?: return@coroutineScope
 
         playJob = launch {
             running = true
             var numFrames = 0
             while (running) {
-                val surfaceEvent = connection.acquire()
+                val surfaceEvent = connection.receive()
                 if (surfaceEvent.eos) {
                     Log.d(TAG, "got EOS")
                     running = false
@@ -70,7 +70,7 @@ class SurfaceViewNode(
 //                    Log.d(TAG, "written $write frames $numFrames")
 
                 }
-                connection.release(surfaceEvent)
+                connection.send(surfaceEvent)
             }
             Log.d(TAG, "wrote frames $numFrames")
         }
@@ -84,16 +84,17 @@ class SurfaceViewNode(
 
     }
 
-    override suspend fun output(key: String): Connection<*>? {
+    override suspend fun output(key: String): Connection<*, *>? {
         throw IllegalStateException("$TAG has no outputs")
     }
 
-    override suspend fun <T : Event> input(key: String, connection: Connection<T>) {
+    override suspend fun <C: Config, T : Event> input(key: String, connection: Connection<C, T>) {
         when (key) {
             PortType.SURFACE_1 -> {
-                this.connection = connection as SurfaceConnection
-                val size = connection.getSize()
-                val rotation = connection.getRotation()
+                this.connection = connection as Connection<SurfaceConfig, SurfaceEvent>
+                channel = connection.consumer()
+                val size = connection.config.size
+                val rotation = connection.config.rotation
                 withContext(Dispatchers.Main) {
                     surfaceView.holder.setFixedSize(size.width, size.height)
                     ConstraintSet().also {
@@ -112,7 +113,7 @@ class SurfaceViewNode(
     private suspend fun setSurface(surface: Surface?) {
         Log.d(TAG, "setSurface $surface")
         this.surface = surface
-        connection?.setSurface(surface)
+        connection?.config?.setSurface(surface)
     }
 
     companion object {

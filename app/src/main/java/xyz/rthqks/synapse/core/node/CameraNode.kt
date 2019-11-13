@@ -14,12 +14,8 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import xyz.rthqks.synapse.core.CameraManager
-import xyz.rthqks.synapse.core.Connection
-import xyz.rthqks.synapse.core.Event
 import xyz.rthqks.synapse.core.Node
-import xyz.rthqks.synapse.core.edge.SurfaceConnection
-import xyz.rthqks.synapse.core.edge.TextureConnection
-import xyz.rthqks.synapse.core.edge.TextureEvent
+import xyz.rthqks.synapse.core.edge.*
 import xyz.rthqks.synapse.data.PortType
 import xyz.rthqks.synapse.gl.GlesManager
 import xyz.rthqks.synapse.gl.Texture
@@ -34,8 +30,8 @@ class CameraNode(
     private lateinit var size: Size
     private lateinit var cameraId: String
     private var surfaceRotation = 0
-    private var surfaceConnection: SurfaceConnection? = null
-    private var textureConnection: TextureConnection? = null
+    private var surfaceConnection: Connection<SurfaceConfig, SurfaceEvent>? = null
+    private var textureConnection: Connection<TextureConfig, TextureEvent>? = null
     private var startJob: Job? = null
     private val mutex = Mutex()
     private var outputSurface: Surface? = null
@@ -55,7 +51,11 @@ class CameraNode(
     }
 
     override suspend fun initialize() {
+        textureConnection?.prime(TextureEvent(outputTexture, FloatArray(16)))
 
+        surfaceConnection?.prime(SurfaceEvent())
+        surfaceConnection?.prime(SurfaceEvent())
+        surfaceConnection?.prime(SurfaceEvent())
     }
 
     override suspend fun start() = when {
@@ -69,7 +69,8 @@ class CameraNode(
 
     private suspend fun startSurface() = coroutineScope {
         val connection = surfaceConnection ?: return@coroutineScope
-        val surface = connection.getSurface()
+        val config = connection.config
+        val surface = config.getSurface()
         mutex.lock()
         startJob = launch {
             cameraManager.start(cameraId, surface, frameRate) { count, timestamp, eos ->
@@ -143,7 +144,7 @@ class CameraNode(
     }
 
     private suspend fun onFrame(
-        connection: TextureConnection,
+        connection: Connection<TextureConfig, TextureEvent>,
         surfaceTexture: SurfaceTexture,
         copyMatrix: Boolean
     ) {
@@ -171,10 +172,11 @@ class CameraNode(
         outputTexture.release()
     }
 
-    override suspend fun output(key: String): Connection<*>? = when (key) {
-        PortType.SURFACE_1 -> SurfaceConnection().also {
+    override suspend fun output(key: String): Connection<*, *>? = when (key) {
+        PortType.SURFACE_1 -> SingleConsumer<SurfaceConfig, SurfaceEvent>(
+            SurfaceConfig(size, surfaceRotation)
+        ).also {
             surfaceConnection = it
-            it.configure(size, surfaceRotation)
         }
         PortType.TEXTURE_1 -> {
             glesManager.withGlContext {
@@ -189,25 +191,23 @@ class CameraNode(
 
             outputSurfaceTexture?.setDefaultBufferSize(size.width, size.height)
 
-            TextureConnection(
-                GLES11Ext.GL_TEXTURE_EXTERNAL_OES,
-                rotatedSize.width,
-                rotatedSize.height,
-                GLES32.GL_RGB8,
-                GLES32.GL_RGB,
-                GLES32.GL_UNSIGNED_BYTE
-            ) {
-                Log.d(TAG, "creating texture event $outputTexture")
-                TextureEvent(outputTexture, FloatArray(16))
-            }.also {
+            SingleConsumer<TextureConfig, TextureEvent>(
+                TextureConfig(
+                    GLES11Ext.GL_TEXTURE_EXTERNAL_OES,
+                    rotatedSize.width,
+                    rotatedSize.height,
+                    GLES32.GL_RGB8,
+                    GLES32.GL_RGB,
+                    GLES32.GL_UNSIGNED_BYTE
+                )
+            ).also {
                 textureConnection = it
-
             }
         }
         else -> null
     }
 
-    override suspend fun <T : Event> input(key: String, connection: Connection<T>) {
+    override suspend fun <C : Config, T : Event> input(key: String, connection: Connection<C, T>) {
         throw IllegalStateException("$TAG has no inputs")
     }
 

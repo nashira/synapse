@@ -5,18 +5,18 @@ import android.media.AudioFormat
 import android.media.AudioTrack
 import android.util.Log
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
-import xyz.rthqks.synapse.core.Connection
-import xyz.rthqks.synapse.core.Event
 import xyz.rthqks.synapse.core.Node
-import xyz.rthqks.synapse.core.edge.AudioConnection
+import xyz.rthqks.synapse.core.edge.*
 import xyz.rthqks.synapse.data.PortType
 
 class AudioPlayerNode : Node() {
     private var audioTrack: AudioTrack? = null
     private lateinit var audioFormat: AudioFormat
-    private var connection: AudioConnection? = null
+    private var connection: Connection<AudioConfig, AudioEvent>? = null
+    private var channel: Channel<AudioEvent>? = null
     private var bufferSize = 0
     private var playJob: Job? = null
     private var running = false
@@ -36,14 +36,14 @@ class AudioPlayerNode : Node() {
     }
 
     override suspend fun start() = coroutineScope {
-        val connection = connection ?: return@coroutineScope
+        val channel = channel ?: return@coroutineScope
 
         playJob = launch {
             running = true
             audioTrack?.play()
             var numFrames = 0
             while (running) {
-                val audioBuffer = connection.acquire()
+                val audioBuffer = channel.receive()
                 if (audioBuffer.eos) {
                     Log.d(TAG, "got EOS")
                     running = false
@@ -57,7 +57,7 @@ class AudioPlayerNode : Node() {
 //                    Log.d(TAG, "written $write frames $numFrames")
 
                 }
-                connection.release(audioBuffer)
+                channel.send(audioBuffer)
             }
             Log.d(TAG, "wrote frames $numFrames")
         }
@@ -72,15 +72,16 @@ class AudioPlayerNode : Node() {
         audioTrack?.release()
     }
 
-    override suspend fun output(key: String): Connection<*> {
+    override suspend fun output(key: String): Connection<*, *> {
         throw IllegalStateException("no outputs: $this")
     }
 
-    override suspend fun <T : Event> input(key: String, connection: Connection<T>) {
+    override suspend fun <C: Config, T : Event> input(key: String, connection: Connection<C, T>) {
         if (key == PortType.AUDIO_1) {
-            this.connection = connection as AudioConnection
-            audioFormat = connection.audioFormat
-            bufferSize = connection.audioBufferSize
+            this.connection = connection as Connection<AudioConfig, AudioEvent>
+            channel = connection.consumer()
+            audioFormat = connection.config.audioFormat
+            bufferSize = connection.config.audioBufferSize
         }
     }
 

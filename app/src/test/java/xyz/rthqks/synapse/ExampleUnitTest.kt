@@ -3,9 +3,9 @@ package xyz.rthqks.synapse
 import kotlinx.coroutines.*
 import org.junit.Assert.assertEquals
 import org.junit.Test
-import xyz.rthqks.synapse.core.Event
-import xyz.rthqks.synapse.core.MultiConnection
 import xyz.rthqks.synapse.core.edge.AudioConnection
+import xyz.rthqks.synapse.core.edge.Event
+import xyz.rthqks.synapse.core.edge.MultiConsumer
 import java.util.concurrent.Executors
 import kotlin.system.measureNanoTime
 
@@ -22,15 +22,10 @@ class ExampleUnitTest {
 
     @Test
     fun testMultiChannel() {
-        val scope = CoroutineScope(Job())
-        var startJob: Job
         var ID = 1
-        val m = MultiConnection(1) { TestEvent(ID++) }
+        val m = MultiConsumer(2) { TestEvent(ID++) }
         runBlocking {
-            startJob = launch {
-                m.start()
-            }
-            val i = m.producer.receive()
+            val i = m.dequeue()
             println("received $i")
             val c1 = m.consumer()
             val c2 = m.consumer()
@@ -53,13 +48,12 @@ class ExampleUnitTest {
             }
             launch {
                 println("m.p")
-                val d = m.producer.receive()
+                val d = m.dequeue()
                 println("m.p $d")
-//                m.prfoducer.send(d)
+                m.queue(d)
                 println("m.p done")
-                startJob.cancel()
             }
-            m.producer.send(i)
+            m.queue(i)
         }
     }
 

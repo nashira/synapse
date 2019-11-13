@@ -4,19 +4,17 @@ import android.opengl.GLES32.*
 import android.opengl.Matrix
 import android.util.Log
 import android.util.Size
+import android.view.Surface
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import xyz.rthqks.synapse.assets.AssetManager
-import xyz.rthqks.synapse.core.Connection
-import xyz.rthqks.synapse.core.Event
 import xyz.rthqks.synapse.core.Node
-import xyz.rthqks.synapse.core.edge.SurfaceConnection
-import xyz.rthqks.synapse.core.edge.TextureConnection
-import xyz.rthqks.synapse.core.edge.TextureEvent
+import xyz.rthqks.synapse.core.edge.*
 import xyz.rthqks.synapse.data.PortType
 import xyz.rthqks.synapse.gl.*
 
@@ -25,16 +23,18 @@ class OverlayFilterNode(
     private val assetManager: AssetManager
 ) : Node() {
     private var startJob: Job? = null
-    private var contentInput: TextureConnection? = null
-    private var maskInput: TextureConnection? = null
+    private var contentInput: Connection<TextureConfig, TextureEvent>? = null
+    private var contentChannel: Channel<TextureEvent>? = null
+    private var maskInput: Connection<TextureConfig, TextureEvent>? = null
+    private var maskChannel: Channel<TextureEvent>? = null
     private var contentSize = Size(0, 0)
     private val connectMutex = Mutex(true)
 
-    private var outputTextureConnection: TextureConnection? = null
+    private var outputTextureConnection: Connection<TextureConfig, TextureEvent>? = null
     private var texture: Texture? = null
     private var framebuffer: Framebuffer? = null
 
-    private var outputSurfaceConnection: SurfaceConnection? = null
+    private var outputSurfaceConnection: Connection<SurfaceConfig, SurfaceEvent>? = null
     private var outputSurfaceWindow: WindowSurface? = null
 
     private val mesh = Quad()
@@ -46,9 +46,10 @@ class OverlayFilterNode(
 
     override suspend fun initialize() {
         val connection = contentInput ?: error("missing input connection")
+        val config = connection.config
         val vertexSource = assetManager.readTextAsset("overlay_filter.vert")
         val fragmentSource = assetManager.readTextAsset("overlay_filter.frag").let {
-            if (connection.isOes) {
+            if (config.isOes) {
                 it.replace("#{EXT}", "#define EXT")
             } else {
                 it
@@ -67,11 +68,11 @@ class OverlayFilterNode(
             texture.initialize()
             texture.initData(
                 0,
-                connection.internalFormat,
+                config.internalFormat,
                 contentSize.width,
                 contentSize.height,
-                connection.format,
-                connection.type
+                config.format,
+                config.type
             )
             Log.d(TAG, "glGetError() ${glGetError()}")
 
@@ -103,6 +104,14 @@ class OverlayFilterNode(
 
             }
         }
+
+        outputTextureConnection?.prime(
+            TextureEvent(texture!!, FloatArray(16).also { Matrix.setIdentityM(it, 0) })
+        )
+
+        outputSurfaceConnection?.prime(SurfaceEvent())
+        outputSurfaceConnection?.prime(SurfaceEvent())
+        outputSurfaceConnection?.prime(SurfaceEvent())
     }
 
     override suspend fun start() = when {
@@ -116,15 +125,15 @@ class OverlayFilterNode(
 
     private suspend fun startTexture() = coroutineScope {
         val output = outputTextureConnection ?: error("no output connection")
-        val input = contentInput ?: error("no content connection")
-        val mask = maskInput ?: error("no mask connection")
+        val input = contentChannel ?: error("no content connection")
+        val mask = maskChannel ?: error("no mask connection")
 
         var copyMatrix = true
 
         startJob = launch {
             while (isActive) {
-                val inEvent1 = input.acquire()
-                val maskEvent = mask.acquire()
+                val inEvent1 = input.receive()
+                val maskEvent = mask.receive()
 
                 val outEvent = output.dequeue()
                 outEvent.eos = inEvent1.eos
@@ -142,8 +151,8 @@ class OverlayFilterNode(
                     executeGl(inEvent1.texture, maskEvent.texture)
                 }
 
-                input.release(inEvent1)
-                mask.release(maskEvent)
+                input.send(inEvent1)
+                mask.send(maskEvent)
 
                 output.queue(outEvent)
 
@@ -163,17 +172,18 @@ class OverlayFilterNode(
 
     private suspend fun startSurface() = coroutineScope {
         val output = outputSurfaceConnection ?: return@coroutineScope
-        val input = contentInput ?: return@coroutineScope
-        val mask = maskInput ?: error("no mask connection")
+        val input = contentChannel ?: return@coroutineScope
+        val mask = maskChannel ?: error("no mask connection")
+        val config = output.config
 
-        updateOutputSurface(output)
+        updateOutputSurface(config.getSurface())
 
         var copyMatrix = true
 
         startJob = launch {
             while (isActive) {
-                val inEvent = input.acquire()
-                val maskEvent = mask.acquire()
+                val inEvent = input.receive()
+                val maskEvent = mask.receive()
 
                 val outEvent = output.dequeue()
                 outEvent.eos = inEvent.eos
@@ -181,7 +191,7 @@ class OverlayFilterNode(
                 outEvent.timestamp = inEvent.timestamp
 
 
-                if (output.hasSurface()) {
+                if (config.hasSurface()) {
                     if (copyMatrix) {
                         copyMatrix = false
 
@@ -196,8 +206,8 @@ class OverlayFilterNode(
                     }
                 }
 
-                input.release(inEvent)
-                mask.release(maskEvent)
+                input.send(inEvent)
+                mask.send(maskEvent)
                 output.queue(outEvent)
 
                 if (outEvent.eos) {
@@ -208,8 +218,7 @@ class OverlayFilterNode(
         }
     }
 
-    private suspend fun updateOutputSurface(output: SurfaceConnection) {
-        val surface = output.getSurface()
+    private suspend fun updateOutputSurface(surface: Surface) {
         Log.d(TAG, "creating output surface")
         glesManager.withGlContext {
             outputSurfaceWindow?.release()
@@ -246,46 +255,46 @@ class OverlayFilterNode(
         }
     }
 
-    override suspend fun output(key: String): Connection<*>? = when (key) {
+    override suspend fun output(key: String): Connection<*, *>? = when (key) {
         PortType.SURFACE_1 -> {
-            SurfaceConnection().also { connection ->
+            connectMutex.withLock {}
+            SingleConsumer<SurfaceConfig, SurfaceEvent>(
+                SurfaceConfig(contentSize, 0)
+            ).also { connection ->
                 outputSurfaceConnection = connection
-                connectMutex.withLock {
-                    connection.configure(contentSize, 0)
-                }
             }
         }
         PortType.TEXTURE_1 -> {
             connectMutex.withLock {}
             val connection = contentInput!!
-            TextureConnection(
-                GL_TEXTURE_2D,
+            val config = connection.config
+            SingleConsumer<TextureConfig, TextureEvent>(
+                TextureConfig(GL_TEXTURE_2D,
                 contentSize.width,
                 contentSize.height,
-                connection.internalFormat,
-                connection.format,
-                connection.type
-            ) {
-                TextureEvent(texture!!, FloatArray(16).also { Matrix.setIdentityM(it, 0) })
-            }.also {
+                config.internalFormat,
+                config.format,
+                config.type
+                )
+            ).also {
                 outputTextureConnection = it
             }
         }
         else -> null
     }
 
-    override suspend fun <T : Event> input(key: String, connection: Connection<T>) {
+    override suspend fun <C: Config, T : Event> input(key: String, connection: Connection<C, T>) {
         when (key) {
             PortType.TEXTURE_1 -> {
-                connection as TextureConnection
-                contentInput = connection
-                contentSize = connection.size
+                contentInput = connection as Connection<TextureConfig, TextureEvent>
+                contentChannel = connection.consumer()
+                contentSize = connection.config.size
 
                 connectMutex.unlock()
             }
             PortType.TEXTURE_2 -> {
-                connection as TextureConnection
-                maskInput = connection
+                maskInput = connection as Connection<TextureConfig, TextureEvent>
+                maskChannel = connection.consumer()
 //                contentSize = connection.size.let { Size(it.width, it.height) }
             }
         }

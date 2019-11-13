@@ -5,17 +5,15 @@ import android.opengl.Matrix
 import android.util.Log
 import android.util.Size
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import xyz.rthqks.synapse.assets.AssetManager
-import xyz.rthqks.synapse.core.Connection
-import xyz.rthqks.synapse.core.Event
 import xyz.rthqks.synapse.core.Node
-import xyz.rthqks.synapse.core.edge.TextureConnection
-import xyz.rthqks.synapse.core.edge.TextureEvent
+import xyz.rthqks.synapse.core.edge.*
 import xyz.rthqks.synapse.data.PortType
 import xyz.rthqks.synapse.gl.*
 
@@ -26,13 +24,14 @@ class BlurNode(
     private val passes: Int = 1,
     private val scale: Int = 1
 ) : Node() {
-    private var inputConnection: TextureConnection? = null
+    private var inputChannel: Channel<TextureEvent>? = null
+    private var inputConnection: Connection<TextureConfig, TextureEvent>? = null
     private var startJob: Job? = null
     private val connectMutex = Mutex(true)
     private var inputSize = Size(0, 0)
     private var size = Size(0, 0)
 
-    private var outputTextureConnection: TextureConnection? = null
+    private var outputConnection: Connection<TextureConfig, TextureEvent>? = null
     private lateinit var texture1: Texture
     private lateinit var framebuffer1: Framebuffer
 
@@ -50,6 +49,7 @@ class BlurNode(
     override suspend fun initialize() {
 
         inputConnection?.let {
+            val config = it.config
             texture1 = Texture(
                 GL_TEXTURE_2D,
                 GL_CLAMP_TO_EDGE,
@@ -68,7 +68,7 @@ class BlurNode(
                 mesh.initialize()
             }
 
-            initializeProgram(program1, texture1, framebuffer1, it.isOes)
+            initializeProgram(program1, texture1, framebuffer1, config.isOes)
             initializeProgram(program2, texture2, framebuffer2, false)
             program2.getUniform(Uniform.Type.Vec2, "direction").let {
                 val data = it.data!!
@@ -81,6 +81,9 @@ class BlurNode(
                 data[1] = size.height.toFloat()
             }
         }
+        outputConnection?.prime(
+            TextureEvent(texture2, FloatArray(16).also { Matrix.setIdentityM(it, 0) })
+        )
     }
 
     private suspend fun initializeProgram(
@@ -90,6 +93,7 @@ class BlurNode(
         oes: Boolean
     ) {
         val connection = inputConnection ?: error("missing input connection")
+        val config = connection.config
 
         val fragName = when (blurSize) {
             13 -> "blur_13.frag"
@@ -107,15 +111,14 @@ class BlurNode(
         }
 
         glesManager.withGlContext {
-
             texture.initialize()
             texture.initData(
                 0,
-                connection.internalFormat,
+                config.internalFormat,
                 size.width,
                 size.height,
-                connection.format,
-                connection.type
+                config.format,
+                config.type
             )
             Log.d(TAG, "glGetError() ${glGetError()}")
 
@@ -155,14 +158,15 @@ class BlurNode(
     }
 
     override suspend fun start() = coroutineScope {
-        val output = outputTextureConnection ?: return@coroutineScope
+        val output = outputConnection ?: return@coroutineScope
         val input = inputConnection ?: return@coroutineScope
+        val channel = inputChannel ?: return@coroutineScope
 
         var copyMatrix = true
 
         startJob = launch {
             while (isActive) {
-                val inEvent = input.acquire()
+                val inEvent = channel.receive()
 
                 val outEvent = output.dequeue()
                 outEvent.eos = inEvent.eos
@@ -180,7 +184,7 @@ class BlurNode(
                     executeGl(inEvent.texture)
                 }
 
-                input.release(inEvent)
+                channel.send(inEvent)
                 output.queue(outEvent)
 
                 if (outEvent.eos) {
@@ -249,32 +253,33 @@ class BlurNode(
         }
     }
 
-    override suspend fun output(key: String): Connection<*>? = when (key) {
+    override suspend fun output(key: String): Connection<*, *>? = when (key) {
         PortType.TEXTURE_1 -> {
             connectMutex.withLock {}
             val connection = inputConnection!!
-            TextureConnection(
-                GL_TEXTURE_2D,
-                size.width,
-                size.height,
-                connection.internalFormat,
-                connection.format,
-                connection.type
-            ) {
-                TextureEvent(texture2, FloatArray(16).also { Matrix.setIdentityM(it, 0) })
-            }.also {
-                outputTextureConnection = it
+            val config = connection.config
+            SingleConsumer<TextureConfig, TextureEvent>(
+                TextureConfig(
+                    GL_TEXTURE_2D,
+                    size.width,
+                    size.height,
+                    config.internalFormat,
+                    config.format,
+                    config.type
+                )
+            ).also {
+                outputConnection = it
             }
         }
         else -> null
     }
 
-    override suspend fun <T : Event> input(key: String, connection: Connection<T>) {
+    override suspend fun <C : Config, T : Event> input(key: String, connection: Connection<C, T>) {
         when (key) {
             PortType.TEXTURE_1 -> {
-                connection as TextureConnection
-                inputConnection = connection
-                inputSize = connection.size
+                inputConnection = connection as Connection<TextureConfig, TextureEvent>
+                inputChannel = connection.consumer()
+                inputSize = connection.config.size
                 size = Size(inputSize.width / scale, inputSize.height / scale)
 
                 connectMutex.unlock()

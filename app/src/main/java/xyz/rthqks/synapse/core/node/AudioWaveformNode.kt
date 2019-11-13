@@ -7,14 +7,12 @@ import android.os.SystemClock
 import android.util.Log
 import android.util.Size
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
 import xyz.rthqks.synapse.assets.AssetManager
-import xyz.rthqks.synapse.core.Connection
-import xyz.rthqks.synapse.core.Event
 import xyz.rthqks.synapse.core.Node
-import xyz.rthqks.synapse.core.edge.AudioConnection
-import xyz.rthqks.synapse.core.edge.SurfaceConnection
+import xyz.rthqks.synapse.core.edge.*
 import xyz.rthqks.synapse.data.PortType
 import xyz.rthqks.synapse.gl.*
 import java.nio.ByteBuffer
@@ -27,8 +25,10 @@ class AudioWaveformNode(
     private var startJob: Job? = null
     private var bufferSize: Int = 0
     private lateinit var audioFormat: AudioFormat
-    private var inputConnection: AudioConnection? = null
-    private var outputConnection: SurfaceConnection? = null
+    private var inputConnection: Connection<AudioConfig, AudioEvent>? = null
+    private var inputChannel: Channel<AudioEvent>? = null
+    private var surfaceConfig: SurfaceConfig? = null
+    private var outputConnection: Connection<SurfaceConfig, SurfaceEvent>? = null
     private var outputSurfaceWindow: WindowSurface? = null
     private val mesh = Quad()
     private val program = Program()
@@ -50,6 +50,10 @@ class AudioWaveformNode(
         Log.d(TAG, "signed ${uniform.data}")
 
         updateAudioTexture(null)
+
+        outputConnection?.prime(SurfaceEvent())
+        outputConnection?.prime(SurfaceEvent())
+        outputConnection?.prime(SurfaceEvent())
     }
 
     private suspend fun createProgram() {
@@ -87,9 +91,10 @@ class AudioWaveformNode(
 
     override suspend fun start() = coroutineScope {
         val output = outputConnection ?: return@coroutineScope
-        val input = inputConnection ?: return@coroutineScope
+        val surfaceConfig = surfaceConfig ?: return@coroutineScope
+        val input = inputChannel ?: return@coroutineScope
 
-        updateOutputSurface(output)
+        updateOutputSurface(surfaceConfig)
 
         startJob = launch {
             running = true
@@ -97,7 +102,7 @@ class AudioWaveformNode(
             while (running) {
                 numFrames++
 
-                val audioBuffer = input.acquire()
+                val audioBuffer = input.receive()
                 if (audioBuffer.eos) {
                     Log.d(TAG, "got EOS")
                     running = false
@@ -105,13 +110,13 @@ class AudioWaveformNode(
 
                 updateAudioTexture(audioBuffer.buffer)
 
-                input.release(audioBuffer)
+                input.send(audioBuffer)
                 val surfaceEvent = output.dequeue()
                 surfaceEvent.count = numFrames.toLong()
                 surfaceEvent.timestamp = SystemClock.elapsedRealtimeNanos()
                 surfaceEvent.eos = audioBuffer.eos
 
-                if (output.hasSurface()) {
+                if (surfaceConfig.hasSurface()) {
                     glesManager.withGlContext {
 
                         glViewport(0, 0, 1080, 1080)
@@ -175,8 +180,8 @@ class AudioWaveformNode(
         }
     }
 
-    private suspend fun updateOutputSurface(output: SurfaceConnection) {
-        val surface = output.getSurface()
+    private suspend fun updateOutputSurface(surfaceConfig: SurfaceConfig) {
+        val surface = surfaceConfig.getSurface()
         Log.d(TAG, "creating output surface")
         glesManager.withGlContext {
             outputSurfaceWindow?.release()
@@ -198,21 +203,24 @@ class AudioWaveformNode(
         }
     }
 
-    override suspend fun output(key: String): Connection<*>? = when (key) {
+    override suspend fun output(key: String): Connection<*, *>? = when (key) {
         PortType.SURFACE_1 -> {
-            SurfaceConnection().also { connection ->
+            surfaceConfig = SurfaceConfig(Size(1080, 1080), 0)
+            SingleConsumer<SurfaceConfig, SurfaceEvent>(
+                surfaceConfig!!
+            ).also { connection ->
                 outputConnection = connection
-                connection.configure(Size(1080, 1080), 0)
             }
         }
         else -> null
     }
 
-    override suspend fun <T : Event> input(key: String, connection: Connection<T>) {
+    override suspend fun <C: Config, T : Event> input(key: String, connection: Connection<C, T>) {
         if (key == PortType.AUDIO_1) {
-            inputConnection = connection as AudioConnection
-            audioFormat = connection.audioFormat
-            bufferSize = connection.audioBufferSize
+            inputConnection = connection as Connection<AudioConfig, AudioEvent>
+            inputChannel = connection.consumer()
+            audioFormat = connection.config.audioFormat
+            bufferSize = connection.config.audioBufferSize
         }
     }
 

@@ -5,17 +5,15 @@ import android.opengl.Matrix
 import android.util.Log
 import android.util.Size
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import xyz.rthqks.synapse.assets.AssetManager
-import xyz.rthqks.synapse.core.Connection
-import xyz.rthqks.synapse.core.Event
 import xyz.rthqks.synapse.core.Node
-import xyz.rthqks.synapse.core.edge.TextureConnection
-import xyz.rthqks.synapse.core.edge.TextureEvent
+import xyz.rthqks.synapse.core.edge.*
 import xyz.rthqks.synapse.data.PortType
 import xyz.rthqks.synapse.gl.*
 
@@ -25,11 +23,12 @@ class FrameDifferenceNode(
 ) : Node() {
     private var startJob: Job? = null
     private var size = Size(0, 0)
-    private var inputConnection: TextureConnection? = null
+    private var inputConnection: Connection<TextureConfig, TextureEvent>? = null
+    private var inputChannel: Channel<TextureEvent>? = null
     private val connectMutex = Mutex(true)
 
-    private var outputConnection1: TextureConnection? = null
-    private var outputConnection2: TextureConnection? = null
+    private var outputConnection1: Connection<TextureConfig, TextureEvent>? = null
+    private var outputConnection2: Connection<TextureConfig, TextureEvent>? = null
 
     private val mesh = Quad()
     private val program = Program()
@@ -57,19 +56,27 @@ class FrameDifferenceNode(
     }
 
     override suspend fun initialize() {
-
-        inputConnection?.isOes?.let {
+        inputConnection?.config?.isOes?.let {
             createProgram(it)
             createTextures()
         }
+        outputConnection1?.prime(
+            TextureEvent(
+                lastFrameTexture1,
+                FloatArray(16).also { Matrix.setIdentityM(it, 0) })
+        )
+        outputConnection2?.prime(
+            TextureEvent(diffTexture, FloatArray(16).also { Matrix.setIdentityM(it, 0) })
+        )
     }
 
     private suspend fun createTextures() {
         val connection = inputConnection ?: error("missing input connection")
+        val config = connection.config
 
-        val intFormat = connection.internalFormat
-        val format = connection.format
-        val type = connection.type
+        val intFormat = config.internalFormat
+        val format = config.format
+        val type = config.type
 
         glesManager.withGlContext {
             diffTexture.initialize()
@@ -148,13 +155,13 @@ class FrameDifferenceNode(
             Log.d(TAG, "no outputs, not starting")
             return@coroutineScope
         }
-        val input = inputConnection ?: return@coroutineScope
+        val input = inputChannel ?: return@coroutineScope
 
         var copyMatrix = true
 
         startJob = launch {
             while (isActive) {
-                val inEvent = input.acquire()
+                val inEvent = input.receive()
 
                 val outEvent1 = outputConnection1?.dequeue()
                 val outEvent2 = outputConnection2?.dequeue()
@@ -183,7 +190,7 @@ class FrameDifferenceNode(
                     executeGl(inEvent.texture)
                 }
 
-                input.release(inEvent)
+                input.send(inEvent)
 
                 val outTexture: Texture
                 if (framebuffer == framebuffer1) {
@@ -244,49 +251,50 @@ class FrameDifferenceNode(
         }
     }
 
-    override suspend fun output(key: String): Connection<*>? = when (key) {
+    override suspend fun output(key: String): Connection<*, *>? = when (key) {
         PortType.TEXTURE_1 -> {
             connectMutex.withLock {}
             val connection = inputConnection ?: error("missing input connection")
+            val config = connection.config
 
-            TextureConnection(
-                GL_TEXTURE_2D,
-                size.width,
-                size.height,
-                connection.internalFormat,
-                connection.format,
-                connection.type
-            ) {
-                TextureEvent(lastFrameTexture1, FloatArray(16).also { Matrix.setIdentityM(it, 0) })
-            }.also {
+            SingleConsumer<TextureConfig, TextureEvent>(
+                TextureConfig(
+                    GL_TEXTURE_2D,
+                    size.width,
+                    size.height,
+                    config.internalFormat,
+                    config.format,
+                    config.type
+                )
+            ).also {
                 outputConnection1 = it
             }
         }
         PortType.TEXTURE_2 -> {
             connectMutex.withLock {}
 
-            TextureConnection(
-                GL_TEXTURE_2D,
-                size.width,
-                size.height,
-                GL_R8,
-                GL_RED,
-                GL_UNSIGNED_BYTE
-            ) {
-                TextureEvent(diffTexture, FloatArray(16).also { Matrix.setIdentityM(it, 0) })
-            }.also {
+            SingleConsumer<TextureConfig, TextureEvent>(
+                TextureConfig(
+                    GL_TEXTURE_2D,
+                    size.width,
+                    size.height,
+                    GL_R8,
+                    GL_RED,
+                    GL_UNSIGNED_BYTE
+                )
+            ).also {
                 outputConnection2 = it
             }
         }
         else -> null
     }
 
-    override suspend fun <T : Event> input(key: String, connection: Connection<T>) {
+    override suspend fun <C: Config, T : Event> input(key: String, connection: Connection<C, T>) {
         when (key) {
             PortType.TEXTURE_1 -> {
-                connection as TextureConnection
-                inputConnection = connection
-                size = connection.size
+                inputConnection = connection as Connection<TextureConfig, TextureEvent>
+                inputChannel = connection.consumer()
+                size = connection.config.size
 
                 connectMutex.unlock()
             }
