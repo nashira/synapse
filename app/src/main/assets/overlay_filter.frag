@@ -24,5 +24,5 @@ uniform sampler2D input_texture1;
 void main() {
     vec4 content = texture(input_texture0, texture_coords0);
     vec4 mask = texture(input_texture1, texture_coords1);
-    color = vec4(mask.rrr + content.rgb * (1.0 - mask.r), 1.0);
+    color = vec4(vec3(0.0, mask.r, 0.0) + content.rgb * (1.0 - mask.r), 1.0);
 }

@@ -19,7 +19,7 @@ class EditGraphViewModel @Inject constructor(
     lateinit var graph: GraphData
     lateinit var graphConfigEditor: GraphConfigEditor
     val graphChannel = MutableLiveData<GraphConfigEditor>()
-    val onNodeAdded = MutableLiveData<Unit>()
+    val onNodeAdded = MutableLiveData<NodeConfig>()
     val onPortSelected = MutableLiveData<Unit>()
 
     fun setGraphId(graphId: Int) {
@@ -48,7 +48,7 @@ class EditGraphViewModel @Inject constructor(
 
     fun addNodeType(nodeType: NodeType) {
         val node = graphConfigEditor.addNodeType(nodeType)
-        onNodeAdded.value = Unit
+        onNodeAdded.value = node
         viewModelScope.launch(Dispatchers.IO) {
             dao.insertProperties(node.properties.values)
             dao.insertNode(node)

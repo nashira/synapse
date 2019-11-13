@@ -162,12 +162,6 @@ class OverlayFilterNode(
                 }
             }
         }
-
-//        launch(startJob!!) {
-//            while (isActive) {
-//                val inEvent = mask.acquire()
-//            }
-//        }
     }
 
     private suspend fun startSurface() = coroutineScope {

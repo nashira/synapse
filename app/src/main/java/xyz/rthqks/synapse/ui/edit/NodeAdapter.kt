@@ -19,7 +19,7 @@ class NodeAdapter(
     private val graphViewModel: EditGraphViewModel
 ) : RecyclerView.Adapter<NodeViewHolder>() {
 
-    private var graphConfig: GraphConfigEditor? = null
+    private var nodes = mutableListOf<NodeConfig>()
     private val viewPool = RecyclerView.RecycledViewPool()
     var onEditNodeProperties: ((NodeConfig) -> Unit)? = null
 
@@ -34,22 +34,23 @@ class NodeAdapter(
         }
     }
 
-    override fun getItemCount(): Int = graphConfig?.nodes?.size ?: 0
+    override fun getItemCount(): Int = nodes.size ?: 0
 
     override fun onBindViewHolder(holder: NodeViewHolder, position: Int) {
-        graphConfig?.nodes?.let {
+        nodes.let {
             holder.bind(it[position])
         }
     }
 
     fun setGraphEditor(graphConfigEditor: GraphConfigEditor) {
-        graphConfig = graphConfigEditor
+        nodes.clear()
+        nodes.addAll(graphConfigEditor.nodes.values)
         notifyDataSetChanged()
     }
 
     fun moveNode(fromPos: Int, toPos: Int) {
-        graphConfig?.nodes?.removeAt(fromPos)?.let {
-            graphConfig?.nodes?.add(toPos, it)
+        nodes.removeAt(fromPos).let {
+            nodes.add(toPos, it)
             notifyItemMoved(fromPos, toPos)
         }
 
@@ -60,8 +61,9 @@ class NodeAdapter(
         }
     }
 
-    fun onNodeAdded() {
-        graphConfig?.nodes?.size?.let {
+    fun onNodeAdded(node: NodeConfig) {
+        nodes.add(node)
+        nodes.size.let {
             notifyItemInserted(it - 1)
             if (it > 1) {
                 notifyItemChanged(it - 2)

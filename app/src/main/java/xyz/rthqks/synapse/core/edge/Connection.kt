@@ -19,7 +19,7 @@ interface Connection<C : Config, E : Event> {
 class SingleConsumer<C : Config, E : Event>(
     override val config: C
 ) : Connection<C, E> {
-    private val duplex = Duplex<E>(
+    internal val duplex = Duplex<E>(
         Channel(Channel.UNLIMITED),
         Channel(Channel.UNLIMITED)
     )
@@ -43,6 +43,10 @@ class MultiConsumer<C : Config, E : Event>(
     override val config: C
 ) : Connection<C, E> {
     private val consumers = mutableListOf<Duplex<E>>()
+
+    fun consumer(duplex: Duplex<E>) {
+        consumers.add(duplex)
+    }
 
     override fun consumer(): Channel<E> {
         val duplex = Duplex<E>(

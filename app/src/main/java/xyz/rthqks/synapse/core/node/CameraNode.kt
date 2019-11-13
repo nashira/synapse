@@ -34,6 +34,7 @@ class CameraNode(
     private var textureConnection: Connection<TextureConfig, TextureEvent>? = null
     private var startJob: Job? = null
     private val mutex = Mutex()
+    private val connectMutex = Mutex()
     private var outputSurface: Surface? = null
     private var outputSurfaceTexture: SurfaceTexture? = null
     private val outputTexture = Texture(
@@ -51,6 +52,13 @@ class CameraNode(
     }
 
     override suspend fun initialize() {
+        glesManager.withGlContext {
+            outputTexture.initialize()
+        }
+        outputSurfaceTexture = SurfaceTexture(outputTexture.id)
+        outputSurfaceTexture?.setDefaultBufferSize(size.width, size.height)
+        outputSurface = Surface(outputSurfaceTexture)
+
         textureConnection?.prime(TextureEvent(outputTexture, FloatArray(16)))
 
         surfaceConnection?.prime(SurfaceEvent())
@@ -179,29 +187,36 @@ class CameraNode(
             surfaceConnection = it
         }
         PortType.TEXTURE_1 -> {
-            glesManager.withGlContext {
-                outputTexture.initialize()
-            }
-            outputSurfaceTexture = SurfaceTexture(outputTexture.id)
-            outputSurface = Surface(outputSurfaceTexture)
 
-            val rotatedSize =
-                if (surfaceRotation == 90 || surfaceRotation == 270)
-                    Size(size.height, size.width) else size
-
-            outputSurfaceTexture?.setDefaultBufferSize(size.width, size.height)
-
-            SingleConsumer<TextureConfig, TextureEvent>(
-                TextureConfig(
-                    GLES11Ext.GL_TEXTURE_EXTERNAL_OES,
-                    rotatedSize.width,
-                    rotatedSize.height,
-                    GLES32.GL_RGB8,
-                    GLES32.GL_RGB,
-                    GLES32.GL_UNSIGNED_BYTE
-                )
-            ).also {
-                textureConnection = it
+            connectMutex.withLock {
+                val rotatedSize =
+                    if (surfaceRotation == 90 || surfaceRotation == 270)
+                        Size(size.height, size.width) else size
+                val con = textureConnection
+                when (con) {
+                    null -> {
+                        SingleConsumer(
+                            TextureConfig(
+                                GLES11Ext.GL_TEXTURE_EXTERNAL_OES,
+                                rotatedSize.width,
+                                rotatedSize.height,
+                                GLES32.GL_RGB8,
+                                GLES32.GL_RGB,
+                                GLES32.GL_UNSIGNED_BYTE
+                            )
+                        )
+                    }
+                    is SingleConsumer -> {
+                        MultiConsumer<TextureConfig, TextureEvent>(con.config).also {
+                            it.consumer(con.duplex)
+                        }
+                    }
+                    else -> {
+                        textureConnection
+                    }
+                }.also {
+                    textureConnection = it
+                }
             }
         }
         else -> null

@@ -142,7 +142,7 @@ class EditGraphFragment : DaggerFragment() {
         touchHelper.attachToRecyclerView(recycler_view)
 
         graphViewModel.onNodeAdded.observe(this, Observer {
-            nodeAdapter.onNodeAdded()
+            nodeAdapter.onNodeAdded(it)
         })
 
         graphViewModel.onPortSelected.observe(this, Observer {

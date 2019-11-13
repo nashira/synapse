@@ -5,14 +5,18 @@ import xyz.rthqks.synapse.ui.edit.PortState
 
 class GraphConfigEditor(val graphData: GraphData) {
 
-    val nodes = graphData.nodes
+    val nodes = mutableMapOf<Int, NodeConfig>()
     val edges = graphData.edges.toMutableSet()
     private var selectedPort: PortConfig? = null
+
+    init {
+        graphData.nodes.forEach { nodes[it.id] = it }
+    }
 
     fun addNodeType(nodeType: NodeType): NodeConfig {
         val nodeConfig = NodeConfig(nodes.size, graphData.id, nodeType)
         nodeConfig.createProperties()
-        nodes.add(nodeConfig)
+        nodes[nodeConfig.id] = nodeConfig
         return nodeConfig
     }
 
@@ -42,11 +46,11 @@ class GraphConfigEditor(val graphData: GraphData) {
             var added: EdgeConfig? = null
             when {
                 it.canConnectTo(portConfig) -> {
-                    removed.addAll(clearEdges(it))
-                    removed.addAll(clearEdges(portConfig!!))
                     added = if (it.key.direction == PortType.OUTPUT) {
+                        removed.addAll(clearEdges(portConfig!!))
                         addEdge(it, portConfig!!)
                     } else {
+                        removed.addAll(clearEdges(it))
                         addEdge(portConfig!!, it)
                     }
                 }
