@@ -67,8 +67,7 @@ class SurfaceViewNode(
                     running = false
                 } else {
                     numFrames++
-//                    Log.d(TAG, "written $write frames $numFrames")
-
+//                    Log.d(TAG, "written frames $numFrames")
                 }
                 connection.send(surfaceEvent)
             }

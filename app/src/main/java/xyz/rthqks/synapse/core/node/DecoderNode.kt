@@ -2,17 +2,20 @@ package xyz.rthqks.synapse.core.node
 
 import android.content.Context
 import android.graphics.SurfaceTexture
-import android.media.*
-import android.media.MediaMetadataRetriever.*
+import android.media.AudioFormat
+import android.media.MediaCodec
+import android.media.MediaFormat
 import android.opengl.GLES11Ext
 import android.opengl.GLES32
 import android.opengl.GLES32.GL_CLAMP_TO_EDGE
 import android.opengl.GLES32.GL_LINEAR
+import android.os.SystemClock
 import android.util.Log
 import android.util.Size
 import android.view.Surface
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
@@ -22,7 +25,7 @@ import xyz.rthqks.synapse.core.edge.*
 import xyz.rthqks.synapse.data.PortType
 import xyz.rthqks.synapse.gl.GlesManager
 import xyz.rthqks.synapse.gl.Texture
-import java.nio.ByteBuffer
+import java.util.concurrent.atomic.AtomicInteger
 
 class DecoderNode(
     private val glesManager: GlesManager,
@@ -81,30 +84,52 @@ class DecoderNode(
         val config = connection.config
         val surface = config.getSurface()
         var count = 0L
+        val startTime = SystemClock.elapsedRealtimeNanos()
         mutex.lock()
         startJob = launch {
-            decoder.start(surface, {
+            val inFlight = AtomicInteger()
+            var gotEos: Boolean
+            var eosIndex: Int
+            var eosFrame: SurfaceEvent
+            decoder.start(surface, { index, info ->
+                inFlight.incrementAndGet()
+                gotEos = (info.flags and MediaCodec.BUFFER_FLAG_END_OF_STREAM) != 0
+                eosIndex = index
+
                 launch {
                     val frame = connection.dequeue()
-                    frame.eos = (it.flags and MediaCodec.BUFFER_FLAG_END_OF_STREAM) != 0
+                    eosFrame = frame
+                    val eos = (info.flags and MediaCodec.BUFFER_FLAG_END_OF_STREAM) != 0
+                    frame.eos = eos
                     frame.count = count++
-                    frame.timestamp = it.presentationTimeUs * 1000
+                    frame.timestamp = info.presentationTimeUs * 1000
 
-                    Log.d(TAG, "video available ${frame.eos}")
+//                    Log.d(TAG, "video available ${eos} ${frame.timestamp}")
+                    val time = SystemClock.elapsedRealtimeNanos() - startTime
+                    val diff = frame.timestamp - time
+                    if (diff > 1_000_000) {
+                        delay(diff / 1_000_000)
+                    }
+                    val inFlightCount = inFlight.decrementAndGet()
+//                    Log.d(TAG, "after delay ${frame.timestamp} $inFlightCount")
 
-                    connection.queue(frame)
-                    if (frame.eos) {
+                    if (!eos) {
+                        connection.queue(frame)
+                        decoder.releaseVideoBuffer(index, false)
+                    }
+
+                    if (gotEos && inFlightCount == 0) {
                         Log.d(TAG, "sending EOS")
-                        Log.d(TAG, "sent frames $count")
+                        Log.d(TAG, "sent frames ${eosFrame.count}")
+                        connection.queue(eosFrame)
+                        decoder.releaseVideoBuffer(eosIndex, true)
                         mutex.unlock()
                     }
                 }
             }, { index, byteBuffer, bufferInfo ->
                 val eos = (bufferInfo.flags and MediaCodec.BUFFER_FLAG_END_OF_STREAM) != 0
-                Log.d(TAG, "audio available $eos")
-                if (!eos) {
-                    decoder.releaseAudioBuffer(index)
-                }
+//                Log.d(TAG, "audio available $eos")
+                decoder.releaseAudioBuffer(index, eos)
             })
             // lock again to suspend until we unlock on EOS
             mutex.withLock { }

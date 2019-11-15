@@ -10,15 +10,14 @@ import android.view.ViewGroup
 import android.view.inputmethod.InputMethodManager
 import android.widget.AdapterView
 import android.widget.ArrayAdapter
-import android.widget.EditText
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.ViewModelProviders
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import dagger.android.support.DaggerFragment
 import kotlinx.android.synthetic.main.fragment_edit_properties.*
+import kotlinx.android.synthetic.main.property_item_discrete.view.*
 import kotlinx.android.synthetic.main.property_item_discrete.view.name
-import kotlinx.android.synthetic.main.property_item_discrete.view.value
 import kotlinx.android.synthetic.main.property_item_text.view.*
 import xyz.rthqks.synapse.R
 import xyz.rthqks.synapse.data.Key

@@ -36,7 +36,7 @@ class Decoder(
 
     private var audioAvailable: ((index: Int, buffer: ByteBuffer?, MediaCodec.BufferInfo) -> Unit)? =
         null
-    private var videoAvailable: ((MediaCodec.BufferInfo) -> Unit)? = null
+    private var videoAvailable: ((index: Int, MediaCodec.BufferInfo) -> Unit)? = null
 
     fun setDataSource(uri: String) {
         Log.d(TAG, "setDataSource $uri")
@@ -74,7 +74,7 @@ class Decoder(
 
     fun start(
         surface: Surface?,
-        videoAvailable: (MediaCodec.BufferInfo) -> Unit,
+        videoAvailable: (index: Int, MediaCodec.BufferInfo) -> Unit,
         audioAvailable: (index: Int, buffer: ByteBuffer?, MediaCodec.BufferInfo) -> Unit
     ) {
         this.videoAvailable = videoAvailable
@@ -101,20 +101,12 @@ class Decoder(
                 val buffer = if (info.flags and MediaCodec.BUFFER_FLAG_END_OF_STREAM == 0) {
                     codec.getOutputBuffer(index)
                 } else {
-                    codec.flush()
-                    audioInputBuffers.clear()
                     null
                 }
                 audioAvailable?.invoke(index, buffer, info)
             }
             videoDecoder -> {
-                videoAvailable?.invoke(info)
-                if (info.flags and MediaCodec.BUFFER_FLAG_END_OF_STREAM == 0) {
-                    codec.releaseOutputBuffer(index, true)
-                } else {
-                    videoInputBuffers.clear()
-                    codec.flush()
-                }
+                videoAvailable?.invoke(index, info)
             }
         }
     }
@@ -122,11 +114,11 @@ class Decoder(
     override fun onInputBufferAvailable(codec: MediaCodec, index: Int) {
         when (codec) {
             audioDecoder -> {
-                Log.d(TAG, "audio onInputBufferAvailable $index")
+//                Log.d(TAG, "audio onInputBufferAvailable $index")
                 audioInputBuffers.add(index)
             }
             videoDecoder -> {
-                Log.d(TAG, "video onInputBufferAvailable $index")
+//                Log.d(TAG, "video onInputBufferAvailable $index")
                 videoInputBuffers.add(index)
             }
         }
@@ -162,14 +154,14 @@ class Decoder(
         var remaining = true
         while (running && remaining) {
             val track = extractor.sampleTrackIndex
-            Log.d(TAG, "track $track")
+//            Log.d(TAG, "track $track")
             when {
                 track == videoTrack && videoInputBuffers.isNotEmpty() -> {
                     val index = videoInputBuffers.remove()
                     videoDecoder?.let {
                         val buffer = it.getInputBuffer(index)!!
                         val size = extractor.readSampleData(buffer, 0)
-                        Log.d(TAG, "video size $size flags ${extractor.sampleFlags}")
+//                        Log.d(TAG, "video size $size flags ${extractor.sampleFlags}")
                         it.queueInputBuffer(
                             index,
                             0,
@@ -186,7 +178,7 @@ class Decoder(
                     audioDecoder?.let {
                         val buffer = it.getInputBuffer(index)!!
                         val size = extractor.readSampleData(buffer, 0)
-                        Log.d(TAG, "audio size $size flags ${extractor.sampleFlags}")
+//                        Log.d(TAG, "audio size $size flags ${extractor.sampleFlags}")
                         it.queueInputBuffer(
                             index,
                             0,
@@ -232,8 +224,22 @@ class Decoder(
         }
     }
 
-    fun releaseAudioBuffer(index: Int) {
-        audioDecoder?.releaseOutputBuffer(index, true)
+    fun releaseAudioBuffer(index: Int, eos: Boolean) {
+        if (eos) {
+            audioInputBuffers.clear()
+            audioDecoder?.flush()
+        } else {
+            audioDecoder?.releaseOutputBuffer(index, true)
+        }
+    }
+
+    fun releaseVideoBuffer(index: Int, eos: Boolean) {
+        if (eos) {
+            videoInputBuffers.clear()
+            videoDecoder?.flush()
+        } else {
+            videoDecoder?.releaseOutputBuffer(index, true)
+        }
     }
 
     fun stop() {
