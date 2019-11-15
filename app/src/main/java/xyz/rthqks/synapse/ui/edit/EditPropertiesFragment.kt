@@ -1,19 +1,25 @@
 package xyz.rthqks.synapse.ui.edit
 
+import android.app.Activity
 import android.os.Bundle
 import android.util.Log
+import android.view.KeyEvent
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.view.inputmethod.InputMethodManager
 import android.widget.AdapterView
 import android.widget.ArrayAdapter
+import android.widget.EditText
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.ViewModelProviders
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import dagger.android.support.DaggerFragment
 import kotlinx.android.synthetic.main.fragment_edit_properties.*
-import kotlinx.android.synthetic.main.property_item_discrete.view.*
+import kotlinx.android.synthetic.main.property_item_discrete.view.name
+import kotlinx.android.synthetic.main.property_item_discrete.view.value
+import kotlinx.android.synthetic.main.property_item_text.view.*
 import xyz.rthqks.synapse.R
 import xyz.rthqks.synapse.data.Key
 import xyz.rthqks.synapse.data.NodeConfig
@@ -75,6 +81,7 @@ class PropertyAdapter(
             .inflate(viewType, parent, false)
         return when (viewType) {
             R.layout.property_item_discrete -> DiscretePropertyViewHolder(view, viewModel)
+            R.layout.property_item_text -> TextPropertyViewHolder(view, viewModel)
             else -> error("unknown property type: $viewType")
         }
     }
@@ -91,6 +98,7 @@ class PropertyAdapter(
     override fun getItemViewType(position: Int): Int {
         return when (propertyTypes[position]) {
             is PropertyType.Discrete -> R.layout.property_item_discrete
+            is PropertyType.Text -> R.layout.property_item_text
             else -> R.layout.frame_layout
         }
     }
@@ -105,9 +113,54 @@ abstract class PropertyViewHolder(itemView: View) : RecyclerView.ViewHolder(item
     abstract fun bind(property: PropertyType<*>, config: PropertyConfig)
 }
 
+class TextPropertyViewHolder(
+    itemView: View,
+    private val viewModel: EditGraphViewModel
+) : PropertyViewHolder(itemView) {
+    private var property: PropertyType.Text? = null
+    private var config: PropertyConfig? = null
+    private var suppressSave = false
+    private var editText = itemView.text_value
+
+    init {
+
+        editText.setOnKeyListener(object : View.OnKeyListener {
+            override fun onKey(v: View, keyCode: Int, event: KeyEvent): Boolean {
+                if (event.action == KeyEvent.ACTION_DOWN && keyCode == KeyEvent.KEYCODE_ENTER) {
+                    val imm =
+                        itemView.context.getSystemService(Activity.INPUT_METHOD_SERVICE) as InputMethodManager
+
+                    imm.hideSoftInputFromWindow(v.windowToken, 0)
+                    v.clearFocus()
+
+                    config?.let {
+                        it.value = PropertyType.toString(property!!.key, editText.text.toString())
+                        viewModel.saveProperty(it)
+                    }
+
+                    return true
+                }
+                return false
+            }
+        })
+    }
+
+    override fun bind(property: PropertyType<*>, config: PropertyConfig) {
+        this.property = property as PropertyType.Text
+        this.config = config
+        itemView.name.setText(property.name)
+        editText.setText(config.value)
+        suppressSave = true
+    }
+
+    companion object {
+        const val TAG = "TextPropertyViewHolder"
+    }
+}
+
 class DiscretePropertyViewHolder(
     itemView: View,
-    private  val viewModel: EditGraphViewModel
+    private val viewModel: EditGraphViewModel
 ) : PropertyViewHolder(itemView) {
     private val arrayAdapter: ArrayAdapter<String> =
         ArrayAdapter(itemView.context, android.R.layout.simple_spinner_item)
@@ -162,6 +215,6 @@ class DiscretePropertyViewHolder(
 }
 
 private fun PropertyType.Discrete<*>.indexOf(value: String): Int {
-        val v = fromString(value)
-        return values.indexOf(v)
+    val v = fromString(value)
+    return values.indexOf(v)
 }

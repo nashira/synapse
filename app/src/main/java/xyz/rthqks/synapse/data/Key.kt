@@ -33,4 +33,5 @@ sealed class Key<T>(
 
     object AccumulateFactor : Key<Float>("accumulate_factor")
     object MultiplyFactor : Key<Float>("multiply_factor")
+    object Uri : Key<String>("uri")
 }

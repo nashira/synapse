@@ -70,7 +70,7 @@ class Graph(
                 NodeType.AudioWaveform -> AudioWaveformNode(glesManager, assetManager)
                 NodeType.Image -> TODO()
                 NodeType.AudioFile -> TODO()
-                NodeType.VideoFile -> TODO()
+                NodeType.VideoFile -> DecoderNode(glesManager, context, it[Key.Uri])
                 NodeType.LutFilter -> GlNode(glesManager, assetManager)
                 NodeType.ShaderFilter -> TODO()
                 NodeType.Speakers -> AudioPlayerNode()
@@ -137,8 +137,8 @@ class Graph(
             it.release()
         }
 
-        dispatcher.close()
         scope.cancel()
+        dispatcher.close()
         logCoroutineInfo(scope.coroutineContext[Job])
     }
 

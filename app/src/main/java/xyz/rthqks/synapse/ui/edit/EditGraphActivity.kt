@@ -89,6 +89,7 @@ class AddNodeAdapter(
     companion object {
         private val TYPES = listOf(
             NodeType.Camera,
+            NodeType.VideoFile,
             NodeType.FrameDifference,
             NodeType.GrayscaleFilter,
             NodeType.BlurFilter,
@@ -98,7 +99,6 @@ class AddNodeAdapter(
             NodeType.AudioWaveform,
 //            NodeType.Image,
 //            NodeType.AudioFile,
-//            NodeType.VideoFile,
             NodeType.LutFilter,
 //            NodeType.ShaderFilter,
             NodeType.Screen,

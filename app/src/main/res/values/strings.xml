@@ -96,4 +96,5 @@
     <string name="property_label_float_point_nine">0.9</string>
     <string name="property_name_multiply_factor">Multiply Factor</string>
     <string name="property_name_accumulate_factor">Accumulate Factor</string>
+    <string name="property_name_uri">Uri</string>
 </resources>

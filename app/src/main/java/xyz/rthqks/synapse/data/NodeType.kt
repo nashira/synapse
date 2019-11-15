@@ -29,6 +29,19 @@ sealed class NodeType(
         )
     )
 
+    object VideoFile : NodeType(
+        "video_file",
+        R.string.name_node_type_video_file, R.drawable.ic_movie,
+        listOf(
+            PortType.Surface(PortType.SURFACE_1, PortType.OUTPUT),
+            PortType.Texture(PortType.TEXTURE_1, PortType.OUTPUT),
+            PortType.AudioBuffer(PortType.AUDIO_1, PortType.OUTPUT)
+        ),
+        listOf(
+            PropertyType.Uri
+        )
+    )
+
     object Microphone : NodeType(
         "microphone",
         R.string.name_node_type_microphone, R.drawable.ic_mic,
@@ -130,13 +143,6 @@ sealed class NodeType(
         R.string.name_node_type_audio_file,
         R.drawable.ic_audio_file,
         listOf(PortType.AudioBuffer(PortType.AUDIO_1, PortType.OUTPUT)),
-        emptyList()
-    )
-
-    object VideoFile : NodeType(
-        "video_file",
-        R.string.name_node_type_video_file, R.drawable.ic_movie,
-        listOf(PortType.Surface(PortType.SURFACE_1, PortType.OUTPUT)),
         emptyList()
     )
 

@@ -23,6 +23,17 @@ sealed class PropertyType<T : Any>(
     abstract fun fromString(string: String): T
     abstract fun toString(value: T): String
 
+
+    abstract class Text(
+        key: Key<String>,
+        default: String,
+        @StringRes name: Int = 0,
+        @DrawableRes icon: Int = 0
+    ) : PropertyType<String>(key, default, name, icon) {
+        override fun fromString(string: String): String = string
+        override fun toString(value: String): String = value
+    }
+
     abstract class Discrete<T : Any>(
         key: Key<T>,
         default: T,
@@ -304,6 +315,12 @@ sealed class PropertyType<T : Any>(
         R.drawable.ic_blur
     )
 
+    object Uri : Text(
+        Key.Uri,
+        "",
+        R.string.property_name_uri,
+        R.drawable.ic_blur)
+
     companion object {
 
         private val map = mutableMapOf<Key<*>, PropertyType<*>>()
@@ -357,6 +374,7 @@ sealed class PropertyType<T : Any>(
             Key.MultiplyFactor -> (value as? Float)?.let {
                 MultiplyFactor.toString(it)
             }
+            Key.Uri -> value as? String
         } ?: error("can't convert $value with key $key")
 
 //        fun <T : Any> foo(key: Key<T>, value: T): String = PropertyType[key].toString(value)
