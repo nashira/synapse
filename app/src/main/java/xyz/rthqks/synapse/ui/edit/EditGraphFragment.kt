@@ -12,7 +12,6 @@ import android.view.inputmethod.InputMethodManager
 import androidx.fragment.app.commit
 import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModelProvider
-import androidx.lifecycle.ViewModelProviders
 import androidx.recyclerview.widget.ItemTouchHelper
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
@@ -36,11 +35,11 @@ class EditGraphFragment : DaggerFragment() {
         super.onActivityCreated(savedInstanceState)
 
         graphViewModel =
-            ViewModelProviders.of(activity!!, viewModelFactory)[EditGraphViewModel::class.java]
+            ViewModelProvider(activity!!, viewModelFactory)[EditGraphViewModel::class.java]
 
         setupUi()
 
-        graphViewModel.graphChannel.observe(this, Observer {
+        graphViewModel.graphChannel.observe(viewLifecycleOwner, Observer {
             Log.d(TAG, it.toString())
             nodeAdapter.setGraphEditor(it)
             edit_title.setText(it.graphData.name)
@@ -141,17 +140,17 @@ class EditGraphFragment : DaggerFragment() {
 
         touchHelper.attachToRecyclerView(recycler_view)
 
-        graphViewModel.onNodeAdded.observe(this, Observer {
+        graphViewModel.onNodeAdded.observe(viewLifecycleOwner, Observer {
             nodeAdapter.onNodeAdded(it)
         })
 
-        graphViewModel.onPortSelected.observe(this, Observer {
+        graphViewModel.onPortSelected.observe(viewLifecycleOwner, Observer {
             nodeAdapter.notifyDataSetChanged()
         })
 
         nodeAdapter.onEditNodeProperties = {
             Log.d(TAG, "onEditNodeProperties $it")
-            fragmentManager?.commit {
+            parentFragmentManager.commit {
                 val fragment = EditPropertiesFragment.newInstance(it)
                 replace(R.id.content, fragment)
                 addToBackStack(null)

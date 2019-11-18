@@ -2,6 +2,7 @@ package xyz.rthqks.synapse.core.node
 
 import android.media.AudioAttributes
 import android.media.AudioFormat
+import android.media.AudioRecord
 import android.media.AudioTrack
 import android.util.Log
 import kotlinx.coroutines.Job
@@ -17,7 +18,6 @@ class AudioPlayerNode : Node() {
     private lateinit var audioFormat: AudioFormat
     private var connection: Connection<AudioConfig, AudioEvent>? = null
     private var channel: Channel<AudioEvent>? = null
-    private var bufferSize = 0
     private var playJob: Job? = null
     private var running = false
 
@@ -25,6 +25,11 @@ class AudioPlayerNode : Node() {
     }
 
     override suspend fun initialize() {
+        val bufferSize = AudioRecord.getMinBufferSize(
+            audioFormat.sampleRate,
+            AudioFormat.CHANNEL_IN_STEREO,
+            audioFormat.encoding
+        )
         audioTrack = AudioTrack.Builder()
             .setAudioAttributes(
                 AudioAttributes.Builder()
@@ -81,7 +86,6 @@ class AudioPlayerNode : Node() {
             this.connection = connection as Connection<AudioConfig, AudioEvent>
             channel = connection.consumer()
             audioFormat = connection.config.audioFormat
-            bufferSize = connection.config.audioBufferSize
         }
     }
 

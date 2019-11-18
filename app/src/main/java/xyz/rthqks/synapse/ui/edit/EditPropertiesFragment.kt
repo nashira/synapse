@@ -1,6 +1,7 @@
 package xyz.rthqks.synapse.ui.edit
 
 import android.app.Activity
+import android.content.Intent
 import android.os.Bundle
 import android.util.Log
 import android.view.KeyEvent
@@ -10,8 +11,8 @@ import android.view.ViewGroup
 import android.view.inputmethod.InputMethodManager
 import android.widget.AdapterView
 import android.widget.ArrayAdapter
+import androidx.core.net.toUri
 import androidx.lifecycle.ViewModelProvider
-import androidx.lifecycle.ViewModelProviders
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import dagger.android.support.DaggerFragment
@@ -20,6 +21,7 @@ import kotlinx.android.synthetic.main.property_item_discrete.view.*
 import kotlinx.android.synthetic.main.property_item_discrete.view.name
 import kotlinx.android.synthetic.main.property_item_text.view.*
 import xyz.rthqks.synapse.R
+import xyz.rthqks.synapse.codec.Decoder
 import xyz.rthqks.synapse.data.Key
 import xyz.rthqks.synapse.data.NodeConfig
 import xyz.rthqks.synapse.data.PropertyConfig
@@ -47,15 +49,34 @@ class EditPropertiesFragment : DaggerFragment() {
 
     override fun onActivityCreated(savedInstanceState: Bundle?) {
         super.onActivityCreated(savedInstanceState)
-        graphViewModel =
-            ViewModelProviders.of(activity!!, viewModelFactory)[EditGraphViewModel::class.java]
+        graphViewModel = ViewModelProvider(activity!!, viewModelFactory)[EditGraphViewModel::class.java]
         val node = graphViewModel.getNode(nodeId)
         toolbar.setTitle(node.type.name)
         recycler_view.layoutManager = LinearLayoutManager(context)
         recycler_view.adapter = PropertyAdapter(node, graphViewModel)
+
+        val intent = Intent(Intent.ACTION_OPEN_DOCUMENT).apply {
+            addCategory(Intent.CATEGORY_OPENABLE)
+            type = "video/*"
+        }
+
+        startActivityForResult(intent, 42)
+    }
+
+    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+        val parcelFileDescriptor = context!!.contentResolver.openAssetFileDescriptor(data!!.data!!, "r")
+        val fileDescriptor = parcelFileDescriptor!!.fileDescriptor
+
+        Decoder.stashedFileDescriptor = fileDescriptor
+
+//        parcelFileDescriptor.close()
+
+        Log.d(TAG, "data $data $fileDescriptor")
+        super.onActivityResult(requestCode, resultCode, data)
     }
 
     companion object {
+        const val TAG = "EditPropertiesFragment"
         private const val ARG_NODE_ID = "node_id"
         fun newInstance(nodeConfig: NodeConfig): EditPropertiesFragment {
             val args = Bundle()
@@ -103,7 +124,7 @@ class PropertyAdapter(
     }
 
     companion object {
-        private val TAG = PropertyAdapter::class.java.simpleName
+        const val TAG = "PropertyAdapter"
     }
 }
 
@@ -209,7 +230,7 @@ class DiscretePropertyViewHolder(
     }
 
     companion object {
-        private val TAG = DiscretePropertyViewHolder::class.java.simpleName
+        const val TAG = "DiscretePropertyViewHolder"
     }
 }
 
