@@ -97,4 +97,5 @@
     <string name="property_name_multiply_factor">Multiply Factor</string>
     <string name="property_name_accumulate_factor">Accumulate Factor</string>
     <string name="property_name_uri">Uri</string>
+    <string name="button_select_file">Select File</string>
 </resources>

@@ -1,7 +1,6 @@
 package xyz.rthqks.synapse.codec
 
 import android.content.Context
-import android.content.res.AssetFileDescriptor
 import android.media.MediaCodec
 import android.media.MediaExtractor
 import android.media.MediaFormat
@@ -13,7 +12,6 @@ import androidx.core.net.toUri
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.SendChannel
 import kotlinx.coroutines.runBlocking
-import java.io.FileDescriptor
 import java.nio.ByteBuffer
 import java.util.*
 
@@ -54,9 +52,10 @@ class Decoder(
     suspend fun setDataSource(uri: String) {
         Log.d(TAG, "setDataSource $uri")
         if (uri.startsWith("content")) {
-            val fd = stashedpa?.fileDescriptor
+            val afd = context.contentResolver.openAssetFileDescriptor(uri.toUri(), "r")
+            val fd = afd!!.fileDescriptor
             extractor.setDataSource(fd!!)
-            stashedpa?.close()
+            afd.close()
         } else {
             extractor.setDataSource(context, uri.toUri(), emptyMap())
         }
@@ -110,7 +109,7 @@ class Decoder(
 
         do {
             val event = channel.receive()
-            Log.d(TAG, "received $event")
+//            Log.d(TAG, "received $event")
             val eos = event.info.flags and MediaCodec.BUFFER_FLAG_END_OF_STREAM != 0
             releaseAudioBuffer(event.index, eos)
         } while (!eos)
@@ -180,6 +179,7 @@ class Decoder(
                     null
                 }
                 val event = nextEvent()
+//                Log.d(TAG, "audio $event")
                 event.set(index, info, buffer)
                 runBlocking {
                     audioChannel?.send(event)
@@ -187,6 +187,7 @@ class Decoder(
             }
             videoDecoder -> {
                 val event = nextEvent()
+//                Log.d(TAG, "video $event")
                 event.set(index, info, null)
                 runBlocking {
                     videoChannel?.send(event)
@@ -405,7 +406,7 @@ class Decoder(
         return null
     }
 
-    data class Event(
+    class Event(
         var index: Int,
         var info: MediaCodec.BufferInfo,
         var buffer: ByteBuffer?
@@ -423,7 +424,6 @@ class Decoder(
 
     companion object {
         const val TAG = "Decoder"
-        var stashedpa: AssetFileDescriptor? = null
         const val DECODING_FORMAT = 0
         const val PAUSE = 1
         const val EOS = 2

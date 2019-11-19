@@ -1,5 +1,6 @@
 package xyz.rthqks.synapse.ui.edit
 
+import android.net.Uri
 import android.util.Log
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
@@ -21,6 +22,7 @@ class EditGraphViewModel @Inject constructor(
     val graphChannel = MutableLiveData<GraphConfigEditor>()
     val onNodeAdded = MutableLiveData<NodeConfig>()
     val onPortSelected = MutableLiveData<Unit>()
+    val onSelectFile = MutableLiveData<PropertyConfig>()
 
     fun setGraphId(graphId: Int) {
         if (graphId == -1) {
@@ -108,6 +110,19 @@ class EditGraphViewModel @Inject constructor(
         viewModelScope.launch(Dispatchers.IO) {
             dao.deleteNode(node)
             dao.deleteEdges(edges)
+        }
+    }
+
+    fun selectFileFor(config: PropertyConfig) {
+        onSelectFile.value = config
+    }
+
+    fun onFileSelected(data: Uri?) {
+        onSelectFile.value?.let { config ->
+            data?.let {
+                config.value = it.toString()
+                saveProperty(config)
+            }
         }
     }
 

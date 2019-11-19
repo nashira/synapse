@@ -323,7 +323,7 @@ sealed class PropertyType<T : Any>(
 
     companion object {
 
-        private val map = mutableMapOf<Key<*>, PropertyType<*>>()
+        val map = mutableMapOf<Key<*>, PropertyType<*>>()
         val gson = Gson()
 
         operator fun <E : Any> get(key: Key<E>): PropertyType<E> {

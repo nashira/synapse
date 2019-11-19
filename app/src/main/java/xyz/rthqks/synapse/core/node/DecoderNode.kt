@@ -161,10 +161,14 @@ class DecoderNode(
                 delay(diff / 1_000_000)
             }
 
-            decoder.releaseVideoBuffer(event.index, eos)
+            if (config.hasSurface()) {
+                decoder.releaseVideoBuffer(event.index, eos)
+            } else {
+                frame.eos = true
+            }
             connection.queue(frame)
 
-        } while (!eos)
+        } while (!frame.eos)
     }
 
     private suspend fun startAudio() {

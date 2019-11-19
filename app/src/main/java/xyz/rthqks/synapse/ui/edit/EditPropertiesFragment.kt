@@ -11,6 +11,7 @@ import android.view.ViewGroup
 import android.view.inputmethod.InputMethodManager
 import android.widget.AdapterView
 import android.widget.ArrayAdapter
+import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModelProvider
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
@@ -19,9 +20,12 @@ import kotlinx.android.synthetic.main.fragment_edit_properties.*
 import kotlinx.android.synthetic.main.property_item_discrete.view.*
 import kotlinx.android.synthetic.main.property_item_discrete.view.name
 import kotlinx.android.synthetic.main.property_item_text.view.*
+import kotlinx.android.synthetic.main.property_item_uri.view.*
 import xyz.rthqks.synapse.R
-import xyz.rthqks.synapse.codec.Decoder
-import xyz.rthqks.synapse.data.*
+import xyz.rthqks.synapse.data.Key
+import xyz.rthqks.synapse.data.NodeConfig
+import xyz.rthqks.synapse.data.PropertyConfig
+import xyz.rthqks.synapse.data.PropertyType
 import javax.inject.Inject
 
 class EditPropertiesFragment : DaggerFragment() {
@@ -51,31 +55,34 @@ class EditPropertiesFragment : DaggerFragment() {
         recycler_view.layoutManager = LinearLayoutManager(context)
         recycler_view.adapter = PropertyAdapter(node, graphViewModel)
 
-        if (node.type == NodeType.VideoFile) {
-            val intent = Intent(Intent.ACTION_OPEN_DOCUMENT).apply {
+        graphViewModel.onSelectFile.observe(viewLifecycleOwner, Observer {
+            Intent(Intent.ACTION_OPEN_DOCUMENT).apply {
                 addCategory(Intent.CATEGORY_OPENABLE)
                 type = "video/*"
+                flags = flags or Intent.FLAG_GRANT_READ_URI_PERMISSION
+                startActivityForResult(this, OPEN_DOC_REQUEST)
             }
-
-            startActivityForResult(intent, 42)
-        }
+        })
     }
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
-        val parcelFileDescriptor = context!!.contentResolver.openAssetFileDescriptor(data!!.data!!, "r")
-//        val fileDescriptor = parcelFileDescriptor!!.fileDescriptor
-
-        Decoder.stashedpa = parcelFileDescriptor
-//        Decoder.stashedFileDescriptor = fileDescriptor
-
-
+        if (requestCode == OPEN_DOC_REQUEST && resultCode == Activity.RESULT_OK) {
+            data?.let {
+                activity?.contentResolver?.takePersistableUriPermission(
+                    data.data!!,
+                    Intent.FLAG_GRANT_READ_URI_PERMISSION
+                )
+                graphViewModel.onFileSelected(data.data)
+            }
 //        Log.d(TAG, "data $data $fileDescriptor")
+        }
         super.onActivityResult(requestCode, resultCode, data)
     }
 
     companion object {
         const val TAG = "EditPropertiesFragment"
-        private const val ARG_NODE_ID = "node_id"
+        const val ARG_NODE_ID = "node_id"
+        const val OPEN_DOC_REQUEST = 17
         fun newInstance(nodeConfig: NodeConfig): EditPropertiesFragment {
             val args = Bundle()
             args.putInt(ARG_NODE_ID, nodeConfig.id)
@@ -92,12 +99,13 @@ class PropertyAdapter(
     private val viewModel: EditGraphViewModel
 ) : RecyclerView.Adapter<PropertyViewHolder>() {
     val properties = nodeConfig.properties.values.toList()
-    val propertyTypes = properties.map { PropertyType[Key[it.type] as Key<Any>] }
+    val propertyTypes: List<PropertyType<*>> = properties.map { PropertyType.map[Key[it.type]] as PropertyType<*> }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): PropertyViewHolder {
         val view = LayoutInflater.from(parent.context)
             .inflate(viewType, parent, false)
         return when (viewType) {
+            R.layout.property_item_uri -> UriPropertyViewHolder(view, viewModel)
             R.layout.property_item_discrete -> DiscretePropertyViewHolder(view, viewModel)
             R.layout.property_item_text -> TextPropertyViewHolder(view, viewModel)
             else -> error("unknown property type: $viewType")
@@ -114,9 +122,12 @@ class PropertyAdapter(
     }
 
     override fun getItemViewType(position: Int): Int {
-        return when (propertyTypes[position]) {
-            is PropertyType.Discrete -> R.layout.property_item_discrete
-            is PropertyType.Text -> R.layout.property_item_text
+        val type = propertyTypes[position]
+        return when {
+            type == PropertyType.Uri -> R.layout.property_item_uri
+            type is PropertyType.Text -> R.layout.property_item_text
+            type is PropertyType.Discrete -> R.layout.property_item_discrete
+            else -> 0
         }
     }
 
@@ -128,6 +139,32 @@ class PropertyAdapter(
 
 abstract class PropertyViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
     abstract fun bind(property: PropertyType<*>, config: PropertyConfig)
+}
+
+class UriPropertyViewHolder(
+    itemView: View,
+    private val viewModel: EditGraphViewModel
+) : PropertyViewHolder(itemView) {
+    private var property: PropertyType.Text? = null
+    private var config: PropertyConfig? = null
+    private var suppressSave = false
+
+    init {
+        itemView.button_select_file.setOnClickListener {
+            config?.let { it1 -> viewModel.selectFileFor(it1) }
+        }
+    }
+
+    override fun bind(property: PropertyType<*>, config: PropertyConfig) {
+        this.property = property as PropertyType.Text
+        this.config = config
+        itemView.uri_name .setText(property.name)
+        suppressSave = true
+    }
+
+    companion object {
+        const val TAG = "TextPropertyViewHolder"
+    }
 }
 
 class TextPropertyViewHolder(
