@@ -34,9 +34,10 @@ class AudioPlayerNode : Node() {
             audioTrack = AudioTrack.Builder()
                 .setAudioAttributes(
                     AudioAttributes.Builder()
-                        .setUsage(AudioAttributes.USAGE_GAME)
+                        .setUsage(AudioAttributes.USAGE_MEDIA)
                         .build()
                 ).setAudioFormat(it)
+                .setTransferMode(AudioTrack.MODE_STREAM)
                 .setBufferSizeInBytes(bufferSize * 2)
                 .build()
         }
@@ -62,7 +63,6 @@ class AudioPlayerNode : Node() {
                     )
                     numFrames++
 //                    Log.d(TAG, "written $write frames $numFrames")
-
                 }
                 channel.send(audioBuffer)
             }

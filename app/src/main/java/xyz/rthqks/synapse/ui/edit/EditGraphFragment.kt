@@ -136,7 +136,6 @@ class EditGraphFragment : DaggerFragment() {
             }
 
             override fun onSwiped(viewHolder: RecyclerView.ViewHolder, direction: Int) {
-//
                 nodeAdapter.removeNode(viewHolder.adapterPosition)
             }
         })

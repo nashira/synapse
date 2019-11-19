@@ -176,11 +176,11 @@ class NodeViewHolder(
             Log.d(TAG, "port ${portConfig.key} ${graphViewModel.getPortState(portConfig)}")
             when(graphViewModel.getPortState(portConfig)) {
                 PortState.Unconnected -> itemView.setBackgroundColor(Color.TRANSPARENT)
-                PortState.Connected -> itemView.setBackgroundColor(Color.BLUE)
-                PortState.SelectedUnconnected -> itemView.setBackgroundColor(Color.CYAN)
-                PortState.SelectedConnected -> itemView.setBackgroundColor(Color.MAGENTA)
-                PortState.EligibleToConnect -> itemView.setBackgroundColor(Color.GREEN)
-                PortState.EligibleToDisconnect -> itemView.setBackgroundColor(Color.RED)
+                PortState.Connected -> itemView.setBackgroundColor(Color.rgb(200, 200, 255))
+                PortState.SelectedUnconnected -> itemView.setBackgroundColor(Color.rgb(200, 255, 255))
+                PortState.SelectedConnected -> itemView.setBackgroundColor(Color.rgb(255, 200, 255))
+                PortState.EligibleToConnect -> itemView.setBackgroundColor(Color.rgb(200, 255, 200))
+                PortState.EligibleToDisconnect -> itemView.setBackgroundColor(Color.rgb(255, 200, 200))
             }
         }
     }
