@@ -39,6 +39,9 @@ abstract class SynapseDao {
     abstract suspend fun deleteGraph(graph: GraphData)
 
     @Delete
+    abstract suspend fun deleteNode(node: NodeConfig)
+
+    @Delete
     abstract suspend fun deleteNodes(nodes: Collection<NodeConfig>)
 
     @Delete

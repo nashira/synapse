@@ -15,7 +15,7 @@ import xyz.rthqks.synapse.data.PortType
 
 class AudioPlayerNode : Node() {
     private var audioTrack: AudioTrack? = null
-    private lateinit var audioFormat: AudioFormat
+    private var audioFormat: AudioFormat? = null
     private var connection: Connection<AudioConfig, AudioEvent>? = null
     private var channel: Channel<AudioEvent>? = null
     private var playJob: Job? = null
@@ -25,19 +25,21 @@ class AudioPlayerNode : Node() {
     }
 
     override suspend fun initialize() {
-        val bufferSize = AudioRecord.getMinBufferSize(
-            audioFormat.sampleRate,
-            AudioFormat.CHANNEL_IN_STEREO,
-            audioFormat.encoding
-        )
-        audioTrack = AudioTrack.Builder()
-            .setAudioAttributes(
-                AudioAttributes.Builder()
-                    .setUsage(AudioAttributes.USAGE_GAME)
-                    .build()
-            ).setAudioFormat(audioFormat)
-            .setBufferSizeInBytes(bufferSize * 2)
-            .build()
+        audioFormat?.let {
+            val bufferSize = AudioRecord.getMinBufferSize(
+                it.sampleRate,
+                AudioFormat.CHANNEL_IN_STEREO,
+                it.encoding
+            )
+            audioTrack = AudioTrack.Builder()
+                .setAudioAttributes(
+                    AudioAttributes.Builder()
+                        .setUsage(AudioAttributes.USAGE_GAME)
+                        .build()
+                ).setAudioFormat(it)
+                .setBufferSizeInBytes(bufferSize * 2)
+                .build()
+        }
     }
 
     override suspend fun start() = coroutineScope {
@@ -81,7 +83,7 @@ class AudioPlayerNode : Node() {
         throw IllegalStateException("no outputs: $this")
     }
 
-    override suspend fun <C: Config, T : Event> input(key: String, connection: Connection<C, T>) {
+    override suspend fun <C : Config, T : Event> input(key: String, connection: Connection<C, T>) {
         if (key == PortType.AUDIO_1) {
             this.connection = connection as Connection<AudioConfig, AudioEvent>
             channel = connection.consumer()

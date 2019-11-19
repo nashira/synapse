@@ -96,6 +96,21 @@ class EditGraphViewModel @Inject constructor(
         }
     }
 
+    fun removeNode(node: NodeConfig) {
+        val edges = mutableListOf<EdgeConfig>()
+        node.inputs.forEach {
+            edges += graphConfigEditor.clearEdges(it)
+        }
+        node.outputs.forEach {
+            edges += graphConfigEditor.clearEdges(it)
+        }
+        graphConfigEditor.removeNode(node.id)
+        viewModelScope.launch(Dispatchers.IO) {
+            dao.deleteNode(node)
+            dao.deleteEdges(edges)
+        }
+    }
+
     companion object {
         private val TAG = EditGraphViewModel::class.java.simpleName
     }

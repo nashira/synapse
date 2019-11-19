@@ -63,14 +63,13 @@ class EditPropertiesFragment : DaggerFragment() {
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         val parcelFileDescriptor = context!!.contentResolver.openAssetFileDescriptor(data!!.data!!, "r")
-        val fileDescriptor = parcelFileDescriptor!!.fileDescriptor
+//        val fileDescriptor = parcelFileDescriptor!!.fileDescriptor
 
         Decoder.stashedpa = parcelFileDescriptor
-        Decoder.stashedFileDescriptor = fileDescriptor
+//        Decoder.stashedFileDescriptor = fileDescriptor
 
-//        parcelFileDescriptor.close()
 
-        Log.d(TAG, "data $data $fileDescriptor")
+//        Log.d(TAG, "data $data $fileDescriptor")
         super.onActivityResult(requestCode, resultCode, data)
     }
 
@@ -118,7 +117,6 @@ class PropertyAdapter(
         return when (propertyTypes[position]) {
             is PropertyType.Discrete -> R.layout.property_item_discrete
             is PropertyType.Text -> R.layout.property_item_text
-            else -> R.layout.frame_layout
         }
     }
 

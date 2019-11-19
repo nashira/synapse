@@ -122,7 +122,7 @@ class EditGraphFragment : DaggerFragment() {
         recycler_view.adapter = nodeAdapter
         val touchHelper = ItemTouchHelper(object : ItemTouchHelper.SimpleCallback(
             ItemTouchHelper.UP or ItemTouchHelper.DOWN,
-            0
+            ItemTouchHelper.START
         ) {
             override fun onMove(
                 recyclerView: RecyclerView,
@@ -135,7 +135,10 @@ class EditGraphFragment : DaggerFragment() {
                 return true
             }
 
-            override fun onSwiped(viewHolder: RecyclerView.ViewHolder, direction: Int) {}
+            override fun onSwiped(viewHolder: RecyclerView.ViewHolder, direction: Int) {
+//
+                nodeAdapter.removeNode(viewHolder.adapterPosition)
+            }
         })
 
         touchHelper.attachToRecyclerView(recycler_view)

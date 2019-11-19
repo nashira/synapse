@@ -4,7 +4,6 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@color/black"
     tools:context=".ui.edit.GraphEditActivity">
 
     <FrameLayout
@@ -18,7 +17,7 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:elevation="8dp"
-        android:background="@color/black"
+        android:background="?android:attr/colorBackground"
         app:behavior_hideable="true"
         app:behavior_peekHeight="240dp"
         app:behavior_skipCollapsed="true"

@@ -32,7 +32,7 @@ class GraphConfigEditor(val graphData: GraphData) {
         return edge
     }
 
-    private fun clearEdges(portConfig: PortConfig): List<EdgeConfig> {
+    fun clearEdges(portConfig: PortConfig): List<EdgeConfig> {
         val toRemove = edges.filter {
             (it.from == portConfig.key) || (it.to == portConfig.key)
         }
@@ -117,6 +117,10 @@ class GraphConfigEditor(val graphData: GraphData) {
 
     private fun PortConfig.edgeTo(other: PortConfig): EdgeConfig =
         EdgeConfig(graphData.id, key.nodeId, key.key, other.key.nodeId, other.key.key)
+
+    fun removeNode(id: Int) {
+        nodes.remove(id)
+    }
 
 
     private val EdgeConfig.from get() = PortKey(fromNodeId, fromKey, PortType.OUTPUT)

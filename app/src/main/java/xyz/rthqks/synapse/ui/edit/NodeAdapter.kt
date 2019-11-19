@@ -70,6 +70,12 @@ class NodeAdapter(
             }
         }
     }
+
+    fun removeNode(position: Int) {
+        val node = nodes.removeAt(position)
+        graphViewModel.removeNode(node)
+        notifyDataSetChanged()
+    }
 }
 
 class NodeViewHolder(

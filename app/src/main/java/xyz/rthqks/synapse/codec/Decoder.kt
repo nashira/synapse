@@ -50,10 +50,12 @@ class Decoder(
     private var videoChannel: SendChannel<Event>? = null
     private var audioChannel: SendChannel<Event>? = null
 
+    @Suppress("BlockingMethodInNonBlockingContext")
     suspend fun setDataSource(uri: String) {
         Log.d(TAG, "setDataSource $uri")
         if (uri.startsWith("content")) {
-            extractor.setDataSource(stashedFileDescriptor!!)
+            val fd = stashedpa?.fileDescriptor
+            extractor.setDataSource(fd!!)
             stashedpa?.close()
         } else {
             extractor.setDataSource(context, uri.toUri(), emptyMap())
@@ -421,7 +423,6 @@ class Decoder(
 
     companion object {
         const val TAG = "Decoder"
-        var stashedFileDescriptor: FileDescriptor? = null
         var stashedpa: AssetFileDescriptor? = null
         const val DECODING_FORMAT = 0
         const val PAUSE = 1
