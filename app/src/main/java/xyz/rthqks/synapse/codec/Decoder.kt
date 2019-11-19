@@ -1,6 +1,7 @@
 package xyz.rthqks.synapse.codec
 
 import android.content.Context
+import android.content.res.AssetFileDescriptor
 import android.media.MediaCodec
 import android.media.MediaExtractor
 import android.media.MediaFormat
@@ -53,6 +54,7 @@ class Decoder(
         Log.d(TAG, "setDataSource $uri")
         if (uri.startsWith("content")) {
             extractor.setDataSource(stashedFileDescriptor!!)
+            stashedpa?.close()
         } else {
             extractor.setDataSource(context, uri.toUri(), emptyMap())
         }
@@ -187,7 +189,6 @@ class Decoder(
                 runBlocking {
                     videoChannel?.send(event)
                 }
-//                videoAvailable?.invoke(index, info)
             }
         }
     }
@@ -356,7 +357,7 @@ class Decoder(
 //        Log.d(TAG, "release audio buffer $index $eos")
         when {
             !eos -> {
-                audioDecoder?.releaseOutputBuffer(index, true)
+                audioDecoder?.releaseOutputBuffer(index, false)
             }
             releaseState == DECODING_FORMAT
                     || releaseState == PAUSE
@@ -383,8 +384,6 @@ class Decoder(
     fun stop() {
         releaseState = PAUSE
         extractState = STOPPING
-//        videoDecoder?.stop()
-//        audioDecoder?.stop()
     }
 
     fun release() {
@@ -423,6 +422,7 @@ class Decoder(
     companion object {
         const val TAG = "Decoder"
         var stashedFileDescriptor: FileDescriptor? = null
+        var stashedpa: AssetFileDescriptor? = null
         const val DECODING_FORMAT = 0
         const val PAUSE = 1
         const val EOS = 2

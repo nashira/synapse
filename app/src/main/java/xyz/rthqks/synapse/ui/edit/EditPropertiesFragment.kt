@@ -11,7 +11,6 @@ import android.view.ViewGroup
 import android.view.inputmethod.InputMethodManager
 import android.widget.AdapterView
 import android.widget.ArrayAdapter
-import androidx.core.net.toUri
 import androidx.lifecycle.ViewModelProvider
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
@@ -22,10 +21,7 @@ import kotlinx.android.synthetic.main.property_item_discrete.view.name
 import kotlinx.android.synthetic.main.property_item_text.view.*
 import xyz.rthqks.synapse.R
 import xyz.rthqks.synapse.codec.Decoder
-import xyz.rthqks.synapse.data.Key
-import xyz.rthqks.synapse.data.NodeConfig
-import xyz.rthqks.synapse.data.PropertyConfig
-import xyz.rthqks.synapse.data.PropertyType
+import xyz.rthqks.synapse.data.*
 import javax.inject.Inject
 
 class EditPropertiesFragment : DaggerFragment() {
@@ -55,18 +51,21 @@ class EditPropertiesFragment : DaggerFragment() {
         recycler_view.layoutManager = LinearLayoutManager(context)
         recycler_view.adapter = PropertyAdapter(node, graphViewModel)
 
-        val intent = Intent(Intent.ACTION_OPEN_DOCUMENT).apply {
-            addCategory(Intent.CATEGORY_OPENABLE)
-            type = "video/*"
-        }
+        if (node.type == NodeType.VideoFile) {
+            val intent = Intent(Intent.ACTION_OPEN_DOCUMENT).apply {
+                addCategory(Intent.CATEGORY_OPENABLE)
+                type = "video/*"
+            }
 
-        startActivityForResult(intent, 42)
+            startActivityForResult(intent, 42)
+        }
     }
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         val parcelFileDescriptor = context!!.contentResolver.openAssetFileDescriptor(data!!.data!!, "r")
         val fileDescriptor = parcelFileDescriptor!!.fileDescriptor
 
+        Decoder.stashedpa = parcelFileDescriptor
         Decoder.stashedFileDescriptor = fileDescriptor
 
 //        parcelFileDescriptor.close()

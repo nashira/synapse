@@ -34,6 +34,8 @@ class DecoderNode(
 ) : Node() {
     private lateinit var size: Size
     private var surfaceRotation = 0
+    private var audioInput: Channel<Decoder.Event>? = null
+    private var videoInput: Channel<Decoder.Event>? = null
     private var surfaceConnection: Connection<SurfaceConfig, SurfaceEvent>? = null
     private var textureConnection: Connection<TextureConfig, TextureEvent>? = null
     private var audioConnection: Connection<AudioConfig, AudioEvent>? = null
@@ -41,7 +43,6 @@ class DecoderNode(
     private var audioFormat: AudioFormat? = null
     private var videoJob: Job? = null
     private var audioJob: Job? = null
-    private val mutex = Mutex()
     private val connectMutex = Mutex()
     private var outputSurface: Surface? = null
     private var outputSurfaceTexture: SurfaceTexture? = null
@@ -79,145 +80,167 @@ class DecoderNode(
     }
 
     override suspend fun initialize() {
-        textureConnection?.let {
-            glesManager.withGlContext {
-                outputTexture.initialize()
+        if (decoder.hasVideo)
+            textureConnection?.let {
+                glesManager.withGlContext {
+                    outputTexture.initialize()
+                }
+
+                outputSurfaceTexture = SurfaceTexture(outputTexture.id)
+                outputSurfaceTexture?.setDefaultBufferSize(size.width, size.height)
+                outputSurface = Surface(outputSurfaceTexture)
+                it.prime(TextureEvent(outputTexture, FloatArray(16)))
+                videoInput = Channel(Channel.UNLIMITED)
             }
 
-            outputSurfaceTexture = SurfaceTexture(outputTexture.id)
-            outputSurfaceTexture?.setDefaultBufferSize(size.width, size.height)
-            outputSurface = Surface(outputSurfaceTexture)
-            it.prime(TextureEvent(outputTexture, FloatArray(16)))
-        }
+        if (decoder.hasVideo)
+            surfaceConnection?.let {
+                it.prime(SurfaceEvent())
+                it.prime(SurfaceEvent())
+                it.prime(SurfaceEvent())
+                videoInput = Channel(Channel.UNLIMITED)
+            }
 
-        surfaceConnection?.let {
-            it.prime(SurfaceEvent())
-            it.prime(SurfaceEvent())
-            it.prime(SurfaceEvent())
-        }
-
-        audioConnection?.let {
-            it.prime(AudioEvent(0))
-            it.prime(AudioEvent(0))
-            it.prime(AudioEvent(0))
-        }
+        if (decoder.hasAudio)
+            audioConnection?.let {
+                it.prime(AudioEvent(0))
+                it.prime(AudioEvent(0))
+                it.prime(AudioEvent(0))
+                audioInput = Channel(Channel.UNLIMITED)
+            }
     }
 
-    override suspend fun start() {
+    override suspend fun start() = coroutineScope {
         audioSession++
         when {
-            surfaceConnection != null -> start2()
-            textureConnection != null -> startTexture()
-            else -> {
+            videoInput == null -> {
                 Log.w(TAG, "no connection, not starting")
-                Unit
+            }
+            surfaceConnection != null -> {
+                videoJob = launch { start2() }
+            }
+            textureConnection != null -> {
+                videoJob = launch { startTexture() }
+            }
+        }
+        if (audioInput != null) {
+            audioJob = launch {
+                startAudio()
             }
         }
     }
 
-    private suspend fun start2() = coroutineScope {
-        val connection = surfaceConnection ?: return@coroutineScope
+    private suspend fun start2() {
+        val connection = surfaceConnection ?: return
+        val videoInput = videoInput ?: return
         val config = connection.config
         val surface = config.getSurface()
-        val audio = audioConnection?.let { Channel<Decoder.Event>(Channel.UNLIMITED) }
-        val video = Channel<Decoder.Event>(Channel.UNLIMITED)
 
-        decoder.start(surface, video, audio)
+        decoder.start(surface, videoInput, audioInput)
 
-        videoJob = launch {
-            var count = 0L
-            val startTime = SystemClock.elapsedRealtimeNanos()
-            var firstTime = -1L
-            do {
-                val event = video.receive()
-                val frame = connection.dequeue()
-                val eos = event.info.flags and MediaCodec.BUFFER_FLAG_END_OF_STREAM != 0
-                frame.eos = eos
-                frame.count = count++
-                frame.timestamp = event.info.presentationTimeUs * 1000
+        var count = 0L
+        val startTime = SystemClock.elapsedRealtimeNanos()
+        var firstTime = -1L
+        do {
+            val event = videoInput.receive()
+            val frame = connection.dequeue()
+            val eos = event.info.flags and MediaCodec.BUFFER_FLAG_END_OF_STREAM != 0
+            frame.eos = eos
+            frame.count = count++
+            frame.timestamp = event.info.presentationTimeUs * 1000
 
 
-                if (firstTime == -1L) {
-                    firstTime = frame.timestamp
-                }
+            if (firstTime == -1L) {
+                firstTime = frame.timestamp
+            }
 
 //                Log.d(TAG, "video available ${eos} ${frame.timestamp}")
-                val time = SystemClock.elapsedRealtimeNanos() - startTime
-                val diff = frame.timestamp - firstTime - time
-                if (diff > 1_000_000) {
-                    delay(diff / 1_000_000)
-                }
+            val time = SystemClock.elapsedRealtimeNanos() - startTime
+            val diff = frame.timestamp - firstTime - time
+            if (diff > 1_000_000) {
+                delay(diff / 1_000_000)
+            }
 
-                decoder.releaseVideoBuffer(event.index, eos)
-                connection.queue(frame)
+            decoder.releaseVideoBuffer(event.index, eos)
+            connection.queue(frame)
 
-            } while (!eos)
-        }
+        } while (!eos)
+    }
 
-        if (audio != null)
-        audioJob = launch {
-            var count = 0
-            val audioConnection = audioConnection!!
-            do {
-                val event = audio.receive()
-                val eos = event.info.flags and MediaCodec.BUFFER_FLAG_END_OF_STREAM != 0
+    private suspend fun startAudio() {
 
-                val audioEvent = audioConnection.dequeue()
-                if (audioEvent.session == audioSession) {
-                    decoder.releaseAudioBuffer(audioEvent.index, audioEvent.eos)
-                }
-                audioEvent.session = audioSession
-                audioEvent.index = event.index
-                audioEvent.frame = count++
-                audioEvent.eos = eos
-                event.buffer?.let {
-                    audioEvent.buffer = it
-                }
-                audioConnection.queue(audioEvent)
-            } while (!eos)
-        }
+        val audioConnection = audioConnection ?: return
+        val audioInput = audioInput ?: return
+
+        var count = 0
+        do {
+            val event = audioInput.receive()
+            val eos = event.info.flags and MediaCodec.BUFFER_FLAG_END_OF_STREAM != 0
+//            Log.d(TAG, "audio available ${eos} $event")
+
+            val audioEvent = audioConnection.dequeue()
+            if (audioEvent.session == audioSession) {
+                decoder.releaseAudioBuffer(audioEvent.index, audioEvent.eos)
+            }
+            audioEvent.session = audioSession
+            audioEvent.index = event.index
+            audioEvent.frame = count++
+            audioEvent.eos = eos
+            event.buffer?.let {
+                audioEvent.buffer = it
+            }
+            audioConnection.queue(audioEvent)
+            if (eos) {
+                decoder.releaseAudioBuffer(audioEvent.index, audioEvent.eos)
+            }
+        } while (!eos)
     }
 
     private suspend fun startTexture() = coroutineScope {
         val connection = textureConnection ?: return@coroutineScope
         val surface = outputSurface ?: return@coroutineScope
-        mutex.lock()
+        val videoInput = videoInput ?: return@coroutineScope
 
-        videoJob = launch {
+        decoder.start(surface, videoInput, audioInput)
 
-            //            cameraManager.start(cameraId, surface, frameRate) { count, timestamp, eos ->
-//                //                launch {
-////                    val frame = connection.dequeue()
-////                    frame.eos = eos
-////                    frame.count = count
-////                    frame.timestamp = timestamp
-////                    connection.queue(frame)
-////                Log.d(TAG, "camera $timestamp")
-//                if (eos) {
-//                    Log.d(TAG, "got EOS from cam")
-//                    Log.d(TAG, "sent frames $count")
-//                    outputSurfaceTexture?.setOnFrameAvailableListener(null)
-//
-//                    launch {
-//                        val event = connection.dequeue()
-//                        event.eos = true
-//                        connection.queue(event)
-//                        mutex.unlock()
-//                    }
-//                }
-//            }
+        var copyMatrix = true
+        setOnFrameAvailableListener {
+            launch {
+                onFrame(connection, it, copyMatrix)
+                copyMatrix = false
+            }
+        }
 
-            var copyMatrix = true
-            setOnFrameAvailableListener {
-                launch {
-                    onFrame(connection, it, copyMatrix)
-                    copyMatrix = false
-                }
+        var count = 0
+        val startTime = SystemClock.elapsedRealtimeNanos()
+        var firstTime = -1L
+        do {
+            val event = videoInput.receive()
+            val eos = event.info.flags and MediaCodec.BUFFER_FLAG_END_OF_STREAM != 0
+            val timestamp = event.info.presentationTimeUs * 1000
+
+            if (firstTime == -1L) {
+                firstTime = timestamp
             }
 
-            // lock again to suspend until we unlock on EOS
-            mutex.withLock { }
-        }
+//                Log.d(TAG, "video available ${eos} ${frame.timestamp}")
+            val time = SystemClock.elapsedRealtimeNanos() - startTime
+            val diff = timestamp - firstTime - time
+            if (diff > 1_000_000) {
+                delay(diff / 1_000_000)
+            }
+
+            decoder.releaseVideoBuffer(event.index, eos)
+            count ++
+        } while (!eos)
+
+        Log.d(TAG, "got EOS from decoder")
+        Log.d(TAG, "sent frames ${count-1}")
+        outputSurfaceTexture?.setOnFrameAvailableListener(null)
+
+        val event = connection.dequeue()
+        event.eos = true
+        connection.queue(event)
     }
 
     private fun setOnFrameAvailableListener(block: (SurfaceTexture) -> Unit) {
@@ -249,6 +272,7 @@ class DecoderNode(
     override suspend fun stop() {
         decoder.stop()
         videoJob?.join()
+        audioJob?.join()
     }
 
     override suspend fun release() {
