@@ -22,7 +22,11 @@ class EditGraphViewModel @Inject constructor(
     val graphChannel = MutableLiveData<GraphConfigEditor>()
     val onNodeAdded = MutableLiveData<NodeConfig>()
     val onPortSelected = MutableLiveData<Unit>()
-    val onSelectFile = MutableLiveData<PropertyConfig>()
+    val onSelectFile = MutableLiveData<MutableList<PropertyConfig>>()
+
+    init {
+        onSelectFile.value = mutableListOf()
+    }
 
     fun setGraphId(graphId: Int) {
         if (graphId == -1) {
@@ -115,15 +119,14 @@ class EditGraphViewModel @Inject constructor(
     }
 
     fun selectFileFor(config: PropertyConfig) {
-        onSelectFile.value = config
+        onSelectFile.value?.add(config)
+        onSelectFile.value = onSelectFile.value
     }
 
-    fun onFileSelected(data: Uri?) {
-        onSelectFile.value?.let { config ->
-            data?.let {
-                config.value = it.toString()
-                saveProperty(config)
-            }
+    fun onFileSelected(data: Uri?, config: PropertyConfig) {
+        data?.let {
+            config.value = it.toString()
+            saveProperty(config)
         }
     }
 

@@ -46,6 +46,7 @@ class ExecGraphActivity : DaggerAppCompatActivity() {
             // create surface views needed by graph, pass view objects back
         })
          */
+        hideSystemUI()
     }
 
     override fun onCreateOptionsMenu(menu: Menu?): Boolean {

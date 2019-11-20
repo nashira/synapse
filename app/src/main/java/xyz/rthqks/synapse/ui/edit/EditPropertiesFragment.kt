@@ -33,6 +33,7 @@ class EditPropertiesFragment : DaggerFragment() {
     lateinit var viewModelFactory: ViewModelProvider.Factory
     private lateinit var graphViewModel: EditGraphViewModel
     private var nodeId: Int = -1
+    private var fileSelectConfig: PropertyConfig? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -49,13 +50,18 @@ class EditPropertiesFragment : DaggerFragment() {
 
     override fun onActivityCreated(savedInstanceState: Bundle?) {
         super.onActivityCreated(savedInstanceState)
-        graphViewModel = ViewModelProvider(activity!!, viewModelFactory)[EditGraphViewModel::class.java]
+        graphViewModel =
+            ViewModelProvider(activity!!, viewModelFactory)[EditGraphViewModel::class.java]
         val node = graphViewModel.getNode(nodeId)
         toolbar.setTitle(node.type.name)
         recycler_view.layoutManager = LinearLayoutManager(context)
         recycler_view.adapter = PropertyAdapter(node, graphViewModel)
 
         graphViewModel.onSelectFile.observe(viewLifecycleOwner, Observer {
+            if (it.size == 0) {
+                return@Observer
+            }
+            fileSelectConfig = it.removeAt(0)
             Intent(Intent.ACTION_OPEN_DOCUMENT).apply {
                 addCategory(Intent.CATEGORY_OPENABLE)
                 type = "video/*"
@@ -72,7 +78,8 @@ class EditPropertiesFragment : DaggerFragment() {
                     data.data!!,
                     Intent.FLAG_GRANT_READ_URI_PERMISSION
                 )
-                graphViewModel.onFileSelected(data.data)
+                fileSelectConfig?.let { p -> graphViewModel.onFileSelected(data.data, p) }
+                fileSelectConfig = null
             }
 //        Log.d(TAG, "data $data $fileDescriptor")
         }
@@ -99,7 +106,8 @@ class PropertyAdapter(
     private val viewModel: EditGraphViewModel
 ) : RecyclerView.Adapter<PropertyViewHolder>() {
     val properties = nodeConfig.properties.values.toList()
-    val propertyTypes: List<PropertyType<*>> = properties.map { PropertyType.map[Key[it.type]] as PropertyType<*> }
+    val propertyTypes: List<PropertyType<*>> =
+        properties.map { PropertyType.map[Key[it.type]] as PropertyType<*> }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): PropertyViewHolder {
         val view = LayoutInflater.from(parent.context)
@@ -158,7 +166,7 @@ class UriPropertyViewHolder(
     override fun bind(property: PropertyType<*>, config: PropertyConfig) {
         this.property = property as PropertyType.Text
         this.config = config
-        itemView.uri_name .setText(property.name)
+        itemView.uri_name.setText(property.name)
         suppressSave = true
     }
 
