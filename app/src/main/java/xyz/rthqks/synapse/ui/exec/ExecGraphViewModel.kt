@@ -3,7 +3,6 @@ package xyz.rthqks.synapse.ui.exec
 import android.content.Context
 import android.util.Log
 import android.view.SurfaceView
-import android.widget.Toast
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import kotlinx.coroutines.*
@@ -22,9 +21,10 @@ class ExecGraphViewModel @Inject constructor(
     private var initJob: Job? = null
     private var startJob: Job? = null
     private var stopJob: Job? = null
-    private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
+    private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
 
     fun loadGraph(graphId: Int) {
+        Log.d(TAG, "loadGraph")
         initJob = scope.launch {
             val graphConfig = dao.getFullGraph(graphId)
             graphLoaded.postValue(graphConfig)
@@ -40,6 +40,7 @@ class ExecGraphViewModel @Inject constructor(
     }
 
     fun startExecution() {
+        Log.d(TAG, "startExecution")
         startJob = scope.launch {
             initJob?.join()
             stopJob?.join()
@@ -57,22 +58,26 @@ class ExecGraphViewModel @Inject constructor(
     }
 
     fun stopExecution() {
+        Log.d(TAG, "stopExecution")
         stopJob = scope.launch {
             Log.d(TAG, "stopping")
             startJob?.join()
+            Log.d(TAG, "calling graph.stop")
             graph.stop()
             Log.d(TAG, "done stopping")
         }
     }
 
     override fun onCleared() {
+        Log.d(TAG, "onCleared")
         scope.launch {
             Log.d(TAG, "release")
-            withTimeoutOrNull(1000) {
+            withTimeoutOrNull(2000) {
                 stopJob?.join()
             } ?: run {
                 Log.w(TAG, "timeout waiting for stop")
-                Toast.makeText(context, "TIMEOUT", Toast.LENGTH_LONG).show()
+//                Toast.makeText(context, "TIMEOUT", Toast.LENGTH_LONG).show()
+                stopJob?.cancel()
             }
             graph.release()
             scope.cancel()
@@ -83,6 +88,11 @@ class ExecGraphViewModel @Inject constructor(
 
     fun setSurfaceView(surfaceView: SurfaceView) {
         this.surfaceView = surfaceView
+        initJob?.let {
+            scope.launch {
+                graph.tmp_SetSurfaceView(surfaceView)
+            }
+        }
     }
 
     companion object {

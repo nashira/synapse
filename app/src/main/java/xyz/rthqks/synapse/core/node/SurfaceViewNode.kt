@@ -15,8 +15,8 @@ import xyz.rthqks.synapse.core.edge.*
 import xyz.rthqks.synapse.data.PortType
 
 class SurfaceViewNode(
-    private val surfaceView: SurfaceView
-) : Node() {
+    private var surfaceView: SurfaceView
+) : Node(), SurfaceHolder.Callback {
     private var channel: Channel<SurfaceEvent>? = null
     private var connection: Connection<SurfaceConfig, SurfaceEvent>? = null
     private var surface: Surface? = null
@@ -26,28 +26,42 @@ class SurfaceViewNode(
     override suspend fun create() {
         Log.d(TAG, "adding callback ${surfaceView.holder.surface}")
 
-        setSurface(surfaceView.holder.surface)
+        setSurfaceView(surfaceView)
+    }
 
-        surfaceView.holder.addCallback(object : SurfaceHolder.Callback {
-            override fun surfaceChanged(
-                holder: SurfaceHolder?,
-                format: Int,
-                width: Int,
-                height: Int
-            ) {
-                Log.d(TAG, "surfaceChanged: $holder $format $width $height")
-                runBlocking { setSurface(holder!!.surface) }
-            }
+    suspend fun setSurfaceView(surfaceView: SurfaceView) {
+        Log.d(TAG, "setSurfaceView $surfaceView")
+        this.surfaceView.holder.removeCallback(this)
+        this.surfaceView = surfaceView
+        surfaceView.holder.addCallback(this)
 
-            override fun surfaceDestroyed(holder: SurfaceHolder?) {
-                Log.d(TAG, "surfaceDestroyed: $holder")
-                runBlocking { setSurface(null) }
-            }
+        connection?.let {
+            val size = it.config.size
+            val rotation = it.config.rotation
+            updateSurfaceViewConfig(size, rotation)
+        } ?: run {
+            setSurface(surfaceView.holder.surface)
+        }
 
-            override fun surfaceCreated(holder: SurfaceHolder?) {
-                Log.d(TAG, "surfaceCreated: $holder")
-            }
-        })
+    }
+
+    override fun surfaceChanged(
+        holder: SurfaceHolder?,
+        format: Int,
+        width: Int,
+        height: Int
+    ) {
+        Log.d(TAG, "surfaceChanged: $holder $format $width $height")
+        runBlocking { setSurface(holder!!.surface) }
+    }
+
+    override fun surfaceDestroyed(holder: SurfaceHolder?) {
+        Log.d(TAG, "surfaceDestroyed: $holder")
+        runBlocking { setSurface(null) }
+    }
+
+    override fun surfaceCreated(holder: SurfaceHolder?) {
+        Log.d(TAG, "surfaceCreated: $holder")
     }
 
     override suspend fun initialize() {
@@ -94,19 +108,27 @@ class SurfaceViewNode(
                 channel = connection.consumer()
                 val size = connection.config.size
                 val rotation = connection.config.rotation
-                withContext(Dispatchers.Main) {
-                    surfaceView.holder.setFixedSize(size.width, size.height)
-                    ConstraintSet().also {
-                        val constraintLayout = surfaceView.parent as ConstraintLayout
-                        it.clone(constraintLayout)
-                        val outSize = if (rotation == 90 || rotation == 270) Size(size.height, size.width) else size
-                        it.setDimensionRatio(R.id.surface_view, "${outSize.width}:${outSize.height}")
-                        it.applyTo(constraintLayout)
-                    }
-                }
-                setSurface(surface)
+                updateSurfaceViewConfig(size, rotation)
             }
         }
+    }
+
+    private suspend fun updateSurfaceViewConfig(
+        size: Size,
+        rotation: Int
+    ) {
+        withContext(Dispatchers.Main) {
+            surfaceView.holder.setFixedSize(size.width, size.height)
+            ConstraintSet().also {
+                val constraintLayout = surfaceView.parent as ConstraintLayout
+                it.clone(constraintLayout)
+                val outSize =
+                    if (rotation == 90 || rotation == 270) Size(size.height, size.width) else size
+                it.setDimensionRatio(R.id.surface_view, "${outSize.width}:${outSize.height}")
+                it.applyTo(constraintLayout)
+            }
+        }
+        setSurface(surface)
     }
 
     private suspend fun setSurface(surface: Surface?) {

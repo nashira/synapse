@@ -33,7 +33,7 @@ class ExecGraphActivity : DaggerAppCompatActivity() {
         val graphId = intent.getIntExtra(GRAPH_ID, -1)
         Log.d(TAG, "graphid: $graphId")
 
-        savedInstanceState ?: run {
+        if (savedInstanceState == null) {
             viewModel.loadGraph(graphId)
         }
 

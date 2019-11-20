@@ -161,11 +161,10 @@ class DecoderNode(
                 delay(diff / 1_000_000)
             }
 
-            if (config.hasSurface()) {
-                decoder.releaseVideoBuffer(event.index, eos)
-            } else {
+            if (!config.hasSurface()) {
                 frame.eos = true
             }
+            decoder.releaseVideoBuffer(event.index, frame.eos)
             connection.queue(frame)
 
         } while (!frame.eos)

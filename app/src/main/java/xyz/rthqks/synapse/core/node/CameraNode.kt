@@ -5,6 +5,7 @@ import android.opengl.GLES11Ext
 import android.opengl.GLES32
 import android.opengl.GLES32.GL_CLAMP_TO_EDGE
 import android.opengl.GLES32.GL_LINEAR
+import android.opengl.Matrix
 import android.util.Log
 import android.util.Size
 import android.view.Surface
@@ -55,11 +56,16 @@ class CameraNode(
         glesManager.withGlContext {
             outputTexture.initialize()
         }
+
         outputSurfaceTexture = SurfaceTexture(outputTexture.id)
         outputSurfaceTexture?.setDefaultBufferSize(size.width, size.height)
         outputSurface = Surface(outputSurfaceTexture)
 
-        textureConnection?.prime(TextureEvent(outputTexture, FloatArray(16)))
+        textureConnection?.prime(
+            TextureEvent(
+                outputTexture,
+                FloatArray(16).also { Matrix.setIdentityM(it, 0) })
+        )
 
         surfaceConnection?.prime(SurfaceEvent())
         surfaceConnection?.prime(SurfaceEvent())
@@ -162,6 +168,18 @@ class CameraNode(
             surfaceTexture.updateTexImage()
             if (copyMatrix) {
                 surfaceTexture.getTransformMatrix(event.matrix)
+                when (cameraManager.displayRotation) {
+                    Surface.ROTATION_90 -> {
+                        Matrix.translateM(event.matrix, 0, 0.5f, 0.5f, 0f)
+                        Matrix.rotateM(event.matrix, 0, 90f, 0f, 0f, -1f)
+                        Matrix.translateM(event.matrix, 0, -0.5f, -0.5f, 0f)
+                    }
+                    Surface.ROTATION_270 -> {
+                        Matrix.translateM(event.matrix, 0, 0.5f, 0.5f, 0f)
+                        Matrix.rotateM(event.matrix, 0, 270f, 0f, 0f, -1f)
+                        Matrix.translateM(event.matrix, 0, -0.5f, -0.5f, 0f)
+                    }
+                }
             }
 //            Log.d(TAG, "surface ${surfaceTexture.timestamp}")
         }

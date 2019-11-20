@@ -22,7 +22,7 @@ class CameraManager(
     private val cameraMap = mutableMapOf<String, CameraCharacteristics>()
     private val thread = HandlerThread(TAG)
     private lateinit var handler: Handler
-    private var displayRotation = 0
+    var displayRotation = 0
     private var camera: CameraDevice? = null
     private var session: CameraCaptureSession? = null
     private var isEos: Boolean = false

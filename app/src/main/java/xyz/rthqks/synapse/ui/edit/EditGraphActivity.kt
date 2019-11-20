@@ -50,11 +50,14 @@ class GraphEditActivity : DaggerAppCompatActivity() {
         bottom_sheet.adapter = AddNodeAdapter {
             Log.d(TAG, "clicked ${getText(it.name)}")
             graphViewModel.addNodeType(it)
-            behavior.state = BottomSheetBehavior.STATE_HIDDEN
         }
 
         graphViewModel.onAddNodeClicked.observe(this, Observer {
-            behavior.state = BottomSheetBehavior.STATE_EXPANDED
+            if (it == null) {
+                behavior.state = BottomSheetBehavior.STATE_HIDDEN
+            } else {
+                behavior.state = BottomSheetBehavior.STATE_EXPANDED
+            }
         })
     }
 

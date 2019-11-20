@@ -18,8 +18,7 @@ class Graph(
 ) {
     private val dispatcher = Executors.newFixedThreadPool(6).asCoroutineDispatcher()
     private val exceptionHandler = CoroutineExceptionHandler { context, throwable ->
-        Log.d(TAG, "error", throwable)
-        throw throwable
+        Log.e(TAG, "error", throwable)
     }
     private val scope = CoroutineScope(SupervisorJob() + dispatcher + exceptionHandler)
     private val glesManager = GlesManager()
@@ -152,16 +151,21 @@ class Graph(
         }
     }
 
-    private suspend fun <T> parallel(items: Iterable<T>, job: Job = Job(), block: suspend (item: T) -> Unit) {
-        items.forEach { scope.launch(job) { block(it) } }
+    private suspend fun <T> parallel(items: Iterable<T>, block: suspend (item: T) -> Unit) {
+        items.forEach { scope.launch { block(it) } }
     }
 
     private suspend fun <T> parallelJoin(items: Iterable<T>, block: suspend (item: T) -> Unit) {
         items.map { scope.launch { block(it) } }.joinAll()
     }
 
-    fun tmp_SetSurfaceView(surfaceView: SurfaceView) {
+    suspend fun tmp_SetSurfaceView(surfaceView: SurfaceView) {
         this.surfaceView = surfaceView
+        nodes.values.forEach {
+            when (it) {
+                is SurfaceViewNode -> it.setSurfaceView(surfaceView)
+            }
+        }
     }
 
     companion object {
