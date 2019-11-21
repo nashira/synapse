@@ -62,8 +62,8 @@ class GraphEditActivity : DaggerAppCompatActivity() {
     }
 
     companion object {
-        private val TAG = GraphEditActivity::class.java.simpleName
-        private const val GRAPH_ID = "graph_id"
+        const val TAG = "GraphEditActivity"
+        const val GRAPH_ID = "graph_id"
 
         fun getIntent(activity: Activity, graphId: Int = -1): Intent {
             return Intent(activity, GraphEditActivity::class.java).also {

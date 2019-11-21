@@ -1,5 +1,6 @@
 package xyz.rthqks.synapse.ui.browse
 
+import android.content.Intent
 import android.os.Bundle
 import android.util.Log
 import android.view.LayoutInflater
@@ -15,6 +16,7 @@ import kotlinx.android.synthetic.main.activity_graph_list.*
 import kotlinx.android.synthetic.main.graph_list_item.view.*
 import xyz.rthqks.synapse.R
 import xyz.rthqks.synapse.data.GraphData
+import xyz.rthqks.synapse.ui.build.BuilderActivity
 import xyz.rthqks.synapse.ui.edit.GraphEditActivity
 import javax.inject.Inject
 
@@ -33,6 +35,13 @@ class GraphListActivity : DaggerAppCompatActivity() {
             startActivity(GraphEditActivity.getIntent(this))
         }
 
+        button_new_graph.setOnLongClickListener {
+            Intent(this, BuilderActivity::class.java).also {
+                startActivity(it)
+            }
+            true
+        }
+
         val graphAdapter = GraphAdapter()
         recycler_view.layoutManager = LinearLayoutManager(this)
         recycler_view.adapter = graphAdapter
@@ -43,10 +52,16 @@ class GraphListActivity : DaggerAppCompatActivity() {
             graphAdapter.setGraphs(it)
         })
 
-        graphAdapter.onItemClick {
-            startActivity(
-                GraphEditActivity.getIntent(this, it.id)
-            )
+        graphAdapter.onItemClick { item, longClick ->
+            if (longClick) {
+                startActivity(
+                    BuilderActivity.getIntent(this, item.id)
+                )
+            } else {
+                startActivity(
+                    GraphEditActivity.getIntent(this, item.id)
+                )
+            }
         }
     }
 
@@ -62,13 +77,13 @@ class GraphListActivity : DaggerAppCompatActivity() {
 
 class GraphAdapter : RecyclerView.Adapter<GraphViewHolder>() {
     private val graphs = mutableListOf<GraphData>()
-    private var itemClickListener: ((GraphData) -> Unit)? = null
+    private var itemClickListener: ((GraphData, Boolean) -> Unit)? = null
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): GraphViewHolder {
         val view = LayoutInflater.from(parent.context)
             .inflate(R.layout.graph_list_item, parent, false)
-        return GraphViewHolder(view) {
-            itemClickListener?.invoke(it)
+        return GraphViewHolder(view) { item, longClick ->
+            itemClickListener?.invoke(item, longClick)
         }
     }
 
@@ -84,14 +99,14 @@ class GraphAdapter : RecyclerView.Adapter<GraphViewHolder>() {
         notifyDataSetChanged()
     }
 
-    fun onItemClick(function: (GraphData) -> Unit) {
+    fun onItemClick(function: (GraphData, Boolean) -> Unit) {
         itemClickListener = function
     }
 }
 
 class GraphViewHolder(
     itemView: View,
-    itemClick: (GraphData) -> Unit
+    itemClick: (GraphData, Boolean) -> Unit
 ) : RecyclerView.ViewHolder(itemView) {
     private val name = itemView.name
     private var graph: GraphData? = null
@@ -99,7 +114,16 @@ class GraphViewHolder(
     init {
         itemView.setOnClickListener {
             Log.d("graph", "clicked $graph")
-            graph?.let(itemClick)
+            graph?.let {
+                itemClick(it, false)
+            }
+        }
+        itemView.setOnLongClickListener {
+            Log.d("graph", "clicked $graph")
+            graph?.let {
+                itemClick(it, true)
+            }
+            true
         }
     }
 
