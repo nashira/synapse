@@ -12,7 +12,6 @@ import android.widget.TextView
 import androidx.fragment.app.commit
 import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModelProvider
-import androidx.lifecycle.ViewModelProviders
 import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.google.android.material.bottomsheet.BottomSheetBehavior
@@ -27,13 +26,13 @@ class GraphEditActivity : DaggerAppCompatActivity() {
 
     @Inject
     lateinit var viewModelFactory: ViewModelProvider.Factory
-    private lateinit var graphViewModel: EditGraphViewModel
+    lateinit var graphViewModel: EditGraphViewModel
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_graph_edit)
 
-        graphViewModel = ViewModelProviders.of(this, viewModelFactory)[EditGraphViewModel::class.java]
+        graphViewModel = ViewModelProvider(this, viewModelFactory)[EditGraphViewModel::class.java]
 
         savedInstanceState ?: run {
             val graphId = intent.getIntExtra(GRAPH_ID, -1)

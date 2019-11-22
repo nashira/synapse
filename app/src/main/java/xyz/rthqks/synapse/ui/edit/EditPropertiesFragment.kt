@@ -58,15 +58,14 @@ class EditPropertiesFragment : DaggerFragment() {
         recycler_view.adapter = PropertyAdapter(node, graphViewModel)
 
         graphViewModel.onSelectFile.observe(viewLifecycleOwner, Observer {
-            if (it.size == 0) {
-                return@Observer
-            }
-            fileSelectConfig = it.removeAt(0)
-            Intent(Intent.ACTION_OPEN_DOCUMENT).apply {
-                addCategory(Intent.CATEGORY_OPENABLE)
-                type = "video/*"
-                flags = flags or Intent.FLAG_GRANT_READ_URI_PERMISSION
-                startActivityForResult(this, OPEN_DOC_REQUEST)
+            it.consume()?.let {
+                fileSelectConfig = it
+                Intent(Intent.ACTION_OPEN_DOCUMENT).apply {
+                    addCategory(Intent.CATEGORY_OPENABLE)
+                    type = "video/*"
+                    flags = flags or Intent.FLAG_GRANT_READ_URI_PERMISSION
+                    startActivityForResult(this, OPEN_DOC_REQUEST)
+                }
             }
         })
     }

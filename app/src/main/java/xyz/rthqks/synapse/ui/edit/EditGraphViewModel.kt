@@ -10,6 +10,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import xyz.rthqks.synapse.data.*
 import xyz.rthqks.synapse.logic.GraphConfigEditor
+import xyz.rthqks.synapse.util.Consumable
 import javax.inject.Inject
 
 class EditGraphViewModel @Inject constructor(
@@ -22,11 +23,7 @@ class EditGraphViewModel @Inject constructor(
     val graphChannel = MutableLiveData<GraphConfigEditor>()
     val onNodeAdded = MutableLiveData<NodeConfig>()
     val onPortSelected = MutableLiveData<Unit>()
-    val onSelectFile = MutableLiveData<MutableList<PropertyConfig>>()
-
-    init {
-        onSelectFile.value = mutableListOf()
-    }
+    val onSelectFile = MutableLiveData<Consumable<PropertyConfig>>()
 
     fun setGraphId(graphId: Int) {
         if (graphId == -1) {
@@ -119,8 +116,7 @@ class EditGraphViewModel @Inject constructor(
     }
 
     fun selectFileFor(config: PropertyConfig) {
-        onSelectFile.value?.add(config)
-        onSelectFile.value = onSelectFile.value
+        onSelectFile.value = Consumable(config)
     }
 
     fun onFileSelected(data: Uri?, config: PropertyConfig) {

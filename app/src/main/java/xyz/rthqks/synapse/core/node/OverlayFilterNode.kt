@@ -10,6 +10,7 @@ import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.selects.whileSelect
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import xyz.rthqks.synapse.assets.AssetManager
@@ -175,15 +176,35 @@ class OverlayFilterNode(
         var copyMatrix = true
 
         startJob = launch {
+
             while (isActive) {
-                val inEvent = input.receive()
-                val maskEvent = mask.receive()
+                var inEventRaw: TextureEvent? = null
+                var maskEventRaw: TextureEvent? = null
+
+                whileSelect {
+                    input.onReceive {
+                        inEventRaw?.let {
+                            input.send(it)
+                        }
+                        inEventRaw = it
+                        maskEventRaw == null
+                    }
+                    mask.onReceive {
+                        maskEventRaw?.let {
+                            mask.send(it)
+                        }
+                        maskEventRaw = it
+                        inEventRaw == null
+                    }
+                }
+
+                val inEvent = inEventRaw!!
+                val maskEvent = maskEventRaw!!
 
                 val outEvent = output.dequeue()
                 outEvent.eos = inEvent.eos
                 outEvent.count = inEvent.count.toLong()
                 outEvent.timestamp = inEvent.timestamp
-
 
                 if (config.hasSurface()) {
                     if (copyMatrix) {

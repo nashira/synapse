@@ -23,9 +23,7 @@ class CameraManager(
     private val thread = HandlerThread(TAG)
     private lateinit var handler: Handler
     var displayRotation = 0
-    private var camera: CameraDevice? = null
-    private var session: CameraCaptureSession? = null
-    private var isEos: Boolean = false
+    var isEos: Boolean = false
 
     fun initialize() {
         thread.start()
@@ -56,14 +54,12 @@ class CameraManager(
         isEos = false
         val c = openCamera(cameraId)
         val s = createSession(c, surface)
-        camera = c
-        session = s
         val request = c.createCaptureRequest(CameraDevice.TEMPLATE_RECORD).also {
             it.addTarget(surface)
             it.set(CaptureRequest.CONTROL_AE_TARGET_FPS_RANGE, Range(fps, fps))
         }.build()
 
-        startRequest(s, request, onFrame)
+        startRequest(c, s, request, onFrame)
     }
 
     fun stop() {
@@ -137,6 +133,7 @@ class CameraManager(
     }
 
     private fun startRequest(
+        camera: CameraDevice,
         session: CameraCaptureSession,
         request: CaptureRequest,
         onFrame: ((Long, Long, Boolean) -> Unit)
@@ -152,7 +149,7 @@ class CameraManager(
                 if (eos) {
                     Log.d(TAG, "got eos")
                     session.close()
-                    camera?.close()
+                    camera.close()
                 }
 
                 val time = result[CaptureResult.SENSOR_TIMESTAMP]!!

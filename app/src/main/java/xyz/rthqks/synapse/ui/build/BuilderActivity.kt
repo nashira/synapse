@@ -13,6 +13,7 @@ import androidx.viewpager2.adapter.FragmentStateAdapter
 import dagger.android.support.DaggerAppCompatActivity
 import kotlinx.android.synthetic.main.activity_builder.*
 import xyz.rthqks.synapse.R
+import xyz.rthqks.synapse.logic.GraphConfigEditor
 import javax.inject.Inject
 
 class BuilderActivity : DaggerAppCompatActivity() {
@@ -37,8 +38,19 @@ class BuilderActivity : DaggerAppCompatActivity() {
             }
         })
 
-        view_pager.adapter = NodeAdapter(this)
+        val nodeAdapter = NodeAdapter(this)
+        view_pager.adapter = nodeAdapter
         view_pager.isUserInputEnabled = false
+
+        savedInstanceState ?: run {
+            val graphId = intent.getIntExtra(GRAPH_ID, -1)
+            viewModel.setGraphId(graphId)
+        }
+
+        viewModel.graphChannel.observe(this, Observer {
+            nodeAdapter.graphConfigEditor = it
+            nodeAdapter.notifyDataSetChanged()
+        })
     }
 
     companion object {
@@ -52,23 +64,17 @@ class BuilderActivity : DaggerAppCompatActivity() {
     }
 }
 
-class SwipeEvent(
-    var action: Int,
-    var x: Float = 0f
-)
-
 class NodeAdapter(
     activity: AppCompatActivity
 ) : FragmentStateAdapter(activity) {
+    var graphConfigEditor: GraphConfigEditor? = null
+
     override fun getItemCount(): Int {
-        return 5
+        return graphConfigEditor?.nodes?.size ?: 0
     }
 
     override fun createFragment(position: Int): Fragment {
-        val args = Bundle()
-        args.putInt("pos", position)
-        val nodeFragment = NodeFragment()
-        nodeFragment.arguments = args
-        return nodeFragment
+        val nodes = graphConfigEditor?.nodes!!.values.toList()
+        return NodeFragment.newInstance(nodes[position].id)
     }
 }

@@ -12,6 +12,7 @@ import android.view.Surface
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import xyz.rthqks.synapse.core.CameraManager
@@ -123,15 +124,17 @@ class CameraNode(
 //                    connection.queue(frame)
 //                Log.d(TAG, "camera $timestamp")
                 if (eos) {
-                    Log.d(TAG, "got EOS from cam")
-                    Log.d(TAG, "sent frames $count")
                     outputSurfaceTexture?.setOnFrameAvailableListener(null)
 
-                    launch {
-                        val event = connection.dequeue()
-                        event.eos = true
-                        connection.queue(event)
-                        mutex.unlock()
+                    runBlocking {
+                        Log.d(TAG, "got EOS from cam")
+                        if (mutex.isLocked) {
+                            val event = connection.dequeue()
+                            event.eos = true
+                            connection.queue(event)
+                            mutex.unlock()
+                        }
+                        Log.d(TAG, "sent frames $count")
                     }
                 }
             }
