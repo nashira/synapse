@@ -1,21 +1,20 @@
 package xyz.rthqks.synapse.ui.build
 
-import android.view.MotionEvent
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import javax.inject.Inject
 
 class BuilderViewModel @Inject constructor() : ViewModel() {
-    val onSwipeEnable = MutableLiveData<Consumable<MotionEvent>>()
+    private val consumable = Consumable<SwipeEvent>()
+    val onSwipeEvent = MutableLiveData<Consumable<SwipeEvent>>()
 
-    fun enableSwipe(event: MotionEvent) {
-        onSwipeEnable.value = Consumable(event)
+    fun swipeEvent(event: SwipeEvent) {
+        consumable.item = event
+        onSwipeEvent.value = consumable
     }
 }
 
-class Consumable<T>(item: T) {
-    private var item: T? = item
-
+class Consumable<T>(var item: T? = null) {
     fun consume(): T? {
         val item = this.item
         this.item = null

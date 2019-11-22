@@ -4,13 +4,12 @@ import android.app.Activity
 import android.content.Intent
 import android.os.Bundle
 import android.util.Log
+import android.view.MotionEvent
 import androidx.appcompat.app.AppCompatActivity
 import androidx.fragment.app.Fragment
-import androidx.fragment.app.FragmentStatePagerAdapter
 import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModelProvider
 import androidx.viewpager2.adapter.FragmentStateAdapter
-import androidx.viewpager2.widget.ViewPager2
 import dagger.android.support.DaggerAppCompatActivity
 import kotlinx.android.synthetic.main.activity_builder.*
 import xyz.rthqks.synapse.R
@@ -27,20 +26,18 @@ class BuilderActivity : DaggerAppCompatActivity() {
 
         viewModel = ViewModelProvider(this, viewModelFactory)[BuilderViewModel::class.java]
         Log.d(TAG, "viewModel $viewModel")
-        viewModel.onSwipeEnable.observe(this, Observer {
-            it.consume()?.let {
-                view_pager.isUserInputEnabled = true
-                view_pager.onInterceptTouchEvent(it)
-            }
-        })
-        view_pager.adapter = NodeAdapter(this)
-        view_pager.registerOnPageChangeCallback(object : ViewPager2.OnPageChangeCallback(){
-            override fun onPageScrollStateChanged(state: Int) {
-                when (state) {
-                    ViewPager2.SCROLL_STATE_IDLE -> view_pager.isUserInputEnabled = false
+        viewModel.onSwipeEvent.observe(this, Observer { consumable ->
+            consumable.consume()?.let {
+                when (it.action) {
+                    MotionEvent.ACTION_DOWN -> view_pager.beginFakeDrag()
+                    MotionEvent.ACTION_MOVE -> view_pager.fakeDragBy(it.x)
+                    MotionEvent.ACTION_UP -> view_pager.endFakeDrag()
+                    else -> true
                 }
             }
         })
+
+        view_pager.adapter = NodeAdapter(this)
         view_pager.isUserInputEnabled = false
     }
 
@@ -54,6 +51,11 @@ class BuilderActivity : DaggerAppCompatActivity() {
             }
     }
 }
+
+class SwipeEvent(
+    var action: Int,
+    var x: Float = 0f
+)
 
 class NodeAdapter(
     activity: AppCompatActivity
