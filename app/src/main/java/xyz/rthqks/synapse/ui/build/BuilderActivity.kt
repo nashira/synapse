@@ -10,10 +10,11 @@ import androidx.fragment.app.Fragment
 import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModelProvider
 import androidx.viewpager2.adapter.FragmentStateAdapter
+import androidx.viewpager2.widget.ViewPager2
 import dagger.android.support.DaggerAppCompatActivity
 import kotlinx.android.synthetic.main.activity_builder.*
 import xyz.rthqks.synapse.R
-import xyz.rthqks.synapse.logic.GraphConfigEditor
+import xyz.rthqks.synapse.data.NodeConfig
 import javax.inject.Inject
 
 class BuilderActivity : DaggerAppCompatActivity() {
@@ -41,17 +42,36 @@ class BuilderActivity : DaggerAppCompatActivity() {
         val nodeAdapter = NodeAdapter(this)
         view_pager.adapter = nodeAdapter
         view_pager.isUserInputEnabled = false
+        view_pager.offscreenPageLimit = 1
+
+        view_pager.registerOnPageChangeCallback(object : ViewPager2.OnPageChangeCallback() {
+
+            override fun onPageScrollStateChanged(state: Int) {
+                if (state == ViewPager2.SCROLL_STATE_IDLE) {
+                    view_pager.post {
+                        viewModel.onViewPagerIdle(view_pager)
+                    }
+                }
+            }
+        })
 
         savedInstanceState ?: run {
             val graphId = intent.getIntExtra(GRAPH_ID, -1)
             viewModel.setGraphId(graphId)
         }
 
+        viewModel.nodesChannel.observe(this, Observer {
+            Log.d(TAG, it.toString())
+            nodeAdapter.setState(it)
+            if (view_pager.currentItem != it.currentItem) {
+                view_pager.setCurrentItem(it.currentItem, false)
+            }
+        })
+
         viewModel.graphChannel.observe(this, Observer {
-            nodeAdapter.graphConfigEditor = it
-            nodeAdapter.notifyDataSetChanged()
         })
     }
+
 
     companion object {
         const val TAG = "BuilderActivity"
@@ -67,14 +87,35 @@ class BuilderActivity : DaggerAppCompatActivity() {
 class NodeAdapter(
     activity: AppCompatActivity
 ) : FragmentStateAdapter(activity) {
-    var graphConfigEditor: GraphConfigEditor? = null
+    val nodes = mutableListOf<NodeConfig>()
 
-    override fun getItemCount(): Int {
-        return graphConfigEditor?.nodes?.size ?: 0
+    override fun getItemCount(): Int = nodes.size
+
+    override fun getItemId(position: Int): Long {
+        return nodes[position].id.toLong()
     }
 
     override fun createFragment(position: Int): Fragment {
-        val nodes = graphConfigEditor?.nodes!!.values.toList()
         return NodeFragment.newInstance(nodes[position].id)
+    }
+
+    fun settle(currentItem: Int) {
+//        when (currentItem) {
+//            0 -> {
+//                nodes.add(0, nodes.removeAt(2))
+//            }
+//            2 -> {
+//                nodes.add(2, nodes.removeAt(0))
+//            }
+//        }
+    }
+
+    fun setState(adapterState: AdapterState<NodeConfig>) {
+        val update = adapterState.items != nodes
+        this.nodes.clear()
+        this.nodes.addAll(adapterState.items)
+        if (update) {
+            notifyDataSetChanged()
+        }
     }
 }

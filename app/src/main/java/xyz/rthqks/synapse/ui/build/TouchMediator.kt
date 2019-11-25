@@ -3,33 +3,36 @@ package xyz.rthqks.synapse.ui.build
 import android.content.Context
 import android.os.Handler
 import android.os.Looper
-import android.util.Log
 import android.view.MotionEvent
 import android.view.View
 import android.view.ViewConfiguration
+import xyz.rthqks.synapse.data.PortConfig
 import kotlin.math.abs
 
 class TouchMediator(
     context: Context,
-    private var callback: ((SwipeEvent) -> Unit)
-) : View.OnTouchListener {
+    private val callback: ((SwipeEvent) -> Unit)
+) {
     private val handler = Handler(Looper.getMainLooper())
+    private val swipeEvent = SwipeEvent(0)
     private var startX = 0f
     private var x = -1f
     private var didLongClick = false
     private var touchSlop: Int = 8
     private var longPressTimeout: Long = 0
-    private val swipeEvent = SwipeEvent(0)
 
     init {
         touchSlop = ViewConfiguration.get(context).scaledTouchSlop
         longPressTimeout = ViewConfiguration.getLongPressTimeout().toLong()
     }
 
-    override fun onTouch(view: View, event: MotionEvent): Boolean {
+    fun onTouch(view: View, event: MotionEvent, portConfig: PortConfig?): Boolean {
 //        Log.d("TouchMediator", "onTouch $event")
+        swipeEvent.portConfig = portConfig
         when (event.actionMasked) {
             MotionEvent.ACTION_DOWN -> {
+                view.drawableHotspotChanged(event.x, event.y)
+                view.isPressed = true
                 swipeEvent.action = MotionEvent.ACTION_DOWN
                 callback(swipeEvent)
 
@@ -46,6 +49,7 @@ class TouchMediator(
                 )
             }
             MotionEvent.ACTION_MOVE -> {
+                view.drawableHotspotChanged(event.x, event.y)
                 swipeEvent.action = MotionEvent.ACTION_MOVE
                 swipeEvent.x = event.rawX - x
                 callback(swipeEvent)
@@ -54,11 +58,11 @@ class TouchMediator(
             }
             MotionEvent.ACTION_UP,
             MotionEvent.ACTION_CANCEL -> {
+                view.isPressed = false
                 swipeEvent.action = MotionEvent.ACTION_UP
                 callback(swipeEvent)
 
                 x = -1f
-                Log.d(NodeFragment.TAG, "total move ${abs(event.rawX - startX)}")
                 if (!didLongClick && abs(event.rawX - startX) < touchSlop) {
                     view.performClick()
                 }
@@ -70,5 +74,6 @@ class TouchMediator(
 
 class SwipeEvent(
     var action: Int,
-    var x: Float = 0f
+    var x: Float = 0f,
+    var portConfig: PortConfig? = null
 )

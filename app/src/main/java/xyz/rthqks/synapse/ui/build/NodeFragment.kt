@@ -1,11 +1,9 @@
 package xyz.rthqks.synapse.ui.build
 
+import android.content.Context
 import android.os.Bundle
 import android.util.Log
-import android.view.Gravity
-import android.view.LayoutInflater
-import android.view.View
-import android.view.ViewGroup
+import android.view.*
 import android.widget.LinearLayout
 import androidx.lifecycle.ViewModelProvider
 import androidx.recyclerview.widget.LinearLayoutManager
@@ -22,7 +20,7 @@ class NodeFragment : DaggerFragment() {
     @Inject
     lateinit var viewModelFactory: ViewModelProvider.Factory
     private lateinit var viewModel: BuilderViewModel
-    private lateinit var swipeTouchListener: TouchMediator
+    private lateinit var touchMediator: TouchMediator
     private lateinit var inputsAdapter: PortsAdapter
     private lateinit var outputsAdapter: PortsAdapter
 
@@ -31,7 +29,7 @@ class NodeFragment : DaggerFragment() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         nodeId = arguments?.getInt(ARG_NODE_ID) ?: -1
-
+        Log.d(TAG, "onCreate $nodeId")
     }
 
     override fun onCreateView(
@@ -39,26 +37,27 @@ class NodeFragment : DaggerFragment() {
         container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View? {
+
+        Log.d(TAG, "onCreateView $nodeId")
         val view = inflater.inflate(R.layout.fragment_node, container, false)
         return view
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        Log.d(TAG, "onViewCreated $nodeId")
+        inputs_list.layoutManager = LinearLayoutManager(context)
+        outputs_list.layoutManager = LinearLayoutManager(context)
         inputsAdapter = PortsAdapter(true)
         outputsAdapter = PortsAdapter(false)
-        inputs_list.isEnabled = false
-        inputs_list.layoutManager = LinearLayoutManager(context)
         inputs_list.adapter = inputsAdapter
-        outputs_list.layoutManager = LinearLayoutManager(context)
         outputs_list.adapter = outputsAdapter
     }
 
     override fun onActivityCreated(savedInstanceState: Bundle?) {
         super.onActivityCreated(savedInstanceState)
+        Log.d(TAG, "onActivityCreated $nodeId")
         viewModel = ViewModelProvider(activity!!, viewModelFactory)[BuilderViewModel::class.java]
-        swipeTouchListener = TouchMediator(context!!, viewModel::swipeEvent)
-//        swipe_left.setOnTouchListener(swipeTouchListener)
-//        swipe_right.setOnTouchListener(swipeTouchListener)
+        touchMediator = TouchMediator(context!!, viewModel::swipeEvent)
 
         val node = viewModel.getNode(nodeId)
         inputsAdapter.setPorts(node.inputs)
@@ -77,6 +76,29 @@ class NodeFragment : DaggerFragment() {
     override fun onResume() {
         super.onResume()
         Log.d(TAG, "onResume $nodeId")
+    }
+
+    override fun onAttach(context: Context) {
+        super.onAttach(context)
+        Log.d(TAG, "onAttach $nodeId")
+    }
+
+    override fun onDetach() {
+        super.onDetach()
+        Log.d(TAG, "onDetach $nodeId")
+    }
+
+    fun onPortTouch(portConfig: PortConfig) {
+        Log.d(TAG, "touch $portConfig")
+        viewModel.preparePortSwipe(portConfig)
+    }
+
+    fun onPortClick(portConfig: PortConfig) {
+        Log.d(TAG, "click $portConfig")
+    }
+
+    fun onPortLongClick(portConfig: PortConfig) {
+        Log.d(TAG, "long click $portConfig")
     }
 
     inner class PortsAdapter(
@@ -114,13 +136,19 @@ class NodeFragment : DaggerFragment() {
         private var portConfig: PortConfig? = null
 
         init {
-//            itemView.setOnClickListener { _ ->
-////                portConfig?.let { it ->
-////                    graphViewModel.setSelectedPort(it)
-////                    null
-////                }
-//            }
-            button.setOnTouchListener(swipeTouchListener)
+            button.setOnTouchListener { v, event ->
+                if (event.actionMasked == MotionEvent.ACTION_DOWN) {
+                    portConfig?.let { it1 -> onPortTouch(it1) }
+                }
+                touchMediator.onTouch(v, event, portConfig)
+            }
+            button.setOnClickListener {
+                portConfig?.let { it1 -> onPortClick(it1) }
+            }
+            button.setOnLongClickListener {
+                portConfig?.let { it1 -> onPortLongClick(it1) }
+                true
+            }
         }
 
         fun bind(portConfig: PortConfig, startAligned: Boolean) {

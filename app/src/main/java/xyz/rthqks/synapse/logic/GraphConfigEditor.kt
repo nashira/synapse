@@ -40,6 +40,12 @@ class GraphConfigEditor(val graphData: GraphData) {
         return toRemove
     }
 
+    fun findEdges(portConfig: PortConfig): List<EdgeConfig> {
+        return edges.filter {
+            (it.from == portConfig.key) || (it.to == portConfig.key)
+        }
+    }
+
     fun setSelectedPort(portConfig: PortConfig?): Pair<EdgeConfig?, List<EdgeConfig>> {
         selectedPort?.let {
             val removed = mutableListOf<EdgeConfig>()
