@@ -1,4 +1,4 @@
-package xyz.rthqks.synapse.core.node
+package xyz.rthqks.synapse.exec.node
 
 import android.media.AudioAttributes
 import android.media.AudioFormat
@@ -9,11 +9,11 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
-import xyz.rthqks.synapse.core.Node
-import xyz.rthqks.synapse.core.edge.*
 import xyz.rthqks.synapse.data.PortType
+import xyz.rthqks.synapse.exec.NodeExecutor
+import xyz.rthqks.synapse.exec.edge.*
 
-class AudioPlayerNode : Node() {
+class AudioPlayerNode : NodeExecutor() {
     private var audioTrack: AudioTrack? = null
     private var audioFormat: AudioFormat? = null
     private var connection: Connection<AudioConfig, AudioEvent>? = null

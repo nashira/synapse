@@ -1,4 +1,4 @@
-package xyz.rthqks.synapse.core.node
+package xyz.rthqks.synapse.exec.node
 
 import android.media.AudioFormat
 import android.opengl.GLES32.*
@@ -11,16 +11,16 @@ import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
 import xyz.rthqks.synapse.assets.AssetManager
-import xyz.rthqks.synapse.core.Node
-import xyz.rthqks.synapse.core.edge.*
 import xyz.rthqks.synapse.data.PortType
+import xyz.rthqks.synapse.exec.NodeExecutor
+import xyz.rthqks.synapse.exec.edge.*
 import xyz.rthqks.synapse.gl.*
 import java.nio.ByteBuffer
 
 class AudioWaveformNode(
     private val glesManager: GlesManager,
     private val assetManager: AssetManager
-) : Node() {
+) : NodeExecutor() {
     private var running: Boolean = false
     private var startJob: Job? = null
     private var bufferSize: Int = 0

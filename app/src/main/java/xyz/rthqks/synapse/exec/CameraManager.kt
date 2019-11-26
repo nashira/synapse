@@ -1,4 +1,4 @@
-package xyz.rthqks.synapse.core
+package xyz.rthqks.synapse.exec
 
 import android.annotation.SuppressLint
 import android.content.Context

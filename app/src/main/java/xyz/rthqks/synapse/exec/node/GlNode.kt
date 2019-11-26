@@ -1,4 +1,4 @@
-package xyz.rthqks.synapse.core.node
+package xyz.rthqks.synapse.exec.node
 
 import android.opengl.GLES32.*
 import android.opengl.Matrix
@@ -13,18 +13,17 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import xyz.rthqks.synapse.assets.AssetManager
-import xyz.rthqks.synapse.core.Node
-import xyz.rthqks.synapse.core.edge.*
 import xyz.rthqks.synapse.data.PortType
+import xyz.rthqks.synapse.exec.NodeExecutor
+import xyz.rthqks.synapse.exec.edge.*
 import xyz.rthqks.synapse.gl.*
 
-class GrayscaleNode(
+class GlNode(
     private val glesManager: GlesManager,
-    private val assetManager: AssetManager,
-    private val scale: Int
-) : Node() {
-    private var inputChannel: Channel<TextureEvent>? = null
+    private val assetManager: AssetManager
+) : NodeExecutor() {
     private var inputConnection: Connection<TextureConfig, TextureEvent>? = null
+    private var inputChannel: Channel<TextureEvent>? = null
     private var startJob: Job? = null
     private val connectMutex = Mutex(true)
     private var size = Size(0, 0)
@@ -47,7 +46,7 @@ class GrayscaleNode(
         val connection = inputConnection ?: error("missing input connection")
         val config = connection.config
         val vertexSource = assetManager.readTextAsset("vertex_texture.vert")
-        val fragmentSource = assetManager.readTextAsset("grayscale.frag").let {
+        val fragmentSource = assetManager.readTextAsset("lut.frag").let {
             if (config.isOes) {
                 it.replace("#{EXT}", "#define EXT")
             } else {
@@ -65,10 +64,18 @@ class GrayscaleNode(
             val framebuffer = framebuffer!!
 
             texture.initialize()
-            texture.initData(0, GL_R8, size.width, size.height, GL_RED, GL_UNSIGNED_BYTE)
+            texture.initData(
+                0,
+                config.internalFormat,
+                size.width,
+                size.height,
+                config.format,
+                config.type
+            )
             Log.d(TAG, "glGetError() ${glGetError()}")
 
             framebuffer.initialize(texture.id)
+
             mesh.initialize()
 
             program.apply {
@@ -92,7 +99,9 @@ class GrayscaleNode(
         }
 
         outputTextureConnection?.prime(
-            TextureEvent(texture!!, FloatArray(16).also { Matrix.setIdentityM(it, 0) })
+            TextureEvent(
+                texture!!,
+                FloatArray(16).also { Matrix.setIdentityM(it, 0) })
         )
 
         outputSurfaceConnection?.prime(SurfaceEvent())
@@ -246,23 +255,23 @@ class GrayscaleNode(
                     GL_TEXTURE_2D,
                     size.width,
                     size.height,
-                    GL_R8,
-                    GL_RED,
-                    GL_UNSIGNED_BYTE
+                    config.internalFormat,
+                    config.format,
+                    config.type
                 )
-            ).also { connection ->
-                outputTextureConnection = connection
+            ).also {
+                outputTextureConnection = it
             }
         }
         else -> null
     }
 
-    override suspend fun <C: Config, T : Event> input(key: String, connection: Connection<C, T>) {
+    override suspend fun <C : Config, T : Event> input(key: String, connection: Connection<C, T>) {
         when (key) {
             PortType.TEXTURE_1 -> {
                 inputConnection = connection as Connection<TextureConfig, TextureEvent>
                 inputChannel = connection.consumer()
-                size = connection.config.size.let { Size(it.width / scale, it.height / scale) }
+                size = connection.config.size
 
                 connectMutex.unlock()
             }
@@ -270,6 +279,6 @@ class GrayscaleNode(
     }
 
     companion object {
-        private val TAG = GrayscaleNode::class.java.simpleName
+        private val TAG = GlNode::class.java.simpleName
     }
 }

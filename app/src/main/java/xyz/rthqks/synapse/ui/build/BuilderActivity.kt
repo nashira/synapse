@@ -14,7 +14,7 @@ import androidx.viewpager2.widget.ViewPager2
 import dagger.android.support.DaggerAppCompatActivity
 import kotlinx.android.synthetic.main.activity_builder.*
 import xyz.rthqks.synapse.R
-import xyz.rthqks.synapse.data.NodeConfig
+import xyz.rthqks.synapse.data.NodeData
 import javax.inject.Inject
 
 class BuilderActivity : DaggerAppCompatActivity() {
@@ -86,7 +86,7 @@ class BuilderActivity : DaggerAppCompatActivity() {
 class NodeAdapter(
     activity: AppCompatActivity
 ) : FragmentStateAdapter(activity) {
-    val nodes = mutableListOf<NodeConfig>()
+    val nodes = mutableListOf<NodeData>()
 
     override fun getItemCount(): Int = nodes.size
 
@@ -109,7 +109,7 @@ class NodeAdapter(
 //        }
     }
 
-    fun setState(adapterState: AdapterState<NodeConfig>) {
+    fun setState(adapterState: AdapterState<NodeData>) {
         val update = adapterState.items != nodes
         this.nodes.clear()
         this.nodes.addAll(adapterState.items)

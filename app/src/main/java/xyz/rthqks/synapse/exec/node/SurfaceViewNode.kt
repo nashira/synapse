@@ -1,4 +1,4 @@
-package xyz.rthqks.synapse.core.node
+package xyz.rthqks.synapse.exec.node
 
 import android.util.Log
 import android.util.Size
@@ -10,13 +10,13 @@ import androidx.constraintlayout.widget.ConstraintSet
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.Channel
 import xyz.rthqks.synapse.R
-import xyz.rthqks.synapse.core.Node
-import xyz.rthqks.synapse.core.edge.*
 import xyz.rthqks.synapse.data.PortType
+import xyz.rthqks.synapse.exec.NodeExecutor
+import xyz.rthqks.synapse.exec.edge.*
 
 class SurfaceViewNode(
     private var surfaceView: SurfaceView
-) : Node(), SurfaceHolder.Callback {
+) : NodeExecutor(), SurfaceHolder.Callback {
     private var channel: Channel<SurfaceEvent>? = null
     private var connection: Connection<SurfaceConfig, SurfaceEvent>? = null
     private var surface: Surface? = null

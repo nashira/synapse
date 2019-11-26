@@ -1,4 +1,4 @@
-package xyz.rthqks.synapse.core.edge
+package xyz.rthqks.synapse.exec.edge
 
 import android.opengl.Matrix
 import xyz.rthqks.synapse.gl.Texture

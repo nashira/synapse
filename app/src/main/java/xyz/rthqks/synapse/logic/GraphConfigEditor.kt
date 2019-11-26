@@ -5,7 +5,7 @@ import xyz.rthqks.synapse.ui.edit.PortState
 
 class GraphConfigEditor(val graphData: GraphData) {
 
-    val nodes = mutableMapOf<Int, NodeConfig>()
+    val nodes = mutableMapOf<Int, NodeData>()
     val edges = graphData.edges.toMutableSet()
     private var selectedPort: PortConfig? = null
 
@@ -13,26 +13,26 @@ class GraphConfigEditor(val graphData: GraphData) {
         graphData.nodes.forEach { nodes[it.id] = it }
     }
 
-    fun addNodeType(nodeType: NodeType): NodeConfig {
-        val nodeConfig = NodeConfig(nodes.size, graphData.id, nodeType)
+    fun addNodeType(nodeType: NodeType): NodeData {
+        val nodeConfig = NodeData(nodes.size, graphData.id, nodeType)
         nodeConfig.createProperties()
         nodes[nodeConfig.id] = nodeConfig
         return nodeConfig
     }
 
-    private fun addEdge(from: PortConfig, to: PortConfig): EdgeConfig {
+    private fun addEdge(from: PortConfig, to: PortConfig): EdgeData {
         val edge = from.edgeTo(to)
         edges.add(edge)
         return edge
     }
 
-    private fun removeEdge(from: PortConfig, to: PortConfig): EdgeConfig {
+    private fun removeEdge(from: PortConfig, to: PortConfig): EdgeData {
         val edge = from.edgeTo(to)
         edges.remove(edge)
         return edge
     }
 
-    fun clearEdges(portConfig: PortConfig): List<EdgeConfig> {
+    fun clearEdges(portConfig: PortConfig): List<EdgeData> {
         val toRemove = edges.filter {
             (it.from == portConfig.key) || (it.to == portConfig.key)
         }
@@ -40,16 +40,16 @@ class GraphConfigEditor(val graphData: GraphData) {
         return toRemove
     }
 
-    fun findEdges(portConfig: PortConfig): List<EdgeConfig> {
+    fun findEdges(portConfig: PortConfig): List<EdgeData> {
         return edges.filter {
             (it.from == portConfig.key) || (it.to == portConfig.key)
         }
     }
 
-    fun setSelectedPort(portConfig: PortConfig?): Pair<EdgeConfig?, List<EdgeConfig>> {
+    fun setSelectedPort(portConfig: PortConfig?): Pair<EdgeData?, List<EdgeData>> {
         selectedPort?.let {
-            val removed = mutableListOf<EdgeConfig>()
-            var added: EdgeConfig? = null
+            val removed = mutableListOf<EdgeData>()
+            var added: EdgeData? = null
             when {
                 it.canConnectTo(portConfig) -> {
                     added = if (it.key.direction == PortType.OUTPUT) {
@@ -90,7 +90,7 @@ class GraphConfigEditor(val graphData: GraphData) {
     }
 
 
-    fun getNode(nodeId: Int): NodeConfig = nodes[nodeId]!!
+    fun getNode(nodeId: Int): NodeData = nodes[nodeId]!!
 
     private val PortConfig.isConnected: Boolean
         get() = edges.any {
@@ -115,21 +115,21 @@ class GraphConfigEditor(val graphData: GraphData) {
                 && !isConnectedTo(other)
     }
 
-    private fun NodeConfig.createProperties() {
+    private fun NodeData.createProperties() {
         type.properties.values.forEach {
-            properties[it.key] = PropertyConfig(graphId, id, it.key.name, PropertyType.toString(it.key, it.default))
+            properties[it.key] = PropertyData(graphId, id, it.key.name, PropertyType.toString(it.key, it.default))
         }
     }
 
-    private fun PortConfig.edgeTo(other: PortConfig): EdgeConfig =
-        EdgeConfig(graphData.id, key.nodeId, key.key, other.key.nodeId, other.key.key)
+    private fun PortConfig.edgeTo(other: PortConfig): EdgeData =
+        EdgeData(graphData.id, key.nodeId, key.key, other.key.nodeId, other.key.key)
 
     fun removeNode(id: Int) {
         nodes.remove(id)
     }
 
 
-    private val EdgeConfig.from get() = PortKey(fromNodeId, fromKey, PortType.OUTPUT)
+    private val EdgeData.from get() = PortKey(fromNodeId, fromKey, PortType.OUTPUT)
 
-    private val EdgeConfig.to get() = PortKey(toNodeId, toKey, PortType.INPUT)
+    private val EdgeData.to get() = PortKey(toNodeId, toKey, PortType.INPUT)
 }

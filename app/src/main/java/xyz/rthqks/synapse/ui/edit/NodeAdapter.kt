@@ -10,7 +10,7 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import kotlinx.android.synthetic.main.node_edit_item.view.*
 import xyz.rthqks.synapse.R
-import xyz.rthqks.synapse.data.NodeConfig
+import xyz.rthqks.synapse.data.NodeData
 import xyz.rthqks.synapse.data.PortConfig
 import xyz.rthqks.synapse.logic.GraphConfigEditor
 
@@ -19,9 +19,9 @@ class NodeAdapter(
     private val graphViewModel: EditGraphViewModel
 ) : RecyclerView.Adapter<NodeViewHolder>() {
 
-    private var nodes = mutableListOf<NodeConfig>()
+    private var nodes = mutableListOf<NodeData>()
     private val viewPool = RecyclerView.RecycledViewPool()
-    var onEditNodeProperties: ((NodeConfig) -> Unit)? = null
+    var onEditNodeProperties: ((NodeData) -> Unit)? = null
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): NodeViewHolder {
         val view = LayoutInflater.from(parent.context).inflate(
@@ -61,7 +61,7 @@ class NodeAdapter(
         }
     }
 
-    fun onNodeAdded(node: NodeConfig) {
+    fun onNodeAdded(node: NodeData) {
         nodes.add(node)
         nodes.size.let {
             notifyItemInserted(it - 1)
@@ -82,7 +82,7 @@ class NodeViewHolder(
     itemView: View,
     viewPool: RecyclerView.RecycledViewPool,
     private val graphViewModel: EditGraphViewModel,
-    private val onEditNodeProperties: ((NodeConfig) -> Unit)
+    private val onEditNodeProperties: ((NodeData) -> Unit)
 ) :
     RecyclerView.ViewHolder(itemView) {
     private val name = itemView.name
@@ -91,7 +91,7 @@ class NodeViewHolder(
     private val outputMenu = itemView.outputs_menu
     private val inputAdapter = PortsAdapter(true)
     private val outputAdapter = PortsAdapter(false)
-    private var nodeConfig: NodeConfig? = null
+    private var nodeData: NodeData? = null
 
     init {
         inputMenu.setRecycledViewPool(viewPool)
@@ -104,12 +104,12 @@ class NodeViewHolder(
         outputMenu.adapter = outputAdapter
 
         propertiesButton.setOnClickListener {
-            nodeConfig?.let { n -> onEditNodeProperties(n) }
+            nodeData?.let { n -> onEditNodeProperties(n) }
         }
     }
 
-    fun bind(node: NodeConfig) {
-        nodeConfig = node
+    fun bind(node: NodeData) {
+        nodeData = node
         val nodeType = node.type
         name.setText(nodeType.name)
         name.setCompoundDrawablesWithIntrinsicBounds(nodeType.icon, 0, 0, 0)

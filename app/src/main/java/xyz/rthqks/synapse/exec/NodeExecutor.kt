@@ -1,10 +1,10 @@
-package xyz.rthqks.synapse.core
+package xyz.rthqks.synapse.exec
 
-import xyz.rthqks.synapse.core.edge.Config
-import xyz.rthqks.synapse.core.edge.Connection
-import xyz.rthqks.synapse.core.edge.Event
+import xyz.rthqks.synapse.exec.edge.Config
+import xyz.rthqks.synapse.exec.edge.Connection
+import xyz.rthqks.synapse.exec.edge.Event
 
-abstract class Node {
+abstract class NodeExecutor {
 
     abstract suspend fun create()
     abstract suspend fun initialize()
@@ -18,6 +18,6 @@ abstract class Node {
 //    abstract suspend fun <C : Config, T : Event> fin(key: Connection.Key<C, T>, connection: Connection<C, T>)
 
     companion object {
-        private val TAG = Node::class.java.simpleName
+        const val TAG = "NodeExecutor"
     }
 }

@@ -1,4 +1,4 @@
-package xyz.rthqks.synapse.core.node
+package xyz.rthqks.synapse.exec.node
 
 import android.content.Context
 import android.graphics.SurfaceTexture
@@ -21,9 +21,9 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import xyz.rthqks.synapse.codec.Decoder
-import xyz.rthqks.synapse.core.Node
-import xyz.rthqks.synapse.core.edge.*
 import xyz.rthqks.synapse.data.PortType
+import xyz.rthqks.synapse.exec.NodeExecutor
+import xyz.rthqks.synapse.exec.edge.*
 import xyz.rthqks.synapse.gl.GlesManager
 import xyz.rthqks.synapse.gl.Texture
 
@@ -31,7 +31,7 @@ class DecoderNode(
     private val glesManager: GlesManager,
     private val context: Context,
     private val uri: String
-) : Node() {
+) : NodeExecutor() {
     private lateinit var size: Size
     private var surfaceRotation = 0
     private var audioInput: Channel<Decoder.Event>? = null

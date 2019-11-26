@@ -1,4 +1,4 @@
-package xyz.rthqks.synapse.core.edge
+package xyz.rthqks.synapse.exec.edge
 
 import xyz.rthqks.synapse.gl.Texture
 

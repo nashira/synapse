@@ -1,4 +1,4 @@
-package xyz.rthqks.synapse.core.node
+package xyz.rthqks.synapse.exec.node
 
 import android.opengl.GLES32.*
 import android.opengl.Matrix
@@ -10,23 +10,26 @@ import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.selects.whileSelect
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import xyz.rthqks.synapse.assets.AssetManager
-import xyz.rthqks.synapse.core.Node
-import xyz.rthqks.synapse.core.edge.*
 import xyz.rthqks.synapse.data.PortType
+import xyz.rthqks.synapse.exec.NodeExecutor
+import xyz.rthqks.synapse.exec.edge.*
 import xyz.rthqks.synapse.gl.*
 
-class GlNode(
+class OverlayFilterNode(
     private val glesManager: GlesManager,
     private val assetManager: AssetManager
-) : Node() {
-    private var inputConnection: Connection<TextureConfig, TextureEvent>? = null
-    private var inputChannel: Channel<TextureEvent>? = null
+) : NodeExecutor() {
     private var startJob: Job? = null
+    private var contentInput: Connection<TextureConfig, TextureEvent>? = null
+    private var contentChannel: Channel<TextureEvent>? = null
+    private var maskInput: Connection<TextureConfig, TextureEvent>? = null
+    private var maskChannel: Channel<TextureEvent>? = null
+    private var contentSize = Size(0, 0)
     private val connectMutex = Mutex(true)
-    private var size = Size(0, 0)
 
     private var outputTextureConnection: Connection<TextureConfig, TextureEvent>? = null
     private var texture: Texture? = null
@@ -43,10 +46,10 @@ class GlNode(
     }
 
     override suspend fun initialize() {
-        val connection = inputConnection ?: error("missing input connection")
+        val connection = contentInput ?: error("missing input connection")
         val config = connection.config
-        val vertexSource = assetManager.readTextAsset("vertex_texture.vert")
-        val fragmentSource = assetManager.readTextAsset("lut.frag").let {
+        val vertexSource = assetManager.readTextAsset("overlay_filter.vert")
+        val fragmentSource = assetManager.readTextAsset("overlay_filter.frag").let {
             if (config.isOes) {
                 it.replace("#{EXT}", "#define EXT")
             } else {
@@ -67,15 +70,14 @@ class GlNode(
             texture.initData(
                 0,
                 config.internalFormat,
-                size.width,
-                size.height,
+                contentSize.width,
+                contentSize.height,
                 config.format,
                 config.type
             )
             Log.d(TAG, "glGetError() ${glGetError()}")
 
             framebuffer.initialize(texture.id)
-
             mesh.initialize()
 
             program.apply {
@@ -95,13 +97,17 @@ class GlNode(
                     0
                 )
 
+                addUniform(
+                    Uniform.Type.Int,
+                    "input_texture1",
+                    1
+                )
+
             }
         }
 
         outputTextureConnection?.prime(
-            TextureEvent(
-                texture!!,
-                FloatArray(16).also { Matrix.setIdentityM(it, 0) })
+            TextureEvent(texture!!, FloatArray(16).also { Matrix.setIdentityM(it, 0) })
         )
 
         outputSurfaceConnection?.prime(SurfaceEvent())
@@ -119,33 +125,36 @@ class GlNode(
     }
 
     private suspend fun startTexture() = coroutineScope {
-        val output = outputTextureConnection ?: return@coroutineScope
-        val input = inputChannel ?: return@coroutineScope
+        val output = outputTextureConnection ?: error("no output connection")
+        val input = contentChannel ?: error("no content connection")
+        val mask = maskChannel ?: error("no mask connection")
 
         var copyMatrix = true
 
         startJob = launch {
             while (isActive) {
-                val inEvent = input.receive()
+                val inEvent1 = input.receive()
+                val maskEvent = mask.receive()
 
                 val outEvent = output.dequeue()
-                outEvent.eos = inEvent.eos
-                outEvent.count = inEvent.count
-                outEvent.timestamp = inEvent.timestamp
-
+                outEvent.eos = inEvent1.eos
+                outEvent.count = inEvent1.count
+                outEvent.timestamp = inEvent1.timestamp
 
                 if (copyMatrix) {
                     copyMatrix = false
                     val uniform = program.getUniform(Uniform.Type.Mat4, "texture_matrix0")
-                    System.arraycopy(inEvent.matrix, 0, uniform.data!!, 0, 16)
+                    System.arraycopy(inEvent1.matrix, 0, uniform.data!!, 0, 16)
                     uniform.dirty = true
                 }
                 glesManager.withGlContext {
                     framebuffer?.bind()
-                    executeGl(inEvent.texture)
+                    executeGl(inEvent1.texture, maskEvent.texture)
                 }
 
-                input.send(inEvent)
+                input.send(inEvent1)
+                mask.send(maskEvent)
+
                 output.queue(outEvent)
 
                 if (outEvent.eos) {
@@ -158,7 +167,8 @@ class GlNode(
 
     private suspend fun startSurface() = coroutineScope {
         val output = outputSurfaceConnection ?: return@coroutineScope
-        val input = inputChannel ?: return@coroutineScope
+        val input = contentChannel ?: return@coroutineScope
+        val mask = maskChannel ?: error("no mask connection")
         val config = output.config
 
         updateOutputSurface(config.getSurface())
@@ -166,14 +176,35 @@ class GlNode(
         var copyMatrix = true
 
         startJob = launch {
+
             while (isActive) {
-                val inEvent = input.receive()
+                var inEventRaw: TextureEvent? = null
+                var maskEventRaw: TextureEvent? = null
+
+                whileSelect {
+                    input.onReceive {
+                        inEventRaw?.let {
+                            input.send(it)
+                        }
+                        inEventRaw = it
+                        maskEventRaw == null
+                    }
+                    mask.onReceive {
+                        maskEventRaw?.let {
+                            mask.send(it)
+                        }
+                        maskEventRaw = it
+                        inEventRaw == null
+                    }
+                }
+
+                val inEvent = inEventRaw!!
+                val maskEvent = maskEventRaw!!
 
                 val outEvent = output.dequeue()
                 outEvent.eos = inEvent.eos
                 outEvent.count = inEvent.count.toLong()
                 outEvent.timestamp = inEvent.timestamp
-
 
                 if (config.hasSurface()) {
                     if (copyMatrix) {
@@ -185,12 +216,13 @@ class GlNode(
                     }
                     glesManager.withGlContext {
                         glBindFramebuffer(GL_FRAMEBUFFER, 0)
-                        executeGl(inEvent.texture)
+                        executeGl(inEvent.texture, maskEvent.texture)
                         outputSurfaceWindow?.swapBuffers()
                     }
                 }
 
                 input.send(inEvent)
+                mask.send(maskEvent)
                 output.queue(outEvent)
 
                 if (outEvent.eos) {
@@ -210,11 +242,12 @@ class GlNode(
         }
     }
 
-    private fun executeGl(texture: Texture) {
+    private fun executeGl(content: Texture, mask: Texture) {
         glUseProgram(program.programId)
-        glViewport(0, 0, size.width, size.height)
+        glViewport(0, 0, contentSize.width, contentSize.height)
 
-        texture.bind(GL_TEXTURE0)
+        content.bind(GL_TEXTURE0)
+        mask.bind(GL_TEXTURE1)
 
         program.bindUniforms()
 
@@ -241,23 +274,22 @@ class GlNode(
         PortType.SURFACE_1 -> {
             connectMutex.withLock {}
             SingleConsumer<SurfaceConfig, SurfaceEvent>(
-                SurfaceConfig(size, 0)
+                SurfaceConfig(contentSize, 0)
             ).also { connection ->
                 outputSurfaceConnection = connection
             }
         }
         PortType.TEXTURE_1 -> {
             connectMutex.withLock {}
-            val connection = inputConnection!!
+            val connection = contentInput!!
             val config = connection.config
             SingleConsumer<TextureConfig, TextureEvent>(
-                TextureConfig(
-                    GL_TEXTURE_2D,
-                    size.width,
-                    size.height,
-                    config.internalFormat,
-                    config.format,
-                    config.type
+                TextureConfig(GL_TEXTURE_2D,
+                contentSize.width,
+                contentSize.height,
+                config.internalFormat,
+                config.format,
+                config.type
                 )
             ).also {
                 outputTextureConnection = it
@@ -266,19 +298,24 @@ class GlNode(
         else -> null
     }
 
-    override suspend fun <C : Config, T : Event> input(key: String, connection: Connection<C, T>) {
+    override suspend fun <C: Config, T : Event> input(key: String, connection: Connection<C, T>) {
         when (key) {
             PortType.TEXTURE_1 -> {
-                inputConnection = connection as Connection<TextureConfig, TextureEvent>
-                inputChannel = connection.consumer()
-                size = connection.config.size
+                contentInput = connection as Connection<TextureConfig, TextureEvent>
+                contentChannel = connection.consumer()
+                contentSize = connection.config.size
 
                 connectMutex.unlock()
+            }
+            PortType.TEXTURE_2 -> {
+                maskInput = connection as Connection<TextureConfig, TextureEvent>
+                maskChannel = connection.consumer()
+//                contentSize = connection.size.let { Size(it.width, it.height) }
             }
         }
     }
 
     companion object {
-        private val TAG = GlNode::class.java.simpleName
+        private val TAG = OverlayFilterNode::class.java.simpleName
     }
 }

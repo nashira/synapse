@@ -10,9 +10,9 @@ data class GraphData(
     var name: String
 ) {
     @Ignore
-    val nodes = mutableListOf<NodeConfig>()
+    val nodes = mutableListOf<NodeData>()
     @Ignore
-    val edges = mutableListOf<EdgeConfig>()
+    val edges = mutableListOf<EdgeData>()
 
     override fun toString(): String {
         return "GraphData(id=$id, name='$name', nodes=$nodes, edges=$edges)"

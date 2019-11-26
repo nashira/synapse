@@ -1,4 +1,4 @@
-package xyz.rthqks.synapse.core.node
+package xyz.rthqks.synapse.exec.node
 
 import android.media.AudioFormat
 import android.media.AudioRecord
@@ -6,16 +6,16 @@ import android.util.Log
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
-import xyz.rthqks.synapse.core.Node
-import xyz.rthqks.synapse.core.edge.*
 import xyz.rthqks.synapse.data.PortType
+import xyz.rthqks.synapse.exec.NodeExecutor
+import xyz.rthqks.synapse.exec.edge.*
 
 class AudioSourceNode(
     private val sampleRate: Int,
     private val channelMask: Int,
     private val audioEncoding: Int,
     private val source: Int
-) : Node() {
+) : NodeExecutor() {
     private lateinit var recorder: AudioRecord
     private lateinit var audioFormat: AudioFormat
     private var bufferSize = 0

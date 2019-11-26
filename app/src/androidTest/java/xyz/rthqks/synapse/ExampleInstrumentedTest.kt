@@ -6,7 +6,7 @@ import kotlinx.coroutines.*
 import org.junit.Assert.assertEquals
 import org.junit.Test
 import org.junit.runner.RunWith
-import xyz.rthqks.synapse.core.edge.AudioConnection
+import xyz.rthqks.synapse.exec.edge.AudioConnection
 import java.util.concurrent.Executors
 import kotlin.system.measureNanoTime
 

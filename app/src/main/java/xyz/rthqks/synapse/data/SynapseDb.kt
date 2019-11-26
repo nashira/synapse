@@ -7,9 +7,9 @@ import androidx.room.TypeConverters
 @Database(
     entities = [
         GraphData::class,
-        NodeConfig::class,
-        EdgeConfig::class,
-        PropertyConfig::class
+        NodeData::class,
+        EdgeData::class,
+        PropertyData::class
     ],
     version = SynapseDb.VERSION,
     exportSchema = false

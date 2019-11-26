@@ -11,7 +11,7 @@ import androidx.room.Index
         Index("graphId", "id", unique = true)
     ]
 )
-data class NodeConfig(
+data class NodeData(
     val id: Int,
     val graphId: Int,
     val type: NodeType
@@ -21,7 +21,7 @@ data class NodeConfig(
     @Ignore
     val outputs = type.outputs.map { PortConfig(PortKey(id, it.key, it.direction), it) }
     @Ignore
-    val properties = mutableMapOf<Key<*>, PropertyConfig>()
+    val properties = mutableMapOf<Key<*>, PropertyData>()
 
     operator fun <T : Any> get(key: Key<T>): T {
         val p = properties[key]!!

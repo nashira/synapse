@@ -22,7 +22,7 @@ class BuilderViewModel @Inject constructor(
     lateinit var graphConfigEditor: GraphConfigEditor
 
     val graphChannel = MutableLiveData<GraphConfigEditor>()
-    val nodesChannel = MutableLiveData<AdapterState<NodeConfig>>()
+    val nodesChannel = MutableLiveData<AdapterState<NodeData>>()
 
     fun setGraphId(graphId: Int) {
         if (graphId == -1) {
@@ -79,7 +79,7 @@ class BuilderViewModel @Inject constructor(
         }
     }
 
-    fun getNode(nodeId: Int): NodeConfig = graphConfigEditor.getNode(nodeId)
+    fun getNode(nodeId: Int): NodeData = graphConfigEditor.getNode(nodeId)
     fun getPortState(portConfig: PortConfig) = graphConfigEditor.getPortState(portConfig)
 
     fun onViewPagerIdle(viewPager: ViewPager2) {

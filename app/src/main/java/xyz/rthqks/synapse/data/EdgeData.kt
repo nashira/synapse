@@ -10,7 +10,7 @@ import androidx.room.Index
         Index("graphId")
     ]
 )
-data class EdgeConfig(
+data class EdgeData(
     val graphId: Int,
     val fromNodeId: Int,
     val fromKey: String,

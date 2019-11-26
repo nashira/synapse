@@ -23,8 +23,8 @@ import kotlinx.android.synthetic.main.property_item_text.view.*
 import kotlinx.android.synthetic.main.property_item_uri.view.*
 import xyz.rthqks.synapse.R
 import xyz.rthqks.synapse.data.Key
-import xyz.rthqks.synapse.data.NodeConfig
-import xyz.rthqks.synapse.data.PropertyConfig
+import xyz.rthqks.synapse.data.NodeData
+import xyz.rthqks.synapse.data.PropertyData
 import xyz.rthqks.synapse.data.PropertyType
 import javax.inject.Inject
 
@@ -33,7 +33,7 @@ class EditPropertiesFragment : DaggerFragment() {
     lateinit var viewModelFactory: ViewModelProvider.Factory
     private lateinit var graphViewModel: EditGraphViewModel
     private var nodeId: Int = -1
-    private var fileSelectConfig: PropertyConfig? = null
+    private var fileSelectData: PropertyData? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -59,7 +59,7 @@ class EditPropertiesFragment : DaggerFragment() {
 
         graphViewModel.onSelectFile.observe(viewLifecycleOwner, Observer {
             it.consume()?.let {
-                fileSelectConfig = it
+                fileSelectData = it
                 Intent(Intent.ACTION_OPEN_DOCUMENT).apply {
                     addCategory(Intent.CATEGORY_OPENABLE)
                     type = "video/*"
@@ -77,8 +77,8 @@ class EditPropertiesFragment : DaggerFragment() {
                     data.data!!,
                     Intent.FLAG_GRANT_READ_URI_PERMISSION
                 )
-                fileSelectConfig?.let { p -> graphViewModel.onFileSelected(data.data, p) }
-                fileSelectConfig = null
+                fileSelectData?.let { p -> graphViewModel.onFileSelected(data.data, p) }
+                fileSelectData = null
             }
 //        Log.d(TAG, "data $data $fileDescriptor")
         }
@@ -89,9 +89,9 @@ class EditPropertiesFragment : DaggerFragment() {
         const val TAG = "EditPropertiesFragment"
         const val ARG_NODE_ID = "node_id"
         const val OPEN_DOC_REQUEST = 17
-        fun newInstance(nodeConfig: NodeConfig): EditPropertiesFragment {
+        fun newInstance(nodeData: NodeData): EditPropertiesFragment {
             val args = Bundle()
-            args.putInt(ARG_NODE_ID, nodeConfig.id)
+            args.putInt(ARG_NODE_ID, nodeData.id)
             val fragment = EditPropertiesFragment()
             fragment.arguments = args
 
@@ -101,10 +101,10 @@ class EditPropertiesFragment : DaggerFragment() {
 }
 
 class PropertyAdapter(
-    private val nodeConfig: NodeConfig,
+    private val nodeData: NodeData,
     private val viewModel: EditGraphViewModel
 ) : RecyclerView.Adapter<PropertyViewHolder>() {
-    val properties = nodeConfig.properties.values.toList()
+    val properties = nodeData.properties.values.toList()
     val propertyTypes: List<PropertyType<*>> =
         properties.map { PropertyType.map[Key[it.type]] as PropertyType<*> }
 
@@ -119,7 +119,7 @@ class PropertyAdapter(
         }
     }
 
-    override fun getItemCount(): Int = nodeConfig.properties.size
+    override fun getItemCount(): Int = nodeData.properties.size
 
     override fun onBindViewHolder(holder: PropertyViewHolder, position: Int) {
         val config = properties[position]
@@ -145,7 +145,7 @@ class PropertyAdapter(
 
 
 abstract class PropertyViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
-    abstract fun bind(property: PropertyType<*>, config: PropertyConfig)
+    abstract fun bind(property: PropertyType<*>, data: PropertyData)
 }
 
 class UriPropertyViewHolder(
@@ -153,18 +153,18 @@ class UriPropertyViewHolder(
     private val viewModel: EditGraphViewModel
 ) : PropertyViewHolder(itemView) {
     private var property: PropertyType.Text? = null
-    private var config: PropertyConfig? = null
+    private var data: PropertyData? = null
     private var suppressSave = false
 
     init {
         itemView.button_select_file.setOnClickListener {
-            config?.let { it1 -> viewModel.selectFileFor(it1) }
+            data?.let { it1 -> viewModel.selectFileFor(it1) }
         }
     }
 
-    override fun bind(property: PropertyType<*>, config: PropertyConfig) {
+    override fun bind(property: PropertyType<*>, data: PropertyData) {
         this.property = property as PropertyType.Text
-        this.config = config
+        this.data = data
         itemView.uri_name.setText(property.name)
         suppressSave = true
     }
@@ -179,7 +179,7 @@ class TextPropertyViewHolder(
     private val viewModel: EditGraphViewModel
 ) : PropertyViewHolder(itemView) {
     private var property: PropertyType.Text? = null
-    private var config: PropertyConfig? = null
+    private var data: PropertyData? = null
     private var suppressSave = false
     private var editText = itemView.text_value
 
@@ -194,7 +194,7 @@ class TextPropertyViewHolder(
                     imm.hideSoftInputFromWindow(v.windowToken, 0)
                     v.clearFocus()
 
-                    config?.let {
+                    data?.let {
                         it.value = PropertyType.toString(property!!.key, editText.text.toString())
                         viewModel.saveProperty(it)
                     }
@@ -206,11 +206,11 @@ class TextPropertyViewHolder(
         })
     }
 
-    override fun bind(property: PropertyType<*>, config: PropertyConfig) {
+    override fun bind(property: PropertyType<*>, data: PropertyData) {
         this.property = property as PropertyType.Text
-        this.config = config
+        this.data = data
         itemView.name.setText(property.name)
-        editText.setText(config.value)
+        editText.setText(data.value)
         suppressSave = true
     }
 
@@ -227,7 +227,7 @@ class DiscretePropertyViewHolder(
         ArrayAdapter(itemView.context, android.R.layout.simple_spinner_item)
 
     private var property: PropertyType.Discrete<*>? = null
-    private var config: PropertyConfig? = null
+    private var data: PropertyData? = null
     private var suppressSave = false
 
     init {
@@ -250,7 +250,7 @@ class DiscretePropertyViewHolder(
                 }
 
                 property?.values?.get(position)?.let { value ->
-                    config?.let {
+                    data?.let {
 
                         it.value = PropertyType.toString(property!!.key, value)
                         viewModel.saveProperty(it)
@@ -260,14 +260,14 @@ class DiscretePropertyViewHolder(
         }
     }
 
-    override fun bind(property: PropertyType<*>, config: PropertyConfig) {
+    override fun bind(property: PropertyType<*>, data: PropertyData) {
         this.property = property as PropertyType.Discrete
-        this.config = config
+        this.data = data
         itemView.name.setText(property.name)
         arrayAdapter.clear()
         arrayAdapter.addAll(property.labels.map { itemView.context.getString(it) })
         suppressSave = true
-        itemView.value.setSelection(property.indexOf(config.value))
+        itemView.value.setSelection(property.indexOf(data.value))
     }
 
     companion object {

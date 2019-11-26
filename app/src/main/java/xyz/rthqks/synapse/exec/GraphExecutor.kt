@@ -1,18 +1,18 @@
-package xyz.rthqks.synapse.core
+package xyz.rthqks.synapse.exec
 
 import android.content.Context
 import android.util.Log
 import android.view.SurfaceView
 import kotlinx.coroutines.*
 import xyz.rthqks.synapse.assets.AssetManager
-import xyz.rthqks.synapse.core.node.*
 import xyz.rthqks.synapse.data.GraphData
 import xyz.rthqks.synapse.data.Key
 import xyz.rthqks.synapse.data.NodeType
+import xyz.rthqks.synapse.exec.node.*
 import xyz.rthqks.synapse.gl.GlesManager
 import java.util.concurrent.Executors
 
-class Graph(
+class GraphExecutor(
     private val context: Context,
     private val graphData: GraphData
 ) {
@@ -24,7 +24,7 @@ class Graph(
     private val glesManager = GlesManager()
     private val cameraManager = CameraManager(context)
     private val assetManager = AssetManager(context)
-    private val nodes = mutableMapOf<Int, Node>()
+    private val nodes = mutableMapOf<Int, NodeExecutor>()
 //    private val connections = mutableListOf<Connection<Event>>()
 
     private lateinit var surfaceView: SurfaceView
@@ -169,6 +169,6 @@ class Graph(
     }
 
     companion object {
-        private val TAG = Graph::class.java.simpleName
+        private val TAG = GraphExecutor::class.java.simpleName
     }
 }

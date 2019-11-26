@@ -1,4 +1,4 @@
-package xyz.rthqks.synapse.core.edge
+package xyz.rthqks.synapse.exec.edge
 
 import android.util.Size
 import android.view.Surface

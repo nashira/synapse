@@ -10,7 +10,7 @@ import androidx.room.Index
     ],
     primaryKeys = ["graphId", "nodeId", "type"]
 )
-data class PropertyConfig(
+data class PropertyData(
     val graphId: Int,
     val nodeId: Int,
     val type: String,

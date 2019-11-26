@@ -21,9 +21,9 @@ class EditGraphViewModel @Inject constructor(
     lateinit var graph: GraphData
     lateinit var graphConfigEditor: GraphConfigEditor
     val graphChannel = MutableLiveData<GraphConfigEditor>()
-    val onNodeAdded = MutableLiveData<NodeConfig>()
+    val onNodeAdded = MutableLiveData<NodeData>()
     val onPortSelected = MutableLiveData<Unit>()
-    val onSelectFile = MutableLiveData<Consumable<PropertyConfig>>()
+    val onSelectFile = MutableLiveData<Consumable<PropertyData>>()
 
     fun setGraphId(graphId: Int) {
         if (graphId == -1) {
@@ -77,7 +77,7 @@ class EditGraphViewModel @Inject constructor(
         }
     }
 
-    fun getNode(nodeId: Int): NodeConfig = graphConfigEditor.getNode(nodeId)
+    fun getNode(nodeId: Int): NodeData = graphConfigEditor.getNode(nodeId)
 
     fun setGraphName(name: String) {
         graph.name = name
@@ -87,7 +87,7 @@ class EditGraphViewModel @Inject constructor(
         }
     }
 
-    fun saveProperty(property: PropertyConfig) {
+    fun saveProperty(property: PropertyData) {
         viewModelScope.launch(Dispatchers.IO) {
             dao.insertProperty(property)
             Log.d(TAG, "saved: $property")
@@ -100,8 +100,8 @@ class EditGraphViewModel @Inject constructor(
         }
     }
 
-    fun removeNode(node: NodeConfig) {
-        val edges = mutableListOf<EdgeConfig>()
+    fun removeNode(node: NodeData) {
+        val edges = mutableListOf<EdgeData>()
         node.inputs.forEach {
             edges += graphConfigEditor.clearEdges(it)
         }
@@ -115,11 +115,11 @@ class EditGraphViewModel @Inject constructor(
         }
     }
 
-    fun selectFileFor(config: PropertyConfig) {
-        onSelectFile.value = Consumable(config)
+    fun selectFileFor(data: PropertyData) {
+        onSelectFile.value = Consumable(data)
     }
 
-    fun onFileSelected(data: Uri?, config: PropertyConfig) {
+    fun onFileSelected(data: Uri?, config: PropertyData) {
         data?.let {
             config.value = it.toString()
             saveProperty(config)

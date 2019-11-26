@@ -3,9 +3,9 @@ package xyz.rthqks.synapse
 import kotlinx.coroutines.*
 import org.junit.Assert.assertEquals
 import org.junit.Test
-import xyz.rthqks.synapse.core.edge.AudioConnection
-import xyz.rthqks.synapse.core.edge.Event
-import xyz.rthqks.synapse.core.edge.MultiConsumer
+import xyz.rthqks.synapse.exec.edge.AudioConnection
+import xyz.rthqks.synapse.exec.edge.Event
+import xyz.rthqks.synapse.exec.edge.MultiConsumer
 import java.util.concurrent.Executors
 import kotlin.system.measureNanoTime
 

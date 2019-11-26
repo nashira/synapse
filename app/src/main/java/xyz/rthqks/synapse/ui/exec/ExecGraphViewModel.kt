@@ -6,9 +6,9 @@ import android.view.SurfaceView
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import kotlinx.coroutines.*
-import xyz.rthqks.synapse.core.Graph
 import xyz.rthqks.synapse.data.GraphData
 import xyz.rthqks.synapse.data.SynapseDao
+import xyz.rthqks.synapse.exec.GraphExecutor
 import javax.inject.Inject
 
 class ExecGraphViewModel @Inject constructor(
@@ -17,7 +17,7 @@ class ExecGraphViewModel @Inject constructor(
 ) : ViewModel() {
     private lateinit var surfaceView: SurfaceView
     val graphLoaded = MutableLiveData<GraphData>()
-    private lateinit var graph: Graph
+    private lateinit var graphExecutor: GraphExecutor
     private var initJob: Job? = null
     private var startJob: Job? = null
     private var stopJob: Job? = null
@@ -29,12 +29,12 @@ class ExecGraphViewModel @Inject constructor(
             val graphConfig = dao.getFullGraph(graphId)
             graphLoaded.postValue(graphConfig)
             Log.d(TAG, "loaded graph: $graphConfig")
-            graph = Graph(context, graphConfig)
+            graphExecutor = GraphExecutor(context, graphConfig)
 
-            graph.tmp_SetSurfaceView(surfaceView)
+            graphExecutor.tmp_SetSurfaceView(surfaceView)
 
             Log.d(TAG, "initialize")
-            graph.initialize()
+            graphExecutor.initialize()
             Log.d(TAG, "initialized")
         }
     }
@@ -45,7 +45,7 @@ class ExecGraphViewModel @Inject constructor(
             initJob?.join()
             stopJob?.join()
             Log.d(TAG, "starting")
-            graph.start()
+            graphExecutor.start()
             // right now start launches coroutines and does not join them.
             // there is a period after start during which calling stop
             // will result in hung coroutines.
@@ -63,7 +63,7 @@ class ExecGraphViewModel @Inject constructor(
             Log.d(TAG, "stopping")
             startJob?.join()
             Log.d(TAG, "calling graph.stop")
-            graph.stop()
+            graphExecutor.stop()
             Log.d(TAG, "done stopping")
         }
     }
@@ -79,7 +79,7 @@ class ExecGraphViewModel @Inject constructor(
 //                Toast.makeText(context, "TIMEOUT", Toast.LENGTH_LONG).show()
                 stopJob?.cancel()
             }
-            graph.release()
+            graphExecutor.release()
             scope.cancel()
             Log.d(TAG, "released")
         }
@@ -90,7 +90,7 @@ class ExecGraphViewModel @Inject constructor(
         this.surfaceView = surfaceView
         initJob?.let {
             scope.launch {
-                graph.tmp_SetSurfaceView(surfaceView)
+                graphExecutor.tmp_SetSurfaceView(surfaceView)
             }
         }
     }

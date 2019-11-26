@@ -1,4 +1,4 @@
-package xyz.rthqks.synapse.core.node
+package xyz.rthqks.synapse.exec.node
 
 import android.opengl.GLES32.*
 import android.opengl.Matrix
@@ -12,9 +12,9 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import xyz.rthqks.synapse.assets.AssetManager
-import xyz.rthqks.synapse.core.Node
-import xyz.rthqks.synapse.core.edge.*
 import xyz.rthqks.synapse.data.PortType
+import xyz.rthqks.synapse.exec.NodeExecutor
+import xyz.rthqks.synapse.exec.edge.*
 import xyz.rthqks.synapse.gl.*
 
 class MacNode(
@@ -22,7 +22,7 @@ class MacNode(
     private val assetManager: AssetManager,
     private val multiplyFactor: Float,
     private val accumulateFactor: Float
-) : Node() {
+) : NodeExecutor() {
     private var startJob: Job? = null
     private var size = Size(0, 0)
     private var inputConnection: Connection<TextureConfig, TextureEvent>? = null

@@ -1,4 +1,4 @@
-package xyz.rthqks.synapse.core.node
+package xyz.rthqks.synapse.exec.node
 
 import android.opengl.GLES32.*
 import android.opengl.Matrix
@@ -12,9 +12,9 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import xyz.rthqks.synapse.assets.AssetManager
-import xyz.rthqks.synapse.core.Node
-import xyz.rthqks.synapse.core.edge.*
 import xyz.rthqks.synapse.data.PortType
+import xyz.rthqks.synapse.exec.NodeExecutor
+import xyz.rthqks.synapse.exec.edge.*
 import xyz.rthqks.synapse.gl.*
 
 class BlurNode(
@@ -23,7 +23,7 @@ class BlurNode(
     private val blurSize: Int = 9,
     private val passes: Int = 1,
     private val scale: Int = 1
-) : Node() {
+) : NodeExecutor() {
     private var inputChannel: Channel<TextureEvent>? = null
     private var inputConnection: Connection<TextureConfig, TextureEvent>? = null
     private var startJob: Job? = null

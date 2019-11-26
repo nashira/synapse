@@ -1,4 +1,4 @@
-package xyz.rthqks.synapse.core.node
+package xyz.rthqks.synapse.exec.node
 
 import android.graphics.SurfaceTexture
 import android.opengl.GLES11Ext
@@ -15,10 +15,10 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
-import xyz.rthqks.synapse.core.CameraManager
-import xyz.rthqks.synapse.core.Node
-import xyz.rthqks.synapse.core.edge.*
 import xyz.rthqks.synapse.data.PortType
+import xyz.rthqks.synapse.exec.CameraManager
+import xyz.rthqks.synapse.exec.NodeExecutor
+import xyz.rthqks.synapse.exec.edge.*
 import xyz.rthqks.synapse.gl.GlesManager
 import xyz.rthqks.synapse.gl.Texture
 
@@ -28,7 +28,7 @@ class CameraNode(
     private val facing: Int,
     private val requestedSize: Size,
     private val frameRate: Int
-) : Node() {
+) : NodeExecutor() {
     private lateinit var size: Size
     private lateinit var cameraId: String
     private var surfaceRotation = 0
