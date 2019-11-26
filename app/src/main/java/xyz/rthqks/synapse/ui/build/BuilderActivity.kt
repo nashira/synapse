@@ -42,7 +42,6 @@ class BuilderActivity : DaggerAppCompatActivity() {
         val nodeAdapter = NodeAdapter(this)
         view_pager.adapter = nodeAdapter
         view_pager.isUserInputEnabled = false
-        view_pager.offscreenPageLimit = 1
 
         view_pager.registerOnPageChangeCallback(object : ViewPager2.OnPageChangeCallback() {
 

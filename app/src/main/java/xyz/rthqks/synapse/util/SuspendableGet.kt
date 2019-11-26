@@ -1,6 +1,7 @@
 package xyz.rthqks.synapse.util
 
 import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 
 class SuspendableGet<T> {
     private var item: T? = null
@@ -19,10 +20,7 @@ class SuspendableGet<T> {
 
     fun has(): Boolean = item != null
 
-    suspend fun get(): T {
-        mutex.lock()
-        val t = item
-        mutex.unlock()
-        return  t!!
+    suspend fun get(): T = mutex.withLock {
+        item!!
     }
 }
