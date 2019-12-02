@@ -15,7 +15,7 @@ import dagger.android.support.DaggerAppCompatActivity
 import kotlinx.android.synthetic.main.activity_graph_list.*
 import kotlinx.android.synthetic.main.graph_list_item.view.*
 import xyz.rthqks.synapse.R
-import xyz.rthqks.synapse.data.GraphData
+import xyz.rthqks.synapse.logic.Graph
 import xyz.rthqks.synapse.ui.build.BuilderActivity
 import xyz.rthqks.synapse.ui.edit.GraphEditActivity
 import javax.inject.Inject
@@ -46,7 +46,6 @@ class GraphListActivity : DaggerAppCompatActivity() {
         recycler_view.layoutManager = LinearLayoutManager(this)
         recycler_view.adapter = graphAdapter
 
-
         viewModel.graphList.observe(this, Observer {
             Log.d(TAG, "graphs: $it")
             graphAdapter.setGraphs(it)
@@ -76,8 +75,8 @@ class GraphListActivity : DaggerAppCompatActivity() {
 }
 
 class GraphAdapter : RecyclerView.Adapter<GraphViewHolder>() {
-    private val graphs = mutableListOf<GraphData>()
-    private var itemClickListener: ((GraphData, Boolean) -> Unit)? = null
+    private val graphs = mutableListOf<Graph>()
+    private var itemClickListener: ((Graph, Boolean) -> Unit)? = null
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): GraphViewHolder {
         val view = LayoutInflater.from(parent.context)
@@ -93,23 +92,23 @@ class GraphAdapter : RecyclerView.Adapter<GraphViewHolder>() {
         holder.bind(graphs[position])
     }
 
-    fun setGraphs(list: List<GraphData>) {
+    fun setGraphs(list: List<Graph>) {
         graphs.clear()
         graphs.addAll(list)
         notifyDataSetChanged()
     }
 
-    fun onItemClick(function: (GraphData, Boolean) -> Unit) {
+    fun onItemClick(function: (Graph, Boolean) -> Unit) {
         itemClickListener = function
     }
 }
 
 class GraphViewHolder(
     itemView: View,
-    itemClick: (GraphData, Boolean) -> Unit
+    itemClick: (Graph, Boolean) -> Unit
 ) : RecyclerView.ViewHolder(itemView) {
     private val name = itemView.name
-    private var graph: GraphData? = null
+    private var graph: Graph? = null
 
     init {
         itemView.setOnClickListener {
@@ -127,8 +126,8 @@ class GraphViewHolder(
         }
     }
 
-    fun bind(graphData: GraphData) {
-        graph = graphData
-        name.text = graphData.name
+    fun bind(graph: Graph) {
+        this.graph = graph
+        name.text = graph.name
     }
 }

@@ -40,7 +40,7 @@ class EditGraphViewModel @Inject constructor(
             }
         } else {
             viewModelScope.launch(Dispatchers.IO) {
-                graph = dao.getFullGraph(graphId)
+                graph = dao.getFullGraphData(graphId)
                 Log.d(TAG, "loaded: $graph")
 
                 graphConfigEditor = GraphConfigEditor(graph)

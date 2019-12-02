@@ -6,7 +6,7 @@ import android.os.Looper
 import android.view.MotionEvent
 import android.view.View
 import android.view.ViewConfiguration
-import xyz.rthqks.synapse.data.PortConfig
+import xyz.rthqks.synapse.logic.Connector
 import kotlin.math.abs
 
 class TouchMediator(
@@ -26,7 +26,7 @@ class TouchMediator(
         longPressTimeout = ViewConfiguration.getLongPressTimeout().toLong()
     }
 
-    fun onTouch(view: View, event: MotionEvent, portConfig: PortConfig?): Boolean {
+    fun onTouch(view: View, event: MotionEvent, portConfig: Connector? = null): Boolean {
 //        Log.d("TouchMediator", "onTouch $event")
         swipeEvent.portConfig = portConfig
         when (event.actionMasked) {
@@ -75,5 +75,5 @@ class TouchMediator(
 class SwipeEvent(
     var action: Int,
     var x: Float = 0f,
-    var portConfig: PortConfig? = null
+    var portConfig: Connector? = null
 )

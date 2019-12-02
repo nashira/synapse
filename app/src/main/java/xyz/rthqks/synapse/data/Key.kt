@@ -23,6 +23,10 @@ sealed class Key<T>(
     object NumPasses : Key<Int>("num_passes")
     object ScaleFactor : Key<Int>("scale_factor")
 
+    object AccumulateFactor : Key<Float>("accumulate_factor")
+    object MultiplyFactor : Key<Float>("multiply_factor")
+    object Uri : Key<String>("uri")
+
     companion object {
         private val map = mutableMapOf<String, Key<*>>()
         operator fun get(name: String) = map[name]
@@ -30,8 +34,4 @@ sealed class Key<T>(
             map[name] = key
         }
     }
-
-    object AccumulateFactor : Key<Float>("accumulate_factor")
-    object MultiplyFactor : Key<Float>("multiply_factor")
-    object Uri : Key<String>("uri")
 }

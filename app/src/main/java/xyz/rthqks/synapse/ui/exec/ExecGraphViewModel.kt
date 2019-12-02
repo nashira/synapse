@@ -26,7 +26,7 @@ class ExecGraphViewModel @Inject constructor(
     fun loadGraph(graphId: Int) {
         Log.d(TAG, "loadGraph")
         initJob = scope.launch {
-            val graphConfig = dao.getFullGraph(graphId)
+            val graphConfig = dao.getFullGraphData(graphId)
             graphLoaded.postValue(graphConfig)
             Log.d(TAG, "loaded graph: $graphConfig")
             graphExecutor = GraphExecutor(context, graphConfig)

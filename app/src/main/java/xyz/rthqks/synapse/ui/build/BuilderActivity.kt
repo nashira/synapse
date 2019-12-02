@@ -14,7 +14,7 @@ import androidx.viewpager2.widget.ViewPager2
 import dagger.android.support.DaggerAppCompatActivity
 import kotlinx.android.synthetic.main.activity_builder.*
 import xyz.rthqks.synapse.R
-import xyz.rthqks.synapse.data.NodeData
+import xyz.rthqks.synapse.logic.Node
 import javax.inject.Inject
 
 class BuilderActivity : DaggerAppCompatActivity() {
@@ -39,7 +39,7 @@ class BuilderActivity : DaggerAppCompatActivity() {
             }
         })
 
-        val nodeAdapter = NodeAdapter(this)
+        val nodeAdapter = NodeAdapter(this, viewModel)
         view_pager.adapter = nodeAdapter
         view_pager.isUserInputEnabled = false
 
@@ -84,9 +84,10 @@ class BuilderActivity : DaggerAppCompatActivity() {
 }
 
 class NodeAdapter(
-    activity: AppCompatActivity
+    activity: AppCompatActivity,
+    private val viewModel: BuilderViewModel
 ) : FragmentStateAdapter(activity) {
-    val nodes = mutableListOf<NodeData>()
+    val nodes = mutableListOf<Node>()
 
     override fun getItemCount(): Int = nodes.size
 
@@ -95,24 +96,20 @@ class NodeAdapter(
     }
 
     override fun createFragment(position: Int): Fragment {
-        return NodeFragment.newInstance(nodes[position].id)
+        val node = nodes[position]
+        return when (node.type) {
+
+            Node.Type.Connection -> {
+                ConnectionFragment.newInstance()
+            }
+            else -> NodeFragment.newInstance(node.id)
+        }
     }
 
-    fun settle(currentItem: Int) {
-//        when (currentItem) {
-//            0 -> {
-//                nodes.add(0, nodes.removeAt(2))
-//            }
-//            2 -> {
-//                nodes.add(2, nodes.removeAt(0))
-//            }
-//        }
-    }
-
-    fun setState(adapterState: AdapterState<NodeData>) {
+    fun setState(adapterState: AdapterState<Node>) {
         val update = adapterState.items != nodes
-        this.nodes.clear()
-        this.nodes.addAll(adapterState.items)
+        nodes.clear()
+        nodes.addAll(adapterState.items)
         if (update) {
             notifyDataSetChanged()
         }

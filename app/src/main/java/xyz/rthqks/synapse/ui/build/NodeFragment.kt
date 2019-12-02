@@ -12,7 +12,7 @@ import dagger.android.support.DaggerFragment
 import kotlinx.android.synthetic.main.fragment_node.*
 import kotlinx.android.synthetic.main.layout_port_fragment_node.view.*
 import xyz.rthqks.synapse.R
-import xyz.rthqks.synapse.data.PortConfig
+import xyz.rthqks.synapse.logic.Connector
 import javax.inject.Inject
 
 class NodeFragment : DaggerFragment() {
@@ -59,9 +59,13 @@ class NodeFragment : DaggerFragment() {
         viewModel = ViewModelProvider(activity!!, viewModelFactory)[BuilderViewModel::class.java]
         touchMediator = TouchMediator(context!!, viewModel::swipeEvent)
 
+        val graph = viewModel.graph
         val node = viewModel.getNode(nodeId)
-        inputsAdapter.setPorts(node.inputs)
-        outputsAdapter.setPorts(node.outputs)
+
+        val connectors = graph.getConnectors(nodeId).groupBy { it.port.output }
+
+        inputsAdapter.setPorts(connectors[false] ?: emptyList())
+        outputsAdapter.setPorts(connectors[true] ?: emptyList())
 
         toolbar.setTitle(node.type.name)
 
@@ -88,25 +92,25 @@ class NodeFragment : DaggerFragment() {
         Log.d(TAG, "onDetach $nodeId")
     }
 
-    fun onPortTouch(portConfig: PortConfig) {
-        Log.d(TAG, "touch $portConfig")
-        viewModel.preparePortSwipe(portConfig)
+    fun onPortTouch(connector: Connector) {
+        Log.d(TAG, "touch $connector")
+        viewModel.preparePortSwipe(connector)
     }
 
-    fun onPortClick(portConfig: PortConfig) {
-        Log.d(TAG, "click $portConfig")
+    fun onPortClick(connector: Connector) {
+        Log.d(TAG, "click $connector")
     }
 
-    fun onPortLongClick(portConfig: PortConfig) {
-        Log.d(TAG, "long click $portConfig")
+    fun onPortLongClick(connector: Connector) {
+        Log.d(TAG, "long click $connector")
     }
 
     inner class PortsAdapter(
         private val isStartAligned: Boolean
     ) : RecyclerView.Adapter<PortViewHolder>() {
-        private val ports = mutableListOf<PortConfig>()
+        private val ports = mutableListOf<Connector>()
 
-        fun setPorts(ports: List<PortConfig>) {
+        fun setPorts(ports: List<Connector>) {
             this.ports.clear()
             this.ports.addAll(ports)
             notifyDataSetChanged()
@@ -133,7 +137,7 @@ class NodeFragment : DaggerFragment() {
     ) : RecyclerView.ViewHolder(itemView) {
         private val name = itemView.name
         private val button = itemView.button
-        private var portConfig: PortConfig? = null
+        private var portConfig: Connector? = null
 
         init {
             button.setOnTouchListener { v, event ->
@@ -151,11 +155,10 @@ class NodeFragment : DaggerFragment() {
             }
         }
 
-        fun bind(portConfig: PortConfig, startAligned: Boolean) {
+        fun bind(portConfig: Connector, startAligned: Boolean) {
             this.portConfig = portConfig
-            val dataType = portConfig.type
-            name.setText(dataType.name)
-            button.setImageResource(dataType.icon)
+            name.text = portConfig.port.name
+//            button.setImageResource(dataType.icon)
             if (!startAligned) {
                 listOf(name, button).forEach {
                     (it.layoutParams as LinearLayout.LayoutParams).apply {
@@ -166,7 +169,7 @@ class NodeFragment : DaggerFragment() {
                 name.gravity = Gravity.END
             }
 
-            Log.d(TAG, "port ${portConfig.key} ${viewModel.getPortState(portConfig)}")
+//            Log.d(TAG, "port ${portConfig.key} ${viewModel.getPortState(portConfig)}")
 //            when(viewModel.getPortState(portConfig)) {
 //                PortState.Unconnected -> itemView.setBackgroundColor(Color.TRANSPARENT)
 //                PortState.Connected -> itemView.setBackgroundColor(Color.rgb(200, 200, 255))

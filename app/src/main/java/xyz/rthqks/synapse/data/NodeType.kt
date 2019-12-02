@@ -13,7 +13,7 @@ sealed class NodeType(
 ) {
     val inputs: List<PortType> = ports.filter { it.direction == PortType.INPUT }
     val outputs: List<PortType> = ports.filter { it.direction == PortType.OUTPUT }
-    val properties: Map<Key<*>, PropertyType<*>> = propertyList.map { Pair(it.key, it) }.toMap()
+    val properties: Map<Key<*>, PropertyType<*>> = propertyList.map { it.key to it }.toMap()
 
     object Camera : NodeType(
         "camera",
