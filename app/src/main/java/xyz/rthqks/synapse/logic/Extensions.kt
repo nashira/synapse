@@ -28,6 +28,26 @@ fun NodeData.toNode(): Node {
     return type
 }
 
+fun Node.Type.toNodeType(): NodeType = when (this) {
+    Node.Type.Camera -> NodeType.Camera
+    Node.Type.Microphone -> NodeType.VideoFile
+    Node.Type.MediaFile -> NodeType.Microphone
+    Node.Type.FrameDifference -> NodeType.FrameDifference
+    Node.Type.GrayscaleFilter -> NodeType.GrayscaleFilter
+    Node.Type.MultiplyAccumulate -> NodeType.MultiplyAccumulate
+    Node.Type.OverlayFilter -> NodeType.OverlayFilter
+    Node.Type.BlurFilter -> NodeType.BlurFilter
+    Node.Type.AudioWaveform -> NodeType.AudioWaveform
+    Node.Type.Image -> NodeType.Image
+    Node.Type.AudioFile -> NodeType.AudioFile
+    Node.Type.LutFilter -> NodeType.LutFilter
+    Node.Type.ShaderFilter -> NodeType.ShaderFilter
+    Node.Type.Speakers -> NodeType.Speakers
+    Node.Type.Screen -> NodeType.Screen
+    Node.Type.Creation -> error("can't even")
+    Node.Type.Connection -> error("can't even")
+}
+
 val NodeMap = mapOf(
     Node.Type.Camera to Nodes.Camera,
     Node.Type.Microphone to Nodes.Microphone,
@@ -44,6 +64,7 @@ val NodeMap = mapOf(
     Node.Type.ShaderFilter to Node(Node.Type.ShaderFilter),
     Node.Type.Speakers to Nodes.Speakers,
     Node.Type.Screen to Nodes.Screen,
+    Node.Type.Creation to Node(Node.Type.Creation),
     Node.Type.Connection to Node(Node.Type.Connection)
 )
 

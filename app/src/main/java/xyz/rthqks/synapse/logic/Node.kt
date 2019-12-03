@@ -61,6 +61,7 @@ class Node(
         ShaderFilter("shader", R.string.name_node_type_shader_filter, R.drawable.ic_texture),
         Speakers("speakers", R.string.name_node_type_speaker, R.drawable.ic_speaker),
         Screen("screen", R.string.name_node_type_screen, R.drawable.ic_display),
+        Creation("creation", 0, 0),
         Connection("connection", 0, 0);
 
         companion object {

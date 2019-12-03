@@ -18,6 +18,7 @@ import kotlinx.android.synthetic.main.layout_connection.view.*
 import xyz.rthqks.synapse.R
 import xyz.rthqks.synapse.logic.Connector
 import xyz.rthqks.synapse.logic.Graph
+import xyz.rthqks.synapse.logic.Node
 import javax.inject.Inject
 
 class ConnectionFragment : DaggerFragment() {
@@ -63,13 +64,14 @@ class ConnectionFragment : DaggerFragment() {
         viewModel.connectionChannel.observe(viewLifecycleOwner, Observer {
             Log.d(TAG, "changed ${it.node.type} ${it.port.name}")
 
-            val openConnectors = graph.getOpenConnectors(it)
-            val potentialConnectors = graph.getPotentialConnectors(it)
-//
-//            Log.d(TAG, openConnectors.joinToString { "${it.node.type} ${it.port.name}" })
-//            Log.d(TAG, potentialConnectors.joinToString { "${it.node.type} ${it.port.name}" })
-
-            connectionAdapter.setData(openConnectors, potentialConnectors)
+            if (it.node.type == Node.Type.Creation) {
+                val connectors = graph.getCreationConnectors()
+                connectionAdapter.setData(emptyList(), connectors)
+            } else {
+                val openConnectors = graph.getOpenConnectors(it)
+                val potentialConnectors = graph.getPotentialConnectors(it)
+                connectionAdapter.setData(openConnectors, potentialConnectors)
+            }
         })
     }
 

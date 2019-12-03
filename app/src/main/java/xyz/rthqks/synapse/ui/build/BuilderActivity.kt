@@ -97,6 +97,7 @@ class NodeAdapter(
     override fun createFragment(position: Int): Fragment {
         val node = nodes[position]
         return when (node.type) {
+            Node.Type.Creation -> ConnectionFragment.newInstance()
             Node.Type.Connection -> ConnectionFragment.newInstance()
             else -> NodeFragment.newInstance(node.id)
         }

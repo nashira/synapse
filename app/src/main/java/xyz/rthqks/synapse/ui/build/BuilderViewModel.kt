@@ -7,11 +7,11 @@ import androidx.lifecycle.viewModelScope
 import androidx.viewpager2.widget.ViewPager2
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import xyz.rthqks.synapse.data.EdgeData
 import xyz.rthqks.synapse.data.GraphData
+import xyz.rthqks.synapse.data.NodeData
 import xyz.rthqks.synapse.data.SynapseDao
-import xyz.rthqks.synapse.logic.Connector
-import xyz.rthqks.synapse.logic.Graph
-import xyz.rthqks.synapse.logic.Node
+import xyz.rthqks.synapse.logic.*
 import xyz.rthqks.synapse.util.Consumable
 import javax.inject.Inject
 
@@ -38,6 +38,10 @@ class BuilderViewModel @Inject constructor(
                 graph = Graph(rowId.toInt(), "Graph")
                 Log.d(TAG, "created: $graph")
                 graphChannel.postValue(graph)
+                connectionChannel.postValue(Connector(CREATION_NODE, FAKE_PORT))
+                nodesChannel.postValue(
+                    AdapterState(0, listOf(CREATION_NODE))
+                )
             }
         } else {
             viewModelScope.launch(Dispatchers.IO) {
@@ -45,9 +49,16 @@ class BuilderViewModel @Inject constructor(
                 Log.d(TAG, "loaded: $graph")
 
                 graphChannel.postValue(graph)
-                nodesChannel.postValue(
-                    AdapterState(0, listOf(graph.getNode(0)))
-                )
+                if (graph.nodeCount() == 0) {
+                    connectionChannel.postValue(Connector(CREATION_NODE, FAKE_PORT))
+                    nodesChannel.postValue(
+                        AdapterState(0, listOf(CREATION_NODE))
+                    )
+                } else {
+                    nodesChannel.postValue(
+                        AdapterState(0, listOf(graph.getNode(0)))
+                    )
+                }
             }
         }
     }
@@ -93,18 +104,37 @@ class BuilderViewModel @Inject constructor(
 
     fun completeConnection(connector: Connector) {
         connectionChannel.value?.let {
-            Log.d(TAG, "connecting ${it.node.type}:${it.port.id} to ${connector.node.type}:${connector.port.id}")
+
             if (connector.node.id == -1) {
                 // new node
-            } else {
+                graph.addNode(connector.node)
+                viewModelScope.launch(Dispatchers.IO) {
+                    dao.insertNode(NodeData(connector.node.id, graph.id, connector.node.type.toNodeType()))
+                    nodesChannel.postValue(AdapterState(0, listOf(connector.node)))
+                }
+            }
+
+            if (it.node.type != Node.Type.Creation) {
                 // new edge
+                val from = if (connector.port.output) connector else it
+                val to = if (connector.port.output) it else connector
+
+                Log.d(TAG, "connecting ${from.node.type}:${from.port.id} to ${to.node.type}:${to.port.id}")
+
+                graph.addEdge(from.node.id, from.port.id, to.node.id, to.port.id)
+                viewModelScope.launch(Dispatchers.IO) {
+                    dao.insertEdge(EdgeData(graph.id, from.node.id, from.port.id, to.node.id, to.port.id))
+                    nodesChannel.postValue(AdapterState(0, listOf(connector.node)))
+                }
             }
         }
     }
 
     companion object {
         const val TAG = "BuilderViewModel"
-        val CONNECTION_NODE = Node(Node.Type.Connection)
+        val CONNECTION_NODE = NodeMap[Node.Type.Connection] ?: error("missing node")
+        val CREATION_NODE = NodeMap[Node.Type.Creation] ?: error("missing node")
+        val FAKE_PORT = Port(Port.Type.Video, "", "", false)
     }
 }
 
