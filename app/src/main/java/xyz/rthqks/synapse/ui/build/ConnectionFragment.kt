@@ -1,23 +1,31 @@
 package xyz.rthqks.synapse.ui.build
 
+import android.content.Context
+import android.graphics.Rect
 import android.os.Bundle
 import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.TextView
 import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModelProvider
+import androidx.recyclerview.widget.GridLayoutManager
+import androidx.recyclerview.widget.RecyclerView
 import dagger.android.support.DaggerFragment
 import kotlinx.android.synthetic.main.fragment_connection.*
+import kotlinx.android.synthetic.main.layout_connection.view.*
 import xyz.rthqks.synapse.R
+import xyz.rthqks.synapse.logic.Connector
+import xyz.rthqks.synapse.logic.Graph
 import javax.inject.Inject
 
 class ConnectionFragment : DaggerFragment() {
     @Inject
     lateinit var viewModelFactory: ViewModelProvider.Factory
     private lateinit var viewModel: BuilderViewModel
-    private val portId: String get() = viewModel.connectionPortId
-    private val nodeId: Int get() = viewModel.connectionNodeId
+    private val graph: Graph get() = viewModel.graph
+    private lateinit var connectionAdapter: ConnectionAdapter
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -28,24 +36,46 @@ class ConnectionFragment : DaggerFragment() {
         return view
     }
 
+    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+
+        toolbar.setTitle(R.string.title_connect)
+        toolbar.inflateMenu(R.menu.connection)
+        toolbar.setOnMenuItemClickListener {
+            return@setOnMenuItemClickListener if (it.itemId == R.id.cancel) {
+                viewModel.cancelConnection()
+                true
+            } else {
+                false
+            }
+        }
+    }
+
     override fun onActivityCreated(savedInstanceState: Bundle?) {
         super.onActivityCreated(savedInstanceState)
         viewModel = ViewModelProvider(activity!!, viewModelFactory)[BuilderViewModel::class.java]
+        connectionAdapter = ConnectionAdapter(viewModel, context!!, 3)
+        val layoutManager = GridLayoutManager(context, 3)
+        layoutManager.spanSizeLookup = connectionAdapter.spanSizeLookup
+        recycler_view.addItemDecoration(connectionAdapter.itemDecoration)
+        recycler_view.layoutManager = layoutManager
+        recycler_view.adapter = connectionAdapter
 
         viewModel.connectionChannel.observe(viewLifecycleOwner, Observer {
-            Log.d(TAG, "changed $nodeId $portId")
-        })
+            Log.d(TAG, "changed ${it.node.type} ${it.port.name}")
 
-        val touchMediator = TouchMediator(context!!, viewModel::swipeEvent)
-        text_view.setOnTouchListener { v, event ->
-            touchMediator.onTouch(v, event)
-        }
+            val openConnectors = graph.getOpenConnectors(it)
+            val potentialConnectors = graph.getPotentialConnectors(it)
+//
+//            Log.d(TAG, openConnectors.joinToString { "${it.node.type} ${it.port.name}" })
+//            Log.d(TAG, potentialConnectors.joinToString { "${it.node.type} ${it.port.name}" })
+
+            connectionAdapter.setData(openConnectors, potentialConnectors)
+        })
     }
 
     override fun onResume() {
         super.onResume()
-        text_view.text = "$nodeId\n$portId"
-        Log.d(TAG, "loaded $nodeId $portId")
+        Log.d(TAG, "onResume")
     }
 
     override fun onPause() {
@@ -53,12 +83,130 @@ class ConnectionFragment : DaggerFragment() {
         Log.d(TAG, "onPause")
     }
 
-
     companion object {
         const val TAG = "ConnectionFragment"
 
         fun newInstance(): ConnectionFragment {
             return ConnectionFragment()
+        }
+    }
+}
+
+class ConnectionAdapter(
+    val viewModel: BuilderViewModel,
+    context: Context,
+    spans: Int) : RecyclerView.Adapter<ConnectionAdapter.ViewHolder>() {
+    private val margin = context.resources.getDimensionPixelSize(R.dimen.connector_margin)
+
+    val spanSizeLookup = object : GridLayoutManager.SpanSizeLookup() {
+        override fun getSpanSize(position: Int): Int {
+            return if (getItemViewType(position) == R.layout.layout_connection) {
+                1
+            } else {
+                spans
+            }
+        }
+    }
+
+    val itemDecoration = object : RecyclerView.ItemDecoration() {
+        override fun getItemOffsets(
+            outRect: Rect,
+            view: View,
+            parent: RecyclerView,
+            state: RecyclerView.State
+        ) {
+            val pos = parent.getChildAdapterPosition(view)
+            val item = items[pos]
+            if (item is HeaderItem) {
+                outRect.set(margin, margin, margin, margin * 2)
+            } else {
+                val index = (view.layoutParams as GridLayoutManager.LayoutParams).spanIndex % spans
+                val left = margin * (spans - index) / spans
+                val right = margin * (index + 1) / spans
+                outRect.set(left, 0, right, margin)
+            }
+        }
+    }
+    private val items = mutableListOf<Item>()
+
+    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
+        val inflater = LayoutInflater.from(parent.context)
+        val view = inflater.inflate(viewType, parent, false)
+        return when (viewType) {
+            R.layout.layout_connection -> ItemViewHolder(view)
+            else -> HeaderViewHolder(view)
+        }
+    }
+
+    override fun getItemCount(): Int {
+        return items.size
+    }
+
+    override fun getItemViewType(position: Int): Int {
+        return when (items[position]) {
+            is HeaderItem -> R.layout.layout_connection_header
+            else -> R.layout.layout_connection
+        }
+    }
+
+    override fun onBindViewHolder(holder: ViewHolder, position: Int) {
+        holder.bind(items[position])
+    }
+
+    fun setData(existing: List<Connector>, potential: List<Connector>) {
+        items.clear()
+        if (existing.isNotEmpty()) {
+            items += HeaderItem("Connect an Existing Node")
+            items += existing.map { ConnectorItem(it) }
+        }
+        if (potential.isNotEmpty()) {
+            items += HeaderItem("Add a New Node")
+            items += potential.map { ConnectorItem(it) }
+        }
+        notifyDataSetChanged()
+    }
+
+    interface Item
+
+    class HeaderItem(
+        val text: String
+    ) : Item
+
+    class ConnectorItem(
+        val connector: Connector
+    ) : Item
+
+    abstract class ViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
+        abstract fun bind(item: Item)
+    }
+
+    class HeaderViewHolder(itemView: View) : ViewHolder(itemView) {
+        private val title = itemView as TextView
+
+        override fun bind(item: Item) {
+            item as HeaderItem
+            title.text = item.text
+        }
+    }
+
+    inner class ItemViewHolder(itemView: View) : ViewHolder(itemView) {
+        private val surfaceView = itemView.surface_view
+        private val portName = itemView.port_name_view
+        private val nodeName = itemView.node_name_view
+        private var item: ConnectorItem? = null
+
+        init {
+            surfaceView.setOnClickListener {
+                item?.let {
+                    viewModel.completeConnection(it.connector)
+                }
+            }
+        }
+
+        override fun bind(item: Item) {
+            this.item = item as ConnectorItem
+            portName.text = item.connector.port.name
+            nodeName.setText(item.connector.node.type.title)
         }
     }
 }

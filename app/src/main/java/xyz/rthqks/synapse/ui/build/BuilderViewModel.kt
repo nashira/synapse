@@ -23,12 +23,9 @@ class BuilderViewModel @Inject constructor(
     lateinit var graph: Graph
 
     val graphChannel = MutableLiveData<Graph>()
-    val connectionChannel = MutableLiveData<Unit>()
+    val connectionChannel = MutableLiveData<Connector>()
     val nodesChannel = MutableLiveData<AdapterState<Node>>()
-    var connectionNodeId: Int = -1
-        private set
-    var connectionPortId: String = ""
-        private set
+
 
     fun setGraphId(graphId: Int) {
         if (graphId == -1) {
@@ -46,7 +43,6 @@ class BuilderViewModel @Inject constructor(
             viewModelScope.launch(Dispatchers.IO) {
                 graph = dao.getFullGraph(graphId)
                 Log.d(TAG, "loaded: $graph")
-                Log.d(TAG, "loaded2: ${dao.getFullGraph(graphId)}")
 
                 graphChannel.postValue(graph)
                 nodesChannel.postValue(
@@ -69,9 +65,7 @@ class BuilderViewModel @Inject constructor(
             val current = if (port.output) 0 else 1
             nodesChannel.value = AdapterState(current, listOf(leftNode, rightNode))
         } ?: run {
-            connectionNodeId = connector.node.id
-            connectionPortId = connector.port.id
-            connectionChannel.value = Unit
+            connectionChannel.value = connector
 
             if (connector.port.output) {
                 nodesChannel.value = AdapterState(0, listOf(connector.node, CONNECTION_NODE))
@@ -89,6 +83,25 @@ class BuilderViewModel @Inject constructor(
         }
     }
 
+    fun cancelConnection() {
+        nodesChannel.value?.let {
+            //            val items = it.items.filter { it.type != Node.Type.Connection }
+            val index = it.items.indexOfFirst { it.type != Node.Type.Connection }
+            nodesChannel.value = AdapterState(index, it.items, true)
+        }
+    }
+
+    fun completeConnection(connector: Connector) {
+        connectionChannel.value?.let {
+            Log.d(TAG, "connecting ${it.node.type}:${it.port.id} to ${connector.node.type}:${connector.port.id}")
+            if (connector.node.id == -1) {
+                // new node
+            } else {
+                // new edge
+            }
+        }
+    }
+
     companion object {
         const val TAG = "BuilderViewModel"
         val CONNECTION_NODE = Node(Node.Type.Connection)
@@ -97,5 +110,6 @@ class BuilderViewModel @Inject constructor(
 
 data class AdapterState<T>(
     val currentItem: Int,
-    val items: List<T>
+    val items: List<T>,
+    val animate: Boolean = false
 )

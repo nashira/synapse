@@ -15,6 +15,7 @@ import dagger.android.support.DaggerAppCompatActivity
 import kotlinx.android.synthetic.main.activity_builder.*
 import xyz.rthqks.synapse.R
 import xyz.rthqks.synapse.logic.Node
+import xyz.rthqks.synapse.ui.build.BuilderActivity.Companion.TAG
 import javax.inject.Inject
 
 class BuilderActivity : DaggerAppCompatActivity() {
@@ -29,17 +30,16 @@ class BuilderActivity : DaggerAppCompatActivity() {
         viewModel = ViewModelProvider(this, viewModelFactory)[BuilderViewModel::class.java]
         Log.d(TAG, "viewModel $viewModel")
         viewModel.onSwipeEvent.observe(this, Observer { consumable ->
-            consumable.consume()?.let {
-                when (it.action) {
+            consumable.consume()?.apply {
+                when (action) {
                     MotionEvent.ACTION_DOWN -> view_pager.beginFakeDrag()
-                    MotionEvent.ACTION_MOVE -> view_pager.fakeDragBy(it.x)
+                    MotionEvent.ACTION_MOVE -> view_pager.fakeDragBy(x)
                     MotionEvent.ACTION_UP -> view_pager.endFakeDrag()
-                    else -> true
                 }
             }
         })
 
-        val nodeAdapter = NodeAdapter(this, viewModel)
+        val nodeAdapter = NodeAdapter(this)
         view_pager.adapter = nodeAdapter
         view_pager.isUserInputEnabled = false
 
@@ -63,14 +63,14 @@ class BuilderActivity : DaggerAppCompatActivity() {
             Log.d(TAG, it.toString())
             nodeAdapter.setState(it)
             if (view_pager.currentItem != it.currentItem) {
-                view_pager.setCurrentItem(it.currentItem, false)
+                view_pager.setCurrentItem(it.currentItem, it.animate)
             }
         })
 
         viewModel.graphChannel.observe(this, Observer {
+
         })
     }
-
 
     companion object {
         const val TAG = "BuilderActivity"
@@ -84,8 +84,7 @@ class BuilderActivity : DaggerAppCompatActivity() {
 }
 
 class NodeAdapter(
-    activity: AppCompatActivity,
-    private val viewModel: BuilderViewModel
+    activity: AppCompatActivity
 ) : FragmentStateAdapter(activity) {
     val nodes = mutableListOf<Node>()
 
@@ -98,19 +97,17 @@ class NodeAdapter(
     override fun createFragment(position: Int): Fragment {
         val node = nodes[position]
         return when (node.type) {
-
-            Node.Type.Connection -> {
-                ConnectionFragment.newInstance()
-            }
+            Node.Type.Connection -> ConnectionFragment.newInstance()
             else -> NodeFragment.newInstance(node.id)
         }
     }
 
     fun setState(adapterState: AdapterState<Node>) {
         val update = adapterState.items != nodes
-        nodes.clear()
-        nodes.addAll(adapterState.items)
         if (update) {
+            Log.d(TAG, "updating adapter items")
+            nodes.clear()
+            nodes.addAll(adapterState.items)
             notifyDataSetChanged()
         }
     }
