@@ -1,6 +1,8 @@
 package xyz.rthqks.synapse.ui.build
 
 import android.util.Log
+import androidx.annotation.MenuRes
+import androidx.annotation.StringRes
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -25,23 +27,19 @@ class BuilderViewModel @Inject constructor(
     val graphChannel = MutableLiveData<Graph>()
     val connectionChannel = MutableLiveData<Connector>()
     val nodesChannel = MutableLiveData<AdapterState<Node>>()
-
+    val titleChannel = MutableLiveData<Int>()
+    val menuChannel = MutableLiveData<Int>()
+    private var nodeAfterCancel: Node? = null
 
     fun setGraphId(graphId: Int) {
         if (graphId == -1) {
-
-            Log.d(TAG, dao.toString())
-
             viewModelScope.launch(Dispatchers.IO) {
                 val rowId = dao.insertGraph(GraphData(0, "Graph"))
 
                 graph = Graph(rowId.toInt(), "Graph")
                 Log.d(TAG, "created: $graph")
                 graphChannel.postValue(graph)
-                connectionChannel.postValue(Connector(CREATION_NODE, FAKE_PORT))
-                nodesChannel.postValue(
-                    AdapterState(0, listOf(CREATION_NODE))
-                )
+                onAddNode()
             }
         } else {
             viewModelScope.launch(Dispatchers.IO) {
@@ -50,14 +48,14 @@ class BuilderViewModel @Inject constructor(
 
                 graphChannel.postValue(graph)
                 if (graph.nodeCount() == 0) {
-                    connectionChannel.postValue(Connector(CREATION_NODE, FAKE_PORT))
-                    nodesChannel.postValue(
-                        AdapterState(0, listOf(CREATION_NODE))
-                    )
+                    onAddNode()
                 } else {
-                    nodesChannel.postValue(
-                        AdapterState(0, listOf(graph.getNode(0)))
-                    )
+                    val firstNode = graph.getFirstNode()
+                    firstNode?.let {
+                        nodesChannel.postValue(
+                            AdapterState(0, listOf(firstNode))
+                        )
+                    }
                 }
             }
         }
@@ -71,8 +69,8 @@ class BuilderViewModel @Inject constructor(
     fun preparePortSwipe(connector: Connector) {
         val port = connector.port
         connector.edge?.let {
-            val leftNode = it.fromNode
-            val rightNode = it.toNode
+            val leftNode = graph.getNode(it.fromNodeId)
+            val rightNode = graph.getNode(it.toNodeId)
             val current = if (port.output) 0 else 1
             nodesChannel.value = AdapterState(current, listOf(leftNode, rightNode))
         } ?: run {
@@ -95,8 +93,12 @@ class BuilderViewModel @Inject constructor(
     }
 
     fun cancelConnection() {
+        nodeAfterCancel?.let {
+            nodesChannel.value = AdapterState(0, listOf(it))
+            nodeAfterCancel = null
+            return
+        }
         nodesChannel.value?.let {
-            //            val items = it.items.filter { it.type != Node.Type.Connection }
             val index = it.items.indexOfFirst { it.type != Node.Type.Connection }
             nodesChannel.value = AdapterState(index, it.items, true)
         }
@@ -107,9 +109,16 @@ class BuilderViewModel @Inject constructor(
 
             if (connector.node.id == -1) {
                 // new node
+                nodeAfterCancel = null
                 graph.addNode(connector.node)
                 viewModelScope.launch(Dispatchers.IO) {
-                    dao.insertNode(NodeData(connector.node.id, graph.id, connector.node.type.toNodeType()))
+                    dao.insertNode(
+                        NodeData(
+                            connector.node.id,
+                            graph.id,
+                            connector.node.type.toNodeType()
+                        )
+                    )
                     nodesChannel.postValue(AdapterState(0, listOf(connector.node)))
                 }
             }
@@ -119,13 +128,68 @@ class BuilderViewModel @Inject constructor(
                 val from = if (connector.port.output) connector else it
                 val to = if (connector.port.output) it else connector
 
-                Log.d(TAG, "connecting ${from.node.type}:${from.port.id} to ${to.node.type}:${to.port.id}")
+                Log.d(
+                    TAG,
+                    "connecting ${from.node.type}:${from.port.id} to ${to.node.type}:${to.port.id}"
+                )
 
                 graph.addEdge(from.node.id, from.port.id, to.node.id, to.port.id)
                 viewModelScope.launch(Dispatchers.IO) {
-                    dao.insertEdge(EdgeData(graph.id, from.node.id, from.port.id, to.node.id, to.port.id))
+                    dao.insertEdge(
+                        EdgeData(
+                            graph.id,
+                            from.node.id,
+                            from.port.id,
+                            to.node.id,
+                            to.port.id
+                        )
+                    )
                     nodesChannel.postValue(AdapterState(0, listOf(connector.node)))
                 }
+            }
+        }
+    }
+
+    fun setTitle(@StringRes resId: Int) {
+        titleChannel.value = resId
+    }
+
+    fun setMenu(@MenuRes menuId: Int) {
+        menuChannel.value = menuId
+    }
+
+    fun onAddNode() {
+        connectionChannel.postValue(Connector(CREATION_NODE, FAKE_PORT))
+        nodesChannel.value?.let {
+            nodeAfterCancel = it.items[it.currentItem]
+        }
+        nodesChannel.postValue(AdapterState(0, listOf(CREATION_NODE)))
+    }
+
+    fun onDelete() {
+        nodesChannel.value?.let {
+            val node = it.items[it.currentItem]
+            val edges = graph.removeNode(node.id)
+
+            val firstNode = graph.getFirstNode()
+            firstNode?.let {
+                nodesChannel.value = AdapterState(0, listOf(firstNode))
+            } ?: run {
+                connectionChannel.value = Connector(CREATION_NODE, FAKE_PORT)
+                nodesChannel.value = AdapterState(0, listOf(CREATION_NODE))
+            }
+
+            viewModelScope.launch(Dispatchers.IO) {
+                dao.deleteNode(node.graphId, node.id)
+                dao.deleteEdges(edges.map {
+                    EdgeData(
+                        node.graphId,
+                        it.fromNodeId,
+                        it.fromPortId,
+                        it.toNodeId,
+                        it.toPortId
+                    )
+                })
             }
         }
     }

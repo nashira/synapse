@@ -35,7 +35,8 @@
         </activity>
 
         <activity android:name=".ui.exec.ExecGraphActivity" />
-        <activity android:name=".ui.build.BuilderActivity" />
+        <activity android:name=".ui.build.BuilderActivity"
+            android:screenOrientation="portrait" />
     </application>
 
 </manifest>

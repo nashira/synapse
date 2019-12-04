@@ -1,8 +1,8 @@
 package xyz.rthqks.synapse.logic
 
 class Edge(
-    val fromNode: Node,
-    val fromPort: Port,
-    val toNode: Node,
-    val toPort: Port
+    val fromNodeId: Int,
+    val fromPortId: String,
+    val toNodeId: Int,
+    val toPortId: String
 )

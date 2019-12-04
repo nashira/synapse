@@ -25,9 +25,20 @@ class Graph(
 
     fun nodeCount() = nodes.size
 
-    fun removeNode(nodeId: Int) {
+    fun removeNode(nodeId: Int): List<Edge> {
+        val removed = mutableListOf<Edge>()
+        edges.removeAll {
+            (it.fromNodeId == nodeId || it.toNodeId == nodeId).also { r ->
+                if (r) {
+                    removed += it
+                }
+            }
+        }
         nodes.remove(nodeId)
+        return removed
     }
+
+    fun getFirstNode(): Node? = nodes.values.firstOrNull()
 
     fun getNode(nodeId: Int): Node {
         return nodes[nodeId]!!
@@ -40,13 +51,13 @@ class Graph(
         toKey: String
     ) {
 
-        val fromNode = getNode(fromNodeId)
-        val toNode = getNode(toNodeId)
+//        val fromNode = getNode(fromNodeId)
+//        val toNode = getNode(toNodeId)
+//
+//        val fromPort = fromNode.getPort(fromKey)
+//        val toPort = toNode.getPort(toKey)
 
-        val fromPort = fromNode.getPort(fromKey)
-        val toPort = toNode.getPort(toKey)
-
-        edges.add(Edge(fromNode, fromPort, toNode, toPort))
+        edges.add(Edge(fromNodeId, fromKey, toNodeId, toKey))
     }
 
     fun removeEdge(edge: Edge) {
@@ -56,15 +67,15 @@ class Graph(
     fun getConnectors(nodeId: Int): List<Connector> {
         val node = getNode(nodeId)
         val ports = node.getPortIds().toMutableSet()
-        val nodeEdges = edges.filter { it.fromNode.id == nodeId || it.toNode.id == nodeId }
+        val nodeEdges = edges.filter { it.fromNodeId == nodeId || it.toNodeId == nodeId }
 
         return nodeEdges.map {
-            if (it.fromNode.id == nodeId) {
-                ports.remove(it.fromPort.id)
-                Connector(node, it.fromPort, it)
+            if (it.fromNodeId == nodeId) {
+                ports.remove(it.fromPortId)
+                Connector(node, node.getPort(it.fromPortId), it)
             } else {
-                ports.remove(it.toPort.id)
-                Connector(node, it.toPort, it)
+                ports.remove(it.toPortId)
+                Connector(node, node.getPort(it.toPortId), it)
             }
         } + ports.map { Connector(node, node.getPort(it)) }
     }
@@ -109,8 +120,8 @@ class Graph(
 
     private fun isConnected(node: Node, port: Port): Boolean {
         return edges.any {
-            it.fromNode.id == node.id && it.fromPort.id == port.id
-                    || it.toNode.id == node.id && it.toPort.id == port.id
+            it.fromNodeId == node.id && it.fromPortId == port.id
+                    || it.toNodeId == node.id && it.toPortId == port.id
         }
     }
 

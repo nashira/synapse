@@ -33,25 +33,11 @@ class ConnectionFragment : DaggerFragment() {
         container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View? {
-        val view = inflater.inflate(R.layout.fragment_connection, container, false)
-        return view
-    }
-
-    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
-
-        toolbar.setTitle(R.string.title_connect)
-        toolbar.inflateMenu(R.menu.connection)
-        toolbar.setOnMenuItemClickListener {
-            return@setOnMenuItemClickListener if (it.itemId == R.id.cancel) {
-                viewModel.cancelConnection()
-                true
-            } else {
-                false
-            }
-        }
+        return inflater.inflate(R.layout.fragment_connection, container, false)
     }
 
     override fun onActivityCreated(savedInstanceState: Bundle?) {
+        Log.d(TAG, "onActivityCreated")
         super.onActivityCreated(savedInstanceState)
         viewModel = ViewModelProvider(activity!!, viewModelFactory)[BuilderViewModel::class.java]
         connectionAdapter = ConnectionAdapter(viewModel, context!!, 3)
@@ -78,6 +64,8 @@ class ConnectionFragment : DaggerFragment() {
     override fun onResume() {
         super.onResume()
         Log.d(TAG, "onResume")
+        viewModel.setTitle(R.string.title_connect)
+        viewModel.setMenu(R.menu.connection)
     }
 
     override fun onPause() {

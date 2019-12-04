@@ -47,6 +47,9 @@ abstract class SynapseDao {
     @Delete
     abstract suspend fun deleteNode(node: NodeData)
 
+    @Query("DELETE FROM node WHERE graphId = :graphId AND id = :id")
+    abstract suspend fun deleteNode(graphId: Int, id: Int)
+
     @Delete
     abstract suspend fun deleteNodes(nodes: Collection<NodeData>)
 

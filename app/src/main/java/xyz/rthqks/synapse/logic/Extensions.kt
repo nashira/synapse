@@ -30,8 +30,8 @@ fun NodeData.toNode(): Node {
 
 fun Node.Type.toNodeType(): NodeType = when (this) {
     Node.Type.Camera -> NodeType.Camera
-    Node.Type.Microphone -> NodeType.VideoFile
-    Node.Type.MediaFile -> NodeType.Microphone
+    Node.Type.Microphone -> NodeType.Microphone
+    Node.Type.MediaFile -> NodeType.VideoFile
     Node.Type.FrameDifference -> NodeType.FrameDifference
     Node.Type.GrayscaleFilter -> NodeType.GrayscaleFilter
     Node.Type.MultiplyAccumulate -> NodeType.MultiplyAccumulate

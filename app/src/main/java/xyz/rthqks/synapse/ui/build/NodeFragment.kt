@@ -67,8 +67,6 @@ class NodeFragment : DaggerFragment() {
         inputsAdapter.setPorts(connectors[false] ?: emptyList())
         outputsAdapter.setPorts(connectors[true] ?: emptyList())
 
-        toolbar.setTitle(node.type.name)
-
         Log.d(TAG, "viewModel $viewModel $this")
     }
 
@@ -80,6 +78,9 @@ class NodeFragment : DaggerFragment() {
     override fun onResume() {
         super.onResume()
         Log.d(TAG, "onResume $nodeId")
+        val node = viewModel.getNode(nodeId)
+        viewModel.setTitle(node.type.title)
+        viewModel.setMenu(R.menu.activity_builder)
     }
 
     override fun onAttach(context: Context) {

@@ -59,6 +59,31 @@ class BuilderActivity : DaggerAppCompatActivity() {
             viewModel.setGraphId(graphId)
         }
 
+        toolbar.setOnMenuItemClickListener {
+            when (it.itemId) {
+                R.id.add_node -> {
+                    viewModel.onAddNode()
+                }
+                R.id.remove_node -> {
+                    onDeleteNode()
+                }
+                R.id.jump_to_node -> {}
+                R.id.cancel -> {
+                    viewModel.cancelConnection()
+                }
+            }
+            true
+        }
+
+        viewModel.titleChannel.observe(this, Observer {
+            toolbar.setTitle(it)
+        })
+
+        viewModel.menuChannel.observe(this, Observer {
+            toolbar.menu.clear()
+            toolbar.inflateMenu(it)
+        })
+
         viewModel.nodesChannel.observe(this, Observer {
             Log.d(TAG, it.toString())
             nodeAdapter.setState(it)
@@ -70,6 +95,17 @@ class BuilderActivity : DaggerAppCompatActivity() {
         viewModel.graphChannel.observe(this, Observer {
 
         })
+    }
+
+    private fun onDeleteNode() {
+        val dialog = ConfirmDialog()
+        dialog.listener = {
+            Log.d(TAG, "onDelete $it")
+            if (it) {
+                viewModel.onDelete()
+            }
+        }
+        dialog.show(supportFragmentManager, null)
     }
 
     companion object {
