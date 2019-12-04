@@ -44,6 +44,10 @@ class Graph(
         return nodes[nodeId]!!
     }
 
+    fun getNodes(): List<Node> {
+        return nodes.values.toList()
+    }
+
     fun addEdge(
         fromNodeId: Int,
         fromKey: String,

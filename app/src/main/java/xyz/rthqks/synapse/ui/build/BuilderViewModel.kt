@@ -194,6 +194,10 @@ class BuilderViewModel @Inject constructor(
         }
     }
 
+    fun jumpToNode(node: Node) {
+        nodesChannel.value = AdapterState(0, listOf(node))
+    }
+
     companion object {
         const val TAG = "BuilderViewModel"
         val CONNECTION_NODE = NodeMap[Node.Type.Connection] ?: error("missing node")

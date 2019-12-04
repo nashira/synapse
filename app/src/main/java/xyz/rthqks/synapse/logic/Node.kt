@@ -1,6 +1,8 @@
 package xyz.rthqks.synapse.logic
 
 import android.hardware.camera2.CameraCharacteristics
+import androidx.annotation.DrawableRes
+import androidx.annotation.StringRes
 import xyz.rthqks.synapse.R
 
 class Node(
@@ -45,7 +47,7 @@ class Node(
 
     fun getPortIds(): Set<String> = ports.keys
 
-    enum class Type(val key: String, val title: Int, val icon: Int) {
+    enum class Type(val key: String, @StringRes val title: Int, @DrawableRes val icon: Int) {
         Camera("camera", R.string.name_node_type_camera, R.drawable.ic_camera),
         Microphone("microphone", R.string.name_node_type_microphone, R.drawable.ic_mic),
         MediaFile("media_file", R.string.name_node_type_media_file, R.drawable.ic_movie),

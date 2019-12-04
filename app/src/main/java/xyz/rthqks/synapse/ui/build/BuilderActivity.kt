@@ -67,7 +67,9 @@ class BuilderActivity : DaggerAppCompatActivity() {
                 R.id.remove_node -> {
                     onDeleteNode()
                 }
-                R.id.jump_to_node -> {}
+                R.id.jump_to_node -> {
+                    onJumpToNode()
+                }
                 R.id.cancel -> {
                     viewModel.cancelConnection()
                 }
@@ -95,6 +97,15 @@ class BuilderActivity : DaggerAppCompatActivity() {
         viewModel.graphChannel.observe(this, Observer {
 
         })
+    }
+
+    private fun onJumpToNode() {
+        val dialog = NodeListDialog()
+        dialog.listener = {
+            Log.d(TAG, "onJump $it")
+            viewModel.jumpToNode(it)
+        }
+        dialog.show(supportFragmentManager, null)
     }
 
     private fun onDeleteNode() {
