@@ -13,10 +13,8 @@ import android.widget.AdapterView
 import android.widget.ArrayAdapter
 import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModelProvider
-import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import dagger.android.support.DaggerFragment
-import kotlinx.android.synthetic.main.fragment_edit_properties.*
 import kotlinx.android.synthetic.main.property_item_discrete.view.*
 import kotlinx.android.synthetic.main.property_item_discrete.view.name
 import kotlinx.android.synthetic.main.property_item_text.view.*
@@ -52,10 +50,9 @@ class EditPropertiesFragment : DaggerFragment() {
         super.onActivityCreated(savedInstanceState)
         graphViewModel =
             ViewModelProvider(activity!!, viewModelFactory)[EditGraphViewModel::class.java]
-        val node = graphViewModel.getNode(nodeId)
-        toolbar.setTitle(node.type.name)
-        recycler_view.layoutManager = LinearLayoutManager(context)
-        recycler_view.adapter = PropertyAdapter(node, graphViewModel)
+//        toolbar.setTitle(node.type.name)
+//        recycler_view.layoutManager = LinearLayoutManager(context)
+//        recycler_view.adapter = PropertyAdapter(node, graphViewModel)
 
         graphViewModel.onSelectFile.observe(viewLifecycleOwner, Observer {
             it.consume()?.let {

@@ -116,7 +116,7 @@ class BuilderViewModel @Inject constructor(
                         NodeData(
                             connector.node.id,
                             graph.id,
-                            connector.node.type.toNodeType()
+                            connector.node.type
                         )
                     )
                     nodesChannel.postValue(AdapterState(0, listOf(connector.node)))

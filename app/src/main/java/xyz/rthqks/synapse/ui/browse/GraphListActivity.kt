@@ -8,7 +8,6 @@ import android.view.View
 import android.view.ViewGroup
 import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModelProvider
-import androidx.lifecycle.ViewModelProviders
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import dagger.android.support.DaggerAppCompatActivity
@@ -17,7 +16,6 @@ import kotlinx.android.synthetic.main.graph_list_item.view.*
 import xyz.rthqks.synapse.R
 import xyz.rthqks.synapse.logic.Graph
 import xyz.rthqks.synapse.ui.build.BuilderActivity
-import xyz.rthqks.synapse.ui.edit.GraphEditActivity
 import javax.inject.Inject
 
 class GraphListActivity : DaggerAppCompatActivity() {
@@ -29,10 +27,10 @@ class GraphListActivity : DaggerAppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_graph_list)
         toolbar.setTitle(R.string.title_graph_list)
-        viewModel = ViewModelProviders.of(this, viewModelFactory)[GraphListViewModel::class.java]
+        viewModel = ViewModelProvider(this, viewModelFactory)[GraphListViewModel::class.java]
 
         button_new_graph.setOnClickListener {
-            startActivity(GraphEditActivity.getIntent(this))
+            startActivity(BuilderActivity.getIntent(this))
         }
 
         button_new_graph.setOnLongClickListener {
@@ -53,12 +51,9 @@ class GraphListActivity : DaggerAppCompatActivity() {
 
         graphAdapter.onItemClick { item, longClick ->
             if (longClick) {
-                startActivity(
-                    BuilderActivity.getIntent(this, item.id)
-                )
             } else {
                 startActivity(
-                    GraphEditActivity.getIntent(this, item.id)
+                    BuilderActivity.getIntent(this, item.id)
                 )
             }
         }

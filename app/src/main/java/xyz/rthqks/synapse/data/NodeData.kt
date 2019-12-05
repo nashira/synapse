@@ -3,6 +3,7 @@ package xyz.rthqks.synapse.data
 import androidx.room.Entity
 import androidx.room.Ignore
 import androidx.room.Index
+import xyz.rthqks.synapse.logic.Node
 
 @Entity(
     tableName = "node",
@@ -14,12 +15,9 @@ import androidx.room.Index
 data class NodeData(
     val id: Int,
     val graphId: Int,
-    val type: NodeType
+    val type: Node.Type
 ) {
-    @Ignore
-    val inputs = type.inputs.map { PortConfig(PortKey(id, it.key, it.direction), it) }
-    @Ignore
-    val outputs = type.outputs.map { PortConfig(PortKey(id, it.key, it.direction), it) }
+
     @Ignore
     val properties = mutableMapOf<Key<*>, PropertyData>()
 

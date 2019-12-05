@@ -22,10 +22,6 @@
         android:theme="@style/AppTheme.NoActionBar"
         tools:ignore="GoogleAppIndexingWarning">
 
-        <activity
-            android:name=".ui.edit.GraphEditActivity"
-            android:label="@string/title_activity_graph_edit" />
-
         <activity android:name=".ui.browse.GraphListActivity">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />

@@ -10,7 +10,6 @@ import xyz.rthqks.synapse.data.SynapseDao
 import xyz.rthqks.synapse.data.SynapseDb
 import xyz.rthqks.synapse.ui.browse.GraphListActivity
 import xyz.rthqks.synapse.ui.build.BuilderActivity
-import xyz.rthqks.synapse.ui.edit.GraphEditActivity
 import xyz.rthqks.synapse.ui.exec.ExecGraphActivity
 import javax.inject.Singleton
 
@@ -20,10 +19,6 @@ abstract class AppModule {
     @ActivityScope
     @ContributesAndroidInjector(modules = [ActivityModule::class])
     abstract fun contributeGraphListActivity(): GraphListActivity
-
-    @ActivityScope
-    @ContributesAndroidInjector(modules = [ActivityModule::class])
-    abstract fun contributeGraphEditActivity(): GraphEditActivity
 
     @ActivityScope
     @ContributesAndroidInjector(modules = [ActivityModule::class])

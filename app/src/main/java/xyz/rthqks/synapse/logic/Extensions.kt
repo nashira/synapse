@@ -1,52 +1,14 @@
 package xyz.rthqks.synapse.logic
 
-import xyz.rthqks.synapse.data.*
+import xyz.rthqks.synapse.data.GraphData
+import xyz.rthqks.synapse.data.NodeData
+import xyz.rthqks.synapse.data.PortType
 
 fun GraphData.toGraph(): Graph {
     return Graph(id, name)
 }
 
-fun NodeData.toNode(): Node {
-    val type = when (type) {
-        NodeType.Camera -> Nodes.Camera.copy(graphId, id)
-        NodeType.VideoFile -> Nodes.MediaFile.copy(graphId, id)
-        NodeType.Microphone -> Nodes.Microphone.copy(graphId, id)
-        NodeType.FrameDifference -> Nodes.FrameDifference.copy(graphId, id)
-        NodeType.GrayscaleFilter -> Nodes.Grayscale.copy(graphId, id)
-        NodeType.MultiplyAccumulate -> Nodes.MultiplyAccumulate.copy(graphId, id)
-        NodeType.OverlayFilter -> Nodes.Overlay.copy(graphId, id)
-        NodeType.BlurFilter -> Nodes.Blur.copy(graphId, id)
-//        NodeType.AudioWaveform -> Nodes.AudioWaveform.copy(graphId, id)
-//        NodeType.Image -> Nodes.Image.copy(graphId, id)
-//        NodeType.AudioFile -> Nodes.AudioFile.copy(graphId, id)
-        NodeType.LutFilter -> Nodes.Lut.copy(graphId, id)
-//        NodeType.ShaderFilter -> Nodes.ShaderFilter.copy(graphId, id)
-        NodeType.Speakers -> Nodes.Speakers.copy(graphId, id)
-        NodeType.Screen -> Nodes.Screen.copy(graphId, id)
-        else -> Node(Node.Type.Image)
-    }
-    return type
-}
-
-fun Node.Type.toNodeType(): NodeType = when (this) {
-    Node.Type.Camera -> NodeType.Camera
-    Node.Type.Microphone -> NodeType.Microphone
-    Node.Type.MediaFile -> NodeType.VideoFile
-    Node.Type.FrameDifference -> NodeType.FrameDifference
-    Node.Type.GrayscaleFilter -> NodeType.GrayscaleFilter
-    Node.Type.MultiplyAccumulate -> NodeType.MultiplyAccumulate
-    Node.Type.OverlayFilter -> NodeType.OverlayFilter
-    Node.Type.BlurFilter -> NodeType.BlurFilter
-    Node.Type.AudioWaveform -> NodeType.AudioWaveform
-    Node.Type.Image -> NodeType.Image
-    Node.Type.AudioFile -> NodeType.AudioFile
-    Node.Type.LutFilter -> NodeType.LutFilter
-    Node.Type.ShaderFilter -> NodeType.ShaderFilter
-    Node.Type.Speakers -> NodeType.Speakers
-    Node.Type.Screen -> NodeType.Screen
-    Node.Type.Creation -> error("can't even")
-    Node.Type.Connection -> error("can't even")
-}
+fun NodeData.toNode(): Node = NodeMap[type]?.copy(graphId, id) ?: error("no mapping for type: $type")
 
 val NodeMap = mapOf(
     Node.Type.Camera to Nodes.Camera,
@@ -67,12 +29,3 @@ val NodeMap = mapOf(
     Node.Type.Creation to Node(Node.Type.Creation),
     Node.Type.Connection to Node(Node.Type.Connection)
 )
-
-fun PortConfig.toPort(): Port {
-    val type = when (type) {
-        is PortType.Surface -> Port.Type.Video
-        is PortType.Texture -> Port.Type.Video
-        is PortType.AudioBuffer -> Port.Type.Audio
-    }
-    return Port(type, key.key, key.key, key.direction == PortType.OUTPUT)
-}

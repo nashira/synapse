@@ -7,9 +7,9 @@ import kotlinx.coroutines.*
 import xyz.rthqks.synapse.assets.AssetManager
 import xyz.rthqks.synapse.data.GraphData
 import xyz.rthqks.synapse.data.Key
-import xyz.rthqks.synapse.data.NodeType
 import xyz.rthqks.synapse.exec.node.*
 import xyz.rthqks.synapse.gl.GlesManager
+import xyz.rthqks.synapse.logic.Node
 import java.util.concurrent.Executors
 
 class GraphExecutor(
@@ -36,47 +36,49 @@ class GraphExecutor(
 
         graphData.nodes.forEach {
             val node = when (it.type) {
-                NodeType.Camera -> CameraNode(
+                Node.Type.Camera -> CameraNode(
                     cameraManager,
                     glesManager,
                     it[Key.CameraFacing],
                     it[Key.CameraCaptureSize],
                     it[Key.CameraFrameRate]
                 )
-                NodeType.FrameDifference -> FrameDifferenceNode(glesManager, assetManager)
-                NodeType.GrayscaleFilter -> GrayscaleNode(
+                Node.Type.FrameDifference -> FrameDifferenceNode(glesManager, assetManager)
+                Node.Type.GrayscaleFilter -> GrayscaleNode(
                     glesManager, assetManager, it[Key.ScaleFactor]
                 )
-                NodeType.BlurFilter -> BlurNode(
+                Node.Type.BlurFilter -> BlurNode(
                     glesManager,
                     assetManager,
                     it[Key.BlurSize],
                     it[Key.NumPasses],
                     it[Key.ScaleFactor]
                 )
-                NodeType.MultiplyAccumulate -> MacNode(
+                Node.Type.MultiplyAccumulate -> MacNode(
                     glesManager,
                     assetManager,
                     it[Key.MultiplyFactor],
                     it[Key.AccumulateFactor]
                 )
-                NodeType.OverlayFilter -> OverlayFilterNode(glesManager, assetManager)
-                NodeType.Microphone -> AudioSourceNode(
+                Node.Type.OverlayFilter -> OverlayFilterNode(glesManager, assetManager)
+                Node.Type.Microphone -> AudioSourceNode(
                     it[Key.AudioSampleRate],
                     it[Key.AudioChannel],
                     it[Key.AudioEncoding],
                     it[Key.AudioSource]
                 )
-                NodeType.AudioWaveform -> AudioWaveformNode(glesManager, assetManager)
-                NodeType.Image -> TODO()
-                NodeType.AudioFile -> TODO()
-                NodeType.VideoFile -> DecoderNode(glesManager, context, it[Key.Uri])
-                NodeType.LutFilter -> GlNode(glesManager, assetManager)
-                NodeType.ShaderFilter -> TODO()
-                NodeType.Speakers -> AudioPlayerNode()
-                NodeType.Screen -> SurfaceViewNode(
+                Node.Type.AudioWaveform -> AudioWaveformNode(glesManager, assetManager)
+                Node.Type.Image -> TODO()
+                Node.Type.AudioFile -> TODO()
+                Node.Type.MediaFile -> DecoderNode(glesManager, context, it[Key.Uri])
+                Node.Type.LutFilter -> GlNode(glesManager, assetManager)
+                Node.Type.ShaderFilter -> TODO()
+                Node.Type.Speakers -> AudioPlayerNode()
+                Node.Type.Screen -> SurfaceViewNode(
                     surfaceView
                 )
+                Node.Type.Creation -> error("not an executable node type: ${it.type}")
+                Node.Type.Connection -> error("not an executable node type: ${it.type}")
             }
             nodes[it.id] = node
         }
