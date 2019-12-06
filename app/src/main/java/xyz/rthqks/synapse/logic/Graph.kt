@@ -48,6 +48,8 @@ class Graph(
         return nodes.values.toList()
     }
 
+    fun getEdges(): List<Edge> = edges
+
     fun addEdge(
         fromNodeId: Int,
         fromKey: String,
@@ -103,8 +105,7 @@ class Graph(
     fun getPotentialConnectors(connector: Connector): List<Connector> {
         val port = connector.port
         val connectors = mutableListOf<Connector>()
-        Node.Type.values().forEach {
-            val n = NodeMap[it] ?: error("missing node map entry")
+        Node.All.forEach { n ->
             connectors += n.ports.filter { it.value.type == port.type
                     && it.value.output != port.output }
                 .map { Connector(n.copy(id), it.value) }
@@ -114,8 +115,7 @@ class Graph(
 
     fun getCreationConnectors(): List<Connector> {
         val connectors = mutableListOf<Connector>()
-        Node.Type.values().forEach {
-            val n = NodeMap[it] ?: error("missing node map entry")
+        Node.All.forEach { n ->
             connectors += n.ports.filter { it.value.output }
                 .map { Connector(n.copy(id), it.value) }
         }

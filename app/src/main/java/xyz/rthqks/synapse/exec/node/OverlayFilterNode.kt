@@ -6,7 +6,6 @@ import android.util.Log
 import android.util.Size
 import android.view.Surface
 import kotlinx.coroutines.Job
-import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
@@ -14,7 +13,6 @@ import kotlinx.coroutines.selects.whileSelect
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import xyz.rthqks.synapse.assets.AssetManager
-import xyz.rthqks.synapse.data.PortType
 import xyz.rthqks.synapse.exec.NodeExecutor
 import xyz.rthqks.synapse.exec.edge.*
 import xyz.rthqks.synapse.gl.*
@@ -24,18 +22,12 @@ class OverlayFilterNode(
     private val assetManager: AssetManager
 ) : NodeExecutor() {
     private var startJob: Job? = null
-    private var contentInput: Connection<TextureConfig, TextureEvent>? = null
-    private var contentChannel: Channel<TextureEvent>? = null
-    private var maskInput: Connection<TextureConfig, TextureEvent>? = null
-    private var maskChannel: Channel<TextureEvent>? = null
     private var contentSize = Size(0, 0)
     private val connectMutex = Mutex(true)
 
-    private var outputTextureConnection: Connection<TextureConfig, TextureEvent>? = null
     private var texture: Texture? = null
     private var framebuffer: Framebuffer? = null
 
-    private var outputSurfaceConnection: Connection<SurfaceConfig, SurfaceEvent>? = null
     private var outputSurfaceWindow: WindowSurface? = null
 
     private val mesh = Quad()
@@ -46,7 +38,7 @@ class OverlayFilterNode(
     }
 
     override suspend fun initialize() {
-        val connection = contentInput ?: error("missing input connection")
+        val connection = connection(INPUT_CONTENT) ?: error("missing input connection")
         val config = connection.config
         val vertexSource = assetManager.readTextAsset("overlay_filter.vert")
         val fragmentSource = assetManager.readTextAsset("overlay_filter.frag").let {
@@ -106,28 +98,28 @@ class OverlayFilterNode(
             }
         }
 
-        outputTextureConnection?.prime(
-            TextureEvent(texture!!, FloatArray(16).also { Matrix.setIdentityM(it, 0) })
-        )
 
-        outputSurfaceConnection?.prime(SurfaceEvent())
-        outputSurfaceConnection?.prime(SurfaceEvent())
-        outputSurfaceConnection?.prime(SurfaceEvent())
+        connection(OUTPUT)?.let {
+            if (it.config.requiresSurface) {
+                repeat(3) { n -> it.prime(VideoEvent()) }
+            } else {
+                it.prime(VideoEvent(texture!!))
+            }
+        }
     }
 
-    override suspend fun start() = when {
-        outputSurfaceConnection != null -> startSurface()
-        outputTextureConnection != null -> startTexture()
-        else -> {
-            Log.w(TAG, "no connection on start")
-            Unit
+    override suspend fun start() {
+        when (config(OUTPUT)?.requiresSurface) {
+            true -> startSurface()
+            false -> startTexture()
+            else -> Log.w(TAG, "no connection on start")
         }
     }
 
     private suspend fun startTexture() = coroutineScope {
-        val output = outputTextureConnection ?: error("no output connection")
-        val input = contentChannel ?: error("no content connection")
-        val mask = maskChannel ?: error("no mask connection")
+        val output = connection(OUTPUT) ?: error("no output connection")
+        val input = channel(INPUT_CONTENT) ?: error("no content connection")
+        val mask = channel(INPUT_MASK) ?: error("no mask connection")
 
         var copyMatrix = true
 
@@ -166,20 +158,20 @@ class OverlayFilterNode(
     }
 
     private suspend fun startSurface() = coroutineScope {
-        val output = outputSurfaceConnection ?: return@coroutineScope
-        val input = contentChannel ?: return@coroutineScope
-        val mask = maskChannel ?: error("no mask connection")
+        val output = connection(OUTPUT) ?: return@coroutineScope
+        val input = channel(INPUT_CONTENT) ?: return@coroutineScope
+        val mask = channel(INPUT_MASK) ?: error("no mask connection")
         val config = output.config
 
-        updateOutputSurface(config.getSurface())
+        updateOutputSurface(config.surface.get())
 
         var copyMatrix = true
 
         startJob = launch {
 
             while (isActive) {
-                var inEventRaw: TextureEvent? = null
-                var maskEventRaw: TextureEvent? = null
+                var inEventRaw: VideoEvent? = null
+                var maskEventRaw: VideoEvent? = null
 
                 whileSelect {
                     input.onReceive {
@@ -203,10 +195,10 @@ class OverlayFilterNode(
 
                 val outEvent = output.dequeue()
                 outEvent.eos = inEvent.eos
-                outEvent.count = inEvent.count.toLong()
+                outEvent.count = inEvent.count
                 outEvent.timestamp = inEvent.timestamp
 
-                if (config.hasSurface()) {
+                if (config.surface.has()) {
                     if (copyMatrix) {
                         copyMatrix = false
 
@@ -270,52 +262,36 @@ class OverlayFilterNode(
         }
     }
 
-    override suspend fun output(key: String): Connection<*, *>? = when (key) {
-        PortType.SURFACE_1 -> {
-            connectMutex.withLock {}
-            SingleConsumer<SurfaceConfig, SurfaceEvent>(
-                SurfaceConfig(contentSize, 0)
-            ).also { connection ->
-                outputSurfaceConnection = connection
+    @Suppress("UNCHECKED_CAST")
+    override suspend fun <C : Config, E : Event> makeConfig(key: Connection.Key<C, E>): C {
+        return when (key) {
+            OUTPUT -> {
+                connectMutex.withLock {}
+                val config = config(INPUT_CONTENT)!!
+                contentSize = config.size
+
+                VideoConfig(
+                    GL_TEXTURE_2D,
+                    contentSize.width,
+                    contentSize.height,
+                    config.internalFormat,
+                    config.format,
+                    config.type
+                ) as C
             }
+            else -> error("unknown key $key")
         }
-        PortType.TEXTURE_1 -> {
-            connectMutex.withLock {}
-            val connection = contentInput!!
-            val config = connection.config
-            SingleConsumer<TextureConfig, TextureEvent>(
-                TextureConfig(GL_TEXTURE_2D,
-                contentSize.width,
-                contentSize.height,
-                config.internalFormat,
-                config.format,
-                config.type
-                )
-            ).also {
-                outputTextureConnection = it
-            }
-        }
-        else -> null
     }
 
-    override suspend fun <C: Config, T : Event> input(key: String, connection: Connection<C, T>) {
-        when (key) {
-            PortType.TEXTURE_1 -> {
-                contentInput = connection as Connection<TextureConfig, TextureEvent>
-                contentChannel = connection.consumer()
-                contentSize = connection.config.size
-
-                connectMutex.unlock()
-            }
-            PortType.TEXTURE_2 -> {
-                maskInput = connection as Connection<TextureConfig, TextureEvent>
-                maskChannel = connection.consumer()
-//                contentSize = connection.size.let { Size(it.width, it.height) }
-            }
-        }
+    override suspend fun <C : Config, E : Event> setConfig(key: Connection.Key<C, E>, config: C) {
+        super.setConfig(key, config)
+        if (key == INPUT_CONTENT) connectMutex.unlock()
     }
 
     companion object {
-        private val TAG = OverlayFilterNode::class.java.simpleName
+        const val TAG = "OverlayFilterNode"
+        val INPUT_CONTENT = Connection.Key<VideoConfig, VideoEvent>("video_1")
+        val INPUT_MASK = Connection.Key<VideoConfig, VideoEvent>("video_2")
+        val OUTPUT = Connection.Key<VideoConfig, VideoEvent>("video_3")
     }
 }

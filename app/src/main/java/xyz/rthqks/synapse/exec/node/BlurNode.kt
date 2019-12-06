@@ -5,14 +5,12 @@ import android.opengl.Matrix
 import android.util.Log
 import android.util.Size
 import kotlinx.coroutines.Job
-import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import xyz.rthqks.synapse.assets.AssetManager
-import xyz.rthqks.synapse.data.PortType
 import xyz.rthqks.synapse.exec.NodeExecutor
 import xyz.rthqks.synapse.exec.edge.*
 import xyz.rthqks.synapse.gl.*
@@ -24,14 +22,11 @@ class BlurNode(
     private val passes: Int = 1,
     private val scale: Int = 1
 ) : NodeExecutor() {
-    private var inputChannel: Channel<TextureEvent>? = null
-    private var inputConnection: Connection<TextureConfig, TextureEvent>? = null
     private var startJob: Job? = null
     private val connectMutex = Mutex(true)
     private var inputSize = Size(0, 0)
     private var size = Size(0, 0)
 
-    private var outputConnection: Connection<TextureConfig, TextureEvent>? = null
     private lateinit var texture1: Texture
     private lateinit var framebuffer1: Framebuffer
 
@@ -48,7 +43,7 @@ class BlurNode(
 
     override suspend fun initialize() {
 
-        inputConnection?.let {
+        connection(INPUT)?.let {
             val config = it.config
             texture1 = Texture(
                 GL_TEXTURE_2D,
@@ -81,8 +76,8 @@ class BlurNode(
                 data[1] = size.height.toFloat()
             }
         }
-        outputConnection?.prime(
-            TextureEvent(texture2, FloatArray(16).also { Matrix.setIdentityM(it, 0) })
+        connection(OUTPUT)?.prime(
+            VideoEvent(texture2, FloatArray(16).also { Matrix.setIdentityM(it, 0) })
         )
     }
 
@@ -92,7 +87,7 @@ class BlurNode(
         framebuffer: Framebuffer,
         oes: Boolean
     ) {
-        val connection = inputConnection ?: error("missing input connection")
+        val connection = connection(INPUT) ?: error("missing input connection")
         val config = connection.config
 
         val fragName = when (blurSize) {
@@ -158,9 +153,8 @@ class BlurNode(
     }
 
     override suspend fun start() = coroutineScope {
-        val output = outputConnection ?: return@coroutineScope
-        val input = inputConnection ?: return@coroutineScope
-        val channel = inputChannel ?: return@coroutineScope
+        val output = connection(OUTPUT) ?: return@coroutineScope
+        val channel = channel(INPUT) ?: return@coroutineScope
 
         var copyMatrix = true
 
@@ -253,41 +247,37 @@ class BlurNode(
         }
     }
 
-    override suspend fun output(key: String): Connection<*, *>? = when (key) {
-        PortType.TEXTURE_1 -> {
-            connectMutex.withLock {}
-            val connection = inputConnection!!
-            val config = connection.config
-            SingleConsumer<TextureConfig, TextureEvent>(
-                TextureConfig(
+    @Suppress("UNCHECKED_CAST")
+    override suspend fun <C : Config, E : Event> makeConfig(key: Connection.Key<C, E>): C {
+        return when(key) {
+            OUTPUT -> {
+                connectMutex.withLock {}
+                val config = config(INPUT)!!
+
+                inputSize = config.size
+                size = Size(inputSize.width / scale, inputSize.height / scale)
+
+                VideoConfig(
                     GL_TEXTURE_2D,
                     size.width,
                     size.height,
                     config.internalFormat,
                     config.format,
                     config.type
-                )
-            ).also {
-                outputConnection = it
+                ) as C
             }
+            else -> error("unknown key $key")
         }
-        else -> null
     }
 
-    override suspend fun <C : Config, T : Event> input(key: String, connection: Connection<C, T>) {
-        when (key) {
-            PortType.TEXTURE_1 -> {
-                inputConnection = connection as Connection<TextureConfig, TextureEvent>
-                inputChannel = connection.consumer()
-                inputSize = connection.config.size
-                size = Size(inputSize.width / scale, inputSize.height / scale)
-
-                connectMutex.unlock()
-            }
-        }
+    override suspend fun <C : Config, E : Event> setConfig(key: Connection.Key<C, E>, config: C) {
+        super.setConfig(key, config)
+        if (key == INPUT) connectMutex.unlock()
     }
 
     companion object {
-        private val TAG = BlurNode::class.java.simpleName
+        const val TAG = "BlurNode"
+        val INPUT = Connection.Key<VideoConfig, VideoEvent>("video_1")
+        val OUTPUT = Connection.Key<VideoConfig, VideoEvent>("video_2")
     }
 }

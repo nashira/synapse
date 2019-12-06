@@ -13,7 +13,10 @@ import xyz.rthqks.synapse.data.EdgeData
 import xyz.rthqks.synapse.data.GraphData
 import xyz.rthqks.synapse.data.NodeData
 import xyz.rthqks.synapse.data.SynapseDao
-import xyz.rthqks.synapse.logic.*
+import xyz.rthqks.synapse.logic.Connector
+import xyz.rthqks.synapse.logic.Graph
+import xyz.rthqks.synapse.logic.Node
+import xyz.rthqks.synapse.logic.Port
 import xyz.rthqks.synapse.util.Consumable
 import javax.inject.Inject
 
@@ -200,8 +203,8 @@ class BuilderViewModel @Inject constructor(
 
     companion object {
         const val TAG = "BuilderViewModel"
-        val CONNECTION_NODE = NodeMap[Node.Type.Connection] ?: error("missing node")
-        val CREATION_NODE = NodeMap[Node.Type.Creation] ?: error("missing node")
+        val CONNECTION_NODE = Node.Type.Connection.node()
+        val CREATION_NODE = Node.Type.Creation.node()
         val FAKE_PORT = Port(Port.Type.Video, "", "", false)
     }
 }

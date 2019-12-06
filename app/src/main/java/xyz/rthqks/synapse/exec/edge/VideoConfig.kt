@@ -21,4 +21,7 @@ class VideoConfig(
     val size = Size(width, height)
     val isOes = target == GLES11Ext.GL_TEXTURE_EXTERNAL_OES
     val surface = SuspendableGet<Surface>()
+
+    // set by consumer
+    var requiresSurface = false
 }

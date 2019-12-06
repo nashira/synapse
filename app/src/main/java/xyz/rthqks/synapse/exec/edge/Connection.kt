@@ -11,9 +11,10 @@ interface Connection<C : Config, E : Event> {
     suspend fun queue(item: E)
     suspend fun dequeue(): E
     fun poll(): E?
+    fun producer(): Channel<E>
     fun consumer(): Channel<E>
     suspend fun prime(item: E)
-    class Key<C : Config, E : Event>(val name: String)
+    data class Key<C : Config, E : Event>(val id: String)
 }
 
 class SingleConsumer<C : Config, E : Event>(
@@ -30,12 +31,13 @@ class SingleConsumer<C : Config, E : Event>(
 
     override fun poll(): E? = duplex.rx.poll()
 
+    override fun producer(): Channel<E> = duplex.host
     override fun consumer(): Channel<E> = duplex.client
 
     override suspend fun prime(item: E) = duplex.rx.send(item)
 
     companion object {
-        private const val TAG = "Connection"
+        const val TAG = "Connection"
     }
 }
 
@@ -43,10 +45,39 @@ class MultiConsumer<C : Config, E : Event>(
     override val config: C
 ) : Connection<C, E> {
     private val consumers = mutableListOf<Duplex<E>>()
+    private val producer = object : Channel<E> by Channel() {
+        override suspend fun send(element: E) {
+            element._counter.set(consumers.size)
+            consumers.forEach {
+                it.tx.send(element)
+            }
+        }
+
+        override suspend fun receive(): E {
+            while (true) {
+                val item = select<E?> {
+                    consumers.forEach {
+                        it.rx.onReceive { item ->
+                            if (item._counter.decrementAndGet() == 0) {
+                                item
+                            } else {
+                                null
+                            }
+                        }
+                    }
+                }
+                item?.let {
+                    return it
+                }
+            }
+        }
+    }
 
     fun consumer(duplex: Duplex<E>) {
         consumers.add(duplex)
     }
+
+    override fun producer(): Channel<E> = producer
 
     override fun consumer(): Channel<E> {
         val duplex = Duplex<E>(
@@ -97,7 +128,7 @@ class MultiConsumer<C : Config, E : Event>(
     override suspend fun prime(item: E) {
         item._counter.set(consumers.size)
         consumers.forEach {
-            it.client.send(item)
+            it.rx.send(item)
         }
     }
 
@@ -112,6 +143,8 @@ abstract class Event {
     val _counter = AtomicInteger()
 }
 
+class Connector<C : Config, E : Event>(val channel: Channel<E>, val config: C)
+
 class Duplex<E : Event>(
     internal val tx: Channel<E>,
     internal val rx: Channel<E>
@@ -121,5 +154,6 @@ class Duplex<E : Event>(
 }
 
 class Simplex<E>(
-    tx: Channel<E>, rx: Channel<E>
+    tx: Channel<E>,
+    rx: Channel<E>
 ) : Channel<E>, SendChannel<E> by tx, ReceiveChannel<E> by rx

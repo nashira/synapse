@@ -6,25 +6,24 @@ import android.media.AudioRecord
 import android.media.AudioTrack
 import android.util.Log
 import kotlinx.coroutines.Job
-import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
-import xyz.rthqks.synapse.data.PortType
 import xyz.rthqks.synapse.exec.NodeExecutor
-import xyz.rthqks.synapse.exec.edge.*
+import xyz.rthqks.synapse.exec.edge.AudioConfig
+import xyz.rthqks.synapse.exec.edge.AudioEvent
+import xyz.rthqks.synapse.exec.edge.Connection
 
 class AudioPlayerNode : NodeExecutor() {
     private var audioTrack: AudioTrack? = null
     private var audioFormat: AudioFormat? = null
-    private var connection: Connection<AudioConfig, AudioEvent>? = null
-    private var channel: Channel<AudioEvent>? = null
     private var playJob: Job? = null
-    private var running = false
 
     override suspend fun create() {
     }
 
     override suspend fun initialize() {
+        audioFormat = config(KEY)?.audioFormat
+
         audioFormat?.let {
             val bufferSize = AudioRecord.getMinBufferSize(
                 it.sampleRate,
@@ -44,10 +43,9 @@ class AudioPlayerNode : NodeExecutor() {
     }
 
     override suspend fun start() = coroutineScope {
-        val channel = channel ?: return@coroutineScope
-
         playJob = launch {
-            running = true
+            val channel = channel(KEY) ?: return@launch
+            var running = true
             audioTrack?.play()
             var numFrames = 0
             while (running) {
@@ -79,19 +77,8 @@ class AudioPlayerNode : NodeExecutor() {
         audioTrack?.release()
     }
 
-    override suspend fun output(key: String): Connection<*, *> {
-        throw IllegalStateException("no outputs: $this")
-    }
-
-    override suspend fun <C : Config, T : Event> input(key: String, connection: Connection<C, T>) {
-        if (key == PortType.AUDIO_1) {
-            this.connection = connection as Connection<AudioConfig, AudioEvent>
-            channel = connection.consumer()
-            audioFormat = connection.config.audioFormat
-        }
-    }
-
     companion object {
-        private val TAG = AudioPlayerNode::class.java.simpleName
+        const val TAG = "AudioPlayerNode"
+        val KEY = Connection.Key<AudioConfig, AudioEvent>("audio_1")
     }
 }

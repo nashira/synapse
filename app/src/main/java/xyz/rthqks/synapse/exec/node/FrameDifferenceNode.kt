@@ -5,14 +5,12 @@ import android.opengl.Matrix
 import android.util.Log
 import android.util.Size
 import kotlinx.coroutines.Job
-import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import xyz.rthqks.synapse.assets.AssetManager
-import xyz.rthqks.synapse.data.PortType
 import xyz.rthqks.synapse.exec.NodeExecutor
 import xyz.rthqks.synapse.exec.edge.*
 import xyz.rthqks.synapse.gl.*
@@ -23,12 +21,7 @@ class FrameDifferenceNode(
 ) : NodeExecutor() {
     private var startJob: Job? = null
     private var size = Size(0, 0)
-    private var inputConnection: Connection<TextureConfig, TextureEvent>? = null
-    private var inputChannel: Channel<TextureEvent>? = null
     private val connectMutex = Mutex(true)
-
-    private var outputConnection1: Connection<TextureConfig, TextureEvent>? = null
-    private var outputConnection2: Connection<TextureConfig, TextureEvent>? = null
 
     private val mesh = Quad()
     private val program = Program()
@@ -56,23 +49,18 @@ class FrameDifferenceNode(
     }
 
     override suspend fun initialize() {
-        inputConnection?.config?.isOes?.let {
-            createProgram(it)
+        config(INPUT)?.let {
+            createProgram(it.isOes)
             createTextures()
         }
-        outputConnection1?.prime(
-            TextureEvent(
-                lastFrameTexture1,
-                FloatArray(16).also { Matrix.setIdentityM(it, 0) })
-        )
-        outputConnection2?.prime(
-            TextureEvent(diffTexture, FloatArray(16).also { Matrix.setIdentityM(it, 0) })
+
+        connection(OUTPUT)?.prime(
+            VideoEvent(diffTexture)
         )
     }
 
     private suspend fun createTextures() {
-        val connection = inputConnection ?: error("missing input connection")
-        val config = connection.config
+        val config = config(INPUT) ?: error("missing input connection")
 
         val intFormat = config.internalFormat
         val format = config.format
@@ -84,9 +72,10 @@ class FrameDifferenceNode(
             lastFrameTexture2.initialize()
             diffTexture.initData(
                 0,
-                GL_R8, size.width, size.height,
-                GL_RED,
-                GL_UNSIGNED_BYTE
+                config.internalFormat,
+                size.width, size.height,
+                config.format,
+                config.type
             )
             Log.d(TAG, "1 glGetError() ${glGetError()}")
             lastFrameTexture1.initData(
@@ -151,11 +140,8 @@ class FrameDifferenceNode(
 
 
     override suspend fun start() = coroutineScope {
-        if (outputConnection1 == null && outputConnection2 == null) {
-            Log.d(TAG, "no outputs, not starting")
-            return@coroutineScope
-        }
-        val input = inputChannel ?: return@coroutineScope
+        val output = connection(OUTPUT) ?: return@coroutineScope
+        val input = channel(INPUT) ?: return@coroutineScope
 
         var copyMatrix = true
 
@@ -163,16 +149,7 @@ class FrameDifferenceNode(
             while (isActive) {
                 val inEvent = input.receive()
 
-                val outEvent1 = outputConnection1?.dequeue()
-                val outEvent2 = outputConnection2?.dequeue()
-
-                outEvent1?.apply {
-                    eos = inEvent.eos
-                    count = inEvent.count
-                    timestamp = inEvent.timestamp
-                }
-
-                outEvent2?.apply {
+                val outEvent = output.dequeue().apply {
                     eos = inEvent.eos
                     count = inEvent.count
                     timestamp = inEvent.timestamp
@@ -192,21 +169,13 @@ class FrameDifferenceNode(
 
                 input.send(inEvent)
 
-                val outTexture: Texture
                 if (framebuffer == framebuffer1) {
                     framebuffer = framebuffer2
-                    outTexture = lastFrameTexture1
                 } else {
                     framebuffer = framebuffer1
-                    outTexture = lastFrameTexture2
                 }
 
-                outEvent1?.let {
-                    it.texture = outTexture
-                    outputConnection1?.queue(it)
-                }
-
-                outEvent2?.let { outputConnection2?.queue(it) }
+                output.queue(outEvent)
 
                 if (inEvent.eos) {
                     Log.d(TAG, "got EOS")
@@ -238,7 +207,7 @@ class FrameDifferenceNode(
     }
 
     override suspend fun release() {
-        inputConnection?.let {
+        connection(INPUT)?.let {
             glesManager.withGlContext {
                 diffTexture.release()
                 lastFrameTexture1.release()
@@ -251,57 +220,38 @@ class FrameDifferenceNode(
         }
     }
 
-    override suspend fun output(key: String): Connection<*, *>? = when (key) {
-        PortType.TEXTURE_1 -> {
-            connectMutex.withLock {}
-            val connection = inputConnection ?: error("missing input connection")
-            val config = connection.config
-
-            SingleConsumer<TextureConfig, TextureEvent>(
-                TextureConfig(
+    @Suppress("UNCHECKED_CAST")
+    override suspend fun <C : Config, E : Event> makeConfig(key: Connection.Key<C, E>): C {
+        return when (key) {
+            OUTPUT -> {
+                connectMutex.withLock {}
+                val config = config(INPUT)!!
+                size = config.size
+                VideoConfig(
                     GL_TEXTURE_2D,
                     size.width,
                     size.height,
                     config.internalFormat,
                     config.format,
                     config.type
-                )
-            ).also {
-                outputConnection1 = it
+                ) as C
             }
+            else -> error("unknown key $key")
         }
-        PortType.TEXTURE_2 -> {
-            connectMutex.withLock {}
-
-            SingleConsumer<TextureConfig, TextureEvent>(
-                TextureConfig(
-                    GL_TEXTURE_2D,
-                    size.width,
-                    size.height,
-                    GL_R8,
-                    GL_RED,
-                    GL_UNSIGNED_BYTE
-                )
-            ).also {
-                outputConnection2 = it
-            }
-        }
-        else -> null
     }
 
-    override suspend fun <C: Config, T : Event> input(key: String, connection: Connection<C, T>) {
+    override suspend fun <C : Config, E : Event> setConfig(key: Connection.Key<C, E>, config: C) {
+        super.setConfig(key, config)
         when (key) {
-            PortType.TEXTURE_1 -> {
-                inputConnection = connection as Connection<TextureConfig, TextureEvent>
-                inputChannel = connection.consumer()
-                size = connection.config.size
-
+            INPUT -> {
                 connectMutex.unlock()
             }
         }
     }
 
     companion object {
-        private val TAG = FrameDifferenceNode::class.java.simpleName
+        const val TAG = "FrameDifferenceNode"
+        val INPUT = Connection.Key<VideoConfig, VideoEvent>("video_1")
+        val OUTPUT = Connection.Key<VideoConfig, VideoEvent>("video_2")
     }
 }

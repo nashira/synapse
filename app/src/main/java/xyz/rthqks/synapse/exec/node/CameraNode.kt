@@ -15,7 +15,6 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
-import xyz.rthqks.synapse.data.PortType
 import xyz.rthqks.synapse.exec.CameraManager
 import xyz.rthqks.synapse.exec.NodeExecutor
 import xyz.rthqks.synapse.exec.edge.*
@@ -32,11 +31,8 @@ class CameraNode(
     private lateinit var size: Size
     private lateinit var cameraId: String
     private var surfaceRotation = 0
-    private var surfaceConnection: Connection<SurfaceConfig, SurfaceEvent>? = null
-    private var textureConnection: Connection<TextureConfig, TextureEvent>? = null
     private var startJob: Job? = null
     private val mutex = Mutex()
-    private val connectMutex = Mutex()
     private var outputSurface: Surface? = null
     private var outputSurfaceTexture: SurfaceTexture? = null
     private val outputTexture = Texture(
@@ -54,28 +50,29 @@ class CameraNode(
     }
 
     override suspend fun initialize() {
-        glesManager.withGlContext {
-            outputTexture.initialize()
+        val connection = connection(OUTPUT) ?: return
+        val config = connection.config
+
+        if (config.requiresSurface) {
+            repeat(3) { connection.prime(VideoEvent()) }
+        } else {
+            glesManager.withGlContext {
+                outputTexture.initialize()
+            }
+
+            outputSurfaceTexture = SurfaceTexture(outputTexture.id)
+            outputSurfaceTexture?.setDefaultBufferSize(size.width, size.height)
+            outputSurface = Surface(outputSurfaceTexture)
+
+            connection.prime(
+                VideoEvent(outputTexture)
+            )
         }
-
-        outputSurfaceTexture = SurfaceTexture(outputTexture.id)
-        outputSurfaceTexture?.setDefaultBufferSize(size.width, size.height)
-        outputSurface = Surface(outputSurfaceTexture)
-
-        textureConnection?.prime(
-            TextureEvent(
-                outputTexture,
-                FloatArray(16).also { Matrix.setIdentityM(it, 0) })
-        )
-
-        surfaceConnection?.prime(SurfaceEvent())
-        surfaceConnection?.prime(SurfaceEvent())
-        surfaceConnection?.prime(SurfaceEvent())
     }
 
-    override suspend fun start() = when {
-        surfaceConnection != null -> startSurface()
-        textureConnection != null -> startTexture()
+    override suspend fun start() = when (config(OUTPUT)?.requiresSurface) {
+        true -> startSurface()
+        false -> startTexture()
         else -> {
             Log.w(TAG, "no connection, not starting")
             Unit
@@ -83,16 +80,16 @@ class CameraNode(
     }
 
     private suspend fun startSurface() = coroutineScope {
-        val connection = surfaceConnection ?: return@coroutineScope
+        val connection = connection(OUTPUT) ?: return@coroutineScope
         val config = connection.config
-        val surface = config.getSurface()
+        val surface = config.surface.get()
         mutex.lock()
         startJob = launch {
             cameraManager.start(cameraId, surface, frameRate) { count, timestamp, eos ->
                 launch {
                     val frame = connection.dequeue()
                     frame.eos = eos
-                    frame.count = count
+                    frame.count = count.toInt()
                     frame.timestamp = timestamp
                     connection.queue(frame)
                     if (eos) {
@@ -109,7 +106,7 @@ class CameraNode(
     }
 
     private suspend fun startTexture() = coroutineScope {
-        val connection = textureConnection ?: return@coroutineScope
+        val connection = connection(OUTPUT) ?: return@coroutineScope
         val surface = outputSurface ?: return@coroutineScope
         mutex.lock()
 
@@ -161,7 +158,7 @@ class CameraNode(
     }
 
     private suspend fun onFrame(
-        connection: Connection<TextureConfig, TextureEvent>,
+        connection: Connection<VideoConfig, VideoEvent>,
         surfaceTexture: SurfaceTexture,
         copyMatrix: Boolean
     ) {
@@ -201,53 +198,30 @@ class CameraNode(
         outputTexture.release()
     }
 
-    override suspend fun output(key: String): Connection<*, *>? = when (key) {
-        PortType.SURFACE_1 -> SingleConsumer<SurfaceConfig, SurfaceEvent>(
-            SurfaceConfig(size, surfaceRotation)
-        ).also {
-            surfaceConnection = it
-        }
-        PortType.TEXTURE_1 -> {
-
-            connectMutex.withLock {
+    @Suppress("UNCHECKED_CAST")
+    override suspend fun <C : Config, E : Event> makeConfig(key: Connection.Key<C, E>): C {
+        return when (key) {
+            OUTPUT -> {
                 val rotatedSize =
                     if (surfaceRotation == 90 || surfaceRotation == 270)
                         Size(size.height, size.width) else size
-                val con = textureConnection
-                when (con) {
-                    null -> {
-                        SingleConsumer(
-                            TextureConfig(
-                                GLES11Ext.GL_TEXTURE_EXTERNAL_OES,
-                                rotatedSize.width,
-                                rotatedSize.height,
-                                GLES32.GL_RGB8,
-                                GLES32.GL_RGB,
-                                GLES32.GL_UNSIGNED_BYTE
-                            )
-                        )
-                    }
-                    is SingleConsumer -> {
-                        MultiConsumer<TextureConfig, TextureEvent>(con.config).also {
-                            it.consumer(con.duplex)
-                        }
-                    }
-                    else -> {
-                        textureConnection
-                    }
-                }.also {
-                    textureConnection = it
-                }
-            }
-        }
-        else -> null
-    }
 
-    override suspend fun <C : Config, T : Event> input(key: String, connection: Connection<C, T>) {
-        throw IllegalStateException("$TAG has no inputs")
+                VideoConfig(
+                    GLES11Ext.GL_TEXTURE_EXTERNAL_OES,
+                    rotatedSize.width,
+                    rotatedSize.height,
+                    GLES32.GL_RGB8,
+                    GLES32.GL_RGB,
+                    GLES32.GL_UNSIGNED_BYTE,
+                    surfaceRotation
+                ) as C
+            }
+            else -> error("unknown key $key")
+        }
     }
 
     companion object {
-        private val TAG = CameraNode::class.java.simpleName
+        const val TAG = "CameraNode"
+        val OUTPUT = Connection.Key<VideoConfig, VideoEvent>("video_1")
     }
 }

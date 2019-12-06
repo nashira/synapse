@@ -5,14 +5,12 @@ import android.opengl.Matrix
 import android.util.Log
 import android.util.Size
 import kotlinx.coroutines.Job
-import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import xyz.rthqks.synapse.assets.AssetManager
-import xyz.rthqks.synapse.data.PortType
 import xyz.rthqks.synapse.exec.NodeExecutor
 import xyz.rthqks.synapse.exec.edge.*
 import xyz.rthqks.synapse.gl.*
@@ -25,11 +23,7 @@ class MacNode(
 ) : NodeExecutor() {
     private var startJob: Job? = null
     private var size = Size(0, 0)
-    private var inputConnection: Connection<TextureConfig, TextureEvent>? = null
-    private var inputChannel: Channel<TextureEvent>? = null
     private val connectMutex = Mutex(true)
-
-    private var outputConnection: Connection<TextureConfig, TextureEvent>? = null
 
     private val mesh = Quad()
     private val program = Program()
@@ -52,20 +46,15 @@ class MacNode(
     }
 
     override suspend fun initialize() {
-        inputConnection?.config?.isOes?.let {
-            createProgram(it)
+        config(INPUT)?.let {
+            createProgram(it.isOes)
             createTextures()
         }
-        outputConnection?.prime(
-            TextureEvent(
-                texture1,
-                FloatArray(16).also { Matrix.setIdentityM(it, 0) })
-        )
+        connection(OUTPUT)?.prime(VideoEvent(texture1))
     }
 
     private suspend fun createTextures() {
-        val connection = inputConnection ?: error("missing input connection")
-        val config = connection.config
+        val config = config(INPUT) ?: error("missing input connection")
 
         val intFormat = config.internalFormat
         val format = config.format
@@ -139,12 +128,12 @@ class MacNode(
 
 
     override suspend fun start() = coroutineScope {
-        val input = inputChannel ?: return@coroutineScope
-        val output = outputConnection ?: return@coroutineScope
-
-        var copyMatrix = true
-
         startJob = launch {
+            val input = channel(INPUT) ?: return@launch
+            val output = connection((OUTPUT)) ?: return@launch
+
+            var copyMatrix = true
+
             while (isActive) {
                 val inEvent = input.receive()
 
@@ -179,7 +168,7 @@ class MacNode(
 
                 outEvent.let {
                     it.texture = outTexture
-                    outputConnection?.queue(it)
+                    output.queue(it)
                 }
 
                 if (inEvent.eos) {
@@ -212,7 +201,7 @@ class MacNode(
     }
 
     override suspend fun release() {
-        inputConnection?.let {
+        connection(INPUT)?.let {
             glesManager.withGlContext {
                 texture1.release()
                 texture2.release()
@@ -224,41 +213,35 @@ class MacNode(
         }
     }
 
-    override suspend fun output(key: String): Connection<*, *>? = when (key) {
-        PortType.TEXTURE_1 -> {
-            connectMutex.withLock {}
-            val connection = inputConnection ?: error("missing input connection")
-            val config = connection.config
+    @Suppress("UNCHECKED_CAST")
+    override suspend fun <C : Config, E : Event> makeConfig(key: Connection.Key<C, E>): C {
+        return when (key) {
+            OUTPUT -> {
+                connectMutex.withLock {}
+                val config = config(INPUT)!!
+                size = config.size
 
-            SingleConsumer<TextureConfig, TextureEvent>(
-                TextureConfig(
+                VideoConfig(
                     GL_TEXTURE_2D,
                     size.width,
                     size.height,
                     config.internalFormat,
                     config.format,
                     config.type
-                )
-            ).also {
-                outputConnection = it
+                ) as C
             }
+            else -> error("unknown key $key")
         }
-        else -> null
     }
 
-    override suspend fun <C: Config, T : Event> input(key: String, connection: Connection<C, T>) {
-        when (key) {
-            PortType.TEXTURE_1 -> {
-                inputConnection = connection as Connection<TextureConfig, TextureEvent>
-                inputChannel = connection.consumer()
-                size = connection.config.size
-
-                connectMutex.unlock()
-            }
-        }
+    override suspend fun <C : Config, E : Event> setConfig(key: Connection.Key<C, E>, config: C) {
+        super.setConfig(key, config)
+        if (key == INPUT) connectMutex.unlock()
     }
 
     companion object {
-        private val TAG = MacNode::class.java.simpleName
+        const val TAG = "MacNode"
+        val INPUT = Connection.Key<VideoConfig, VideoEvent>("video_1")
+        val OUTPUT = Connection.Key<VideoConfig, VideoEvent>("video_2")
     }
 }

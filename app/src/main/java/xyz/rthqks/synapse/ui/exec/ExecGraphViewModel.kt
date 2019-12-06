@@ -6,9 +6,9 @@ import android.view.SurfaceView
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import kotlinx.coroutines.*
-import xyz.rthqks.synapse.data.GraphData
 import xyz.rthqks.synapse.data.SynapseDao
 import xyz.rthqks.synapse.exec.GraphExecutor
+import xyz.rthqks.synapse.logic.Graph
 import javax.inject.Inject
 
 class ExecGraphViewModel @Inject constructor(
@@ -16,7 +16,7 @@ class ExecGraphViewModel @Inject constructor(
     private val dao: SynapseDao
 ) : ViewModel() {
     private lateinit var surfaceView: SurfaceView
-    val graphLoaded = MutableLiveData<GraphData>()
+    val graphLoaded = MutableLiveData<Graph>()
     private lateinit var graphExecutor: GraphExecutor
     private var initJob: Job? = null
     private var startJob: Job? = null
@@ -26,12 +26,12 @@ class ExecGraphViewModel @Inject constructor(
     fun loadGraph(graphId: Int) {
         Log.d(TAG, "loadGraph")
         initJob = scope.launch {
-            val graphConfig = dao.getFullGraphData(graphId)
+            val graphConfig = dao.getFullGraph(graphId)
             graphLoaded.postValue(graphConfig)
             Log.d(TAG, "loaded graph: $graphConfig")
             graphExecutor = GraphExecutor(context, graphConfig)
 
-            graphExecutor.tmp_SetSurfaceView(surfaceView)
+            graphExecutor.tmpSetSurfaceView(surfaceView)
 
             Log.d(TAG, "initialize")
             graphExecutor.initialize()
@@ -90,7 +90,7 @@ class ExecGraphViewModel @Inject constructor(
         this.surfaceView = surfaceView
         initJob?.let {
             scope.launch {
-                graphExecutor.tmp_SetSurfaceView(surfaceView)
+                graphExecutor.tmpSetSurfaceView(surfaceView)
             }
         }
     }

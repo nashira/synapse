@@ -29,7 +29,7 @@ class NodeFragment : DaggerFragment() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         nodeId = arguments?.getInt(ARG_NODE_ID) ?: -1
-        Log.d(TAG, "onCreate $nodeId")
+//        Log.d(TAG, "onCreate $nodeId")
     }
 
     override fun onCreateView(
@@ -38,13 +38,13 @@ class NodeFragment : DaggerFragment() {
         savedInstanceState: Bundle?
     ): View? {
 
-        Log.d(TAG, "onCreateView $nodeId")
+//        Log.d(TAG, "onCreateView $nodeId")
         val view = inflater.inflate(R.layout.fragment_node, container, false)
         return view
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
-        Log.d(TAG, "onViewCreated $nodeId")
+//        Log.d(TAG, "onViewCreated $nodeId")
         inputs_list.layoutManager = LinearLayoutManager(context)
         outputs_list.layoutManager = LinearLayoutManager(context)
         inputsAdapter = PortsAdapter(true)
@@ -55,19 +55,16 @@ class NodeFragment : DaggerFragment() {
 
     override fun onActivityCreated(savedInstanceState: Bundle?) {
         super.onActivityCreated(savedInstanceState)
-        Log.d(TAG, "onActivityCreated $nodeId")
+//        Log.d(TAG, "onActivityCreated $nodeId")
         viewModel = ViewModelProvider(activity!!, viewModelFactory)[BuilderViewModel::class.java]
         touchMediator = TouchMediator(context!!, viewModel::swipeEvent)
 
         val graph = viewModel.graph
-        val node = viewModel.getNode(nodeId)
-
         val connectors = graph.getConnectors(nodeId).groupBy { it.port.output }
-
         inputsAdapter.setPorts(connectors[false] ?: emptyList())
         outputsAdapter.setPorts(connectors[true] ?: emptyList())
 
-        Log.d(TAG, "viewModel $viewModel $this")
+//        Log.d(TAG, "viewModel $viewModel $this")
     }
 
     override fun onPause() {
@@ -81,16 +78,21 @@ class NodeFragment : DaggerFragment() {
         val node = viewModel.getNode(nodeId)
         viewModel.setTitle(node.type.title)
         viewModel.setMenu(R.menu.activity_builder)
+
+        val graph = viewModel.graph
+        val connectors = graph.getConnectors(nodeId).groupBy { it.port.output }
+        inputsAdapter.setPorts(connectors[false] ?: emptyList())
+        outputsAdapter.setPorts(connectors[true] ?: emptyList())
     }
 
     override fun onAttach(context: Context) {
         super.onAttach(context)
-        Log.d(TAG, "onAttach $nodeId")
+//        Log.d(TAG, "onAttach $nodeId")
     }
 
     override fun onDetach() {
         super.onDetach()
-        Log.d(TAG, "onDetach $nodeId")
+//        Log.d(TAG, "onDetach $nodeId")
     }
 
     fun onPortTouch(connector: Connector) {

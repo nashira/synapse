@@ -16,6 +16,7 @@ import kotlinx.android.synthetic.main.activity_builder.*
 import xyz.rthqks.synapse.R
 import xyz.rthqks.synapse.logic.Node
 import xyz.rthqks.synapse.ui.build.BuilderActivity.Companion.TAG
+import xyz.rthqks.synapse.ui.exec.ExecGraphActivity
 import javax.inject.Inject
 
 class BuilderActivity : DaggerAppCompatActivity() {
@@ -72,6 +73,11 @@ class BuilderActivity : DaggerAppCompatActivity() {
                 }
                 R.id.cancel -> {
                     viewModel.cancelConnection()
+                }
+                R.id.execute -> {
+                    startActivity(
+                        ExecGraphActivity.getIntent(this, viewModel.graph.id)
+                    )
                 }
             }
             true

@@ -8,17 +8,13 @@ import android.view.SurfaceView
 import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.constraintlayout.widget.ConstraintSet
 import kotlinx.coroutines.*
-import kotlinx.coroutines.channels.Channel
 import xyz.rthqks.synapse.R
-import xyz.rthqks.synapse.data.PortType
 import xyz.rthqks.synapse.exec.NodeExecutor
 import xyz.rthqks.synapse.exec.edge.*
 
 class SurfaceViewNode(
     private var surfaceView: SurfaceView
 ) : NodeExecutor(), SurfaceHolder.Callback {
-    private var channel: Channel<SurfaceEvent>? = null
-    private var connection: Connection<SurfaceConfig, SurfaceEvent>? = null
     private var surface: Surface? = null
     private var running: Boolean = false
     private var playJob: Job? = null
@@ -35,14 +31,13 @@ class SurfaceViewNode(
         this.surfaceView = surfaceView
         surfaceView.holder.addCallback(this)
 
-        connection?.let {
+        connection(INPUT)?.let {
             val size = it.config.size
             val rotation = it.config.rotation
             updateSurfaceViewConfig(size, rotation)
         } ?: run {
             setSurface(surfaceView.holder.surface)
         }
-
     }
 
     override fun surfaceChanged(
@@ -69,7 +64,7 @@ class SurfaceViewNode(
     }
 
     override suspend fun start() = coroutineScope {
-        val connection = channel ?: return@coroutineScope
+        val connection = channel(INPUT) ?: return@coroutineScope
 
         playJob = launch {
             running = true
@@ -97,19 +92,14 @@ class SurfaceViewNode(
 
     }
 
-    override suspend fun output(key: String): Connection<*, *>? {
-        throw IllegalStateException("$TAG has no outputs")
-    }
-
-    override suspend fun <C: Config, T : Event> input(key: String, connection: Connection<C, T>) {
-        when (key) {
-            PortType.SURFACE_1 -> {
-                this.connection = connection as Connection<SurfaceConfig, SurfaceEvent>
-                channel = connection.consumer()
-                val size = connection.config.size
-                val rotation = connection.config.rotation
-                updateSurfaceViewConfig(size, rotation)
-            }
+    override suspend fun <C : Config, E : Event> setConfig(key: Connection.Key<C, E>, config: C) {
+        super.setConfig(key, config)
+        if (key == INPUT) {
+            config as VideoConfig
+            config.requiresSurface = true
+            val size = config.size
+            val rotation = config.rotation
+            updateSurfaceViewConfig(size, rotation)
         }
     }
 
@@ -118,13 +108,13 @@ class SurfaceViewNode(
         rotation: Int
     ) {
         withContext(Dispatchers.Main) {
-            surfaceView.holder.setFixedSize(size.width, size.height)
+            val outSize =
+                if (rotation == 90 || rotation == 270) Size(size.height, size.width) else size
+            surfaceView.holder.setFixedSize(outSize.width, outSize.height)
             ConstraintSet().also {
                 val constraintLayout = surfaceView.parent as ConstraintLayout
                 it.clone(constraintLayout)
-                val outSize =
-                    if (rotation == 90 || rotation == 270) Size(size.height, size.width) else size
-                it.setDimensionRatio(R.id.surface_view, "${outSize.width}:${outSize.height}")
+                it.setDimensionRatio(R.id.surface_view, "${size.width}:${size.height}")
                 it.applyTo(constraintLayout)
             }
         }
@@ -134,11 +124,12 @@ class SurfaceViewNode(
     private suspend fun setSurface(surface: Surface?) {
         Log.d(TAG, "setSurface $surface")
         this.surface = surface
-        connection?.config?.setSurface(surface)
+        config(INPUT)?.surface?.set(surface)
     }
 
     companion object {
-        private val TAG = SurfaceViewNode::class.java.simpleName
+        const val TAG = "SurfaceViewNode"
+        val INPUT = Connection.Key<VideoConfig, VideoEvent>("video_1")
     }
 }
 

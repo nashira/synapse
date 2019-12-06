@@ -18,10 +18,7 @@ import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.sync.Mutex
-import kotlinx.coroutines.sync.withLock
 import xyz.rthqks.synapse.codec.Decoder
-import xyz.rthqks.synapse.data.PortType
 import xyz.rthqks.synapse.exec.NodeExecutor
 import xyz.rthqks.synapse.exec.edge.*
 import xyz.rthqks.synapse.gl.GlesManager
@@ -36,14 +33,10 @@ class DecoderNode(
     private var surfaceRotation = 0
     private var audioInput: Channel<Decoder.Event>? = null
     private var videoInput: Channel<Decoder.Event>? = null
-    private var surfaceConnection: Connection<SurfaceConfig, SurfaceEvent>? = null
-    private var textureConnection: Connection<TextureConfig, TextureEvent>? = null
-    private var audioConnection: Connection<AudioConfig, AudioEvent>? = null
     private var audioSession = 0
     private var audioFormat: AudioFormat? = null
     private var videoJob: Job? = null
     private var audioJob: Job? = null
-    private val connectMutex = Mutex()
     private var outputSurface: Surface? = null
     private var outputSurfaceTexture: SurfaceTexture? = null
     private val outputTexture = Texture(
@@ -80,46 +73,43 @@ class DecoderNode(
     }
 
     override suspend fun initialize() {
-        if (decoder.hasVideo)
-            textureConnection?.let {
-                glesManager.withGlContext {
-                    outputTexture.initialize()
+        if (decoder.hasVideo) {
+            connection(VIDEO)?.let {
+                if (it.config.requiresSurface) {
+                    repeat(3) { n -> it.prime(VideoEvent()) }
+                } else {
+                    glesManager.withGlContext {
+                        outputTexture.initialize()
+                    }
+
+                    outputSurfaceTexture = SurfaceTexture(outputTexture.id)
+                    outputSurfaceTexture?.setDefaultBufferSize(size.width, size.height)
+                    outputSurface = Surface(outputSurfaceTexture)
+                    it.prime(VideoEvent(outputTexture, FloatArray(16)))
                 }
-
-                outputSurfaceTexture = SurfaceTexture(outputTexture.id)
-                outputSurfaceTexture?.setDefaultBufferSize(size.width, size.height)
-                outputSurface = Surface(outputSurfaceTexture)
-                it.prime(TextureEvent(outputTexture, FloatArray(16)))
                 videoInput = Channel(Channel.UNLIMITED)
             }
+        }
 
-        if (decoder.hasVideo)
-            surfaceConnection?.let {
-                it.prime(SurfaceEvent())
-                it.prime(SurfaceEvent())
-                it.prime(SurfaceEvent())
-                videoInput = Channel(Channel.UNLIMITED)
-            }
-
-        if (decoder.hasAudio)
-            audioConnection?.let {
-                it.prime(AudioEvent(0))
-                it.prime(AudioEvent(0))
-                it.prime(AudioEvent(0))
+        if (decoder.hasAudio) {
+            connection(AUDIO)?.let {
+                repeat(3) { n -> it.prime(AudioEvent(0)) }
                 audioInput = Channel(Channel.UNLIMITED)
             }
+        }
     }
 
     override suspend fun start() = coroutineScope {
         audioSession++
+        val videoConfig = config(VIDEO)
         when {
             videoInput == null -> {
                 Log.w(TAG, "no connection, not starting")
             }
-            surfaceConnection != null -> {
+            videoConfig?.requiresSurface == true -> {
                 videoJob = launch { start2() }
             }
-            textureConnection != null -> {
+            videoConfig?.requiresSurface == false -> {
                 videoJob = launch { startTexture() }
             }
         }
@@ -131,14 +121,14 @@ class DecoderNode(
     }
 
     private suspend fun start2() {
-        val connection = surfaceConnection ?: return
+        val connection = connection(VIDEO) ?: return
         val videoInput = videoInput ?: return
         val config = connection.config
-        val surface = config.getSurface()
+        val surface = config.surface.get()
 
         decoder.start(surface, videoInput, audioInput)
 
-        var count = 0L
+        var count = 0
         val startTime = SystemClock.elapsedRealtimeNanos()
         var firstTime = -1L
         do {
@@ -161,7 +151,7 @@ class DecoderNode(
                 delay(diff / 1_000_000)
             }
 
-            if (!config.hasSurface()) {
+            if (!config.surface.has()) {
                 frame.eos = true
             }
             decoder.releaseVideoBuffer(event.index, frame.eos)
@@ -171,8 +161,7 @@ class DecoderNode(
     }
 
     private suspend fun startAudio() {
-
-        val audioConnection = audioConnection ?: return
+        val audioConnection = connection(AUDIO) ?: return
         val audioInput = audioInput ?: return
 
         var count = 0
@@ -200,7 +189,7 @@ class DecoderNode(
     }
 
     private suspend fun startTexture() = coroutineScope {
-        val connection = textureConnection ?: return@coroutineScope
+        val connection = connection(VIDEO) ?: return@coroutineScope
         val surface = outputSurface ?: return@coroutineScope
         val videoInput = videoInput ?: return@coroutineScope
 
@@ -255,7 +244,7 @@ class DecoderNode(
     }
 
     private suspend fun onFrame(
-        connection: Connection<TextureConfig, TextureEvent>,
+        connection: Connection<VideoConfig, VideoEvent>,
         surfaceTexture: SurfaceTexture,
         copyMatrix: Boolean
     ) {
@@ -285,81 +274,38 @@ class DecoderNode(
         outputTexture.release()
     }
 
-    override suspend fun output(key: String): Connection<*, *>? = when (key) {
-        PortType.SURFACE_1 -> SingleConsumer<SurfaceConfig, SurfaceEvent>(
-            SurfaceConfig(size, surfaceRotation)
-        ).also {
-            surfaceConnection = it
-        }
-        PortType.TEXTURE_1 -> {
-
-            connectMutex.withLock {
+    @Suppress("UNCHECKED_CAST")
+    override suspend fun <C : Config, E : Event> makeConfig(key: Connection.Key<C, E>): C {
+        return when (key) {
+            VIDEO -> {
                 val rotatedSize =
                     if (surfaceRotation == 90 || surfaceRotation == 270)
                         Size(size.height, size.width) else size
-                val con = textureConnection
-                when (con) {
-                    null -> {
-                        SingleConsumer(
-                            TextureConfig(
-                                GLES11Ext.GL_TEXTURE_EXTERNAL_OES,
-                                rotatedSize.width,
-                                rotatedSize.height,
-                                GLES32.GL_RGB8,
-                                GLES32.GL_RGB,
-                                GLES32.GL_UNSIGNED_BYTE
-                            )
-                        )
-                    }
-                    is SingleConsumer -> {
-                        MultiConsumer<TextureConfig, TextureEvent>(con.config).also {
-                            it.consumer(con.duplex)
-                        }
-                    }
-                    else -> {
-                        textureConnection
-                    }
-                }.also {
-                    textureConnection = it
-                }
+
+                VideoConfig(
+                    GLES11Ext.GL_TEXTURE_EXTERNAL_OES,
+                    rotatedSize.width,
+                    rotatedSize.height,
+                    GLES32.GL_RGB8,
+                    GLES32.GL_RGB,
+                    GLES32.GL_UNSIGNED_BYTE,
+                    surfaceRotation
+                ) as C
             }
-        }
-        PortType.AUDIO_1 -> {
-
-            connectMutex.withLock {
-                val con = audioConnection
-                val audioFormat = audioFormat ?: return@withLock null
-
-                when (con) {
-                    null -> {
-                        SingleConsumer(
-                            AudioConfig(
-                                audioFormat,
-                                0
-                            )
-                        )
-                    }
-                    is SingleConsumer -> {
-                        MultiConsumer<AudioConfig, AudioEvent>(con.config).also {
-                            it.consumer(con.duplex)
-                        }
-                    }
-                    else -> {
-                        audioConnection
-                    }
-                }.also {
-                    audioConnection = it
-                }
+            AUDIO -> {
+                val audioFormat = audioFormat ?: error("missing audio format")
+                AudioConfig(
+                    audioFormat,
+                    0
+                ) as C
             }
+            else -> error("unknown key $key")
         }
-        else -> null
-    }
-
-    override suspend fun <C : Config, T : Event> input(key: String, connection: Connection<C, T>) {
-        throw IllegalStateException("$TAG has no inputs")
     }
 
     companion object {
         const val TAG = "DecoderNode"
+        val VIDEO = Connection.Key<VideoConfig, VideoEvent>("video_1")
+        val AUDIO = Connection.Key<AudioConfig, AudioEvent>("audio_1")
     }
 }

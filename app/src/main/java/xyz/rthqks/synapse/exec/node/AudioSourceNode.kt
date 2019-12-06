@@ -6,7 +6,6 @@ import android.util.Log
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
-import xyz.rthqks.synapse.data.PortType
 import xyz.rthqks.synapse.exec.NodeExecutor
 import xyz.rthqks.synapse.exec.edge.*
 
@@ -19,11 +18,8 @@ class AudioSourceNode(
     private lateinit var recorder: AudioRecord
     private lateinit var audioFormat: AudioFormat
     private var bufferSize = 0
-    private var itemsCreated = 0
-    private var connection: Connection<AudioConfig, AudioEvent>? = null
     private var recordJob: Job? = null
     private var running = false
-
 
     override suspend fun create() {
         bufferSize = AudioRecord.getMinBufferSize(
@@ -47,15 +43,17 @@ class AudioSourceNode(
     }
 
     override suspend fun initialize() {
-        connection?.prime(AudioEvent(bufferSize))
-        connection?.prime(AudioEvent(bufferSize))
-        connection?.prime(AudioEvent(bufferSize))
+        connection(KEY)?.let { con ->
+            repeat(3) {
+                con.prime(AudioEvent(bufferSize))
+            }
+        }
     }
 
     override suspend fun start() = coroutineScope {
-        val connection = connection ?: return@coroutineScope
 
         recordJob = launch {
+            val connection = connection(KEY) ?: return@launch
             recorder.startRecording()
             running = true
             var numFrames = 0
@@ -82,10 +80,11 @@ class AudioSourceNode(
         running = false
         recordJob?.join()
         recorder.stop()
-        connection?.dequeue()?.let {
+        connection(KEY)?.let {
             Log.d(TAG, "sending EOS")
-            it.eos = true
-            connection?.queue(it)
+            val e = it.dequeue()
+            e.eos = true
+            it.queue(e)
         }
     }
 
@@ -93,21 +92,16 @@ class AudioSourceNode(
         recorder.release()
     }
 
-    override suspend fun output(key: String): Connection<*, *>? {
-        return if (key == PortType.AUDIO_1) {
-            SingleConsumer<AudioConfig, AudioEvent>(
-                AudioConfig(audioFormat, bufferSize)
-            ).also {
-                connection = it
-            }
-        } else null
-    }
-
-    override suspend fun <C : Config, T : Event> input(key: String, connection: Connection<C, T>) {
-        throw IllegalStateException("no inputs: $this")
+    @Suppress("UNCHECKED_CAST")
+    override suspend fun <C : Config, E : Event> makeConfig(key: Connection.Key<C, E>): C {
+        return when (key) {
+            KEY -> AudioConfig(audioFormat, bufferSize) as C
+            else -> error("")
+        }
     }
 
     companion object {
-        private val TAG = AudioSourceNode::class.java.simpleName
+        const val TAG = "AudioSourceNode"
+        val KEY = Connection.Key<AudioConfig, AudioEvent>("audio_1")
     }
 }

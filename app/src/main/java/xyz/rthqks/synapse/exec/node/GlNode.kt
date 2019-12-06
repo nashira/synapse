@@ -6,14 +6,12 @@ import android.util.Log
 import android.util.Size
 import android.view.Surface
 import kotlinx.coroutines.Job
-import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import xyz.rthqks.synapse.assets.AssetManager
-import xyz.rthqks.synapse.data.PortType
 import xyz.rthqks.synapse.exec.NodeExecutor
 import xyz.rthqks.synapse.exec.edge.*
 import xyz.rthqks.synapse.gl.*
@@ -22,17 +20,13 @@ class GlNode(
     private val glesManager: GlesManager,
     private val assetManager: AssetManager
 ) : NodeExecutor() {
-    private var inputConnection: Connection<TextureConfig, TextureEvent>? = null
-    private var inputChannel: Channel<TextureEvent>? = null
     private var startJob: Job? = null
     private val connectMutex = Mutex(true)
     private var size = Size(0, 0)
 
-    private var outputTextureConnection: Connection<TextureConfig, TextureEvent>? = null
     private var texture: Texture? = null
     private var framebuffer: Framebuffer? = null
 
-    private var outputSurfaceConnection: Connection<SurfaceConfig, SurfaceEvent>? = null
     private var outputSurfaceWindow: WindowSurface? = null
 
     private val mesh = Quad()
@@ -43,7 +37,7 @@ class GlNode(
     }
 
     override suspend fun initialize() {
-        val connection = inputConnection ?: error("missing input connection")
+        val connection = connection(INPUT) ?: error("missing input connection")
         val config = connection.config
         val vertexSource = assetManager.readTextAsset("vertex_texture.vert")
         val fragmentSource = assetManager.readTextAsset("lut.frag").let {
@@ -98,29 +92,26 @@ class GlNode(
             }
         }
 
-        outputTextureConnection?.prime(
-            TextureEvent(
-                texture!!,
-                FloatArray(16).also { Matrix.setIdentityM(it, 0) })
-        )
-
-        outputSurfaceConnection?.prime(SurfaceEvent())
-        outputSurfaceConnection?.prime(SurfaceEvent())
-        outputSurfaceConnection?.prime(SurfaceEvent())
+        connection(OUTPUT)?.let {
+            if (it.config.requiresSurface) {
+                repeat(3) { n -> it.prime(VideoEvent()) }
+            } else {
+                it.prime(VideoEvent(texture!!))
+            }
+        }
     }
 
-    override suspend fun start() = when {
-        outputSurfaceConnection != null -> startSurface()
-        outputTextureConnection != null -> startTexture()
-        else -> {
-            Log.w(TAG, "no connection on start")
-            Unit
+    override suspend fun start() {
+        when (config(OUTPUT)?.requiresSurface) {
+            true -> startSurface()
+            false -> startTexture()
+            else -> Log.w(TAG, "no connection on start")
         }
     }
 
     private suspend fun startTexture() = coroutineScope {
-        val output = outputTextureConnection ?: return@coroutineScope
-        val input = inputChannel ?: return@coroutineScope
+        val output = connection((OUTPUT)) ?: return@coroutineScope
+        val input = channel(INPUT) ?: return@coroutineScope
 
         var copyMatrix = true
 
@@ -157,11 +148,11 @@ class GlNode(
     }
 
     private suspend fun startSurface() = coroutineScope {
-        val output = outputSurfaceConnection ?: return@coroutineScope
-        val input = inputChannel ?: return@coroutineScope
+        val output = connection(OUTPUT) ?: return@coroutineScope
+        val input = channel(INPUT) ?: return@coroutineScope
         val config = output.config
 
-        updateOutputSurface(config.getSurface())
+        updateOutputSurface(config.surface.get())
 
         var copyMatrix = true
 
@@ -171,11 +162,10 @@ class GlNode(
 
                 val outEvent = output.dequeue()
                 outEvent.eos = inEvent.eos
-                outEvent.count = inEvent.count.toLong()
+                outEvent.count = inEvent.count
                 outEvent.timestamp = inEvent.timestamp
 
-
-                if (config.hasSurface()) {
+                if (config.surface.has()) {
                     if (copyMatrix) {
                         copyMatrix = false
 
@@ -237,48 +227,35 @@ class GlNode(
         }
     }
 
-    override suspend fun output(key: String): Connection<*, *>? = when (key) {
-        PortType.SURFACE_1 -> {
-            connectMutex.withLock {}
-            SingleConsumer<SurfaceConfig, SurfaceEvent>(
-                SurfaceConfig(size, 0)
-            ).also { connection ->
-                outputSurfaceConnection = connection
-            }
-        }
-        PortType.TEXTURE_1 -> {
-            connectMutex.withLock {}
-            val connection = inputConnection!!
-            val config = connection.config
-            SingleConsumer<TextureConfig, TextureEvent>(
-                TextureConfig(
+    @Suppress("UNCHECKED_CAST")
+    override suspend fun <C : Config, E : Event> makeConfig(key: Connection.Key<C, E>): C {
+        return when (key) {
+            OUTPUT -> {
+                connectMutex.withLock {}
+                val config = config(INPUT)!!
+                size = config.size
+
+                VideoConfig(
                     GL_TEXTURE_2D,
                     size.width,
                     size.height,
                     config.internalFormat,
                     config.format,
                     config.type
-                )
-            ).also {
-                outputTextureConnection = it
+                ) as C
             }
+            else -> error("unknown key $key")
         }
-        else -> null
     }
 
-    override suspend fun <C : Config, T : Event> input(key: String, connection: Connection<C, T>) {
-        when (key) {
-            PortType.TEXTURE_1 -> {
-                inputConnection = connection as Connection<TextureConfig, TextureEvent>
-                inputChannel = connection.consumer()
-                size = connection.config.size
-
-                connectMutex.unlock()
-            }
-        }
+    override suspend fun <C : Config, E : Event> setConfig(key: Connection.Key<C, E>, config: C) {
+        super.setConfig(key, config)
+        if (key == INPUT) connectMutex.unlock()
     }
 
     companion object {
-        private val TAG = GlNode::class.java.simpleName
+        const val TAG = "GlNode"
+        val INPUT = Connection.Key<VideoConfig, VideoEvent>("video_1")
+        val OUTPUT = Connection.Key<VideoConfig, VideoEvent>("video_2")
     }
 }

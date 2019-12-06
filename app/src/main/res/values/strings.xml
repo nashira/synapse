@@ -104,4 +104,5 @@
     <string name="menu_title_remove_node">Remove Node</string>
     <string name="menu_title_add_node">Add Node</string>
     <string name="menu_title_jump_to_node">Jump to Node</string>
+    <string name="menu_title_execute">Execute</string>
 </resources>
