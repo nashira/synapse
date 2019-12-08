@@ -75,7 +75,7 @@ class Graph(
         val ports = node.getPortIds().toMutableSet()
         val nodeEdges = edges.filter { it.fromNodeId == nodeId || it.toNodeId == nodeId }
 
-        return nodeEdges.map {
+        return (nodeEdges.map {
             if (it.fromNodeId == nodeId) {
                 ports.remove(it.fromPortId)
                 Connector(node, node.getPort(it.fromPortId), it)
@@ -83,7 +83,7 @@ class Graph(
                 ports.remove(it.toPortId)
                 Connector(node, node.getPort(it.toPortId), it)
             }
-        } + ports.map { Connector(node, node.getPort(it)) }
+        } + ports.map { Connector(node, node.getPort(it)) }).sortedBy { it.port.id }
     }
 
     fun getOpenConnectors(connector: Connector): List<Connector> {
