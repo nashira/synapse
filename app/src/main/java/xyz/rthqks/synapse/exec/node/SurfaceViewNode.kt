@@ -68,19 +68,14 @@ class SurfaceViewNode(
 
         playJob = launch {
             running = true
-            var numFrames = 0
             while (running) {
                 val surfaceEvent = connection.receive()
                 if (surfaceEvent.eos) {
                     Log.d(TAG, "got EOS")
                     running = false
-                } else {
-                    numFrames++
-//                    Log.d(TAG, "written frames $numFrames")
                 }
                 connection.send(surfaceEvent)
             }
-            Log.d(TAG, "wrote frames $numFrames")
         }
     }
 

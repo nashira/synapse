@@ -64,7 +64,7 @@ class GraphExecutor(
                     glesManager,
                     assetManager,
                     it[Key.MultiplyFactor] ?: 0.9f,
-                    it[Key.AccumulateFactor] ?: 1f
+                    it[Key.AccumulateFactor] ?: 0.9f
                 )
                 Node.Type.OverlayFilter -> OverlayFilterNode(glesManager, assetManager)
                 Node.Type.Microphone -> AudioSourceNode(

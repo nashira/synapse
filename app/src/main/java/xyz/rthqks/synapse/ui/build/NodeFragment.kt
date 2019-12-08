@@ -19,10 +19,11 @@ class NodeFragment : DaggerFragment() {
 
     @Inject
     lateinit var viewModelFactory: ViewModelProvider.Factory
-    private lateinit var viewModel: BuilderViewModel
+    lateinit var viewModel: BuilderViewModel
     private lateinit var touchMediator: TouchMediator
     private lateinit var inputsAdapter: PortsAdapter
     private lateinit var outputsAdapter: PortsAdapter
+    var touching = false
 
     private var nodeId = -1
 
@@ -74,7 +75,9 @@ class NodeFragment : DaggerFragment() {
 
     override fun onResume() {
         super.onResume()
-        Log.d(TAG, "onResume $nodeId")
+        Log.d(TAG, "onResume $nodeId $touching")
+        if (touching) return
+
         val node = viewModel.getNode(nodeId)
         viewModel.setTitle(node.type.title)
         viewModel.setMenu(R.menu.activity_builder)
@@ -97,7 +100,9 @@ class NodeFragment : DaggerFragment() {
 
     fun onPortTouch(connector: Connector) {
         Log.d(TAG, "touch $connector")
+        touching = true
         viewModel.preparePortSwipe(connector)
+        touching = false
     }
 
     fun onPortClick(connector: Connector) {
@@ -161,7 +166,7 @@ class NodeFragment : DaggerFragment() {
         fun bind(portConfig: Connector, startAligned: Boolean) {
             this.portConfig = portConfig
             name.text = portConfig.port.name
-//            button.setImageResource(dataType.icon)
+//            button.setImageResource()
             if (!startAligned) {
                 listOf(name, button).forEach {
                     (it.layoutParams as LinearLayout.LayoutParams).apply {
@@ -171,16 +176,6 @@ class NodeFragment : DaggerFragment() {
                 }
                 name.gravity = Gravity.END
             }
-
-//            Log.d(TAG, "port ${portConfig.key} ${viewModel.getPortState(portConfig)}")
-//            when(viewModel.getPortState(portConfig)) {
-//                PortState.Unconnected -> itemView.setBackgroundColor(Color.TRANSPARENT)
-//                PortState.Connected -> itemView.setBackgroundColor(Color.rgb(200, 200, 255))
-//                PortState.SelectedUnconnected -> itemView.setBackgroundColor(Color.rgb(200, 255, 255))
-//                PortState.SelectedConnected -> itemView.setBackgroundColor(Color.rgb(255, 200, 255))
-//                PortState.EligibleToConnect -> itemView.setBackgroundColor(Color.rgb(200, 255, 200))
-//                PortState.EligibleToDisconnect -> itemView.setBackgroundColor(Color.rgb(255, 200, 200))
-//            }
         }
     }
 
