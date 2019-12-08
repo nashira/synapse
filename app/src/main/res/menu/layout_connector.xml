@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+
+    <item
+        android:id="@+id/add_connection"
+        android:icon="@drawable/ic_add_circle"
+        android:title="@string/add_connection"
+        app:iconTint="@color/colorAccent"
+        app:showAsAction="ifRoom|withText" />
+
+    <item
+        android:id="@+id/delete_connection"
+        android:icon="@drawable/ic_remove_circle"
+        android:title="@string/delete_connection"
+        app:iconTint="@color/colorAccent"
+        app:showAsAction="ifRoom|withText" />
+</menu>

@@ -45,7 +45,7 @@ class NodeListDialog : DialogFragment() {
         view.layoutManager = LinearLayoutManager(context)
         view.adapter = adapter
         return AlertDialog.Builder(context!!).apply {
-            setMessage(R.string.menu_title_jump_to_node)
+            setTitle(R.string.menu_title_jump_to_node)
             setView(view)
 
         }.create()

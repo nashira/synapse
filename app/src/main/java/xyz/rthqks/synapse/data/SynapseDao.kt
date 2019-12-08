@@ -56,6 +56,21 @@ abstract class SynapseDao {
     @Delete
     abstract suspend fun deleteEdges(edges: List<EdgeData>)
 
+    @Query(
+        """DELETE FROM edge WHERE graphId = :graphId
+        AND fromNodeId = :fromNode
+        AND fromKey = :fromPort
+        AND toNodeId = :toNode
+        AND toKey = :toPort"""
+    )
+    abstract suspend fun deleteEdge(
+        graphId: Int,
+        fromNode: Int,
+        fromPort: String,
+        toNode: Int,
+        toPort: String
+    )
+
     @Delete
     abstract suspend fun deleteProperties(properties: Collection<PropertyData>)
 

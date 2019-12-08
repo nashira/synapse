@@ -24,9 +24,9 @@
         app:showAsAction="ifRoom" />
 
     <item
-        android:id="@+id/remove_node"
+        android:id="@+id/delete_node"
         android:icon="@drawable/ic_delete"
         app:iconTint="@color/white"
-        android:title="@string/menu_title_remove_node"
+        android:title="@string/menu_title_delete_node"
         app:showAsAction="ifRoom" />
 </menu>

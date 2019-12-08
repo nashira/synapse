@@ -65,7 +65,7 @@ class BuilderActivity : DaggerAppCompatActivity() {
                 R.id.add_node -> {
                     viewModel.onAddNode()
                 }
-                R.id.remove_node -> {
+                R.id.delete_node -> {
                     onDeleteNode()
                 }
                 R.id.jump_to_node -> {

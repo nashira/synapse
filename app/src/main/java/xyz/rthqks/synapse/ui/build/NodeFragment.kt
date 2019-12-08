@@ -5,6 +5,9 @@ import android.os.Bundle
 import android.util.Log
 import android.view.*
 import android.widget.LinearLayout
+import androidx.appcompat.view.menu.MenuPopupHelper
+import androidx.appcompat.widget.PopupMenu
+import androidx.core.view.isEmpty
 import androidx.lifecycle.ViewModelProvider
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
@@ -60,12 +63,7 @@ class NodeFragment : DaggerFragment() {
         viewModel = ViewModelProvider(activity!!, viewModelFactory)[BuilderViewModel::class.java]
         touchMediator = TouchMediator(context!!, viewModel::swipeEvent)
 
-        val graph = viewModel.graph
-        val connectors = graph.getConnectors(nodeId).groupBy { it.port.output }
-        inputsAdapter.setPorts(connectors[false] ?: emptyList())
-        outputsAdapter.setPorts(connectors[true] ?: emptyList())
-
-//        Log.d(TAG, "viewModel $viewModel $this")
+        reloadConnectors()
     }
 
     override fun onPause() {
@@ -82,6 +80,10 @@ class NodeFragment : DaggerFragment() {
         viewModel.setTitle(node.type.title)
         viewModel.setMenu(R.menu.activity_builder)
 
+        reloadConnectors()
+    }
+
+    private fun reloadConnectors() {
         val graph = viewModel.graph
         val connectors = graph.getConnectors(nodeId).groupBy { it.port.output }
         inputsAdapter.setPorts(connectors[false] ?: emptyList())
@@ -98,19 +100,60 @@ class NodeFragment : DaggerFragment() {
 //        Log.d(TAG, "onDetach $nodeId")
     }
 
-    fun onPortTouch(connector: Connector) {
+    fun onConnectorTouch(connector: Connector) {
         Log.d(TAG, "touch $connector")
         touching = true
         viewModel.preparePortSwipe(connector)
         touching = false
     }
 
-    fun onPortClick(connector: Connector) {
+    fun onConnectorClick(connector: Connector) {
         Log.d(TAG, "click $connector")
     }
 
-    fun onPortLongClick(connector: Connector) {
+    fun onConnectorLongClick(view: View, connector: Connector) {
         Log.d(TAG, "long click $connector")
+        val menu = PopupMenu(context!!, view)
+        menu.inflate(R.menu.layout_connector)
+
+        if (connector.edge == null) {
+            menu.menu.findItem(R.id.delete_connection)?.isVisible = false
+        }
+
+        if (!connector.port.output) {
+            menu.menu.findItem(R.id.add_connection)?.isVisible = false
+        }
+
+        if (menu.menu.isEmpty()) {
+            return
+        }
+
+        try {
+            // TODO: remove when support library adds this
+            val field = PopupMenu::class.java.getDeclaredField("mPopup").also {
+                it.isAccessible = true
+            }.get(menu) as MenuPopupHelper
+            field.setForceShowIcon(true)
+        } catch (e: Throwable) {
+            Log.w(TAG, "error forcing icons visible")
+        }
+
+        menu.setOnMenuItemClickListener {
+            when (it.itemId) {
+                R.id.delete_connection -> {
+                    connector.edge?.let { it1 ->
+                        viewModel.deleteEdge(it1)
+                        reloadConnectors()
+                    }
+                }
+                R.id.add_connection -> {
+                    viewModel.startConnection(connector)
+                }
+            }
+            true
+        }
+
+        menu.show()
     }
 
     inner class PortsAdapter(
@@ -143,38 +186,56 @@ class NodeFragment : DaggerFragment() {
     inner class PortViewHolder(
         itemView: View
     ) : RecyclerView.ViewHolder(itemView) {
-        private val name = itemView.name
         private val button = itemView.button
-        private var portConfig: Connector? = null
+        private var connector: Connector? = null
 
         init {
             button.setOnTouchListener { v, event ->
                 if (event.actionMasked == MotionEvent.ACTION_DOWN) {
-                    portConfig?.let { it1 -> onPortTouch(it1) }
+                    connector?.let { it1 -> onConnectorTouch(it1) }
                 }
-                touchMediator.onTouch(v, event, portConfig)
+                touchMediator.onTouch(v, event, connector)
             }
             button.setOnClickListener {
-                portConfig?.let { it1 -> onPortClick(it1) }
+                connector?.let { it1 -> onConnectorClick(it1) }
             }
             button.setOnLongClickListener {
-                portConfig?.let { it1 -> onPortLongClick(it1) }
+                connector?.let { it1 -> onConnectorLongClick(it, it1) }
                 true
             }
         }
 
-        fun bind(portConfig: Connector, startAligned: Boolean) {
-            this.portConfig = portConfig
-            name.text = portConfig.port.name
+        fun bind(connector: Connector, startAligned: Boolean) {
+            this.connector = connector
+            connector.edge?.let {
+                val otherPort =
+                    if (startAligned) viewModel.getConnector(it.fromNodeId, it.fromPortId).port
+                    else viewModel.getConnector(it.toNodeId, it.toPortId).port
+                button.text = "${connector.port.name} (${otherPort.name})"
+            } ?: run {
+                button.text = connector.port.name
+            }
 //            button.setImageResource()
             if (!startAligned) {
-                listOf(name, button).forEach {
+                button.setCompoundDrawablesWithIntrinsicBounds(
+                    0,
+                    0,
+                    R.drawable.ic_arrow_forward_ios,
+                    0
+                )
+                listOf(button).forEach {
                     (it.layoutParams as LinearLayout.LayoutParams).apply {
                         gravity = Gravity.END
                         it.layoutParams = this
                     }
                 }
-                name.gravity = Gravity.END
+            } else {
+                button.setCompoundDrawablesWithIntrinsicBounds(
+                    R.drawable.ic_arrow_forward_ios,
+                    0,
+                    0,
+                    0
+                )
             }
         }
     }

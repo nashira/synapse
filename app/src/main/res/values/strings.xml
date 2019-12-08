@@ -101,8 +101,10 @@
     <string name="button_cancel">Cancel</string>
     <string name="title_connect">Connect</string>
     <string name="name_node_type_media_file">Media File</string>
-    <string name="menu_title_remove_node">Remove Node</string>
+    <string name="menu_title_delete_node">Delete Node</string>
     <string name="menu_title_add_node">Add Node</string>
     <string name="menu_title_jump_to_node">Jump to Node</string>
     <string name="menu_title_execute">Execute</string>
+    <string name="add_connection">Add Connection</string>
+    <string name="delete_connection">Delete Connection</string>
 </resources>

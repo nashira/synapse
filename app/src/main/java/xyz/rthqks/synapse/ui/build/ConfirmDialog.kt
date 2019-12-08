@@ -10,7 +10,7 @@ class ConfirmDialog : DialogFragment() {
 
     override fun onCreateDialog(savedInstanceState: Bundle?): Dialog {
         return AlertDialog.Builder(context!!).apply {
-            setMessage("Delete Node?")
+            setTitle("Delete Node?")
             setNegativeButton("Cancel") { d, w ->
                 listener?.invoke(false)
             }

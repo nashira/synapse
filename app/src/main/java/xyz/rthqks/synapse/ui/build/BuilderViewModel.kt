@@ -13,10 +13,7 @@ import xyz.rthqks.synapse.data.EdgeData
 import xyz.rthqks.synapse.data.GraphData
 import xyz.rthqks.synapse.data.NodeData
 import xyz.rthqks.synapse.data.SynapseDao
-import xyz.rthqks.synapse.logic.Connector
-import xyz.rthqks.synapse.logic.Graph
-import xyz.rthqks.synapse.logic.Node
-import xyz.rthqks.synapse.logic.Port
+import xyz.rthqks.synapse.logic.*
 import xyz.rthqks.synapse.util.Consumable
 import javax.inject.Inject
 
@@ -77,13 +74,22 @@ class BuilderViewModel @Inject constructor(
             val current = if (port.output) 0 else 1
             nodesChannel.value = AdapterState(current, listOf(leftNode, rightNode))
         } ?: run {
-            connectionChannel.value = connector
 
+            connectionChannel.value = connector
             if (connector.port.output) {
                 nodesChannel.value = AdapterState(0, listOf(connector.node, CONNECTION_NODE))
             } else {
                 nodesChannel.value = AdapterState(1, listOf(CONNECTION_NODE, connector.node))
             }
+        }
+    }
+
+    fun startConnection(connector: Connector) {
+        connectionChannel.value = connector
+        if (connector.port.output) {
+            nodesChannel.value = AdapterState(1, listOf(connector.node, CONNECTION_NODE), true)
+        } else {
+            nodesChannel.value = AdapterState(0, listOf(CONNECTION_NODE, connector.node), true)
         }
     }
 
@@ -169,6 +175,17 @@ class BuilderViewModel @Inject constructor(
         nodesChannel.postValue(AdapterState(0, listOf(CREATION_NODE)))
     }
 
+    fun deleteEdge(edge: Edge) {
+        graph.removeEdge(edge)
+        viewModelScope.launch(Dispatchers.IO) {
+            dao.deleteEdge(
+                graph.id,
+                edge.fromNodeId, edge.fromPortId,
+                edge.toNodeId, edge.toPortId
+            )
+        }
+    }
+
     fun onDelete() {
         nodesChannel.value?.let {
             val node = it.items[it.currentItem]
@@ -199,6 +216,12 @@ class BuilderViewModel @Inject constructor(
 
     fun jumpToNode(node: Node) {
         nodesChannel.value = AdapterState(0, listOf(node))
+    }
+
+    fun getConnector(nodeId: Int, portId: String): Connector {
+        val node = getNode(nodeId)
+        val port = node.getPort(portId)
+        return Connector(node, port)
     }
 
     companion object {
