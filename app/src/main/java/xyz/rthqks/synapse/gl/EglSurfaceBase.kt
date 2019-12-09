@@ -17,7 +17,9 @@
 package xyz.rthqks.synapse.gl
 
 import android.opengl.EGL14
+import android.opengl.EGLSurface
 import android.util.Log
+import java.util.concurrent.atomic.AtomicReference
 
 /**
  * Common base class for EGL surfaces.
@@ -98,7 +100,9 @@ open class EglSurfaceBase protected constructor(// EglCore object we're associat
      * Makes our EGL context and surface current.
      */
     fun makeCurrent() {
-        mEglCore.makeCurrent(mEGLSurface)
+        if (CURRENT_EGL_SURFACE.getAndSet(mEGLSurface) != mEGLSurface) {
+            mEglCore.makeCurrent(mEGLSurface)
+        }
     }
 
     /**
@@ -131,7 +135,10 @@ open class EglSurfaceBase protected constructor(// EglCore object we're associat
         mEglCore.setPresentationTime(mEGLSurface, nsecs)
     }
 
+    fun isCurrent(): Boolean = mEglCore.isCurrent(mEGLSurface)
+
     companion object {
-        protected val TAG = EglSurfaceBase::class.java.simpleName
+        const val TAG = "EglSurfaceBase"
+        val CURRENT_EGL_SURFACE = AtomicReference<EGLSurface>()
     }
 }

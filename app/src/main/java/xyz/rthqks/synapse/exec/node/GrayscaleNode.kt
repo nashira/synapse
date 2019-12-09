@@ -103,12 +103,12 @@ class GrayscaleNode(
     }
 
     private suspend fun startTexture() = coroutineScope {
-        val output = connection(OUTPUT) ?: return@coroutineScope
-        val input = channel(INPUT) ?: return@coroutineScope
-
-        var copyMatrix = true
-
         startJob = launch {
+            val output = connection(OUTPUT) ?: return@launch
+            val input = channel(INPUT) ?: return@launch
+
+            var copyMatrix = true
+
             while (isActive) {
                 val inEvent = input.receive()
 
@@ -141,15 +141,15 @@ class GrayscaleNode(
     }
 
     private suspend fun startSurface() = coroutineScope {
-        val output = connection(OUTPUT) ?: return@coroutineScope
-        val input = channel(INPUT) ?: return@coroutineScope
-        val config = output.config
-
-        updateOutputSurface(config.surface.get())
-
-        var copyMatrix = true
-
         startJob = launch {
+            val output = connection(OUTPUT) ?: return@launch
+            val input = channel(INPUT) ?: return@launch
+            val config = output.config
+
+            updateOutputSurface(config.surface.get())
+
+            var copyMatrix = true
+
             while (isActive) {
                 val inEvent = input.receive()
 

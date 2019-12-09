@@ -136,8 +136,9 @@ class SurfaceViewNode(
     private suspend fun startTexture() = coroutineScope {
         playJob = launch {
             val input = channel(INPUT) ?: return@launch
-
             updateOutputSurface()
+            val windowSurface = windowSurface ?: return@launch
+
             var copyMatrix = true
             while (isActive) {
                 val inEvent = input.receive()
@@ -150,9 +151,10 @@ class SurfaceViewNode(
                 }
                 if (surface != null) {
                     glesManager.withGlContext {
+                        windowSurface.makeCurrent()
                         GLES32.glBindFramebuffer(GLES32.GL_FRAMEBUFFER, 0)
                         executeGl(inEvent.texture)
-                        windowSurface?.swapBuffers()
+                        windowSurface.swapBuffers()
                     }
                 }
 
