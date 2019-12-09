@@ -10,6 +10,7 @@ import android.util.Range
 import android.util.Size
 import android.view.Surface
 import android.view.WindowManager
+import kotlin.coroutines.Continuation
 import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException
 import kotlin.coroutines.suspendCoroutine
@@ -85,21 +86,25 @@ class CameraManager(
 
     @SuppressLint("MissingPermission")
     private suspend fun openCamera(cameraId: String): CameraDevice = suspendCoroutine {
+        var continuation: Continuation<CameraDevice>? = it
         manager.openCamera(cameraId, object : CameraDevice.StateCallback() {
             override fun onOpened(camera: CameraDevice) {
                 Log.d(TAG, "onOpened")
-                it.resume(camera)
+                continuation?.resume(camera)
+                continuation = null
             }
 
             override fun onDisconnected(camera: CameraDevice) {
                 Log.d(TAG, "onDisconnected")
                 camera.close()
-                it.resumeWithException(RuntimeException("camera open exception: disconnected"))
+                continuation?.resumeWithException(RuntimeException("camera open exception: disconnected"))
+                continuation = null
             }
 
             override fun onError(camera: CameraDevice, error: Int) {
                 Log.d(TAG, "onError")
-                it.resumeWithException(RuntimeException("camera open exception: $error"))
+                continuation?.resumeWithException(RuntimeException("camera open exception: $error"))
+                continuation = null
             }
 
             override fun onClosed(camera: CameraDevice) {
