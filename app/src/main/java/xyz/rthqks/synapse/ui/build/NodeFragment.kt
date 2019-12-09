@@ -74,13 +74,14 @@ class NodeFragment : DaggerFragment() {
     override fun onResume() {
         super.onResume()
         Log.d(TAG, "onResume $nodeId $touching")
-        if (touching) return
 
         val node = viewModel.getNode(nodeId)
         viewModel.setTitle(node.type.title)
         viewModel.setMenu(R.menu.activity_builder)
 
-        reloadConnectors()
+        if (!touching) {
+            reloadConnectors()
+        }
     }
 
     private fun reloadConnectors() {

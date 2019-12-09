@@ -79,9 +79,7 @@ class GraphExecutor(
                 Node.Type.LutFilter -> GlNode(glesManager, assetManager)
                 Node.Type.ShaderFilter -> TODO()
                 Node.Type.Speakers -> AudioPlayerNode()
-                Node.Type.Screen -> SurfaceViewNode(
-                    surfaceView
-                )
+                Node.Type.Screen -> SurfaceViewNode(assetManager, glesManager, surfaceView)
                 Node.Type.Creation -> error("not an executable node type: ${it.type}")
                 Node.Type.Connection -> error("not an executable node type: ${it.type}")
             }

@@ -86,7 +86,7 @@ class GrayscaleNode(
         }
 
         connection(OUTPUT)?.let {
-            if (it.config.requiresSurface) {
+            if (it.config.acceptsSurface) {
                 repeat(3) { n -> it.prime(VideoEvent()) }
             } else {
                 it.prime(VideoEvent(texture!!))
@@ -95,7 +95,7 @@ class GrayscaleNode(
     }
 
     override suspend fun start() {
-        when (config(OUTPUT)?.requiresSurface) {
+        when (config(OUTPUT)?.acceptsSurface) {
             true -> startSurface()
             false -> startTexture()
             else -> Log.w(TAG, "no connection on start")
@@ -237,7 +237,8 @@ class GrayscaleNode(
                     size.height,
                     GL_R8,
                     GL_RED,
-                    GL_UNSIGNED_BYTE
+                    GL_UNSIGNED_BYTE,
+                    offersSurface = true
                 ) as C
             }
             else -> error("unknown key $key")

@@ -53,7 +53,7 @@ class CameraNode(
         val connection = connection(OUTPUT) ?: return
         val config = connection.config
 
-        if (config.requiresSurface) {
+        if (config.acceptsSurface) {
             repeat(3) { connection.prime(VideoEvent()) }
         } else {
             glesManager.withGlContext {
@@ -70,7 +70,7 @@ class CameraNode(
         }
     }
 
-    override suspend fun start() = when (config(OUTPUT)?.requiresSurface) {
+    override suspend fun start() = when (config(OUTPUT)?.acceptsSurface) {
         true -> startSurface()
         false -> startTexture()
         else -> {
@@ -213,7 +213,8 @@ class CameraNode(
                     GLES32.GL_RGB8,
                     GLES32.GL_RGB,
                     GLES32.GL_UNSIGNED_BYTE,
-                    surfaceRotation
+                    surfaceRotation,
+                    offersSurface = true
                 ) as C
             }
             else -> error("unknown key $key")

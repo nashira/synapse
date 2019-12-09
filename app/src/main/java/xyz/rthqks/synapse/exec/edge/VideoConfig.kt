@@ -13,7 +13,8 @@ class VideoConfig(
     val internalFormat: Int,
     val format: Int,
     val type: Int,
-    val rotation: Int = 0
+    val rotation: Int = 0,
+    val offersSurface: Boolean = false
 ) : Config {
 
     constructor(size: Size, rotation: Int) : this(0, size.width, size.height, 0, 0, 0, rotation)
@@ -23,5 +24,5 @@ class VideoConfig(
     val surface = SuspendableGet<Surface>()
 
     // set by consumer
-    var requiresSurface = false
+    var acceptsSurface = false
 }

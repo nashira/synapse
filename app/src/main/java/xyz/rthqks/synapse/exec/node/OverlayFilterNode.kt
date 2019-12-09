@@ -100,7 +100,7 @@ class OverlayFilterNode(
 
 
         connection(OUTPUT)?.let {
-            if (it.config.requiresSurface) {
+            if (it.config.acceptsSurface) {
                 repeat(3) { n -> it.prime(VideoEvent()) }
             } else {
                 it.prime(VideoEvent(texture!!))
@@ -109,7 +109,7 @@ class OverlayFilterNode(
     }
 
     override suspend fun start() {
-        when (config(OUTPUT)?.requiresSurface) {
+        when (config(OUTPUT)?.acceptsSurface) {
             true -> startSurface()
             false -> startTexture()
             else -> Log.w(TAG, "no connection on start")
@@ -276,7 +276,8 @@ class OverlayFilterNode(
                     contentSize.height,
                     config.internalFormat,
                     config.format,
-                    config.type
+                    config.type,
+                    offersSurface = true
                 ) as C
             }
             else -> error("unknown key $key")

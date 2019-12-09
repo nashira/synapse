@@ -75,7 +75,7 @@ class DecoderNode(
     override suspend fun initialize() {
         if (decoder.hasVideo) {
             connection(VIDEO)?.let {
-                if (it.config.requiresSurface) {
+                if (it.config.acceptsSurface) {
                     repeat(3) { n -> it.prime(VideoEvent()) }
                 } else {
                     glesManager.withGlContext {
@@ -106,10 +106,10 @@ class DecoderNode(
             videoInput == null -> {
                 Log.w(TAG, "no connection, not starting")
             }
-            videoConfig?.requiresSurface == true -> {
+            videoConfig?.acceptsSurface == true -> {
                 videoJob = launch { start2() }
             }
-            videoConfig?.requiresSurface == false -> {
+            videoConfig?.acceptsSurface == false -> {
                 videoJob = launch { startTexture() }
             }
         }
@@ -289,7 +289,8 @@ class DecoderNode(
                     GLES32.GL_RGB8,
                     GLES32.GL_RGB,
                     GLES32.GL_UNSIGNED_BYTE,
-                    surfaceRotation
+                    surfaceRotation,
+                    offersSurface = true
                 ) as C
             }
             AUDIO -> {

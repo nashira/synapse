@@ -110,7 +110,7 @@ abstract class Mesh(
         const val DRAW_ELEMENTS = 1
         const val DRAW_ARRAYS_INSTANCED = 2
         const val DRAW_ELEMENTS_INSTANCED = 3
-        private val TAG = Mesh::class.java.simpleName
+        const val TAG = "Mesh"
     }
 }
 
