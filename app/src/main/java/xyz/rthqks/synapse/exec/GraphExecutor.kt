@@ -16,30 +16,26 @@ import xyz.rthqks.synapse.gl.GlesManager
 import xyz.rthqks.synapse.logic.Graph
 import xyz.rthqks.synapse.logic.Node
 import xyz.rthqks.synapse.logic.Port
-import java.util.concurrent.Executors
 
 class GraphExecutor(
     private val context: Context,
+    private val dispatcher: CoroutineDispatcher,
+    private val glesManager: GlesManager,
+    private val cameraManager: CameraManager,
+    private val assetManager: AssetManager,
     private val graph: Graph
 ) {
-    private val dispatcher = Executors.newFixedThreadPool(6).asCoroutineDispatcher()
+
     private val exceptionHandler = CoroutineExceptionHandler { _, throwable ->
         Log.e(TAG, "error", throwable)
     }
     private val scope = CoroutineScope(SupervisorJob() + dispatcher + exceptionHandler)
-    private val glesManager = GlesManager()
-    private val cameraManager = CameraManager(context)
-    private val assetManager = AssetManager(context)
     private val nodes = mutableMapOf<Int, NodeExecutor>()
 //    private val connections = mutableListOf<Connection<Event>>()
 
     private lateinit var surfaceView: SurfaceView
 
     suspend fun initialize() {
-
-        cameraManager.initialize()
-        glesManager.withGlContext { it.initialize() }
-
         graph.getNodes().forEach {
             val node = when (it.type) {
                 Node.Type.Camera -> CameraNode(
@@ -118,11 +114,6 @@ class GraphExecutor(
                 }
             }
 
-//            val config = from.getConfig()
-//            from.output(edge.fromPortId)?.let {
-//                to.input(edge.toPortId, it)
-//            }7
-
             Log.d(TAG, "connect complete $edge")
         }
 
@@ -171,13 +162,13 @@ class GraphExecutor(
             it.release()
             Log.d(TAG, "release complete $it")
         }
-        cameraManager.release()
-        glesManager.withGlContext {
-            it.release()
-        }
-
+//        cameraManager.release()
+//        glesManager.withGlContext {
+//            it.release()
+//        }
+//
         scope.cancel()
-        dispatcher.close()
+//        dispatcher.close()
         logCoroutineInfo(scope.coroutineContext[Job])
     }
 
@@ -208,6 +199,6 @@ class GraphExecutor(
     }
 
     companion object {
-        private val TAG = GraphExecutor::class.java.simpleName
+        const val TAG = "GraphExecutor"
     }
 }

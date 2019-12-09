@@ -6,9 +6,13 @@ import android.view.SurfaceView
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import kotlinx.coroutines.*
+import xyz.rthqks.synapse.assets.AssetManager
 import xyz.rthqks.synapse.data.SynapseDao
+import xyz.rthqks.synapse.exec.CameraManager
 import xyz.rthqks.synapse.exec.GraphExecutor
+import xyz.rthqks.synapse.gl.GlesManager
 import xyz.rthqks.synapse.logic.Graph
+import java.util.concurrent.Executors
 import javax.inject.Inject
 
 class ExecGraphViewModel @Inject constructor(
@@ -23,13 +27,24 @@ class ExecGraphViewModel @Inject constructor(
     private var stopJob: Job? = null
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
 
+    private val dispatcher = Executors.newFixedThreadPool(6).asCoroutineDispatcher()
+    private val glesManager = GlesManager()
+    private val cameraManager = CameraManager(context)
+    private val assetManager = AssetManager(context)
+
     fun loadGraph(graphId: Int) {
         Log.d(TAG, "loadGraph")
         initJob = scope.launch {
-            val graphConfig = dao.getFullGraph(graphId)
-            graphLoaded.postValue(graphConfig)
-            Log.d(TAG, "loaded graph: $graphConfig")
-            graphExecutor = GraphExecutor(context, graphConfig)
+            val graph = dao.getFullGraph(graphId)
+            graphLoaded.postValue(graph)
+            Log.d(TAG, "loaded graph: $graph")
+
+            cameraManager.initialize()
+            glesManager.withGlContext { it.initialize() }
+
+            graphExecutor = GraphExecutor(
+                context, dispatcher, glesManager, cameraManager, assetManager, graph
+            )
 
             graphExecutor.tmpSetSurfaceView(surfaceView)
 
@@ -80,6 +95,10 @@ class ExecGraphViewModel @Inject constructor(
                 stopJob?.cancel()
             }
             graphExecutor.release()
+            glesManager.release()
+            cameraManager.release()
+            dispatcher.close()
+
             scope.cancel()
             Log.d(TAG, "released")
         }

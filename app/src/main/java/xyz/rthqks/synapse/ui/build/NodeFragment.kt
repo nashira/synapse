@@ -26,8 +26,6 @@ class NodeFragment : DaggerFragment() {
     private lateinit var touchMediator: TouchMediator
     private lateinit var inputsAdapter: PortsAdapter
     private lateinit var outputsAdapter: PortsAdapter
-    var touching = false
-
     private var nodeId = -1
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -68,19 +66,20 @@ class NodeFragment : DaggerFragment() {
 
     override fun onPause() {
         super.onPause()
-        Log.d(TAG, "onPause $nodeId")
+        Log.d(TAG, "onPause $nodeId ${viewModel.isAdapterChanging}")
     }
 
     override fun onResume() {
         super.onResume()
-        Log.d(TAG, "onResume $nodeId $touching")
+        Log.d(TAG, "onResume $nodeId ${viewModel.isAdapterChanging}")
 
         val node = viewModel.getNode(nodeId)
         viewModel.setTitle(node.type.title)
         viewModel.setMenu(R.menu.activity_builder)
 
-        if (!touching) {
+        if (!viewModel.isAdapterChanging) {
             reloadConnectors()
+            viewModel.startPreview(nodeId, surface_view)
         }
     }
 
@@ -103,9 +102,7 @@ class NodeFragment : DaggerFragment() {
 
     fun onConnectorTouch(connector: Connector) {
         Log.d(TAG, "touch $connector")
-        touching = true
         viewModel.preparePortSwipe(connector)
-        touching = false
     }
 
     fun onConnectorClick(connector: Connector) {

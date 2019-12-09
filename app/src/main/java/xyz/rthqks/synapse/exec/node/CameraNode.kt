@@ -113,13 +113,6 @@ class CameraNode(
         startJob = launch {
 
             cameraManager.start(cameraId, surface, frameRate) { count, timestamp, eos ->
-                //                launch {
-//                    val frame = connection.dequeue()
-//                    frame.eos = eos
-//                    frame.count = count
-//                    frame.timestamp = timestamp
-//                    connection.queue(frame)
-//                Log.d(TAG, "camera $timestamp")
                 if (eos) {
                     outputSurfaceTexture?.setOnFrameAvailableListener(null)
 
@@ -128,6 +121,7 @@ class CameraNode(
                         if (mutex.isLocked) {
                             val event = connection.dequeue()
                             event.eos = true
+                            event.timestamp = timestamp
                             connection.queue(event)
                             mutex.unlock()
                         }

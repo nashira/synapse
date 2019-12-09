@@ -112,7 +112,7 @@ class OverlayFilterNode(
         when (config(OUTPUT)?.acceptsSurface) {
             true -> startSurface()
             false -> startTexture()
-            else -> Log.w(TAG, "no connection on start")
+            else -> startNoOutput()
         }
     }
 
@@ -222,6 +222,32 @@ class OverlayFilterNode(
                     startJob?.cancel()
                 }
             }
+        }
+    }
+
+    private suspend fun startNoOutput() = coroutineScope {
+        val input = channel(INPUT_CONTENT) ?: error("no content connection")
+        val mask = channel(INPUT_MASK) ?: error("no mask connection")
+
+        startJob = launch {
+            var eos = false
+            whileSelect {
+                input.onReceive {
+                    input.send(it)
+                    val stop = eos && it.eos
+                    eos = it.eos
+                    !stop
+                }
+                mask.onReceive {
+                    mask.send(it)
+                    val stop = eos && it.eos
+                    eos = it.eos
+                    !stop
+                }
+            }
+
+            Log.d(TAG, "got EOS")
+            startJob?.cancel()
         }
     }
 
