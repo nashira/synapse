@@ -341,6 +341,7 @@ class BuilderViewModel @Inject constructor(
 //                Toast.makeText(context, "TIMEOUT", Toast.LENGTH_LONG).show()
                 stopJob?.cancel()
             }
+            graphExecutor?.release()
             glesManager.release()
             cameraManager.release()
             dispatcher.close()

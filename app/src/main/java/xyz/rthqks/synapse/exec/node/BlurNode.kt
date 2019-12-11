@@ -160,9 +160,9 @@ class BlurNode(
 
         startJob = launch {
             while (isActive) {
+                val outEvent = output.dequeue()
                 val inEvent = channel.receive()
 
-                val outEvent = output.dequeue()
                 outEvent.eos = inEvent.eos
                 outEvent.count = inEvent.count
                 outEvent.timestamp = inEvent.timestamp

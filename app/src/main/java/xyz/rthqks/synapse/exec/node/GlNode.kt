@@ -158,9 +158,8 @@ class GlNode(
 
         startJob = launch {
             while (isActive) {
-                val inEvent = input.receive()
-
                 val outEvent = output.dequeue()
+                val inEvent = input.receive()
                 outEvent.eos = inEvent.eos
                 outEvent.count = inEvent.count
                 outEvent.timestamp = inEvent.timestamp

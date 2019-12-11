@@ -3,9 +3,7 @@ package xyz.rthqks.synapse.exec.node
 import android.media.AudioFormat
 import android.media.AudioRecord
 import android.util.Log
-import kotlinx.coroutines.Job
-import kotlinx.coroutines.coroutineScope
-import kotlinx.coroutines.launch
+import kotlinx.coroutines.*
 import xyz.rthqks.synapse.exec.NodeExecutor
 import xyz.rthqks.synapse.exec.edge.*
 
@@ -19,7 +17,6 @@ class AudioSourceNode(
     private lateinit var audioFormat: AudioFormat
     private var bufferSize = 0
     private var recordJob: Job? = null
-    private var running = false
 
     override suspend fun create() {
         bufferSize = AudioRecord.getMinBufferSize(
@@ -55,9 +52,8 @@ class AudioSourceNode(
         recordJob = launch {
             val connection = connection(KEY) ?: return@launch
             recorder.startRecording()
-            running = true
             var numFrames = 0
-            while (running) {
+            while (isActive) {
                 val audioEvent = connection.dequeue()
                 audioEvent.eos = false
                 audioEvent.frame = numFrames
@@ -77,8 +73,7 @@ class AudioSourceNode(
     }
 
     override suspend fun stop() {
-        running = false
-        recordJob?.join()
+        recordJob?.cancelAndJoin()
         recorder.stop()
         connection(KEY)?.let {
             Log.d(TAG, "sending EOS")

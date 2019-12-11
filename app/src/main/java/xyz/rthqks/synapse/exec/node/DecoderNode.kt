@@ -85,7 +85,7 @@ class DecoderNode(
                     outputSurfaceTexture = SurfaceTexture(outputTexture.id)
                     outputSurfaceTexture?.setDefaultBufferSize(size.width, size.height)
                     outputSurface = Surface(outputSurfaceTexture)
-                    it.prime(VideoEvent(outputTexture, FloatArray(16)))
+                    it.prime(VideoEvent(outputTexture))
                 }
                 videoInput = Channel(Channel.UNLIMITED)
             }
@@ -132,8 +132,8 @@ class DecoderNode(
         val startTime = SystemClock.elapsedRealtimeNanos()
         var firstTime = -1L
         do {
-            val event = videoInput.receive()
             val frame = connection.dequeue()
+            val event = videoInput.receive()
             val eos = event.info.flags and MediaCodec.BUFFER_FLAG_END_OF_STREAM != 0
             frame.eos = eos
             frame.count = count++
@@ -166,11 +166,11 @@ class DecoderNode(
 
         var count = 0
         do {
+            val audioEvent = audioConnection.dequeue()
+
             val event = audioInput.receive()
             val eos = event.info.flags and MediaCodec.BUFFER_FLAG_END_OF_STREAM != 0
-//            Log.d(TAG, "audio available ${eos} $event")
 
-            val audioEvent = audioConnection.dequeue()
             if (audioEvent.session == audioSession) {
                 decoder.releaseAudioBuffer(audioEvent.index, audioEvent.eos)
             }

@@ -143,8 +143,6 @@ abstract class Event {
     val _counter = AtomicInteger()
 }
 
-class Connector<C : Config, E : Event>(val channel: Channel<E>, val config: C)
-
 class Duplex<E : Event>(
     internal val tx: Channel<E>,
     internal val rx: Channel<E>

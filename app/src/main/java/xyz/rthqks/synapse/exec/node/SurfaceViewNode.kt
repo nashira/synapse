@@ -72,11 +72,15 @@ class SurfaceViewNode(
 
     override suspend fun initialize() {
         val config = config(INPUT) ?: return
-        if (!config.offersSurface) {
+        if (true || !config.offersSurface) {
             Log.d(TAG, "NEED TO READ FROM A TEXTURE!!")
+            val grayscale = config.format == GLES32.GL_RED
+
             val vertexSource = assetManager.readTextAsset("vertex_texture.vert")
             val fragmentSource = assetManager.readTextAsset("copy.frag").let {
                 if (config.isOes) it.replace("#{EXT}", "#define EXT") else it
+            }.let {
+                if (grayscale) it.replace("#{RED}", "#define RED") else it
             }
             glesManager.withGlContext {
                 mesh.initialize()
@@ -102,7 +106,8 @@ class SurfaceViewNode(
 
     override suspend fun start() {
         when (config(INPUT)?.offersSurface) {
-            true -> startSurface()
+//            true -> startSurface()
+            true,
             false -> startTexture()
             else -> Log.w(TAG, "no connection on start")
         }
@@ -184,13 +189,17 @@ class SurfaceViewNode(
     }
 
     override suspend fun release() {
-
+        glesManager.withGlContext {
+            windowSurface?.release()
+            mesh.release()
+            program.release()
+        }
     }
 
     override suspend fun <C : Config, E : Event> setConfig(key: Connection.Key<C, E>, config: C) {
         super.setConfig(key, config)
         config(INPUT)?.let {
-            it.acceptsSurface = true
+//            it.acceptsSurface = true
             size = it.size
             val rotation = it.rotation
             updateSurfaceViewConfig(size, rotation)
@@ -202,8 +211,8 @@ class SurfaceViewNode(
         rotation: Int
     ) {
         withContext(Dispatchers.Main) {
-            val outSize =
-                if (rotation == 90 || rotation == 270) Size(size.height, size.width) else size
+            val outSize = size
+//                if (rotation == 90 || rotation == 270) Size(size.height, size.width) else size
             surfaceView.holder.setFixedSize(outSize.width, outSize.height)
             ConstraintSet().also {
                 val constraintLayout = surfaceView.parent as ConstraintLayout

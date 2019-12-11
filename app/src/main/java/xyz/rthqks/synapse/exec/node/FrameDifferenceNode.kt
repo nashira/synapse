@@ -147,9 +147,10 @@ class FrameDifferenceNode(
 
         startJob = launch {
             while (isActive) {
+                val outEvent = output.dequeue()
                 val inEvent = input.receive()
 
-                val outEvent = output.dequeue().apply {
+                outEvent.apply {
                     eos = inEvent.eos
                     count = inEvent.count
                     timestamp = inEvent.timestamp
