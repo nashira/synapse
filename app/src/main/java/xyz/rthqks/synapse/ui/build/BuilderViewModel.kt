@@ -8,7 +8,6 @@ import androidx.annotation.StringRes
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import androidx.viewpager2.widget.ViewPager2
 import kotlinx.coroutines.*
 import xyz.rthqks.synapse.assets.AssetManager
 import xyz.rthqks.synapse.data.EdgeData
@@ -333,7 +332,6 @@ class BuilderViewModel @Inject constructor(
         Log.d(TAG, "onCleared")
         scope.launch {
             Log.d(TAG, "release")
-            stopExecution()
             withTimeoutOrNull(2000) {
                 stopJob?.join()
             } ?: run {

@@ -1,6 +1,5 @@
 package xyz.rthqks.synapse.ui.build
 
-import android.content.Context
 import android.os.Bundle
 import android.util.Log
 import android.view.*

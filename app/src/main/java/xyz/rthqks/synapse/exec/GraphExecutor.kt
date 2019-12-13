@@ -10,7 +10,9 @@ import android.view.SurfaceView
 import kotlinx.coroutines.*
 import xyz.rthqks.synapse.assets.AssetManager
 import xyz.rthqks.synapse.data.Key
-import xyz.rthqks.synapse.exec.edge.*
+import xyz.rthqks.synapse.exec.edge.Config
+import xyz.rthqks.synapse.exec.edge.Connection
+import xyz.rthqks.synapse.exec.edge.Event
 import xyz.rthqks.synapse.exec.node.*
 import xyz.rthqks.synapse.gl.GlesManager
 import xyz.rthqks.synapse.logic.Edge

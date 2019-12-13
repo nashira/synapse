@@ -10,6 +10,8 @@ import android.util.Range
 import android.util.Size
 import android.view.Surface
 import android.view.WindowManager
+import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.runBlocking
 import kotlin.coroutines.Continuation
 import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException
@@ -23,6 +25,10 @@ class CameraManager(
     private val cameraMap = mutableMapOf<String, CameraCharacteristics>()
     private val thread = HandlerThread(TAG)
     private lateinit var handler: Handler
+    private var eventIndex = 0
+    private val events = Array(10) {
+        Event(0, 0, false)
+    }
     var displayRotation = 0
     var isEos: Boolean = false
 
@@ -48,7 +54,7 @@ class CameraManager(
         cameraId: String,
         surface: Surface,
         fps: Int,
-        onFrame: ((Long, Long, Boolean) -> Unit)
+        channel: Channel<Event>
     ) {
         isEos = false
         val c = openCamera(cameraId)
@@ -58,7 +64,7 @@ class CameraManager(
             it.set(CaptureRequest.CONTROL_AE_TARGET_FPS_RANGE, Range(fps, fps))
         }.build()
 
-        startRequest(c, s, request, onFrame)
+        startRequest(c, s, request, channel)
     }
 
     fun stop() {
@@ -139,7 +145,7 @@ class CameraManager(
         camera: CameraDevice,
         session: CameraCaptureSession,
         request: CaptureRequest,
-        onFrame: ((Long, Long, Boolean) -> Unit)
+        channel: Channel<Event>
     ) {
         session.setRepeatingRequest(request, object : CameraCaptureSession.CaptureCallback() {
             override fun onCaptureCompleted(
@@ -147,19 +153,27 @@ class CameraManager(
                 request: CaptureRequest,
                 result: TotalCaptureResult
             ) {
-                val eos = isEos
+                runBlocking {
+                    val eos = isEos
 
-                if (eos) {
-                    Log.d(TAG, "got eos")
+                    if (eos) {
+                        Log.d(TAG, "got eos")
 //                    session.stopRepeating()
-                    session.close()
-                    camera.close()
-                }
+                        session.close()
+                        camera.close()
+                    }
 
-                val time = result[CaptureResult.SENSOR_TIMESTAMP]!!
-                onFrame(result.frameNumber, time, eos)
+                    val time = result[CaptureResult.SENSOR_TIMESTAMP]!!
+                    val event = nextEvent()
+                    event.set(result.frameNumber.toInt(), time, eos)
+                    channel.send(event)
+                }
             }
         }, handler)
+    }
+    private fun nextEvent(): Event {
+        eventIndex = (eventIndex + 1) % events.size
+        return events[eventIndex]
     }
 
     fun resolve(facing: Int, size: Size, frameRate: Int): Conf {
@@ -183,7 +197,7 @@ class CameraManager(
 
     data class Conf(val id: String, val size: Size, val fps: Int, val rotation: Int)
 
-    class Event(
+    data class Event(
         var count: Int,
         var timestamp: Long,
         var eos: Boolean

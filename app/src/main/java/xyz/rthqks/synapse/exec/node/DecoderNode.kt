@@ -13,11 +13,8 @@ import android.os.SystemClock
 import android.util.Log
 import android.util.Size
 import android.view.Surface
-import kotlinx.coroutines.Job
+import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.Channel
-import kotlinx.coroutines.coroutineScope
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.launch
 import xyz.rthqks.synapse.codec.Decoder
 import xyz.rthqks.synapse.exec.NodeExecutor
 import xyz.rthqks.synapse.exec.edge.*
@@ -197,7 +194,7 @@ class DecoderNode(
 
         var copyMatrix = true
         setOnFrameAvailableListener {
-            launch {
+            runBlocking {
                 onFrame(connection, it, copyMatrix)
                 copyMatrix = false
             }

@@ -10,11 +10,10 @@ import android.util.Log
 import android.util.Size
 import android.view.Surface
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
-import kotlinx.coroutines.sync.Mutex
-import kotlinx.coroutines.sync.withLock
 import xyz.rthqks.synapse.exec.CameraManager
 import xyz.rthqks.synapse.exec.NodeExecutor
 import xyz.rthqks.synapse.exec.edge.*
@@ -32,7 +31,6 @@ class CameraNode(
     private lateinit var cameraId: String
     private var surfaceRotation = 0
     private var startJob: Job? = null
-    private val mutex = Mutex()
     private var outputSurface: Surface? = null
     private var outputSurfaceTexture: SurfaceTexture? = null
     private val outputTexture = Texture(
@@ -70,77 +68,68 @@ class CameraNode(
         }
     }
 
-    override suspend fun start() = when (config(OUTPUT)?.acceptsSurface) {
-        true -> startSurface()
-        false -> startTexture()
-        else -> {
-            Log.w(TAG, "no connection, not starting")
-            Unit
+    override suspend fun start() = coroutineScope {
+        when (config(OUTPUT)?.acceptsSurface) {
+            true -> {
+                startJob = launch { startSurface() }
+            }
+            false -> {
+                startJob = launch { startTexture() }
+            }
+            else -> {
+                Log.w(TAG, "no connection, not starting")
+                Unit
+            }
         }
     }
 
-    private suspend fun startSurface() = coroutineScope {
-        val connection = connection(OUTPUT) ?: return@coroutineScope
+    private suspend fun startSurface() {
+        val connection = connection(OUTPUT) ?: return
         val config = connection.config
         val surface = config.surface.get()
-        mutex.lock()
-        startJob = launch {
-            cameraManager.start(cameraId, surface, frameRate) { count, timestamp, eos ->
-                launch {
-                    val frame = connection.dequeue()
-                    frame.eos = eos
-                    frame.count = count.toInt()
-                    frame.timestamp = timestamp
-                    connection.queue(frame)
-                    if (eos) {
-                        Log.d(TAG, "sending EOS")
-                        Log.d(TAG, "sent frames $count")
-                        mutex.unlock()
-                    }
-                }
+        val cameraChannel = Channel<CameraManager.Event>(3)
+        cameraManager.start(cameraId, surface, frameRate, cameraChannel)
+        do {
+            val (count, timestamp, eos) = cameraChannel.receive()
+            val frame = connection.dequeue()
+            frame.count = count
+            frame.timestamp = timestamp
+            frame.eos = eos
+            connection.queue(frame)
+            if (eos) {
+                Log.d(TAG, "sending EOS")
+                Log.d(TAG, "sent frames $count")
             }
-            // lock again to suspend until we unlock on EOS
-            mutex.lock()
-            mutex.unlock()
-        }
+        } while (!eos)
     }
 
-    private suspend fun startTexture() = coroutineScope {
-        val connection = connection(OUTPUT) ?: return@coroutineScope
-        val surface = outputSurface ?: return@coroutineScope
-        mutex.lock()
+    private suspend fun startTexture() {
+        val connection = connection(OUTPUT) ?: return
+        val surface = outputSurface ?: return
+        val cameraChannel = Channel<CameraManager.Event>(3)
 
-        startJob = launch {
-
-            cameraManager.start(cameraId, surface, frameRate) { count, timestamp, eos ->
-                if (eos) {
-                    outputSurfaceTexture?.setOnFrameAvailableListener(null)
-
-                    runBlocking {
-                        Log.d(TAG, "got EOS from cam")
-                        if (mutex.isLocked) {
-                            val event = connection.dequeue()
-                            event.eos = true
-                            event.timestamp = timestamp
-                            connection.queue(event)
-                            mutex.unlock()
-                        }
-                        Log.d(TAG, "sent frames $count")
-                    }
-                }
+        var copyMatrix = true
+        setOnFrameAvailableListener {
+            runBlocking {
+                onFrame(connection, it, copyMatrix)
+                copyMatrix = false
             }
-
-            var copyMatrix = true
-            setOnFrameAvailableListener {
-                launch {
-                    onFrame(connection, it, copyMatrix)
-                    copyMatrix = false
-                }
-            }
-
-            // lock again to suspend until we unlock on EOS
-            mutex.withLock { }
         }
+
+        cameraManager.start(cameraId, surface, frameRate, cameraChannel)
+        do {
+            val (count, timestamp, eos) = cameraChannel.receive()
+            if (eos) {
+                outputSurfaceTexture?.setOnFrameAvailableListener(null)
+                Log.d(TAG, "got EOS from cam")
+                val event = connection.dequeue()
+                event.count = count
+                event.timestamp = timestamp
+                event.eos = true
+                connection.queue(event)
+                Log.d(TAG, "sent frames $count")
+            }
+        } while (!eos)
     }
 
     private fun setOnFrameAvailableListener(block: (SurfaceTexture) -> Unit) {
