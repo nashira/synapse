@@ -108,10 +108,6 @@ class BuilderActivity : DaggerAppCompatActivity() {
                 view_pager.setCurrentItem(it.currentItem, it.animate)
             }
         })
-
-        viewModel.graphChannel.observe(this, Observer {
-
-        })
     }
 
     override fun onStop() {
@@ -133,7 +129,7 @@ class BuilderActivity : DaggerAppCompatActivity() {
         dialog.listener = {
             Log.d(TAG, "onDelete $it")
             if (it) {
-                viewModel.onDelete()
+                viewModel.deleteNode()
             }
         }
         dialog.show(supportFragmentManager, null)

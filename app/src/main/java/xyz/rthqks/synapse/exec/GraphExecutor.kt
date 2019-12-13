@@ -18,6 +18,7 @@ import xyz.rthqks.synapse.gl.GlesManager
 import xyz.rthqks.synapse.logic.Edge
 import xyz.rthqks.synapse.logic.Graph
 import xyz.rthqks.synapse.logic.Node
+import java.util.concurrent.atomic.AtomicReference
 
 class GraphExecutor(
     private val context: Context,
@@ -27,17 +28,24 @@ class GraphExecutor(
     private val assetManager: AssetManager,
     private val graph: Graph
 ) {
-
     private val exceptionHandler = CoroutineExceptionHandler { _, throwable ->
         Log.e(TAG, "error", throwable)
+//        throw throwable
     }
+
     private val scope = CoroutineScope(SupervisorJob() + dispatcher + exceptionHandler)
     private val nodes = mutableMapOf<Int, NodeExecutor>()
-//    private val connections = mutableListOf<Connection<Event>>()
 
     private lateinit var surfaceView: SurfaceView
+    private var state = AtomicReference(State.Created)
+//    private var jobs = mutableMapOf<State, Job>()
 
     suspend fun initialize() {
+        state.getAndSet(State.Initialized).let {
+            if (it != State.Created) {
+                error("unexpected state $it")
+            }
+        }
         graph.getNodes().forEach {
             val node = nodeExecutor(it)
             nodes[it.id] = node
@@ -60,7 +68,6 @@ class GraphExecutor(
             it.initialize()
             Log.d(TAG, "initialize complete $it")
         }
-
         logCoroutineInfo(scope.coroutineContext[Job])
     }
 
@@ -130,6 +137,12 @@ class GraphExecutor(
     }
 
     suspend fun start() {
+        state.getAndSet(State.Started).let {
+            if (it != State.Initialized) {
+                error("unexpected state $it")
+            }
+        }
+
         parallel(nodes.values) {
             Log.d(TAG, "start $it")
             it.start()
@@ -140,6 +153,11 @@ class GraphExecutor(
     }
 
     suspend fun stop() {
+        state.getAndSet(State.Initialized).let {
+            if (it != State.Started) {
+//                error("unexpected state $it")
+            }
+        }
         parallelJoin(nodes.values) {
             Log.d(TAG, "stop $it")
             it.stop()
@@ -149,18 +167,17 @@ class GraphExecutor(
     }
 
     suspend fun release() {
+        state.getAndSet(State.Released).let {
+            if (it != State.Initialized) {
+                error("unexpected state $it")
+            }
+        }
         parallelJoin(nodes.values) {
             Log.d(TAG, "release $it")
             it.release()
             Log.d(TAG, "release complete $it")
         }
-//        cameraManager.release()
-//        glesManager.withGlContext {
-//            it.release()
-//        }
-//
         scope.cancel()
-//        dispatcher.close()
         logCoroutineInfo(scope.coroutineContext[Job])
     }
 
@@ -199,5 +216,12 @@ class GraphExecutor(
 
     companion object {
         const val TAG = "GraphExecutor"
+    }
+
+    enum class State {
+        Created,
+        Initialized,
+        Started,
+        Released
     }
 }

@@ -130,14 +130,14 @@ class MacNode(
     override suspend fun start() = coroutineScope {
         startJob = launch {
             val input = channel(INPUT) ?: return@launch
-            val output = connection((OUTPUT)) ?: return@launch
+            val output = channel(OUTPUT) ?: return@launch
 
             var copyMatrix = true
 
             while (isActive) {
                 val inEvent = input.receive()
 
-                val outEvent = output.dequeue().apply {
+                val outEvent = output.receive().apply {
                     eos = inEvent.eos
                     count = inEvent.count
                     timestamp = inEvent.timestamp
@@ -168,7 +168,7 @@ class MacNode(
 
                 outEvent.let {
                     it.texture = outTexture
-                    output.queue(it)
+                    output.send(it)
                 }
 
                 if (inEvent.eos) {

@@ -38,8 +38,7 @@ class GrayscaleNode(
     }
 
     override suspend fun initialize() {
-        val connection = connection(INPUT) ?: error("missing input connection")
-        val config = connection.config
+        val config = config(INPUT) ?: error("missing input connection")
         val vertexSource = assetManager.readTextAsset("vertex_texture.vert")
         val fragmentSource = assetManager.readTextAsset("grayscale.frag").let {
             if (config.isOes) {
@@ -104,7 +103,7 @@ class GrayscaleNode(
 
     private suspend fun startTexture() = coroutineScope {
         startJob = launch {
-            val output = connection(OUTPUT) ?: return@launch
+            val output = channel(OUTPUT) ?: return@launch
             val input = channel(INPUT) ?: return@launch
 
             var copyMatrix = true
@@ -112,7 +111,7 @@ class GrayscaleNode(
             while (isActive) {
                 val inEvent = input.receive()
 
-                val outEvent = output.dequeue()
+                val outEvent = output.receive()
                 outEvent.eos = inEvent.eos
                 outEvent.count = inEvent.count
                 outEvent.timestamp = inEvent.timestamp
@@ -130,7 +129,7 @@ class GrayscaleNode(
                 }
 
                 input.send(inEvent)
-                output.queue(outEvent)
+                output.send(outEvent)
 
                 if (outEvent.eos) {
                     Log.d(TAG, "got EOS")
@@ -142,9 +141,9 @@ class GrayscaleNode(
 
     private suspend fun startSurface() = coroutineScope {
         startJob = launch {
-            val output = connection(OUTPUT) ?: return@launch
+            val output = channel(OUTPUT) ?: return@launch
             val input = channel(INPUT) ?: return@launch
-            val config = output.config
+            val config = config(OUTPUT) ?: return@launch
 
             updateOutputSurface(config.surface.get())
 
@@ -153,7 +152,7 @@ class GrayscaleNode(
             while (isActive) {
                 val inEvent = input.receive()
 
-                val outEvent = output.dequeue()
+                val outEvent = output.receive()
                 outEvent.eos = inEvent.eos
                 outEvent.count = inEvent.count
                 outEvent.timestamp = inEvent.timestamp
@@ -175,7 +174,7 @@ class GrayscaleNode(
                 }
 
                 input.send(inEvent)
-                output.queue(outEvent)
+                output.send(outEvent)
 
                 if (outEvent.eos) {
                     Log.d(TAG, "got EOS")

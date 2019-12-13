@@ -8,8 +8,6 @@ import java.util.concurrent.atomic.AtomicInteger
 
 interface Connection<C : Config, E : Event> {
     val config: C
-    suspend fun queue(item: E)
-    suspend fun dequeue(): E
     fun poll(): E?
     fun producer(): Channel<E>
     fun consumer(): Channel<E>
@@ -24,10 +22,6 @@ class SingleConsumer<C : Config, E : Event>(
         Channel(Channel.UNLIMITED),
         Channel(Channel.UNLIMITED)
     )
-
-    override suspend fun queue(item: E) = duplex.tx.send(item)
-
-    override suspend fun dequeue(): E = duplex.rx.receive()
 
     override fun poll(): E? = duplex.rx.poll()
 
@@ -86,32 +80,6 @@ class MultiConsumer<C : Config, E : Event>(
         )
         consumers.add(duplex)
         return duplex.client
-    }
-
-    override suspend fun queue(item: E) {
-        item._counter.set(consumers.size)
-        consumers.forEach {
-            it.tx.send(item)
-        }
-    }
-
-    override suspend fun dequeue(): E {
-        while (true) {
-            val item = select<E?> {
-                consumers.forEach {
-                    it.rx.onReceive { item ->
-                        if (item._counter.decrementAndGet() == 0) {
-                            item
-                        } else {
-                            null
-                        }
-                    }
-                }
-            }
-            item?.let {
-                return it
-            }
-        }
     }
 
     override fun poll(): E? {

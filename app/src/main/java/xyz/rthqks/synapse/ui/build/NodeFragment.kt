@@ -78,7 +78,6 @@ class NodeFragment : DaggerFragment() {
 
         if (!viewModel.isAdapterChanging) {
             reloadConnectors()
-            viewModel.startPreview(nodeId, surface_view)
         }
     }
 

@@ -152,6 +152,7 @@ class SurfaceViewNode(
                     val uniform = program.getUniform(Uniform.Type.Mat4, "texture_matrix0")
                     val matrix = uniform.data!!
                     System.arraycopy(inEvent.matrix, 0, matrix, 0, 16)
+                    // center crop
                     val inAspect = inputSize.width / inputSize.height.toFloat()
                     val outAspect = outputSize.width / outputSize.height.toFloat()
 

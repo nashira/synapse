@@ -118,9 +118,9 @@ class DecoderNode(
     }
 
     private suspend fun start2() {
-        val connection = connection(VIDEO) ?: return
+        val connection = channel(VIDEO) ?: return
         val videoInput = videoInput ?: return
-        val config = connection.config
+        val config = config(VIDEO) ?: return
         val surface = config.surface.get()
 
         decoder.start(surface, videoInput, audioInput)
@@ -129,7 +129,7 @@ class DecoderNode(
         val startTime = SystemClock.elapsedRealtimeNanos()
         var firstTime = -1L
         do {
-            val frame = connection.dequeue()
+            val frame = connection.receive()
             val event = videoInput.receive()
             val eos = event.info.flags and MediaCodec.BUFFER_FLAG_END_OF_STREAM != 0
             frame.eos = eos
@@ -152,18 +152,18 @@ class DecoderNode(
                 frame.eos = true
             }
             decoder.releaseVideoBuffer(event.index, frame.eos)
-            connection.queue(frame)
+            connection.send(frame)
 
         } while (!frame.eos)
     }
 
     private suspend fun startAudio() {
-        val audioConnection = connection(AUDIO) ?: return
+        val audioChannel = channel(AUDIO) ?: return
         val audioInput = audioInput ?: return
 
         var count = 0
         do {
-            val audioEvent = audioConnection.dequeue()
+            val audioEvent = audioChannel.receive()
 
             val event = audioInput.receive()
             val eos = event.info.flags and MediaCodec.BUFFER_FLAG_END_OF_STREAM != 0
@@ -178,7 +178,7 @@ class DecoderNode(
             event.buffer?.let {
                 audioEvent.buffer = it
             }
-            audioConnection.queue(audioEvent)
+            audioChannel.send(audioEvent)
             if (eos) {
                 decoder.releaseAudioBuffer(audioEvent.index, audioEvent.eos)
             }
@@ -186,7 +186,7 @@ class DecoderNode(
     }
 
     private suspend fun startTexture() = coroutineScope {
-        val connection = connection(VIDEO) ?: return@coroutineScope
+        val connection = channel(VIDEO) ?: return@coroutineScope
         val surface = outputSurface ?: return@coroutineScope
         val videoInput = videoInput ?: return@coroutineScope
 
@@ -227,9 +227,9 @@ class DecoderNode(
         Log.d(TAG, "sent frames ${count-1}")
         outputSurfaceTexture?.setOnFrameAvailableListener(null)
 
-        val event = connection.dequeue()
+        val event = connection.receive()
         event.eos = true
-        connection.queue(event)
+        connection.send(event)
     }
 
     private fun setOnFrameAvailableListener(block: (SurfaceTexture) -> Unit) {
@@ -241,12 +241,12 @@ class DecoderNode(
     }
 
     private suspend fun onFrame(
-        connection: Connection<VideoConfig, VideoEvent>,
+        connection: Channel<VideoEvent>,
         surfaceTexture: SurfaceTexture,
         copyMatrix: Boolean
     ) {
 
-        val event = connection.dequeue()
+        val event = connection.receive()
         glesManager.withGlContext {
             surfaceTexture.updateTexImage()
             if (copyMatrix) {
@@ -255,7 +255,7 @@ class DecoderNode(
 //            Log.d(TAG, "surface ${surfaceTexture.timestamp}")
         }
         event.eos = false
-        connection.queue(event)
+        connection.send(event)
     }
 
     override suspend fun stop() {

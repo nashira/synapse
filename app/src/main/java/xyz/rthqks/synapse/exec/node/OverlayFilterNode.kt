@@ -117,7 +117,7 @@ class OverlayFilterNode(
     }
 
     private suspend fun startTexture() = coroutineScope {
-        val output = connection(OUTPUT) ?: error("no output connection")
+        val output = channel(OUTPUT) ?: error("no output connection")
         val input = channel(INPUT_CONTENT) ?: error("no content connection")
         val mask = channel(INPUT_MASK) ?: error("no mask connection")
 
@@ -128,7 +128,7 @@ class OverlayFilterNode(
                 val inEvent1 = input.receive()
                 val maskEvent = mask.receive()
 
-                val outEvent = output.dequeue()
+                val outEvent = output.receive()
                 outEvent.eos = inEvent1.eos
                 outEvent.count = inEvent1.count
                 outEvent.timestamp = inEvent1.timestamp
@@ -147,7 +147,7 @@ class OverlayFilterNode(
                 input.send(inEvent1)
                 mask.send(maskEvent)
 
-                output.queue(outEvent)
+                output.send(outEvent)
 
                 if (outEvent.eos) {
                     Log.d(TAG, "got EOS")
@@ -158,10 +158,10 @@ class OverlayFilterNode(
     }
 
     private suspend fun startSurface() = coroutineScope {
-        val output = connection(OUTPUT) ?: return@coroutineScope
+        val output = channel(OUTPUT) ?: return@coroutineScope
+        val config = config(OUTPUT) ?: return@coroutineScope
         val input = channel(INPUT_CONTENT) ?: return@coroutineScope
         val mask = channel(INPUT_MASK) ?: error("no mask connection")
-        val config = output.config
 
         updateOutputSurface(config.surface.get())
 
@@ -193,7 +193,7 @@ class OverlayFilterNode(
                 val inEvent = inEventRaw!!
                 val maskEvent = maskEventRaw!!
 
-                val outEvent = output.dequeue()
+                val outEvent = output.receive()
                 outEvent.eos = inEvent.eos
                 outEvent.count = inEvent.count
                 outEvent.timestamp = inEvent.timestamp
@@ -215,7 +215,7 @@ class OverlayFilterNode(
 
                 input.send(inEvent)
                 mask.send(maskEvent)
-                output.queue(outEvent)
+                output.send(outEvent)
 
                 if (outEvent.eos) {
                     Log.d(TAG, "got EOS")

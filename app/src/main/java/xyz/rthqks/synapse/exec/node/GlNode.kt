@@ -110,7 +110,7 @@ class GlNode(
     }
 
     private suspend fun startTexture() = coroutineScope {
-        val output = connection((OUTPUT)) ?: return@coroutineScope
+        val output = channel((OUTPUT)) ?: return@coroutineScope
         val input = channel(INPUT) ?: return@coroutineScope
 
         var copyMatrix = true
@@ -119,7 +119,7 @@ class GlNode(
             while (isActive) {
                 val inEvent = input.receive()
 
-                val outEvent = output.dequeue()
+                val outEvent = output.receive()
                 outEvent.eos = inEvent.eos
                 outEvent.count = inEvent.count
                 outEvent.timestamp = inEvent.timestamp
@@ -137,7 +137,7 @@ class GlNode(
                 }
 
                 input.send(inEvent)
-                output.queue(outEvent)
+                output.send(outEvent)
 
                 if (outEvent.eos) {
                     Log.d(TAG, "got EOS")
@@ -148,9 +148,9 @@ class GlNode(
     }
 
     private suspend fun startSurface() = coroutineScope {
-        val output = connection(OUTPUT) ?: return@coroutineScope
+        val output = channel(OUTPUT) ?: return@coroutineScope
         val input = channel(INPUT) ?: return@coroutineScope
-        val config = output.config
+        val config = config(OUTPUT) ?: return@coroutineScope
 
         updateOutputSurface(config.surface.get())
 
@@ -158,7 +158,7 @@ class GlNode(
 
         startJob = launch {
             while (isActive) {
-                val outEvent = output.dequeue()
+                val outEvent = output.receive()
                 val inEvent = input.receive()
                 outEvent.eos = inEvent.eos
                 outEvent.count = inEvent.count
@@ -180,7 +180,7 @@ class GlNode(
                 }
 
                 input.send(inEvent)
-                output.queue(outEvent)
+                output.send(outEvent)
 
                 if (outEvent.eos) {
                     Log.d(TAG, "got EOS")

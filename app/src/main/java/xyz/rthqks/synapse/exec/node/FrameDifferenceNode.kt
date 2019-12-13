@@ -140,14 +140,14 @@ class FrameDifferenceNode(
 
 
     override suspend fun start() = coroutineScope {
-        val output = connection(OUTPUT) ?: return@coroutineScope
+        val output = channel(OUTPUT) ?: return@coroutineScope
         val input = channel(INPUT) ?: return@coroutineScope
 
         var copyMatrix = true
 
         startJob = launch {
             while (isActive) {
-                val outEvent = output.dequeue()
+                val outEvent = output.receive()
                 val inEvent = input.receive()
 
                 outEvent.apply {
@@ -170,13 +170,9 @@ class FrameDifferenceNode(
 
                 input.send(inEvent)
 
-                if (framebuffer == framebuffer1) {
-                    framebuffer = framebuffer2
-                } else {
-                    framebuffer = framebuffer1
-                }
+                framebuffer = if (framebuffer == framebuffer1) framebuffer2 else framebuffer1
 
-                output.queue(outEvent)
+                output.send(outEvent)
 
                 if (inEvent.eos) {
                     Log.d(TAG, "got EOS")

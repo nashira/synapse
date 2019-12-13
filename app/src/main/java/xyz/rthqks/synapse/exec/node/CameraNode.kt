@@ -84,18 +84,18 @@ class CameraNode(
     }
 
     private suspend fun startSurface() {
-        val connection = connection(OUTPUT) ?: return
-        val config = connection.config
+        val output = channel(OUTPUT) ?: return
+        val config = config(OUTPUT) ?: return
         val surface = config.surface.get()
         val cameraChannel = Channel<CameraManager.Event>(3)
         cameraManager.start(cameraId, surface, frameRate, cameraChannel)
         do {
             val (count, timestamp, eos) = cameraChannel.receive()
-            val frame = connection.dequeue()
+            val frame = output.receive()
             frame.count = count
             frame.timestamp = timestamp
             frame.eos = eos
-            connection.queue(frame)
+            output.send(frame)
             if (eos) {
                 Log.d(TAG, "sending EOS")
                 Log.d(TAG, "sent frames $count")
@@ -104,14 +104,14 @@ class CameraNode(
     }
 
     private suspend fun startTexture() {
-        val connection = connection(OUTPUT) ?: return
+        val channel = channel(OUTPUT) ?: return
         val surface = outputSurface ?: return
         val cameraChannel = Channel<CameraManager.Event>(3)
 
         var copyMatrix = true
         setOnFrameAvailableListener {
             runBlocking {
-                onFrame(connection, it, copyMatrix)
+                onFrame(channel, it, copyMatrix)
                 copyMatrix = false
             }
         }
@@ -122,11 +122,11 @@ class CameraNode(
             if (eos) {
                 outputSurfaceTexture?.setOnFrameAvailableListener(null)
                 Log.d(TAG, "got EOS from cam")
-                val event = connection.dequeue()
+                val event = channel.receive()
                 event.count = count
                 event.timestamp = timestamp
                 event.eos = true
-                connection.queue(event)
+                channel.send(event)
                 Log.d(TAG, "sent frames $count")
             }
         } while (!eos)
@@ -141,12 +141,12 @@ class CameraNode(
     }
 
     private suspend fun onFrame(
-        connection: Connection<VideoConfig, VideoEvent>,
+        channel: Channel<VideoEvent>,
         surfaceTexture: SurfaceTexture,
         copyMatrix: Boolean
     ) {
 
-        val event = connection.dequeue()
+        val event = channel.receive()
         glesManager.withGlContext {
             surfaceTexture.updateTexImage()
             if (copyMatrix) {
@@ -167,7 +167,7 @@ class CameraNode(
 //            Log.d(TAG, "surface ${surfaceTexture.timestamp}")
         }
         event.eos = false
-        connection.queue(event)
+        channel.send(event)
     }
 
     override suspend fun stop() {

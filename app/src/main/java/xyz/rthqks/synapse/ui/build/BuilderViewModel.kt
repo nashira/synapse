@@ -1,30 +1,24 @@
 package xyz.rthqks.synapse.ui.build
 
-import android.content.Context
 import android.util.Log
-import android.view.SurfaceView
 import androidx.annotation.MenuRes
 import androidx.annotation.StringRes
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import kotlinx.coroutines.*
-import xyz.rthqks.synapse.assets.AssetManager
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import xyz.rthqks.synapse.data.EdgeData
 import xyz.rthqks.synapse.data.GraphData
 import xyz.rthqks.synapse.data.NodeData
 import xyz.rthqks.synapse.data.SynapseDao
-import xyz.rthqks.synapse.exec.CameraManager
-import xyz.rthqks.synapse.exec.GraphExecutor
-import xyz.rthqks.synapse.exec.node.SurfaceViewNode
-import xyz.rthqks.synapse.gl.GlesManager
+import xyz.rthqks.synapse.exec.Executor
 import xyz.rthqks.synapse.logic.*
 import xyz.rthqks.synapse.util.Consumable
-import java.util.concurrent.Executors
 import javax.inject.Inject
 
 class BuilderViewModel @Inject constructor(
-    private val context: Context,
+    private val executor: Executor,
     private val dao: SynapseDao
 ) : ViewModel() {
     private val consumable = Consumable<SwipeEvent>()
@@ -39,16 +33,9 @@ class BuilderViewModel @Inject constructor(
     private var nodeAfterCancel: Node? = null
     var isAdapterChanging = false
 
-
-    private var graphExecutor: GraphExecutor? = null
-    private var initJob: Job? = null
-    private var startJob: Job? = null
-    private var stopJob: Job? = null
-    private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
-    private val dispatcher = Executors.newFixedThreadPool(6).asCoroutineDispatcher()
-    private val glesManager = GlesManager()
-    private val cameraManager = CameraManager(context)
-    private val assetManager = AssetManager(context)
+    init {
+        executor.initialize()
+    }
 
     fun setGraphId(graphId: Int) {
         if (graphId == -1) {
@@ -59,6 +46,7 @@ class BuilderViewModel @Inject constructor(
                 Log.d(TAG, "created: $graph")
                 graphChannel.postValue(graph)
                 onAddNode()
+                executor.initializeGraph(graph)
             }
         } else {
             viewModelScope.launch(Dispatchers.IO) {
@@ -76,12 +64,9 @@ class BuilderViewModel @Inject constructor(
                         )
                     }
                 }
-            }
-        }
 
-        runBlocking {
-            cameraManager.initialize()
-            glesManager.withGlContext { it.initialize() }
+                executor.initializeGraph(graph)
+            }
         }
     }
 
@@ -212,7 +197,7 @@ class BuilderViewModel @Inject constructor(
         }
     }
 
-    fun onDelete() {
+    fun deleteNode() {
         nodesChannel.value?.let {
             val node = it.items[it.currentItem]
             val edges = graph.removeNode(node.id)
@@ -250,112 +235,130 @@ class BuilderViewModel @Inject constructor(
         return Connector(node, port)
     }
 
-    fun startPreview(nodeId: Int, surfaceView: SurfaceView?) {
-        Log.d(TAG, "startPreview $nodeId $graphExecutor")
+//    fun startPreview(nodeId: Int, surfaceView: SurfaceView?) {
+//        Log.d(TAG, "startPreview $nodeId $graphExecutor")
+//
+//        scope.launch {
+//            stopExecution()
+//
+//            withTimeoutOrNull(2000) {
+//                stopJob?.join()
+//            } ?: run {
+//                Log.w(TAG, "timeout waiting for stop")
+////                Toast.makeText(context, "TIMEOUT", Toast.LENGTH_LONG).show()
+//                stopJob?.cancel()
+//            }
+//
+//            graphExecutor?.release()
+//            initGraphExecutor(nodeId, surfaceView)
+//        }
+//    }
 
-        scope.launch {
-            stopExecution()
-
-            withTimeoutOrNull(2000) {
-                stopJob?.join()
-            } ?: run {
-                Log.w(TAG, "timeout waiting for stop")
-//                Toast.makeText(context, "TIMEOUT", Toast.LENGTH_LONG).show()
-                stopJob?.cancel()
-            }
-
-            graphExecutor?.release()
-            initGraphExecutor(nodeId, surfaceView)
-            startExecution()
-        }
-    }
-
-    private fun initGraphExecutor(nodeId: Int, surfaceView: SurfaceView?) {
-        Log.d(TAG, "loadGraph")
-        initJob = scope.launch {
-            val graph = dao.getFullGraph(graph.id)
-            Log.d(TAG, "loaded graph: $graph")
-
-            graph.getNodes().filter { it.type == Node.Type.Screen }.forEach {
-                graph.removeNode(it.id)
-            }
-
-            val portId = graph.getNode(nodeId).ports.values.first { it.output }.id
-            val node = Node.Type.Screen.node().copy(graph.id)
-            graph.addNode(node)
-            graph.addEdge(nodeId, portId, node.id, SurfaceViewNode.INPUT.id)
-
-            graphExecutor = GraphExecutor(
-                context, dispatcher, glesManager, cameraManager, assetManager, graph
-            )
-
-            surfaceView?.let {
-                graphExecutor?.tmpSetSurfaceView(surfaceView)
-            }
-
-            Log.d(TAG, "initialize")
-            graphExecutor?.initialize()
-            Log.d(TAG, "initialized")
-        }
-    }
-
-    fun startExecution() {
-        Log.d(TAG, "startExecution")
-        startJob = scope.launch {
-            initJob?.join()
-            stopJob?.join()
-            Log.d(TAG, "starting")
-            graphExecutor?.start()
-            // right now start launches coroutines and does not join them.
-            // there is a period after start during which calling stop
-            // will result in hung coroutines.
-            // this delay will not block any threads, it will simply keep
-            // startJob active to allow for the nodes to settle
-            // TODO: have start not return until it would be safe to call stop
-            delay(250)
-            Log.d(TAG, "done starting")
-        }
-    }
-
-    fun stopExecution() {
-        Log.d(TAG, "stopExecution")
-        stopJob = scope.launch {
-            Log.d(TAG, "stopping")
-            startJob?.join()
-            Log.d(TAG, "calling graph.stop")
-            graphExecutor?.stop()
-            Log.d(TAG, "done stopping")
-        }
-    }
+//    private fun initGraphExecutor(nodeId: Int, surfaceView: SurfaceView?) {
+//        Log.d(TAG, "loadGraph")
+//        initJob = scope.launch {
+//            val graph = dao.getFullGraph(graph.id)
+//            Log.d(TAG, "loaded graph: $graph")
+//
+//            graph.getNodes().filter { it.type == Node.Type.Screen }.forEach {
+//                graph.removeNode(it.id)
+//            }
+//
+//            val portId = graph.getNode(nodeId).ports.values.first { it.output }.id
+//            val node = Node.Type.Screen.node().copy(graph.id)
+//            graph.addNode(node)
+//            graph.addEdge(nodeId, portId, node.id, SurfaceViewNode.INPUT.id)
+//
+//            graphExecutor = GraphExecutor(
+//                context, dispatcher, glesManager, cameraManager, assetManager, graph
+//            )
+//
+//            surfaceView?.let {
+//                graphExecutor?.tmpSetSurfaceView(surfaceView)
+//            }
+//
+//            Log.d(TAG, "initialize")
+//            graphExecutor?.initialize()
+//            Log.d(TAG, "initialized")
+//            startExecution()
+//        }
+//    }
+//
+//    fun startExecution() {
+//        Log.d(TAG, "startExecution")
+//        startJob = scope.launch {
+//            initJob?.join()
+//            stopJob?.join()
+//            Log.d(TAG, "starting")
+//            graphExecutor?.start()
+//            // right now start launches coroutines and does not join them.
+//            // there is a period after start during which calling stop
+//            // will result in hung coroutines.
+//            // this delay will not block any threads, it will simply keep
+//            // startJob active to allow for the nodes to settle
+//            // TODO: have start not return until it would be safe to call stop
+//            delay(250)
+//            Log.d(TAG, "done starting")
+//        }
+//    }
+//
+//    fun stopExecution() {
+//        Log.d(TAG, "stopExecution")
+//        stopJob = scope.launch {
+//            Log.d(TAG, "stopping")
+//            startJob?.join()
+//            Log.d(TAG, "calling graph.stop")
+//            graphExecutor?.stop()
+//            Log.d(TAG, "done stopping")
+//        }
+//    }
 
     override fun onCleared() {
         Log.d(TAG, "onCleared")
-        scope.launch {
+        viewModelScope.launch {
             Log.d(TAG, "release")
-            withTimeoutOrNull(2000) {
-                stopJob?.join()
-            } ?: run {
-                Log.w(TAG, "timeout waiting for stop")
-//                Toast.makeText(context, "TIMEOUT", Toast.LENGTH_LONG).show()
-                stopJob?.cancel()
-            }
-            graphExecutor?.release()
-            glesManager.release()
-            cameraManager.release()
-            dispatcher.close()
-
-            scope.cancel()
+            executor.release()
             Log.d(TAG, "released")
         }
         super.onCleared()
     }
 
     fun previewSingle() {
+        nodesChannel.value?.also {
+            val current = it.items[it.currentItem]
+            if (current.id != -1) {
+//                executor.setPreviewNodes(current)
+                Log.d(TAG, "should preview ${current.type} ${current.id}")
+            } else {
+                Log.d(TAG, "should stop")
 
+                viewModelScope.launch {
+
+                    executor.stop()
+                }
+            }
+         }
     }
 
     fun previewAll() {
+        nodesChannel.value?.also {
+            val current = it.items.filter { it.id != -1 }
+            if (current.isNotEmpty()) {
+//                executor.setPreviewNodes(current)
+                Log.d(TAG, "should preview ${current.joinToString { it.type.name }}")
+            } else {
+                Log.d(TAG, "should stop")
+                viewModelScope.launch {
+                    executor.stop()
+                }
+            }
+        }
+    }
 
+    fun stopExecution() {
+        viewModelScope.launch {
+            executor.stop()
+        }
     }
 
     companion object {

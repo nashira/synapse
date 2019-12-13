@@ -153,15 +153,15 @@ class BlurNode(
     }
 
     override suspend fun start() = coroutineScope {
-        val output = connection(OUTPUT) ?: return@coroutineScope
-        val channel = channel(INPUT) ?: return@coroutineScope
+        val output = channel(OUTPUT) ?: return@coroutineScope
+        val input = channel(INPUT) ?: return@coroutineScope
 
         var copyMatrix = true
 
         startJob = launch {
             while (isActive) {
-                val outEvent = output.dequeue()
-                val inEvent = channel.receive()
+                val outEvent = output.receive()
+                val inEvent = input.receive()
 
                 outEvent.eos = inEvent.eos
                 outEvent.count = inEvent.count
@@ -178,8 +178,8 @@ class BlurNode(
                     executeGl(inEvent.texture)
                 }
 
-                channel.send(inEvent)
-                output.queue(outEvent)
+                input.send(inEvent)
+                output.send(outEvent)
 
                 if (outEvent.eos) {
                     Log.d(TAG, "got EOS")

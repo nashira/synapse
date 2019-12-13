@@ -54,11 +54,11 @@ class AudioSourceNode(
     override suspend fun start() = coroutineScope {
 
         recordJob = launch {
-            val connection = connection(OUTPUT) ?: return@launch
+            val output = channel(OUTPUT) ?: return@launch
             recorder.startRecording()
             var numFrames = 0
             while (isActive) {
-                val audioEvent = connection.dequeue()
+                val audioEvent = output.receive()
                 audioEvent.eos = false
                 audioEvent.count = numFrames
                 audioEvent.buffer.position(0)
@@ -68,7 +68,7 @@ class AudioSourceNode(
                     AudioRecord.READ_BLOCKING
                 )
                 audioEvent.buffer.limit(read)
-                connection.queue(audioEvent)
+                output.send(audioEvent)
                 numFrames++
 //                Log.d(TAG, "read $read frames $numFrames")
             }
@@ -79,11 +79,11 @@ class AudioSourceNode(
     override suspend fun stop() {
         recordJob?.cancelAndJoin()
         recorder.stop()
-        connection(OUTPUT)?.let {
+        channel(OUTPUT)?.let {
             Log.d(TAG, "sending EOS")
-            val e = it.dequeue()
+            val e = it.receive()
             e.eos = true
-            it.queue(e)
+            it.send(e)
         }
     }
 
