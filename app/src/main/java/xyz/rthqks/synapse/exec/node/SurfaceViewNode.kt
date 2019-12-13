@@ -7,10 +7,7 @@ import android.util.Size
 import android.view.Surface
 import android.view.SurfaceHolder
 import android.view.SurfaceView
-import androidx.constraintlayout.widget.ConstraintLayout
-import androidx.constraintlayout.widget.ConstraintSet
 import kotlinx.coroutines.*
-import xyz.rthqks.synapse.R
 import xyz.rthqks.synapse.assets.AssetManager
 import xyz.rthqks.synapse.exec.NodeExecutor
 import xyz.rthqks.synapse.exec.edge.*
@@ -24,7 +21,8 @@ class SurfaceViewNode(
     private var surface: Surface? = null
     private var running: Boolean = false
     private var playJob: Job? = null
-    private var size: Size = Size(0, 0)
+    private var inputSize: Size = Size(0, 0)
+    private var outputSize: Size = Size(0, 0)
 
     private val mesh = Quad()
     private val program = Program()
@@ -58,6 +56,7 @@ class SurfaceViewNode(
         height: Int
     ) {
         Log.d(TAG, "surfaceChanged: $holder $format $width $height")
+        outputSize = Size(width, height)
         runBlocking { setSurface(holder!!.surface) }
     }
 
@@ -151,7 +150,18 @@ class SurfaceViewNode(
                 if (copyMatrix) {
                     copyMatrix = false
                     val uniform = program.getUniform(Uniform.Type.Mat4, "texture_matrix0")
-                    System.arraycopy(inEvent.matrix, 0, uniform.data!!, 0, 16)
+                    val matrix = uniform.data!!
+                    System.arraycopy(inEvent.matrix, 0, matrix, 0, 16)
+                    val inAspect = inputSize.width / inputSize.height.toFloat()
+                    val outAspect = outputSize.width / outputSize.height.toFloat()
+
+                    val scaleX = if (inAspect > outAspect) outAspect / inAspect else 1f
+                    val scaleY = if (inAspect < outAspect) inAspect / outAspect else 1f
+
+                    Matrix.translateM(matrix, 0, 0.5f, 0.5f, 0f)
+                    Matrix.scaleM(matrix, 0, scaleX, scaleY, 1f)
+                    Matrix.translateM(matrix, 0, -0.5f, -0.5f, 0f)
+
                     uniform.dirty = true
                 }
                 if (surface != null) {
@@ -175,7 +185,7 @@ class SurfaceViewNode(
 
     private fun executeGl(texture: Texture) {
         GLES32.glUseProgram(program.programId)
-        GLES32.glViewport(0, 0, size.width, size.height)
+        GLES32.glViewport(0, 0, outputSize.width, outputSize.height)
 
         texture.bind(GLES32.GL_TEXTURE0)
 
@@ -200,9 +210,9 @@ class SurfaceViewNode(
         super.setConfig(key, config)
         config(INPUT)?.let {
 //            it.acceptsSurface = true
-            size = it.size
+            inputSize = it.size
             val rotation = it.rotation
-            updateSurfaceViewConfig(size, rotation)
+            updateSurfaceViewConfig(inputSize, rotation)
         }
     }
 
@@ -211,15 +221,16 @@ class SurfaceViewNode(
         rotation: Int
     ) {
         withContext(Dispatchers.Main) {
+            outputSize = Size(surfaceView.measuredWidth, surfaceView.measuredHeight)
             val outSize = size
 //                if (rotation == 90 || rotation == 270) Size(size.height, size.width) else size
-            surfaceView.holder.setFixedSize(outSize.width, outSize.height)
-            ConstraintSet().also {
-                val constraintLayout = surfaceView.parent as ConstraintLayout
-                it.clone(constraintLayout)
-                it.setDimensionRatio(R.id.surface_view, "${size.width}:${size.height}")
-                it.applyTo(constraintLayout)
-            }
+//            surfaceView.holder.setFixedSize(outSize.width, outSize.height)
+//            ConstraintSet().also {
+//                val constraintLayout = surfaceView.parent as ConstraintLayout
+//                it.clone(constraintLayout)
+//                it.setDimensionRatio(R.id.surface_view, "${size.width}:${size.height}")
+//                it.applyTo(constraintLayout)
+//            }
         }
         setSurface(surface)
     }

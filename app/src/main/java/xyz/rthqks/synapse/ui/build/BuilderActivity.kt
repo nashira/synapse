@@ -47,9 +47,18 @@ class BuilderActivity : DaggerAppCompatActivity() {
         view_pager.registerOnPageChangeCallback(object : ViewPager2.OnPageChangeCallback() {
 
             override fun onPageScrollStateChanged(state: Int) {
-                if (state == ViewPager2.SCROLL_STATE_IDLE) {
-                    view_pager.post {
-                        viewModel.onViewPagerIdle(view_pager)
+                when (state) {
+                    ViewPager2.SCROLL_STATE_IDLE -> view_pager.post {
+                        Log.d(TAG, "scroll idle")
+                        viewModel.updateCurrentItem(view_pager.currentItem)
+                        viewModel.previewSingle()
+                    }
+                    ViewPager2.SCROLL_STATE_DRAGGING -> {
+                        Log.d(TAG, "scroll dragging")
+                        viewModel.previewAll()
+                    }
+                    ViewPager2.SCROLL_STATE_SETTLING -> {
+                        Log.d(TAG, "scroll settling")
                     }
                 }
             }
@@ -103,6 +112,11 @@ class BuilderActivity : DaggerAppCompatActivity() {
         viewModel.graphChannel.observe(this, Observer {
 
         })
+    }
+
+    override fun onStop() {
+        super.onStop()
+        viewModel.stopExecution()
     }
 
     private fun onJumpToNode() {

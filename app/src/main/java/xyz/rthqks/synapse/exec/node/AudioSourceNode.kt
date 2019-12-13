@@ -6,6 +6,8 @@ import android.util.Log
 import kotlinx.coroutines.*
 import xyz.rthqks.synapse.exec.NodeExecutor
 import xyz.rthqks.synapse.exec.edge.*
+import java.nio.ByteBuffer
+import java.nio.ByteOrder
 
 class AudioSourceNode(
     private val sampleRate: Int,
@@ -40,9 +42,11 @@ class AudioSourceNode(
     }
 
     override suspend fun initialize() {
-        connection(KEY)?.let { con ->
+        connection(OUTPUT)?.let { con ->
             repeat(3) {
-                con.prime(AudioEvent(bufferSize))
+                val item = AudioEvent()
+                item.buffer = ByteBuffer.allocateDirect(bufferSize).order(ByteOrder.nativeOrder())
+                con.prime(item)
             }
         }
     }
@@ -50,13 +54,13 @@ class AudioSourceNode(
     override suspend fun start() = coroutineScope {
 
         recordJob = launch {
-            val connection = connection(KEY) ?: return@launch
+            val connection = connection(OUTPUT) ?: return@launch
             recorder.startRecording()
             var numFrames = 0
             while (isActive) {
                 val audioEvent = connection.dequeue()
                 audioEvent.eos = false
-                audioEvent.frame = numFrames
+                audioEvent.count = numFrames
                 audioEvent.buffer.position(0)
                 val read = recorder.read(
                     audioEvent.buffer,
@@ -75,7 +79,7 @@ class AudioSourceNode(
     override suspend fun stop() {
         recordJob?.cancelAndJoin()
         recorder.stop()
-        connection(KEY)?.let {
+        connection(OUTPUT)?.let {
             Log.d(TAG, "sending EOS")
             val e = it.dequeue()
             e.eos = true
@@ -90,13 +94,13 @@ class AudioSourceNode(
     @Suppress("UNCHECKED_CAST")
     override suspend fun <C : Config, E : Event> makeConfig(key: Connection.Key<C, E>): C {
         return when (key) {
-            KEY -> AudioConfig(audioFormat, bufferSize) as C
+            OUTPUT -> AudioConfig(audioFormat, bufferSize) as C
             else -> error("")
         }
     }
 
     companion object {
         const val TAG = "AudioSourceNode"
-        val KEY = Connection.Key<AudioConfig, AudioEvent>("audio_1")
+        val OUTPUT = Connection.Key<AudioConfig, AudioEvent>("audio_1")
     }
 }

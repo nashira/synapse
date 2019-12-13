@@ -41,8 +41,6 @@ class CameraManager(
         ids.forEach { id ->
             val characteristics = manager.getCameraCharacteristics(id)
             cameraMap[id] = characteristics
-            val orientation = characteristics[CameraCharacteristics.SENSOR_ORIENTATION]
-//            Log.d(TAG, "id: $id orientation $orientation")
         }
     }
 
@@ -153,12 +151,13 @@ class CameraManager(
 
                 if (eos) {
                     Log.d(TAG, "got eos")
+//                    session.stopRepeating()
                     session.close()
                     camera.close()
                 }
 
                 val time = result[CaptureResult.SENSOR_TIMESTAMP]!!
-                onFrame.invoke(result.frameNumber, time, eos)
+                onFrame(result.frameNumber, time, eos)
             }
         }, handler)
     }
@@ -183,4 +182,16 @@ class CameraManager(
     }
 
     data class Conf(val id: String, val size: Size, val fps: Int, val rotation: Int)
+
+    class Event(
+        var count: Int,
+        var timestamp: Long,
+        var eos: Boolean
+    ) {
+        fun set(count: Int, timestamp: Long, eos: Boolean) {
+            this.count = count
+            this.timestamp = timestamp
+            this.eos = eos
+        }
+    }
 }

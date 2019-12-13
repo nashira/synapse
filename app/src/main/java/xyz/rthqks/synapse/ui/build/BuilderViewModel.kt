@@ -122,9 +122,9 @@ class BuilderViewModel @Inject constructor(
 
     fun getNode(nodeId: Int): Node = graph.getNode(nodeId)
 
-    fun onViewPagerIdle(viewPager: ViewPager2) {
+    fun updateCurrentItem(currentItem: Int) {
         nodesChannel.value?.let {
-            nodesChannel.value = AdapterState(viewPager.currentItem, it.items)
+            nodesChannel.value = AdapterState(currentItem, it.items)
         }
     }
 
@@ -350,6 +350,14 @@ class BuilderViewModel @Inject constructor(
             Log.d(TAG, "released")
         }
         super.onCleared()
+    }
+
+    fun previewSingle() {
+
+    }
+
+    fun previewAll() {
+
     }
 
     companion object {

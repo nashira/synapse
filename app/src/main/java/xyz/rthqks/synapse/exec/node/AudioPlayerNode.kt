@@ -22,7 +22,7 @@ class AudioPlayerNode : NodeExecutor() {
     }
 
     override suspend fun initialize() {
-        audioFormat = config(KEY)?.audioFormat
+        audioFormat = config(INPUT)?.audioFormat
 
         audioFormat?.let {
             val bufferSize = AudioRecord.getMinBufferSize(
@@ -44,7 +44,7 @@ class AudioPlayerNode : NodeExecutor() {
 
     override suspend fun start() = coroutineScope {
         playJob = launch {
-            val channel = channel(KEY) ?: return@launch
+            val channel = channel(INPUT) ?: return@launch
             var running = true
             audioTrack?.play()
             var numFrames = 0
@@ -79,6 +79,6 @@ class AudioPlayerNode : NodeExecutor() {
 
     companion object {
         const val TAG = "AudioPlayerNode"
-        val KEY = Connection.Key<AudioConfig, AudioEvent>("audio_1")
+        val INPUT = Connection.Key<AudioConfig, AudioEvent>("audio_1")
     }
 }

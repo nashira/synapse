@@ -13,9 +13,9 @@ import xyz.rthqks.synapse.data.Key
 import xyz.rthqks.synapse.exec.edge.*
 import xyz.rthqks.synapse.exec.node.*
 import xyz.rthqks.synapse.gl.GlesManager
+import xyz.rthqks.synapse.logic.Edge
 import xyz.rthqks.synapse.logic.Graph
 import xyz.rthqks.synapse.logic.Node
-import xyz.rthqks.synapse.logic.Port
 
 class GraphExecutor(
     private val context: Context,
@@ -37,48 +37,7 @@ class GraphExecutor(
 
     suspend fun initialize() {
         graph.getNodes().forEach {
-            val node = when (it.type) {
-                Node.Type.Camera -> CameraNode(
-                    cameraManager,
-                    glesManager,
-                    it[Key.CameraFacing] ?: CameraCharacteristics.LENS_FACING_BACK,
-                    it[Key.CameraCaptureSize] ?: Size(1920, 1080),
-                    it[Key.CameraFrameRate] ?: 30
-                )
-                Node.Type.FrameDifference -> FrameDifferenceNode(glesManager, assetManager)
-                Node.Type.GrayscaleFilter -> GrayscaleNode(
-                    glesManager, assetManager, it[Key.ScaleFactor] ?: 1
-                )
-                Node.Type.BlurFilter -> BlurNode(
-                    glesManager,
-                    assetManager,
-                    it[Key.BlurSize] ?: 9,
-                    it[Key.NumPasses] ?: 1,
-                    it[Key.ScaleFactor] ?: 1
-                )
-                Node.Type.MultiplyAccumulate -> MacNode(
-                    glesManager,
-                    assetManager,
-                    it[Key.MultiplyFactor] ?: 0.9f,
-                    it[Key.AccumulateFactor] ?: 0.9f
-                )
-                Node.Type.OverlayFilter -> OverlayFilterNode(glesManager, assetManager)
-                Node.Type.Microphone -> AudioSourceNode(
-                    it[Key.AudioSampleRate] ?: 48000,
-                    it[Key.AudioChannel] ?: AudioFormat.CHANNEL_OUT_DEFAULT,
-                    it[Key.AudioEncoding] ?: AudioFormat.ENCODING_PCM_16BIT,
-                    it[Key.AudioSource] ?: MediaRecorder.AudioSource.DEFAULT
-                )
-                Node.Type.Image -> TODO()
-                Node.Type.AudioFile -> TODO()
-                Node.Type.MediaFile -> DecoderNode(glesManager, context, it[Key.Uri] ?: "")
-                Node.Type.LutFilter -> GlNode(glesManager, assetManager)
-                Node.Type.ShaderFilter -> TODO()
-                Node.Type.Speakers -> AudioPlayerNode()
-                Node.Type.Screen -> SurfaceViewNode(assetManager, glesManager, surfaceView)
-                Node.Type.Creation -> error("not an executable node type: ${it.type}")
-                Node.Type.Connection -> error("not an executable node type: ${it.type}")
-            }
+            val node = nodeExecutor(it)
             nodes[it.id] = node
         }
 
@@ -89,31 +48,8 @@ class GraphExecutor(
         }
 
         parallelJoin(graph.getEdges()) { edge ->
-            val from = nodes[edge.fromNodeId]!!
-            val to = nodes[edge.toNodeId]!!
-
-            val fromPort = graph.getNode(edge.fromNodeId).getPort(edge.fromPortId)
-            val toPort = graph.getNode(edge.toNodeId).getPort(edge.toPortId)
-
-            if (fromPort.type != toPort.type) {
-                error("port types don't match $edge")
-            }
-
             Log.d(TAG, "connect $edge")
-
-            when (fromPort.type) {
-                Port.Type.Audio -> {
-                    val fromKey = Connection.Key<AudioConfig, AudioEvent>(fromPort.id)
-                    val toKey = Connection.Key<AudioConfig, AudioEvent>(toPort.id)
-                    doConnection(fromKey, toKey, from, to)
-                }
-                Port.Type.Video -> {
-                    val fromKey = Connection.Key<VideoConfig, VideoEvent>(fromPort.id)
-                    val toKey = Connection.Key<VideoConfig, VideoEvent>(toPort.id)
-                    doConnection(fromKey, toKey, from, to)
-                }
-            }
-
+            addEdge(edge)
             Log.d(TAG, "connect complete $edge")
         }
 
@@ -126,12 +62,66 @@ class GraphExecutor(
         logCoroutineInfo(scope.coroutineContext[Job])
     }
 
-    private suspend fun <C : Config, E : Event> doConnection(
-        fromKey: Connection.Key<C, E>,
-        toKey: Connection.Key<C, E>,
-        fromNode: NodeExecutor,
-        toNode: NodeExecutor
-    ) {
+    private fun nodeExecutor(node: Node): NodeExecutor {
+        return when (node.type) {
+            Node.Type.Camera -> CameraNode(
+                cameraManager,
+                glesManager,
+                node[Key.CameraFacing] ?: CameraCharacteristics.LENS_FACING_BACK,
+                node[Key.CameraCaptureSize] ?: Size(1920, 1080),
+                node[Key.CameraFrameRate] ?: 30
+            )
+            Node.Type.FrameDifference -> FrameDifferenceNode(glesManager, assetManager)
+            Node.Type.GrayscaleFilter -> GrayscaleNode(
+                glesManager, assetManager, node[Key.ScaleFactor] ?: 1
+            )
+            Node.Type.BlurFilter -> BlurNode(
+                glesManager,
+                assetManager,
+                node[Key.BlurSize] ?: 9,
+                node[Key.NumPasses] ?: 1,
+                node[Key.ScaleFactor] ?: 1
+            )
+            Node.Type.MultiplyAccumulate -> MacNode(
+                glesManager,
+                assetManager,
+                node[Key.MultiplyFactor] ?: 0.9f,
+                node[Key.AccumulateFactor] ?: 0.9f
+            )
+            Node.Type.OverlayFilter -> OverlayFilterNode(glesManager, assetManager)
+            Node.Type.Microphone -> AudioSourceNode(
+                node[Key.AudioSampleRate] ?: 48000,
+                node[Key.AudioChannel] ?: AudioFormat.CHANNEL_OUT_DEFAULT,
+                node[Key.AudioEncoding] ?: AudioFormat.ENCODING_PCM_16BIT,
+                node[Key.AudioSource] ?: MediaRecorder.AudioSource.DEFAULT
+            )
+            Node.Type.Image -> TODO()
+            Node.Type.AudioFile -> TODO()
+            Node.Type.MediaFile -> DecoderNode(glesManager, context, node[Key.Uri] ?: "")
+            Node.Type.LutFilter -> GlNode(glesManager, assetManager)
+            Node.Type.ShaderFilter -> TODO()
+            Node.Type.Speakers -> AudioPlayerNode()
+            Node.Type.Screen -> SurfaceViewNode(assetManager, glesManager, surfaceView)
+            Node.Type.Creation -> error("not an executable node type: ${node.type}")
+            Node.Type.Connection -> error("not an executable node type: ${node.type}")
+        }
+    }
+
+    private suspend fun addEdge(edge: Edge) {
+
+        val fromNode = nodes[edge.fromNodeId]!!
+        val toNode = nodes[edge.toNodeId]!!
+
+        val fromPort = graph.getNode(edge.fromNodeId).getPort(edge.fromPortId)
+        val toPort = graph.getNode(edge.toNodeId).getPort(edge.toPortId)
+
+        if (fromPort.type != toPort.type) {
+            error("port types don't match $edge")
+        }
+
+        val fromKey = Connection.Key<Config, Event>(fromPort.id)
+        val toKey = Connection.Key<Config, Event>(toPort.id)
+
         val config = fromNode.getConfig(fromKey)
         toNode.setConfig(toKey, config)
         toNode.input(toKey, fromNode.output(fromKey))
@@ -196,6 +186,13 @@ class GraphExecutor(
                 is SurfaceViewNode -> it.setSurfaceView(surfaceView)
             }
         }
+    }
+
+    suspend fun addNode(node: Node, edge: Edge) {
+        val executor = nodeExecutor(node)
+        executor.create()
+        addEdge(edge)
+        executor.initialize()
     }
 
     companion object {

@@ -93,7 +93,7 @@ class DecoderNode(
 
         if (decoder.hasAudio) {
             connection(AUDIO)?.let {
-                repeat(3) { n -> it.prime(AudioEvent(0)) }
+                repeat(3) { n -> it.prime(AudioEvent()) }
                 audioInput = Channel(Channel.UNLIMITED)
             }
         }
@@ -176,7 +176,7 @@ class DecoderNode(
             }
             audioEvent.session = audioSession
             audioEvent.index = event.index
-            audioEvent.frame = count++
+            audioEvent.count = count++
             audioEvent.eos = eos
             event.buffer?.let {
                 audioEvent.buffer = it

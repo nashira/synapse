@@ -83,21 +83,21 @@ class NodeFragment : DaggerFragment() {
         }
     }
 
+    override fun onStart() {
+        super.onStart()
+        Log.d(TAG, "onStart $nodeId ${viewModel.isAdapterChanging}")
+    }
+
+    override fun onStop() {
+        super.onStop()
+        Log.d(TAG, "onStop $nodeId ${viewModel.isAdapterChanging}")
+    }
+
     private fun reloadConnectors() {
         val graph = viewModel.graph
         val connectors = graph.getConnectors(nodeId).groupBy { it.port.output }
         inputsAdapter.setPorts(connectors[false] ?: emptyList())
         outputsAdapter.setPorts(connectors[true] ?: emptyList())
-    }
-
-    override fun onAttach(context: Context) {
-        super.onAttach(context)
-//        Log.d(TAG, "onAttach $nodeId")
-    }
-
-    override fun onDetach() {
-        super.onDetach()
-//        Log.d(TAG, "onDetach $nodeId")
     }
 
     fun onConnectorTouch(connector: Connector) {

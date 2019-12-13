@@ -141,6 +141,9 @@ interface Config
 
 abstract class Event {
     val _counter = AtomicInteger()
+    var eos: Boolean = false
+    var count: Int = 0
+    var timestamp: Long = 0
 }
 
 class Duplex<E : Event>(

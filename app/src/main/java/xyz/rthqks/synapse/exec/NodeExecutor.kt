@@ -24,8 +24,7 @@ abstract class NodeExecutor {
     @Suppress("UNCHECKED_CAST")
     suspend fun <C : Config, E : Event> output(key: Connection.Key<C, E>): Connection<C, E> {
         connectMutex.withLock {
-            val existing = connections[key] as Connection<C, E>?
-            return when (existing) {
+            return when (val existing = connections[key] as Connection<C, E>?) {
                 null -> {
                     val config = getConfig(key)
                     SingleConsumer<C, E>(config).also {
