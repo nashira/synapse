@@ -44,18 +44,20 @@ class BuilderActivity : DaggerAppCompatActivity() {
         view_pager.adapter = nodeAdapter
         view_pager.isUserInputEnabled = false
 
-        view_pager.registerOnPageChangeCallback(object : ViewPager2.OnPageChangeCallback() {
+//        view_pager.setPageTransformer { page, position ->
+////            Log.d(TAG, "page $page $position")
+//            page.translationX = if (position < 0) -page.width * position else 0f
+//        }
 
+        view_pager.registerOnPageChangeCallback(object : ViewPager2.OnPageChangeCallback() {
             override fun onPageScrollStateChanged(state: Int) {
                 when (state) {
                     ViewPager2.SCROLL_STATE_IDLE -> view_pager.post {
                         Log.d(TAG, "scroll idle")
                         viewModel.updateCurrentItem(view_pager.currentItem)
-                        viewModel.previewSingle()
                     }
                     ViewPager2.SCROLL_STATE_DRAGGING -> {
                         Log.d(TAG, "scroll dragging")
-                        viewModel.previewAll()
                     }
                     ViewPager2.SCROLL_STATE_SETTLING -> {
                         Log.d(TAG, "scroll settling")
@@ -76,6 +78,9 @@ class BuilderActivity : DaggerAppCompatActivity() {
                 }
                 R.id.delete_node -> {
                     onDeleteNode()
+                }
+                R.id.delete_graph -> {
+                    viewModel.showFirstNode()
                 }
                 R.id.jump_to_node -> {
                     onJumpToNode()
@@ -160,7 +165,8 @@ class NodeAdapter(
     override fun createFragment(position: Int): Fragment {
         val node = nodes[position]
         return when (node.type) {
-            Node.Type.Creation -> ConnectionFragment.newInstance()
+            Node.Type.Properties -> GraphFragment.newInstance()
+            Node.Type.Creation,
             Node.Type.Connection -> ConnectionFragment.newInstance()
             else -> NodeFragment.newInstance(node.id)
         }

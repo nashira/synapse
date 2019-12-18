@@ -40,7 +40,7 @@ class SurfaceViewNode(
     }
 
     suspend fun setSurfaceView(surfaceView: SurfaceView) {
-        Log.d(TAG, "setSurfaceView $surfaceView")
+        Log.d(TAG, "setSurfaceView ${surfaceView.holder}")
         this.surfaceView?.holder?.removeCallback(this)
         this.surfaceView = surfaceView
         surfaceView.holder.addCallback(this)

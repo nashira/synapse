@@ -107,4 +107,6 @@
     <string name="menu_title_execute">Execute</string>
     <string name="add_connection">Add Connection</string>
     <string name="delete_connection">Delete Connection</string>
+    <string name="name_node_type_properties">Graph Properties</string>
+    <string name="menu_title_delete_graph">Delete Graph</string>
 </resources>

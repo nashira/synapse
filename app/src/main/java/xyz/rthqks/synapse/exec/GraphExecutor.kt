@@ -38,7 +38,6 @@ class GraphExecutor(
 
     private var surfaceView: SurfaceView? = null
     private var state = AtomicReference(State.Created)
-//    private var jobs = mutableMapOf<State, Job>()
 
     suspend fun initialize() {
         state.getAndSet(State.Initialized).let {
@@ -111,7 +110,9 @@ class GraphExecutor(
             Node.Type.ShaderFilter -> TODO()
             Node.Type.Speakers -> AudioPlayerNode()
             Node.Type.Screen -> SurfaceViewNode(assetManager, glesManager, mapOf("cropCenter" to true))
-            Node.Type.Creation -> error("not an executable node type: ${node.type}")
+
+            Node.Type.Properties,
+            Node.Type.Creation,
             Node.Type.Connection -> error("not an executable node type: ${node.type}")
         }
     }
@@ -129,6 +130,10 @@ class GraphExecutor(
 
     suspend fun start() {
         state.getAndSet(State.Started).let {
+            if (it == State.Started) {
+                Log.d(TAG, "already $it")
+                return
+            }
             if (it != State.Initialized) {
                 error("unexpected state $it")
             }
@@ -145,6 +150,10 @@ class GraphExecutor(
 
     suspend fun stop() {
         state.getAndSet(State.Initialized).let {
+            if (it == State.Initialized) {
+                Log.d(TAG, "already $it")
+                return
+            }
             if (it != State.Started) {
 //                error("unexpected state $it")
             }
@@ -175,9 +184,9 @@ class GraphExecutor(
     private fun logCoroutineInfo(job: Job?, indent: String = "") {
         job?.let {
             Log.d(TAG, "coroutine $indent${it.children.count()}")
-            it.children.forEach { child ->
-                logCoroutineInfo(child, "$indent  ")
-            }
+//            it.children.forEach { child ->
+//                logCoroutineInfo(child, "$indent  ")
+//            }
         }
     }
 

@@ -32,44 +32,36 @@ class BuilderViewModel @Inject constructor(
     val titleChannel = MutableLiveData<Int>()
     val menuChannel = MutableLiveData<Int>()
     private var nodeAfterCancel: Node? = null
-    var isAdapterChanging = false
 
     init {
         executor.initialize(true)
     }
 
     fun setGraphId(graphId: Int) {
-        if (graphId == -1) {
-            viewModelScope.launch(Dispatchers.IO) {
+        viewModelScope.launch(Dispatchers.IO) {
+            if (graphId == -1) {
                 val rowId = dao.insertGraph(GraphData(0, "Graph"))
 
                 graph = Graph(rowId.toInt(), "Graph")
                 Log.d(TAG, "created: $graph")
-                graphChannel.postValue(graph)
-                onAddNode()
-                executor.initializeGraph(graph)
-                executor.start()
-            }
-        } else {
-            viewModelScope.launch(Dispatchers.IO) {
+            } else {
                 graph = dao.getFullGraph(graphId)
                 Log.d(TAG, "loaded: $graph")
-
-                graphChannel.postValue(graph)
-                if (graph.nodeCount() == 0) {
-                    onAddNode()
-                } else {
-                    val firstNode = graph.getFirstNode()
-                    firstNode?.let {
-                        nodesChannel.postValue(
-                            AdapterState(0, listOf(firstNode))
-                        )
-                    }
-                }
-
-                executor.initializeGraph(graph)
-                executor.start()
             }
+            graphChannel.postValue(graph)
+
+            nodesChannel.postValue(AdapterState(0, listOf(PROPERTIES_NODE)))
+
+            executor.initializeGraph(graph)
+        }
+    }
+
+    fun showFirstNode() {
+        graph.getFirstNode()?.let {
+            nodesChannel.value = AdapterState(0, listOf(it))
+            updateStartState()
+        } ?: run {
+            onAddNode()
         }
     }
 
@@ -79,7 +71,6 @@ class BuilderViewModel @Inject constructor(
     }
 
     fun preparePortSwipe(connector: Connector) {
-        isAdapterChanging = true
         val port = connector.port
         connector.edge?.let {
             val leftNode = graph.getNode(it.fromNodeId)
@@ -95,7 +86,6 @@ class BuilderViewModel @Inject constructor(
                 nodesChannel.value = AdapterState(1, listOf(CONNECTION_NODE, connector.node))
             }
         }
-        isAdapterChanging = false
     }
 
     fun startConnection(connector: Connector) {
@@ -112,6 +102,7 @@ class BuilderViewModel @Inject constructor(
     fun updateCurrentItem(currentItem: Int) {
         nodesChannel.value?.let {
             nodesChannel.value = AdapterState(currentItem, it.items)
+            updateStartState()
         }
     }
 
@@ -130,7 +121,7 @@ class BuilderViewModel @Inject constructor(
     fun completeConnection(connector: Connector) {
         connectionChannel.value?.let {
 
-            if (connector.node.id == -1) {
+            if (connector.node.id < -1) {
                 // new node
                 nodeAfterCancel = null
                 graph.addNode(connector.node)
@@ -231,6 +222,7 @@ class BuilderViewModel @Inject constructor(
 
     fun jumpToNode(node: Node) {
         nodesChannel.value = AdapterState(0, listOf(node))
+        updateStartState()
     }
 
     fun getConnector(nodeId: Int, portId: String): Connector {
@@ -248,32 +240,13 @@ class BuilderViewModel @Inject constructor(
         super.onCleared()
     }
 
-    fun previewSingle() {
+    private fun updateStartState() {
         nodesChannel.value?.also {
-            val current = it.items[it.currentItem]
-            if (current.id != -1) {
-//                executor.setPreviewNodes(current)
-                Log.d(TAG, "should preview ${current.type} ${current.id}")
+            val current = it.items[it.currentItem].id >= 0
+            if (current) {
+                executor.start()
             } else {
-                Log.d(TAG, "should stop")
-                viewModelScope.launch {
-                    executor.stop()
-                }
-            }
-        }
-    }
-
-    fun previewAll() {
-        nodesChannel.value?.also {
-            val current = it.items.filter { it.id != -1 }
-            if (current.isNotEmpty()) {
-//                executor.setPreviewNodes(current)
-                Log.d(TAG, "should preview ${current.joinToString { it.type.name }}")
-            } else {
-                Log.d(TAG, "should stop")
-                viewModelScope.launch {
-                    executor.stop()
-                }
+                executor.stop()
             }
         }
     }
@@ -290,6 +263,7 @@ class BuilderViewModel @Inject constructor(
 
     companion object {
         const val TAG = "BuilderViewModel"
+        val PROPERTIES_NODE = Node.Type.Properties.node()
         val CONNECTION_NODE = Node.Type.Connection.node()
         val CREATION_NODE = Node.Type.Creation.node()
         val FAKE_PORT = Port(Port.Type.Video, "", "", false)

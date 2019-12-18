@@ -90,11 +90,7 @@ class ConnectionAdapter(
 
     val spanSizeLookup = object : GridLayoutManager.SpanSizeLookup() {
         override fun getSpanSize(position: Int): Int {
-            return if (getItemViewType(position) == R.layout.layout_connection) {
-                1
-            } else {
-                spans
-            }
+            return if (getItemViewType(position) == R.layout.layout_connection) 1 else spans
         }
     }
 

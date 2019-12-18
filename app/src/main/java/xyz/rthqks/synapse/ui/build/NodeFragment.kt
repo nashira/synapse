@@ -8,6 +8,7 @@ import androidx.appcompat.view.menu.MenuPopupHelper
 import androidx.appcompat.widget.PopupMenu
 import androidx.core.view.isEmpty
 import androidx.lifecycle.ViewModelProvider
+import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import dagger.android.support.DaggerFragment
@@ -38,10 +39,8 @@ class NodeFragment : DaggerFragment() {
         container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View? {
-
 //        Log.d(TAG, "onCreateView $nodeId")
-        val view = inflater.inflate(R.layout.fragment_node, container, false)
-        return view
+        return inflater.inflate(R.layout.fragment_node, container, false)
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
@@ -67,30 +66,27 @@ class NodeFragment : DaggerFragment() {
 
     override fun onPause() {
         super.onPause()
-        Log.d(TAG, "onPause $nodeId ${viewModel.isAdapterChanging}")
+        Log.d(TAG, "onPause $nodeId")
     }
 
     override fun onResume() {
         super.onResume()
-        Log.d(TAG, "onResume $nodeId ${viewModel.isAdapterChanging}")
+        Log.d(TAG, "onResume $nodeId")
 
         val node = viewModel.getNode(nodeId)
         viewModel.setTitle(node.type.title)
         viewModel.setMenu(R.menu.activity_builder)
-
-        if (!viewModel.isAdapterChanging) {
-//            reloadConnectors()
-        }
+        reloadConnectors()
     }
 
     override fun onStart() {
         super.onStart()
-        Log.d(TAG, "onStart $nodeId ${viewModel.isAdapterChanging}")
+        Log.d(TAG, "onStart $nodeId")
     }
 
     override fun onStop() {
         super.onStop()
-        Log.d(TAG, "onStop $nodeId ${viewModel.isAdapterChanging}")
+        Log.d(TAG, "onStop $nodeId")
     }
 
     private fun reloadConnectors() {
@@ -160,9 +156,31 @@ class NodeFragment : DaggerFragment() {
         private val ports = mutableListOf<Connector>()
 
         fun setPorts(ports: List<Connector>) {
+            val oldPorts = ports
+            val result = DiffUtil.calculateDiff(object : DiffUtil.Callback(){
+                override fun areItemsTheSame(oldItemPosition: Int, newItemPosition: Int): Boolean {
+                    val o = oldPorts[oldItemPosition]
+                    val n = ports[newItemPosition]
+                    return o.port == n.port
+                }
+
+                override fun getOldListSize(): Int = oldPorts.size
+
+                override fun getNewListSize(): Int = ports.size
+
+                override fun areContentsTheSame(
+                    oldItemPosition: Int,
+                    newItemPosition: Int
+                ): Boolean {
+                    val o = oldPorts[oldItemPosition]
+                    val n = ports[newItemPosition]
+                    return o.edge == n.edge
+                }
+
+            })
             this.ports.clear()
             this.ports.addAll(ports)
-            notifyDataSetChanged()
+            result.dispatchUpdatesTo(this)
         }
 
         override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): PortViewHolder {

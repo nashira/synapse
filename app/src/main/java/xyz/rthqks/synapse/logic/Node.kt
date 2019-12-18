@@ -77,6 +77,7 @@ class Node(
         ShaderFilter("shader", R.string.name_node_type_shader_filter, R.drawable.ic_texture),
         Speakers("speakers", R.string.name_node_type_speaker, R.drawable.ic_speaker),
         Screen("screen", R.string.name_node_type_screen, R.drawable.ic_display),
+        Properties("properties", R.string.name_node_type_properties, R.drawable.ic_tune),
         Creation("creation", 0, 0),
         Connection("connection", 0, 0);
 
@@ -133,8 +134,9 @@ class Node(
             Node(Type.Speakers).apply {
                 add(Port(Audio, "audio_1", "Audio", false))
             },
-            Node(Type.Connection),
-            Node(Type.Creation)
+            Node(Type.Properties).also { it.id = -2 },
+            Node(Type.Connection).also { it.id = -3 },
+            Node(Type.Creation).also { it.id = -4 }
         )
     }
 }

@@ -3,6 +3,7 @@ package xyz.rthqks.synapse.inject
 import dagger.Module
 import dagger.android.ContributesAndroidInjector
 import xyz.rthqks.synapse.ui.build.ConnectionFragment
+import xyz.rthqks.synapse.ui.build.GraphFragment
 import xyz.rthqks.synapse.ui.build.NodeFragment
 import xyz.rthqks.synapse.ui.build.NodeListDialog
 import xyz.rthqks.synapse.ui.edit.EditPropertiesFragment
@@ -13,6 +14,10 @@ abstract class ActivityModule {
     @FragmentScope
     @ContributesAndroidInjector
     abstract fun contributeEditPropertiesFragment(): EditPropertiesFragment
+
+    @FragmentScope
+    @ContributesAndroidInjector
+    abstract fun contributeGraphFragment(): GraphFragment
 
     @FragmentScope
     @ContributesAndroidInjector
