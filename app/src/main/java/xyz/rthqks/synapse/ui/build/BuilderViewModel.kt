@@ -242,7 +242,7 @@ class BuilderViewModel @Inject constructor(
     override fun onCleared() {
         Log.d(TAG, "onCleared")
         Log.d(TAG, "release")
-        executor.releaseGraph(graph)
+        executor.releaseGraph()
         executor.release()
         Log.d(TAG, "released")
         super.onCleared()
@@ -284,7 +284,7 @@ class BuilderViewModel @Inject constructor(
 
     fun setSurfaceView(nodeId: Int, surfaceView: SurfaceView) {
         viewModelScope.launch {
-            executor.setPreviewSurfaceView(graph, nodeId, surfaceView)
+            executor.setPreviewSurfaceView(nodeId, surfaceView)
         }
     }
 

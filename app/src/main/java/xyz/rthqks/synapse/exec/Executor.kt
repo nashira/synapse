@@ -11,6 +11,7 @@ import xyz.rthqks.synapse.exec.node.SurfaceViewNode
 import xyz.rthqks.synapse.gl.GlesManager
 import xyz.rthqks.synapse.logic.Graph
 import xyz.rthqks.synapse.logic.Node
+import xyz.rthqks.synapse.logic.Port
 import java.util.*
 import java.util.concurrent.Executors
 import javax.inject.Inject
@@ -19,6 +20,7 @@ class Executor @Inject constructor(
     private val context: Context
 ) {
     private var graphExecutor: GraphExecutor? = null
+    private var graph: Graph? = null
     private val dispatcher = Executors.newFixedThreadPool(6).asCoroutineDispatcher()
     private val glesManager = GlesManager()
     private val cameraManager = CameraManager(context)
@@ -33,7 +35,7 @@ class Executor @Inject constructor(
             when (msg) {
                 is Operation.Initialize -> doInitialize(msg.isPreview)
                 is Operation.InitGraph -> doInitializeGraph(msg.graph)
-                is Operation.ReleaseGraph -> doReleaseGraph(msg.graph)
+                is Operation.ReleaseGraph -> doReleaseGraph()
                 is Operation.Release -> doRelease()
                 is Operation.Start -> doStart()
                 is Operation.Stop -> doStop()
@@ -59,9 +61,9 @@ class Executor @Inject constructor(
         }
     }
 
-    fun releaseGraph(graph: Graph) {
+    fun releaseGraph() {
         runBlocking {
-            commandChannel.send(Operation.ReleaseGraph(graph))
+            commandChannel.send(Operation.ReleaseGraph())
         }
     }
 
@@ -77,7 +79,7 @@ class Executor @Inject constructor(
         }
     }
 
-    suspend fun setPreviewSurfaceView(graph: Graph, nodeId: Int, surfaceView: SurfaceView) {
+    suspend fun setPreviewSurfaceView(nodeId: Int, surfaceView: SurfaceView) {
         val graphExecutor = graphExecutor ?: return
         val nodes = LinkedList<Pair<Int, NodeExecutor>>()
         nodes.add(nodeId to graphExecutor.getNode(nodeId))
@@ -91,8 +93,8 @@ class Executor @Inject constructor(
                 return
             }
 
-            graph.getEdges(id).forEach {
-                if (it.fromNodeId == id) {
+            graph?.getEdges(id)?.forEach {
+                if (it.fromNodeId == id && it.toNodeId > Graph.COPY_ID_SKIP) {
                     nodes.add(it.toNodeId to graphExecutor.getNode(it.toNodeId))
                 }
             }
@@ -135,16 +137,21 @@ class Executor @Inject constructor(
 
     private suspend fun doInitializeGraph(graph: Graph) {
         Log.d(TAG, "initialize graph ${graph.id}")
-        graph.getNodes().forEach { source ->
-            if (source.type != Node.Type.Screen) {
-                val portId = source.ports.values.firstOrNull { it.output }?.id
-                portId?.let {
-                    val node = Node.Type.Screen.node().copy(graph.id)
-                    graph.addNode(node)
-                    graph.addEdge(source.id, portId, node.id, SurfaceViewNode.INPUT.id)
+        var graphNew = graph
+        if (preview) {
+            graphNew = graph.copy()
+            graphNew.getNodes().forEach { source ->
+                source.ports.values.firstOrNull {
+                    it.output && it.type == Port.Type.Video
+                }?.id?.let {
+                    val node = Node.Type.Screen.node().copy(graphNew.id)
+                    graphNew.addNode(node)
+                    graphNew.addEdge(source.id, it, node.id, SurfaceViewNode.INPUT.id)
                 }
             }
         }
+
+        this.graph = graphNew
 
         graphExecutor = GraphExecutor(
             context,
@@ -152,13 +159,13 @@ class Executor @Inject constructor(
             glesManager,
             cameraManager,
             assetManager,
-            graph
+            graphNew
         )
         graphExecutor?.initialize()
     }
 
-    private suspend fun doReleaseGraph(graph: Graph) {
-        Log.d(TAG, "release graph ${graph.id}")
+    private suspend fun doReleaseGraph() {
+        Log.d(TAG, "release graph ${graph?.id}")
         graphExecutor?.release()
     }
 
@@ -171,7 +178,7 @@ class Executor @Inject constructor(
         class InitGraph(val graph: Graph) : Operation()
         class Start : Operation()
         class Stop : Operation()
-        class ReleaseGraph(val graph: Graph) : Operation()
+        class ReleaseGraph() : Operation()
         class Release : Operation()
     }
 }

@@ -27,6 +27,7 @@ class Graph(
     fun getFirstNode(): Node? = nodes.values.firstOrNull()
 
     fun getNode(nodeId: Int): Node {
+//        Log.d(TAG, "getNode $nodeId")
         return nodes[nodeId]!!
     }
 
@@ -121,8 +122,21 @@ class Graph(
         } ?: false
     }
 
+    fun copy(): Graph {
+        return Graph(id, name).also {
+            it.nodes.putAll(nodes)
+            it.edges.addAll(edges)
+            val ei = mutableMapOf<Int, MutableSet<Edge>>()
+            edgeIndex.forEach { ei[it.key] = it.value.toMutableSet() }
+            it.edgeIndex.putAll(ei)
+            it.nextNodeId = nextNodeId + COPY_ID_SKIP
+        }
+    }
+
     private fun max(i: Int, j: Int) = if (i > j) i else j
 
     companion object {
+        const val TAG = "Graph"
+        const val COPY_ID_SKIP = 10_000
     }
 }
