@@ -52,7 +52,6 @@ class AudioSourceNode(
     }
 
     override suspend fun start() = coroutineScope {
-
         recordJob = launch {
             val output = channel(OUTPUT) ?: return@launch
             recorder.startRecording()

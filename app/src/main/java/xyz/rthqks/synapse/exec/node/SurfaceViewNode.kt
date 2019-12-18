@@ -7,7 +7,10 @@ import android.util.Size
 import android.view.Surface
 import android.view.SurfaceHolder
 import android.view.SurfaceView
+import androidx.constraintlayout.widget.ConstraintLayout
+import androidx.constraintlayout.widget.ConstraintSet
 import kotlinx.coroutines.*
+import xyz.rthqks.synapse.R
 import xyz.rthqks.synapse.assets.AssetManager
 import xyz.rthqks.synapse.exec.NodeExecutor
 import xyz.rthqks.synapse.exec.edge.*
@@ -16,36 +19,36 @@ import xyz.rthqks.synapse.gl.*
 class SurfaceViewNode(
     private val assetManager: AssetManager,
     private val glesManager: GlesManager,
-    private var surfaceView: SurfaceView
+    private val properties: Map<String, Any?>
 ) : NodeExecutor(), SurfaceHolder.Callback {
     private var surface: Surface? = null
     private var running: Boolean = false
     private var playJob: Job? = null
     private var inputSize: Size = Size(0, 0)
     private var outputSize: Size = Size(0, 0)
+    private var surfaceView: SurfaceView? = null
 
     private val mesh = Quad()
     private val program = Program()
     private var windowSurface: WindowSurface? = null
 
-    override suspend fun create() {
-        Log.d(TAG, "adding callback ${surfaceView.holder.surface}")
+    private val cropCenter: Boolean by properties
 
-        setSurfaceView(surfaceView)
+    override suspend fun create() {
+//        Log.d(TAG, "adding callback ${surfaceView.holder.surface}")
+//        setSurfaceView(surfaceView)
     }
 
     suspend fun setSurfaceView(surfaceView: SurfaceView) {
         Log.d(TAG, "setSurfaceView $surfaceView")
-        this.surfaceView.holder.removeCallback(this)
+        this.surfaceView?.holder?.removeCallback(this)
         this.surfaceView = surfaceView
         surfaceView.holder.addCallback(this)
 
-        connection(INPUT)?.let {
-            val size = it.config.size
-            val rotation = it.config.rotation
-            updateSurfaceViewConfig(size, rotation)
-        } ?: run {
-            setSurface(surfaceView.holder.surface)
+        config(INPUT)?.let {
+            inputSize = it.size
+            val rotation = it.rotation
+            updateSurfaceViewConfig(inputSize, rotation)
         }
     }
 
@@ -56,8 +59,12 @@ class SurfaceViewNode(
         height: Int
     ) {
         Log.d(TAG, "surfaceChanged: $holder $format $width $height")
-        outputSize = Size(width, height)
-        runBlocking { setSurface(holder!!.surface) }
+        runBlocking {
+            if (cropCenter) {
+                outputSize = Size(width, height)
+            }
+            setSurface(holder!!.surface)
+        }
     }
 
     override fun surfaceDestroyed(holder: SurfaceHolder?) {
@@ -127,50 +134,54 @@ class SurfaceViewNode(
         }
     }
 
-    private suspend fun updateOutputSurface() {
-        Log.d(TAG, "creating input surface")
-        val surface = surface ?: return
+    private suspend fun updateWindowSurface() {
+        Log.d(TAG, "updating input surface")
         glesManager.withGlContext {
             windowSurface?.release()
-            windowSurface = it.createWindowSurface(surface)
-            windowSurface?.makeCurrent()
+            windowSurface = null
+            surface?.let { surface ->
+                if (surface.isValid) {
+                    windowSurface = it.createWindowSurface(surface)
+                }
+            }
         }
     }
 
     private suspend fun startTexture() = coroutineScope {
         playJob = launch {
             val input = channel(INPUT) ?: return@launch
-            updateOutputSurface()
-            val windowSurface = windowSurface ?: return@launch
 
             var copyMatrix = true
             while (isActive) {
                 val inEvent = input.receive()
 
-                if (copyMatrix) {
+                if (copyMatrix && windowSurface != null) {
                     copyMatrix = false
                     val uniform = program.getUniform(Uniform.Type.Mat4, "texture_matrix0")
                     val matrix = uniform.data!!
                     System.arraycopy(inEvent.matrix, 0, matrix, 0, 16)
                     // center crop
-                    val inAspect = inputSize.width / inputSize.height.toFloat()
-                    val outAspect = outputSize.width / outputSize.height.toFloat()
+                    if (cropCenter) {
+                        val inAspect = inputSize.width / inputSize.height.toFloat()
+                        val outAspect = outputSize.width / outputSize.height.toFloat()
 
-                    val scaleX = if (inAspect > outAspect) outAspect / inAspect else 1f
-                    val scaleY = if (inAspect < outAspect) inAspect / outAspect else 1f
+                        val scaleX = if (inAspect > outAspect) outAspect / inAspect else 1f
+                        val scaleY = if (inAspect < outAspect) inAspect / outAspect else 1f
 
-                    Matrix.translateM(matrix, 0, 0.5f, 0.5f, 0f)
-                    Matrix.scaleM(matrix, 0, scaleX, scaleY, 1f)
-                    Matrix.translateM(matrix, 0, -0.5f, -0.5f, 0f)
+                        Matrix.translateM(matrix, 0, 0.5f, 0.5f, 0f)
+                        Matrix.scaleM(matrix, 0, scaleX, scaleY, 1f)
+                        Matrix.translateM(matrix, 0, -0.5f, -0.5f, 0f)
+                    }
 
                     uniform.dirty = true
                 }
-                if (surface != null) {
+
+                if (surface != null && windowSurface != null) {
                     glesManager.withGlContext {
-                        windowSurface.makeCurrent()
+                        windowSurface?.makeCurrent()
                         GLES32.glBindFramebuffer(GLES32.GL_FRAMEBUFFER, 0)
                         executeGl(inEvent.texture)
-                        windowSurface.swapBuffers()
+                        windowSurface?.swapBuffers()
                     }
                 }
 
@@ -210,7 +221,7 @@ class SurfaceViewNode(
     override suspend fun <C : Config, E : Event> setConfig(key: Connection.Key<C, E>, config: C) {
         super.setConfig(key, config)
         config(INPUT)?.let {
-//            it.acceptsSurface = true
+            //            it.acceptsSurface = true
             inputSize = it.size
             val rotation = it.rotation
             updateSurfaceViewConfig(inputSize, rotation)
@@ -221,35 +232,44 @@ class SurfaceViewNode(
         size: Size,
         rotation: Int
     ) {
+        Log.d(TAG, "updateSurfaceViewConfig")
+        val surfaceView = surfaceView ?: return
         withContext(Dispatchers.Main) {
-            outputSize = Size(surfaceView.measuredWidth, surfaceView.measuredHeight)
-            val outSize = size
-//                if (rotation == 90 || rotation == 270) Size(size.height, size.width) else size
-//            surfaceView.holder.setFixedSize(outSize.width, outSize.height)
-//            ConstraintSet().also {
-//                val constraintLayout = surfaceView.parent as ConstraintLayout
-//                it.clone(constraintLayout)
-//                it.setDimensionRatio(R.id.surface_view, "${size.width}:${size.height}")
-//                it.applyTo(constraintLayout)
-//            }
+            if (cropCenter) {
+                outputSize = Size(surfaceView.measuredWidth, surfaceView.measuredHeight)
+            } else {
+                outputSize = size
+                if (rotation == 90 || rotation == 270) Size(size.height, size.width) else size
+                surfaceView.holder.setFixedSize(outputSize.width, outputSize.height)
+                ConstraintSet().also {
+                    val constraintLayout = surfaceView.parent as ConstraintLayout
+                    it.clone(constraintLayout)
+                    it.setDimensionRatio(R.id.surface_view, "${size.width}:${size.height}")
+                    it.applyTo(constraintLayout)
+                }
+            }
         }
-        setSurface(surface)
+        setSurface(surfaceView.holder.surface)
     }
 
     private suspend fun setSurface(surface: Surface?) {
-        Log.d(TAG, "setSurface $surface")
+        Log.d(TAG, "setSurface ${surface?.isValid}")
         this.surface = surface
-        config(INPUT)?.surface?.set(surface)
+
+        if (surface?.isValid == true) {
+            config(INPUT)?.surface?.set(surface)
+            debug.add(this)
+        } else {
+            debug.remove(this)
+        }
+        updateWindowSurface()
+        Log.d(TAG, "active surfaces ${debug.size}")
+        Log.d(TAG, debug.joinToString())
     }
 
     companion object {
         const val TAG = "SurfaceViewNode"
         val INPUT = Connection.Key<VideoConfig, VideoEvent>("video_1")
+        val debug = mutableSetOf<SurfaceViewNode>()
     }
 }
-
-/*
-pass surface into execVM -> graph -> surfaceviewnode
-listen to surfaceholder events
-
- */

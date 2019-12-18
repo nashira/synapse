@@ -46,11 +46,11 @@ class ExecGraphViewModel @Inject constructor(
                 context, dispatcher, glesManager, cameraManager, assetManager, graph
             )
 
-            graphExecutor.tmpSetSurfaceView(surfaceView)
-
             Log.d(TAG, "initialize")
             graphExecutor.initialize()
             Log.d(TAG, "initialized")
+
+            graphExecutor.tmpSetSurfaceView(surfaceView)
         }
     }
 

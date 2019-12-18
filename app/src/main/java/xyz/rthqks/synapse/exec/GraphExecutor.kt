@@ -36,7 +36,7 @@ class GraphExecutor(
     private val scope = CoroutineScope(SupervisorJob() + dispatcher + exceptionHandler)
     private val nodes = mutableMapOf<Int, NodeExecutor>()
 
-    private lateinit var surfaceView: SurfaceView
+    private var surfaceView: SurfaceView? = null
     private var state = AtomicReference(State.Created)
 //    private var jobs = mutableMapOf<State, Job>()
 
@@ -77,7 +77,7 @@ class GraphExecutor(
                 cameraManager,
                 glesManager,
                 node[Key.CameraFacing] ?: CameraCharacteristics.LENS_FACING_BACK,
-                node[Key.CameraCaptureSize] ?: Size(1920, 1080),
+                node[Key.CameraCaptureSize] ?: Size(640, 480),
                 node[Key.CameraFrameRate] ?: 30
             )
             Node.Type.FrameDifference -> FrameDifferenceNode(glesManager, assetManager)
@@ -110,26 +110,17 @@ class GraphExecutor(
             Node.Type.LutFilter -> GlNode(glesManager, assetManager)
             Node.Type.ShaderFilter -> TODO()
             Node.Type.Speakers -> AudioPlayerNode()
-            Node.Type.Screen -> SurfaceViewNode(assetManager, glesManager, surfaceView)
+            Node.Type.Screen -> SurfaceViewNode(assetManager, glesManager, mapOf("cropCenter" to true))
             Node.Type.Creation -> error("not an executable node type: ${node.type}")
             Node.Type.Connection -> error("not an executable node type: ${node.type}")
         }
     }
 
     private suspend fun addEdge(edge: Edge) {
-
         val fromNode = nodes[edge.fromNodeId]!!
         val toNode = nodes[edge.toNodeId]!!
-
-        val fromPort = graph.getNode(edge.fromNodeId).getPort(edge.fromPortId)
-        val toPort = graph.getNode(edge.toNodeId).getPort(edge.toPortId)
-
-        if (fromPort.type != toPort.type) {
-            error("port types don't match $edge")
-        }
-
-        val fromKey = Connection.Key<Config, Event>(fromPort.id)
-        val toKey = Connection.Key<Config, Event>(toPort.id)
+        val fromKey = Connection.Key<Config, Event>(edge.fromPortId)
+        val toKey = Connection.Key<Config, Event>(edge.toPortId)
 
         val config = fromNode.getConfig(fromKey)
         toNode.setConfig(toKey, config)
@@ -213,6 +204,8 @@ class GraphExecutor(
         addEdge(edge)
         executor.initialize()
     }
+
+    fun getNode(nodeId: Int): NodeExecutor = nodes[nodeId]!!
 
     companion object {
         const val TAG = "GraphExecutor"

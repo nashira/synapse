@@ -29,6 +29,19 @@ class ExampleUnitTest {
         assertEquals(k2, k4)
     }
 
+    @Test
+    fun completableDeferred() {
+        val c = CompletableDeferred<Int>()
+        runBlocking {
+            launch {
+                println("await 1 ${c.await()}")
+                println("await 2 ${c.await()}")
+            }
+
+            c.complete(1)
+        }
+    }
+
 //
 //
 //    @Test

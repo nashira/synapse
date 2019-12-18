@@ -8,7 +8,6 @@ import java.util.concurrent.atomic.AtomicInteger
 
 interface Connection<C : Config, E : Event> {
     val config: C
-    fun poll(): E?
     fun producer(): Channel<E>
     fun consumer(): Channel<E>
     suspend fun prime(item: E)
@@ -18,12 +17,10 @@ interface Connection<C : Config, E : Event> {
 class SingleConsumer<C : Config, E : Event>(
     override val config: C
 ) : Connection<C, E> {
-    internal val duplex = Duplex<E>(
+    val duplex = Duplex<E>(
         Channel(Channel.UNLIMITED),
         Channel(Channel.UNLIMITED)
     )
-
-    override fun poll(): E? = duplex.rx.poll()
 
     override fun producer(): Channel<E> = duplex.host
     override fun consumer(): Channel<E> = duplex.client
@@ -38,8 +35,8 @@ class SingleConsumer<C : Config, E : Event>(
 class MultiConsumer<C : Config, E : Event>(
     override val config: C
 ) : Connection<C, E> {
-    private val consumers = mutableListOf<Duplex<E>>()
-    private val producer = object : Channel<E> by Channel() {
+    protected val consumers = mutableListOf<Duplex<E>>()
+    protected val producer = object : Channel<E> by Channel() {
         override suspend fun send(element: E) {
             element._counter.set(consumers.size)
             consumers.forEach {
@@ -65,6 +62,17 @@ class MultiConsumer<C : Config, E : Event>(
                 }
             }
         }
+
+        override fun poll(): E? {
+            consumers.forEach {
+                it.rx.poll()?.let { item ->
+                    if (item._counter.decrementAndGet() == 0) {
+                        return item
+                    }
+                }
+            }
+            return null
+        }
     }
 
     fun consumer(duplex: Duplex<E>) {
@@ -80,17 +88,6 @@ class MultiConsumer<C : Config, E : Event>(
         )
         consumers.add(duplex)
         return duplex.client
-    }
-
-    override fun poll(): E? {
-        consumers.forEach {
-            it.rx.poll()?.let { item ->
-                if (item._counter.decrementAndGet() == 0) {
-                    return item
-                }
-            }
-        }
-        return null
     }
 
     override suspend fun prime(item: E) {

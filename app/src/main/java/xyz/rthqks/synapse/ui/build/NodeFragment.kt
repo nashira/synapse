@@ -61,6 +61,8 @@ class NodeFragment : DaggerFragment() {
         touchMediator = TouchMediator(context!!, viewModel::swipeEvent)
 
         reloadConnectors()
+
+        viewModel.setSurfaceView(nodeId, surface_view)
     }
 
     override fun onPause() {
@@ -77,7 +79,7 @@ class NodeFragment : DaggerFragment() {
         viewModel.setMenu(R.menu.activity_builder)
 
         if (!viewModel.isAdapterChanging) {
-            reloadConnectors()
+//            reloadConnectors()
         }
     }
 

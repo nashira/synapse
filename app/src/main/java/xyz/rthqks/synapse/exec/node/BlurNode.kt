@@ -42,7 +42,6 @@ class BlurNode(
     }
 
     override suspend fun initialize() {
-
         connection(INPUT)?.let {
             val config = it.config
             texture1 = Texture(
@@ -76,9 +75,8 @@ class BlurNode(
                 data[1] = size.height.toFloat()
             }
         }
-        connection(OUTPUT)?.prime(
-            VideoEvent(texture2, FloatArray(16).also { Matrix.setIdentityM(it, 0) })
-        )
+
+        connection(OUTPUT)?.prime(VideoEvent(texture2))
     }
 
     private suspend fun initializeProgram(
@@ -153,12 +151,12 @@ class BlurNode(
     }
 
     override suspend fun start() = coroutineScope {
-        val output = channel(OUTPUT) ?: return@coroutineScope
-        val input = channel(INPUT) ?: return@coroutineScope
-
-        var copyMatrix = true
-
         startJob = launch {
+            val output = channel(OUTPUT) ?: return@launch
+            val input = channel(INPUT) ?: return@launch
+
+            var copyMatrix = true
+
             while (isActive) {
                 val outEvent = output.receive()
                 val inEvent = input.receive()
@@ -249,7 +247,7 @@ class BlurNode(
 
     @Suppress("UNCHECKED_CAST")
     override suspend fun <C : Config, E : Event> makeConfig(key: Connection.Key<C, E>): C {
-        return when(key) {
+        return when (key) {
             OUTPUT -> {
                 connectMutex.withLock {}
                 val config = config(INPUT)!!
