@@ -3,7 +3,7 @@ package xyz.rthqks.synapse.logic
 
 class Graph(
     val id: Int,
-    val name: String
+    var name: String
 ) {
     private val nodes = mutableMapOf<Int, Node>()
     private val edges = mutableSetOf<Edge>()

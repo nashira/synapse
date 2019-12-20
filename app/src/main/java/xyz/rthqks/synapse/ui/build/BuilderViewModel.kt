@@ -56,13 +56,21 @@ class BuilderViewModel @Inject constructor(
         }
     }
 
-    fun showFirstNode() {
-        graph.getFirstNode()?.let {
-            nodesChannel.value = AdapterState(0, listOf(it))
-            updateStartState()
-        } ?: run {
-            onAddNode()
+    fun setGraphName(name: String) {
+        graph.name = name
+        viewModelScope.launch(Dispatchers.IO) {
+            dao.insertGraph(GraphData(graph.id, graph.name))
+            Log.d(TAG, "saved: $graph")
         }
+    }
+
+    fun showFirstNode() {
+        val nextNode = graph.getFirstNode() ?: run {
+            connectionChannel.postValue(Connector(CREATION_NODE, FAKE_PORT))
+            CREATION_NODE
+        }
+        nodesChannel.value = AdapterState(0, listOf(PROPERTIES_NODE, nextNode))
+        updateStartState()
     }
 
     fun swipeEvent(event: SwipeEvent) {
@@ -207,15 +215,7 @@ class BuilderViewModel @Inject constructor(
 
             viewModelScope.launch(Dispatchers.IO) {
                 dao.deleteNode(node.graphId, node.id)
-                dao.deleteEdges(edges.map {
-                    EdgeData(
-                        node.graphId,
-                        it.fromNodeId,
-                        it.fromPortId,
-                        it.toNodeId,
-                        it.toPortId
-                    )
-                })
+                dao.deleteEdgesForNode(node.graphId, node.id)
             }
         }
     }
@@ -242,7 +242,7 @@ class BuilderViewModel @Inject constructor(
 
     private fun updateStartState() {
         nodesChannel.value?.also {
-            val current = it.items[it.currentItem].id != Node.Type.Properties.node().id
+            val current = it.items.any { it.id != Node.Type.Properties.node().id }
             if (current) {
                 executor.start()
             } else {
@@ -265,6 +265,22 @@ class BuilderViewModel @Inject constructor(
         executor.stop()
         executor.addConnectionPreviews(source, connectors)
         executor.start()
+    }
+
+    fun onBackPressed(): Boolean {
+        return nodesChannel.value?.let {
+            val handled = it.items[it.currentItem].id != Node.Type.Properties.node().id
+            if (handled){
+                jumpToNode(PROPERTIES_NODE)
+            }
+            handled
+        } ?: false
+    }
+
+    fun deleteGraph() {
+        viewModelScope.launch(Dispatchers.IO) {
+            dao.deleteFullGraph(graph.id)
+        }
     }
 
     companion object {

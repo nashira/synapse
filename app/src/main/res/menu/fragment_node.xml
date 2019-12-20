@@ -3,9 +3,9 @@
     xmlns:app="http://schemas.android.com/apk/res-auto">
 
     <item
-        android:id="@+id/execute"
-        android:icon="@drawable/ic_play"
-        android:title="@string/menu_title_execute"
+        android:id="@+id/jump_to_graph"
+        android:icon="@drawable/ic_settings"
+        android:title="@string/menu_title_jump_to_graph"
         app:iconTint="@color/white"
         app:showAsAction="ifRoom" />
 

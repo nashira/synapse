@@ -42,6 +42,54 @@ class ExampleUnitTest {
         }
     }
 
+    @Test
+    fun state() {
+        val s = State()
+        println("created ${s.created.satisfied}")
+        s.create.satisfied = true
+        println("created ${s.created.satisfied}")
+
+        val f = Foo()
+        val a = f.getId()
+        val b = f.getId()
+        f.set(a, true)
+        f.set(b, true)
+        val c = a or b
+        println(f.state.toString(2))
+        println(f.state and c)
+    }
+
+    class Foo {
+        private var id = 1
+        var state: Int = 0
+
+        fun getId(): Int {
+            val old = id
+            id = id shl 1
+            return old
+        }
+
+        fun set(id: Int, sat: Boolean) {
+            val mask = if (sat) 1 shl id else 0
+            state = state or mask
+        }
+    }
+
+    class Dep(vararg deps: Dep) {
+        private val deps = deps.toList()
+        var satisfied = false
+            get() = if (deps.isNotEmpty()) deps.all { it.satisfied } else field
+    }
+
+    class State {
+        val create = Dep()
+        val created = Dep(create)
+        val surface = Dep()
+        val ready = Dep(created, surface)
+        val start = Dep()
+        val started = Dep(ready, start)
+    }
+
 //
 //
 //    @Test
@@ -287,12 +335,12 @@ class NTest(
         println("start $id")
 //        startJob = launch {
         running = true
-            while (running) {
-                delay(400)
-                println("run $id ${Thread.currentThread().name}")
-                if (Math.random() < 0.3) {
+        while (running) {
+            delay(400)
+            println("run $id ${Thread.currentThread().name}")
+            if (Math.random() < 0.3) {
 //                    throw RuntimeException("random error $id")
-                }
+            }
 //            }
         }
         println("started $id")

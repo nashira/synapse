@@ -6,7 +6,6 @@ import android.media.MediaRecorder
 import android.util.Size
 import androidx.annotation.DrawableRes
 import androidx.annotation.StringRes
-import com.google.gson.Gson
 import xyz.rthqks.synapse.R
 
 @Suppress("LeakingThis")
@@ -324,7 +323,6 @@ sealed class PropertyType<T : Any>(
     companion object {
 
         val map = mutableMapOf<Key<*>, PropertyType<*>>()
-        val gson = Gson()
 
         operator fun <E : Any> get(key: Key<E>): PropertyType<E> {
             val p = map[key]

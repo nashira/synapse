@@ -7,7 +7,6 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.runBlocking
 import xyz.rthqks.synapse.data.GraphData
 import xyz.rthqks.synapse.data.NodeData
 import xyz.rthqks.synapse.data.PropertyData
@@ -40,11 +39,6 @@ class EditGraphViewModel @Inject constructor(
         }
     }
 
-    fun deleteGraph() {
-        runBlocking(Dispatchers.IO) {
-            dao.deleteFullGraph(graph)
-        }
-    }
     fun selectFileFor(data: PropertyData) {
         onSelectFile.value = Consumable(data)
     }

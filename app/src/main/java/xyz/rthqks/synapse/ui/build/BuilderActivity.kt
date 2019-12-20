@@ -73,26 +73,15 @@ class BuilderActivity : DaggerAppCompatActivity() {
 
         toolbar.setOnMenuItemClickListener {
             when (it.itemId) {
-                R.id.add_node -> {
-                    viewModel.onAddNode()
-                }
-                R.id.delete_node -> {
-                    onDeleteNode()
-                }
-                R.id.delete_graph -> {
-                    viewModel.showFirstNode()
-                }
-                R.id.jump_to_node -> {
-                    onJumpToNode()
-                }
-                R.id.cancel -> {
-                    viewModel.cancelConnection()
-                }
-                R.id.execute -> {
-                    startActivity(
-                        ExecGraphActivity.getIntent(this, viewModel.graph.id)
-                    )
-                }
+                R.id.add_node -> viewModel.onAddNode()
+                R.id.delete_node -> onDeleteNode()
+                R.id.delete_graph -> onDeleteGraph()
+                R.id.jump_to_node -> onJumpToNode()
+                R.id.jump_to_graph -> viewModel.jumpToNode(BuilderViewModel.PROPERTIES_NODE)
+                R.id.cancel -> viewModel.cancelConnection()
+                R.id.execute -> startActivity(
+                    ExecGraphActivity.getIntent(this, viewModel.graph.id)
+                )
             }
             true
         }
@@ -130,14 +119,36 @@ class BuilderActivity : DaggerAppCompatActivity() {
     }
 
     private fun onDeleteNode() {
-        val dialog = ConfirmDialog()
-        dialog.listener = {
+        ConfirmDialog(
+            R.string.menu_title_delete_node,
+            R.string.button_cancel,
+            R.string.confirm_delete
+        ) {
             Log.d(TAG, "onDelete $it")
             if (it) {
                 viewModel.deleteNode()
             }
+        }.show(supportFragmentManager, null)
+    }
+
+    private fun onDeleteGraph() {
+        ConfirmDialog(
+            R.string.menu_title_delete_graph,
+            R.string.button_cancel,
+            R.string.confirm_delete
+        ) {
+            Log.d(TAG, "onDelete $it")
+            if (it) {
+                viewModel.deleteGraph()
+                finish()
+            }
+        }.show(supportFragmentManager, null)
+    }
+
+    override fun onBackPressed() {
+        if (!viewModel.onBackPressed()) {
+            super.onBackPressed()
         }
-        dialog.show(supportFragmentManager, null)
     }
 
     companion object {

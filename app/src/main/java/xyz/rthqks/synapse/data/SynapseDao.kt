@@ -41,8 +41,8 @@ abstract class SynapseDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     abstract suspend fun insertProperty(property: PropertyData)
 
-    @Delete
-    abstract suspend fun deleteGraph(graph: GraphData)
+    @Query("DELETE FROM graph WHERE id = :graphId")
+    abstract suspend fun deleteGraph(graphId: Int)
 
     @Delete
     abstract suspend fun deleteNode(node: NodeData)
@@ -50,11 +50,14 @@ abstract class SynapseDao {
     @Query("DELETE FROM node WHERE graphId = :graphId AND id = :id")
     abstract suspend fun deleteNode(graphId: Int, id: Int)
 
-    @Delete
-    abstract suspend fun deleteNodes(nodes: Collection<NodeData>)
+    @Query("DELETE FROM node WHERE graphId = :graphId")
+    abstract suspend fun deleteNodes(graphId: Int)
 
-    @Delete
-    abstract suspend fun deleteEdges(edges: List<EdgeData>)
+    @Query("DELETE FROM edge WHERE graphId = :graphId")
+    abstract suspend fun deleteEdges(graphId: Int)
+
+    @Query("DELETE FROM edge WHERE graphId = :graphId AND (fromNodeId = :nodeId OR toNodeId = :nodeId)")
+    abstract suspend fun deleteEdgesForNode(graphId: Int, nodeId: Int)
 
     @Query(
         """DELETE FROM edge WHERE graphId = :graphId
@@ -71,8 +74,8 @@ abstract class SynapseDao {
         toPort: String
     )
 
-    @Delete
-    abstract suspend fun deleteProperties(properties: Collection<PropertyData>)
+    @Query("DELETE FROM property WHERE graphId = :graphId")
+    abstract suspend fun deleteProperties(graphId: Int)
 
     suspend fun getFullGraphData(graphId: Int): GraphData {
         val graph = getGraph(graphId)
@@ -109,12 +112,10 @@ abstract class SynapseDao {
         return graph
     }
 
-    suspend fun deleteFullGraph(graph: GraphData) {
-        graph.nodes.forEach {
-            deleteProperties(it.properties.values)
-        }
-        deleteEdges(graph.edges)
-        deleteNodes(graph.nodes)
-        deleteGraph(graph)
+    suspend fun deleteFullGraph(graphId: Int) {
+        deleteProperties(graphId)
+        deleteEdges(graphId)
+        deleteNodes(graphId)
+        deleteGraph(graphId)
     }
 }

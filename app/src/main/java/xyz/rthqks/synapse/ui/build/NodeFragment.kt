@@ -75,7 +75,7 @@ class NodeFragment : DaggerFragment() {
 
         val node = viewModel.getNode(nodeId)
         viewModel.setTitle(node.type.title)
-        viewModel.setMenu(R.menu.activity_builder)
+        viewModel.setMenu(R.menu.fragment_node)
         reloadConnectors()
     }
 
