@@ -209,12 +209,40 @@ class GraphExecutor(
 
     suspend fun addNode(node: Node, edge: Edge) {
         val executor = nodeExecutor(node)
+        nodes[node.id] = executor
         executor.create()
         addEdge(edge)
         executor.initialize()
     }
 
-    fun getNode(nodeId: Int): NodeExecutor = nodes[nodeId]!!
+    fun getNode(nodeId: Int): NodeExecutor = nodes[nodeId] ?: error("no node for id $nodeId")
+
+    suspend fun add(newNodes: List<Node>, newEdges: List<Edge>) {
+        val addedNodes = newNodes.map {
+            val node = nodeExecutor(it)
+            nodes[it.id] = node
+            node
+        }
+
+        parallelJoin(addedNodes) {
+            Log.d(TAG, "create $it")
+            it.create()
+            Log.d(TAG, "create complete $it")
+        }
+
+        parallelJoin(newEdges) { edge ->
+            Log.d(TAG, "connect $edge")
+            addEdge(edge)
+            Log.d(TAG, "connect complete $edge")
+        }
+
+        parallelJoin(addedNodes) {
+            Log.d(TAG, "initialize $it")
+            it.initialize()
+            Log.d(TAG, "initialize complete $it")
+        }
+        logCoroutineInfo(scope.coroutineContext[Job])
+    }
 
     companion object {
         const val TAG = "GraphExecutor"

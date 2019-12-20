@@ -9,9 +9,7 @@ import kotlinx.coroutines.channels.actor
 import xyz.rthqks.synapse.assets.AssetManager
 import xyz.rthqks.synapse.exec.node.SurfaceViewNode
 import xyz.rthqks.synapse.gl.GlesManager
-import xyz.rthqks.synapse.logic.Graph
-import xyz.rthqks.synapse.logic.Node
-import xyz.rthqks.synapse.logic.Port
+import xyz.rthqks.synapse.logic.*
 import java.util.*
 import java.util.concurrent.Executors
 import javax.inject.Inject
@@ -32,14 +30,22 @@ class Executor @Inject constructor(
 
     private val commandChannel = scope.actor<Operation>(capacity = Channel.UNLIMITED) {
         for (msg in channel) {
-            when (msg) {
-                is Operation.Initialize -> doInitialize(msg.isPreview)
-                is Operation.InitGraph -> doInitializeGraph(msg.graph)
-                is Operation.ReleaseGraph -> doReleaseGraph()
-                is Operation.Release -> doRelease()
-                is Operation.Start -> doStart()
-                is Operation.Stop -> doStop()
+            Log.d(TAG, "handling $msg")
+            withTimeoutOrNull(2000) {
+                when (msg) {
+                    is Operation.Initialize -> doInitialize(msg.isPreview)
+                    is Operation.InitGraph -> doInitializeGraph(msg.graph)
+                    is Operation.ReleaseGraph -> doReleaseGraph()
+                    is Operation.Release -> doRelease()
+                    is Operation.Start -> doStart()
+                    is Operation.Stop -> doStop()
+                    is Operation.ConnectPreview -> doAddConnectionPreviews(msg.source, msg.targets)
+                    is Operation.SetSurfaceView -> doSetSurfaceView(msg.nodeId, msg.surfaceView)
+                }
+            } ?: run {
+                Log.w(TAG, "TIMEOUT handling $msg")
             }
+            Log.d(TAG, "done handling $msg")
         }
     }
 
@@ -79,7 +85,19 @@ class Executor @Inject constructor(
         }
     }
 
-    suspend fun setPreviewSurfaceView(nodeId: Int, surfaceView: SurfaceView) {
+    fun addConnectionPreviews(source: Connector, targets: List<Connector>) {
+        runBlocking {
+            commandChannel.send(Operation.ConnectPreview(source, targets))
+        }
+    }
+
+    fun setPreviewSurfaceView(nodeId: Int, surfaceView: SurfaceView) {
+        runBlocking {
+            commandChannel.send(Operation.SetSurfaceView(nodeId, surfaceView))
+        }
+    }
+
+    private suspend fun doSetSurfaceView(nodeId: Int, surfaceView: SurfaceView) {
         val graphExecutor = graphExecutor ?: return
         val nodes = LinkedList<Pair<Int, NodeExecutor>>()
         nodes.add(nodeId to graphExecutor.getNode(nodeId))
@@ -107,7 +125,6 @@ class Executor @Inject constructor(
 
     private suspend fun doInitialize(preview: Boolean) {
         this.preview = preview
-        Log.d(TAG, "initialize")
         glesManager.withGlContext {
             glesManager.initialize()
         }
@@ -115,7 +132,6 @@ class Executor @Inject constructor(
     }
 
     private suspend fun doRelease() {
-        Log.d(TAG, "release")
         cameraManager.release()
         glesManager.withGlContext {
             glesManager.release()
@@ -126,12 +142,10 @@ class Executor @Inject constructor(
     }
 
     private suspend fun doStart() {
-        Log.d(TAG, "start")
         graphExecutor?.start()
     }
 
     private suspend fun doStop() {
-        Log.d(TAG, "stop")
         graphExecutor?.stop()
     }
 
@@ -169,16 +183,44 @@ class Executor @Inject constructor(
         graphExecutor?.release()
     }
 
+    private suspend fun doAddConnectionPreviews(source: Connector, targets: List<Connector>) {
+        val graph = graph ?: return
+        Log.d(TAG, "source node ${source.node.type} ${source.node.id} ${source.port.id}")
+        val data = mutableListOf<Pair<Node, Edge>>()
+        targets.forEach {
+            val target = it.node
+            Log.d(TAG, "adding node ${target.type} ${target.id} ${it.port.id}")
+            graph.addNode(target)
+            val edge = graph.addEdge(source.node.id, source.port.id, target.id, it.port.id)
+            Log.d(TAG, "added node ${target.type} ${target.id} ${it.port.id}")
+            data.add(target to edge)
+
+            target.ports.values.firstOrNull {
+                it.output && it.type == Port.Type.Video
+            }?.id?.let {
+                val screen = Node.Type.Screen.node().copy(graph.id)
+                graph.addNode(screen)
+                val se = graph.addEdge(target.id, it, screen.id, SurfaceViewNode.INPUT.id)
+                data.add(screen to se)
+            }
+        }
+
+        val (nodes, edges) = data.unzip()
+        graphExecutor?.add(nodes, edges)
+    }
+
     companion object {
         const val TAG = "Executor"
     }
 
     private sealed class Operation {
-        class Initialize(val isPreview: Boolean) : Operation()
-        class InitGraph(val graph: Graph) : Operation()
+        data class Initialize(val isPreview: Boolean) : Operation()
+        data class InitGraph(val graph: Graph) : Operation()
         class Start : Operation()
         class Stop : Operation()
         class ReleaseGraph() : Operation()
         class Release : Operation()
+        data class ConnectPreview(val source: Connector, val targets: List<Connector>) : Operation()
+        data class SetSurfaceView(val nodeId: Int, val surfaceView: SurfaceView) : Operation()
     }
 }

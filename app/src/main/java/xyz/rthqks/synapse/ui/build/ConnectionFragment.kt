@@ -10,11 +10,14 @@ import android.view.ViewGroup
 import android.widget.TextView
 import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModelProvider
+import androidx.lifecycle.viewModelScope
 import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import dagger.android.support.DaggerFragment
 import kotlinx.android.synthetic.main.fragment_connection.*
 import kotlinx.android.synthetic.main.layout_connection.view.*
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import xyz.rthqks.synapse.R
 import xyz.rthqks.synapse.logic.Connector
 import xyz.rthqks.synapse.logic.Graph
@@ -52,11 +55,16 @@ class ConnectionFragment : DaggerFragment() {
 
             if (it.node.type == Node.Type.Creation) {
                 val connectors = graph.getCreationConnectors()
+//                viewModel.addConnectionPreview(it, connectors)
                 connectionAdapter.setData(emptyList(), connectors)
             } else {
                 val openConnectors = graph.getOpenConnectors(it)
                 val potentialConnectors = graph.getPotentialConnectors(it)
-                connectionAdapter.setData(openConnectors, potentialConnectors)
+                viewModel.viewModelScope.launch {
+                    viewModel.addConnectionPreview(it, potentialConnectors)
+                    delay(1000)
+                    connectionAdapter.setData(openConnectors, potentialConnectors)
+                }
             }
         })
     }
@@ -193,6 +201,15 @@ class ConnectionAdapter(
             this.item = item as ConnectorItem
             portName.text = item.connector.port.name
             nodeName.setText(item.connector.node.type.title)
+            val id = item.connector.node.id
+            Log.d(TAG, "bind $id")
+            if (id >= 0) {
+                viewModel.setSurfaceView(id, surfaceView)
+            }
         }
+    }
+
+    companion object {
+        const val TAG = "ConnectionFragment"
     }
 }

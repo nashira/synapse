@@ -1,6 +1,11 @@
 package xyz.rthqks.synapse.exec
 
+import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.channels.SendChannel
+import kotlinx.coroutines.channels.actor
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import xyz.rthqks.synapse.exec.edge.*
@@ -15,7 +20,25 @@ abstract class NodeExecutor {
     private val connections = mutableMapOf<Connection.Key<*, *>, Connection<*, *>>()
     private val channels = mutableMapOf<Connection.Key<*, *>, Channel<*>>()
     private val configs = mutableMapOf<Connection.Key<*, *>, Config>()
+    private val waitingConfigs = mutableMapOf<Connection.Key<*, *>, MutableSet<CompletableDeferred<Config>>>()
     private val connectMutex = Mutex()
+    private lateinit var commands: SendChannel<() -> Unit>
+
+    suspend fun foo() = coroutineScope {
+        commands = actor {
+            for (action in channel) action()
+        }
+    }
+
+    suspend fun bar(action: () -> Unit) {
+        commands.send(action)
+        commands.send {
+        }
+
+        bar {
+
+        }
+    }
 
     open suspend fun <C : Config, E : Event> makeConfig(key: Connection.Key<C, E>): C {
         error("makeConfig not implemented")
@@ -56,6 +79,7 @@ abstract class NodeExecutor {
 
     open suspend fun <C : Config, E : Event> setConfig(key: Connection.Key<C, E>, config: C) {
         configs[key] = config
+        waitingConfigs.remove(key)?.forEach { it.complete(config) }
     }
 
     @Suppress("UNCHECKED_CAST")
@@ -71,6 +95,15 @@ abstract class NodeExecutor {
     @Suppress("UNCHECKED_CAST")
     protected fun <C : Config, E : Event> config(key: Connection.Key<C, E>): C? {
         return configs[key] as C?
+    }
+
+    @Suppress("UNCHECKED_CAST")
+    protected fun <C : Config, E : Event> deferredConfig(key: Connection.Key<C, E>): Deferred<C> {
+        configs[key]?.let { return@deferredConfig CompletableDeferred(it as C) }
+
+        val deferred = CompletableDeferred<C>()
+        waitingConfigs.getOrPut(key) { mutableSetOf() }.add(deferred as CompletableDeferred<Config>)
+        return deferred
     }
 
     companion object {

@@ -38,8 +38,7 @@ class OverlayFilterNode(
     }
 
     override suspend fun initialize() {
-        val connection = connection(INPUT_CONTENT) ?: error("missing input connection")
-        val config = connection.config
+        val config = config(INPUT_CONTENT) ?: return
         val vertexSource = assetManager.readTextAsset("overlay_filter.vert")
         val fragmentSource = assetManager.readTextAsset("overlay_filter.frag").let {
             if (config.isOes) {
@@ -97,7 +96,6 @@ class OverlayFilterNode(
 
             }
         }
-
 
         connection(OUTPUT)?.let {
             if (it.config.acceptsSurface) {
@@ -226,8 +224,8 @@ class OverlayFilterNode(
     }
 
     private suspend fun startNoOutput() = coroutineScope {
-        val input = channel(INPUT_CONTENT) ?: error("no content connection")
-        val mask = channel(INPUT_MASK) ?: error("no mask connection")
+        val input = channel(INPUT_CONTENT) ?: return@coroutineScope
+        val mask = channel(INPUT_MASK) ?: return@coroutineScope
 
         startJob = launch {
             var eos = false

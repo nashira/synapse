@@ -242,7 +242,7 @@ class BuilderViewModel @Inject constructor(
 
     private fun updateStartState() {
         nodesChannel.value?.also {
-            val current = it.items[it.currentItem].id >= 0
+            val current = it.items[it.currentItem].id != Node.Type.Properties.node().id
             if (current) {
                 executor.start()
             } else {
@@ -259,6 +259,12 @@ class BuilderViewModel @Inject constructor(
         viewModelScope.launch {
             executor.setPreviewSurfaceView(nodeId, surfaceView)
         }
+    }
+
+    fun addConnectionPreview(source: Connector, connectors: List<Connector>) {
+        executor.stop()
+        executor.addConnectionPreviews(source, connectors)
+        executor.start()
     }
 
     companion object {

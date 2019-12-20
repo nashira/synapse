@@ -8,14 +8,14 @@ class Graph(
     private val nodes = mutableMapOf<Int, Node>()
     private val edges = mutableSetOf<Edge>()
     private val edgeIndex = mutableMapOf<Int, MutableSet<Edge>>()
-    private var nextNodeId = -1
+    private var maxNodeId = 0
 
     fun addNode(node: Node) {
         if (node.id == -1) {
-            node.id = ++nextNodeId
+            node.id = ++maxNodeId
         }
-        nextNodeId = max(nextNodeId, node.id)
         nodes[node.id] = node
+        maxNodeId = max(maxNodeId, node.id)
     }
 
     fun nodeCount() = nodes.size
@@ -44,11 +44,12 @@ class Graph(
         fromKey: String,
         toNodeId: Int,
         toKey: String
-    ) {
+    ): Edge {
         val edge = Edge(fromNodeId, fromKey, toNodeId, toKey)
         edges.add(edge)
         edgeIndex.getOrPut(fromNodeId) { mutableSetOf() } += edge
         edgeIndex.getOrPut(toNodeId) { mutableSetOf() } += edge
+        return edge
     }
 
     fun removeEdge(edge: Edge) {
@@ -98,7 +99,7 @@ class Graph(
     fun getPotentialConnectors(connector: Connector): List<Connector> {
         val port = connector.port
         val connectors = mutableListOf<Connector>()
-        Node.All.forEach { n ->
+        Node.All.filter { it.type != Node.Type.OverlayFilter }.forEach { n ->
             connectors += n.ports.filter { it.value.type == port.type
                     && it.value.output != port.output }
                 .map { Connector(n.copy(id), it.value) }
@@ -129,7 +130,7 @@ class Graph(
             val ei = mutableMapOf<Int, MutableSet<Edge>>()
             edgeIndex.forEach { ei[it.key] = it.value.toMutableSet() }
             it.edgeIndex.putAll(ei)
-            it.nextNodeId = nextNodeId + COPY_ID_SKIP
+            it.maxNodeId = maxNodeId + COPY_ID_SKIP
         }
     }
 
