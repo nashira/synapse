@@ -25,7 +25,10 @@ class SingleConsumer<C : Config, E : Event>(
     override fun producer(): Channel<E> = duplex.host
     override fun consumer(): Channel<E> = duplex.client
 
-    override suspend fun prime(item: E) = duplex.rx.send(item)
+    override suspend fun prime(item: E) {
+        item._counter.set(1)
+        duplex.rx.send(item)
+    }
 
     companion object {
         const val TAG = "Connection"

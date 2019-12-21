@@ -7,6 +7,7 @@ import android.widget.LinearLayout
 import androidx.appcompat.view.menu.MenuPopupHelper
 import androidx.appcompat.widget.PopupMenu
 import androidx.core.view.isEmpty
+import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModelProvider
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.LinearLayoutManager
@@ -59,9 +60,11 @@ class NodeFragment : DaggerFragment() {
         viewModel = ViewModelProvider(activity!!, viewModelFactory)[BuilderViewModel::class.java]
         touchMediator = TouchMediator(context!!, viewModel::swipeEvent)
 
-        reloadConnectors()
-
-        viewModel.setSurfaceView(nodeId, surface_view)
+        viewModel.graphChannel.observe(viewLifecycleOwner, Observer {
+            Log.d(TAG, "graph change")
+            reloadConnectors()
+            viewModel.setSurfaceView(nodeId, surface_view)
+        })
     }
 
     override fun onPause() {

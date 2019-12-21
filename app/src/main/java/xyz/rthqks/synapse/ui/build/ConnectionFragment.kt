@@ -62,7 +62,7 @@ class ConnectionFragment : DaggerFragment() {
                 val potentialConnectors = graph.getPotentialConnectors(it)
                 viewModel.viewModelScope.launch {
                     viewModel.addConnectionPreview(it, potentialConnectors)
-                    delay(1000)
+                    viewModel.waitForExecutor()
                     connectionAdapter.setData(openConnectors, potentialConnectors)
                 }
             }
@@ -93,7 +93,8 @@ class ConnectionFragment : DaggerFragment() {
 class ConnectionAdapter(
     val viewModel: BuilderViewModel,
     context: Context,
-    spans: Int) : RecyclerView.Adapter<ConnectionAdapter.ViewHolder>() {
+    spans: Int
+) : RecyclerView.Adapter<ConnectionAdapter.ViewHolder>() {
     private val margin = context.resources.getDimensionPixelSize(R.dimen.connector_margin)
 
     val spanSizeLookup = object : GridLayoutManager.SpanSizeLookup() {
@@ -192,7 +193,9 @@ class ConnectionAdapter(
         init {
             surfaceView.setOnClickListener {
                 item?.let {
-                    viewModel.completeConnection(it.connector)
+                    viewModel.completeConnection(
+                        Connector(it.connector.node.copy(id = -1), it.connector.port)
+                    )
                 }
             }
         }

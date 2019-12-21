@@ -41,6 +41,7 @@ class Executor @Inject constructor(
                     is Operation.Stop -> doStop()
                     is Operation.ConnectPreview -> doAddConnectionPreviews(msg.source, msg.targets)
                     is Operation.SetSurfaceView -> doSetSurfaceView(msg.nodeId, msg.surfaceView)
+                    is Operation.Wait -> msg.deferred.complete(Unit)
                 }
             } ?: run {
                 Log.w(TAG, "TIMEOUT handling $msg")
@@ -97,6 +98,12 @@ class Executor @Inject constructor(
         }
     }
 
+    suspend fun await() {
+        val deferred = CompletableDeferred<Unit>()
+        commandChannel.send(Operation.Wait(deferred))
+        deferred.await()
+    }
+
     private suspend fun doSetSurfaceView(nodeId: Int, surfaceView: SurfaceView) {
         val graphExecutor = graphExecutor ?: return
         val nodes = LinkedList<Pair<Int, NodeExecutor>>()
@@ -126,7 +133,7 @@ class Executor @Inject constructor(
     private suspend fun doInitialize(preview: Boolean) {
         this.preview = preview
         glesManager.withGlContext {
-            glesManager.initialize()
+            it.initialize()
         }
         cameraManager.initialize()
     }
@@ -134,7 +141,7 @@ class Executor @Inject constructor(
     private suspend fun doRelease() {
         cameraManager.release()
         glesManager.withGlContext {
-            glesManager.release()
+            it.release()
         }
         commandChannel.close()
         scope.cancel()
@@ -191,8 +198,8 @@ class Executor @Inject constructor(
             val target = it.node
             Log.d(TAG, "adding node ${target.type} ${target.id} ${it.port.id}")
             graph.addNode(target)
-            val edge = graph.addEdge(source.node.id, source.port.id, target.id, it.port.id)
             Log.d(TAG, "added node ${target.type} ${target.id} ${it.port.id}")
+            val edge = graph.addEdge(source.node.id, source.port.id, target.id, it.port.id)
             data.add(target to edge)
 
             target.ports.values.firstOrNull {
@@ -222,5 +229,6 @@ class Executor @Inject constructor(
         class Release : Operation()
         data class ConnectPreview(val source: Connector, val targets: List<Connector>) : Operation()
         data class SetSurfaceView(val nodeId: Int, val surfaceView: SurfaceView) : Operation()
+        class Wait(val deferred: CompletableDeferred<Unit>) : Executor.Operation()
     }
 }

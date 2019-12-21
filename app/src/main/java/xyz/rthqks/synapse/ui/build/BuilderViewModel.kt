@@ -115,6 +115,8 @@ class BuilderViewModel @Inject constructor(
     }
 
     fun cancelConnection() {
+        restartGraph()
+
         nodeAfterCancel?.let {
             nodesChannel.value = AdapterState(0, listOf(it))
             nodeAfterCancel = null
@@ -127,9 +129,14 @@ class BuilderViewModel @Inject constructor(
     }
 
     fun completeConnection(connector: Connector) {
+        Log.d(TAG, "completing connection ${connector.node.type} ${connector.node.id}")
+
         connectionChannel.value?.let {
 
-            if (connector.node.id < -1) {
+            val addNode = connector.node.id <= -1
+            Log.d(TAG, "completing connection ${it.node.type} ${it.node.id}")
+
+            if (addNode) {
                 // new node
                 nodeAfterCancel = null
                 graph.addNode(connector.node)
@@ -141,7 +148,7 @@ class BuilderViewModel @Inject constructor(
                             connector.node.type
                         )
                     )
-                    nodesChannel.postValue(AdapterState(0, listOf(connector.node)))
+
                 }
             }
 
@@ -166,10 +173,22 @@ class BuilderViewModel @Inject constructor(
                             to.port.id
                         )
                     )
-                    nodesChannel.postValue(AdapterState(0, listOf(connector.node)))
                 }
             }
+
+            if (addNode) {
+                restartGraph()
+                nodesChannel.value = AdapterState(0, listOf(connector.node))
+            }
         }
+    }
+
+    private fun restartGraph() {
+        executor.stop()
+        executor.releaseGraph()
+        executor.initializeGraph(graph)
+        executor.start()
+        graphChannel.postValue(graph)
     }
 
     fun setTitle(@StringRes resId: Int) {
@@ -267,13 +286,24 @@ class BuilderViewModel @Inject constructor(
         executor.start()
     }
 
+    suspend fun waitForExecutor() {
+        executor.await()
+    }
+
     fun onBackPressed(): Boolean {
         return nodesChannel.value?.let {
-            val handled = it.items[it.currentItem].id != Node.Type.Properties.node().id
-            if (handled){
-                jumpToNode(PROPERTIES_NODE)
+            when (it.items[it.currentItem].id) {
+                Node.Type.Properties.node().id -> false
+                Node.Type.Creation.node().id,
+                Node.Type.Connection.node().id -> {
+                    cancelConnection()
+                    true
+                }
+                else -> {
+                    jumpToNode(PROPERTIES_NODE)
+                    true
+                }
             }
-            handled
         } ?: false
     }
 
