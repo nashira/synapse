@@ -81,8 +81,8 @@ class BuilderViewModel @Inject constructor(
     fun preparePortSwipe(connector: Connector) {
         val port = connector.port
         connector.edge?.let {
-            val leftNode = graph.getNode(it.fromNodeId)
-            val rightNode = graph.getNode(it.toNodeId)
+            val leftNode = graph.getNode(it.fromNodeId)!!
+            val rightNode = graph.getNode(it.toNodeId)!!
             val current = if (port.output) 0 else 1
             nodesChannel.value = AdapterState(current, listOf(leftNode, rightNode))
         } ?: run {
@@ -105,7 +105,7 @@ class BuilderViewModel @Inject constructor(
         }
     }
 
-    fun getNode(nodeId: Int): Node = graph.getNode(nodeId)
+    fun getNode(nodeId: Int): Node = graph.getNode(nodeId)!!
 
     fun updateCurrentItem(currentItem: Int) {
         nodesChannel.value?.let {
@@ -221,16 +221,19 @@ class BuilderViewModel @Inject constructor(
     fun deleteNode() {
         nodesChannel.value?.let {
             val node = it.items[it.currentItem]
-            val edges = graph.removeEdges(node.id)
+            graph.removeEdges(node.id)
             graph.removeNode(node.id)
 
             val firstNode = graph.getFirstNode()
+
             firstNode?.let {
                 nodesChannel.value = AdapterState(0, listOf(firstNode))
             } ?: run {
                 connectionChannel.value = Connector(CREATION_NODE, FAKE_PORT)
                 nodesChannel.value = AdapterState(0, listOf(CREATION_NODE))
             }
+
+            restartGraph()
 
             viewModelScope.launch(Dispatchers.IO) {
                 dao.deleteNode(node.graphId, node.id)

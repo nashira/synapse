@@ -61,9 +61,11 @@ class NodeFragment : DaggerFragment() {
         touchMediator = TouchMediator(context!!, viewModel::swipeEvent)
 
         viewModel.graphChannel.observe(viewLifecycleOwner, Observer {
-            Log.d(TAG, "graph change")
-            reloadConnectors()
-            viewModel.setSurfaceView(nodeId, surface_view)
+            Log.d(TAG, "graph change $nodeId ${viewModel.graph.getNode(nodeId)}")
+            viewModel.graph.getNode(nodeId)?.let {
+                reloadConnectors()
+                viewModel.setSurfaceView(nodeId, surface_view)
+            }
         })
     }
 
@@ -93,6 +95,7 @@ class NodeFragment : DaggerFragment() {
     }
 
     private fun reloadConnectors() {
+        Log.d(TAG, "reloadConnectors $nodeId")
         val graph = viewModel.graph
         val connectors = graph.getConnectors(nodeId).groupBy { it.port.output }
         inputsAdapter.setPorts(connectors[false] ?: emptyList())
@@ -159,8 +162,8 @@ class NodeFragment : DaggerFragment() {
         private val ports = mutableListOf<Connector>()
 
         fun setPorts(ports: List<Connector>) {
-            val oldPorts = ports
-            val result = DiffUtil.calculateDiff(object : DiffUtil.Callback(){
+            val oldPorts = this.ports
+            val result = DiffUtil.calculateDiff(object : DiffUtil.Callback() {
                 override fun areItemsTheSame(oldItemPosition: Int, newItemPosition: Int): Boolean {
                     val o = oldPorts[oldItemPosition]
                     val n = ports[newItemPosition]

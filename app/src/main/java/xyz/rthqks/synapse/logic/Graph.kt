@@ -26,9 +26,9 @@ class Graph(
 
     fun getFirstNode(): Node? = nodes.values.firstOrNull()
 
-    fun getNode(nodeId: Int): Node {
+    fun getNode(nodeId: Int): Node? {
 //        Log.d(TAG, "getNode $nodeId")
-        return nodes[nodeId]!!
+        return nodes[nodeId]
     }
 
     fun getNodes(): List<Node> {
@@ -65,7 +65,7 @@ class Graph(
     }
 
     fun getConnectors(nodeId: Int): List<Connector> {
-        val node = getNode(nodeId)
+        val node = getNode(nodeId) ?: return emptyList()
         val ports = node.getPortIds().toMutableSet()
         val nodeEdges = getEdges(nodeId)
 
