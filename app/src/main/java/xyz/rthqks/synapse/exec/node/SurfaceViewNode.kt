@@ -15,11 +15,13 @@ import xyz.rthqks.synapse.assets.AssetManager
 import xyz.rthqks.synapse.exec.NodeExecutor
 import xyz.rthqks.synapse.exec.edge.*
 import xyz.rthqks.synapse.gl.*
+import xyz.rthqks.synapse.logic.Properties
+import xyz.rthqks.synapse.logic.Property
 
 class SurfaceViewNode(
     private val assetManager: AssetManager,
     private val glesManager: GlesManager,
-    private val properties: Map<String, Any?>
+    private val properties: Properties
 ) : NodeExecutor(), SurfaceHolder.Callback {
     private var surface: Surface? = null
     private var running: Boolean = false
@@ -32,7 +34,7 @@ class SurfaceViewNode(
     private val program = Program()
     private var windowSurface: WindowSurface? = null
 
-    private val cropCenter: Boolean by properties
+    private val cropCenter: Boolean by properties.delegate(Property.Type.ScreenCrop, false)
 
     override suspend fun create() {
 //        Log.d(TAG, "adding callback ${surfaceView.holder.surface}")
@@ -240,7 +242,7 @@ class SurfaceViewNode(
                 outputSize = Size(surfaceView.measuredWidth, surfaceView.measuredHeight)
             } else {
                 outputSize = size
-                if (rotation == 90 || rotation == 270) Size(size.height, size.width) else size
+//                if (rotation == 90 || rotation == 270) Size(size.height, size.width) else size
                 surfaceView.holder.setFixedSize(outputSize.width, outputSize.height)
                 ConstraintSet().also {
                     val constraintLayout = surfaceView.parent as ConstraintLayout

@@ -1,15 +1,10 @@
 package xyz.rthqks.synapse.exec
 
 import android.content.Context
-import android.hardware.camera2.CameraCharacteristics
-import android.media.AudioFormat
-import android.media.MediaRecorder
 import android.util.Log
-import android.util.Size
 import android.view.SurfaceView
 import kotlinx.coroutines.*
 import xyz.rthqks.synapse.assets.AssetManager
-import xyz.rthqks.synapse.data.Key
 import xyz.rthqks.synapse.exec.edge.Config
 import xyz.rthqks.synapse.exec.edge.Connection
 import xyz.rthqks.synapse.exec.edge.Event
@@ -72,44 +67,20 @@ class GraphExecutor(
 
     private fun nodeExecutor(node: Node): NodeExecutor {
         return when (node.type) {
-            Node.Type.Camera -> CameraNode(
-                cameraManager,
-                glesManager,
-                node[Key.CameraFacing] ?: CameraCharacteristics.LENS_FACING_BACK,
-                node[Key.CameraCaptureSize] ?: Size(640, 480),
-                node[Key.CameraFrameRate] ?: 30
-            )
+            Node.Type.Camera -> CameraNode(cameraManager, glesManager, node.properties)
             Node.Type.FrameDifference -> FrameDifferenceNode(glesManager, assetManager)
-            Node.Type.GrayscaleFilter -> GrayscaleNode(
-                glesManager, assetManager, node[Key.ScaleFactor] ?: 1
-            )
-            Node.Type.BlurFilter -> BlurNode(
-                glesManager,
-                assetManager,
-                node[Key.BlurSize] ?: 9,
-                node[Key.NumPasses] ?: 1,
-                node[Key.ScaleFactor] ?: 1
-            )
-            Node.Type.MultiplyAccumulate -> MacNode(
-                glesManager,
-                assetManager,
-                node[Key.MultiplyFactor] ?: 0.9f,
-                node[Key.AccumulateFactor] ?: 0.9f
-            )
+            Node.Type.GrayscaleFilter -> GrayscaleNode(glesManager, assetManager, node.properties)
+            Node.Type.BlurFilter -> BlurNode(glesManager, assetManager, node.properties)
+            Node.Type.MultiplyAccumulate -> MacNode(glesManager, assetManager, node.properties)
             Node.Type.OverlayFilter -> OverlayFilterNode(glesManager, assetManager)
-            Node.Type.Microphone -> AudioSourceNode(
-                node[Key.AudioSampleRate] ?: 48000,
-                node[Key.AudioChannel] ?: AudioFormat.CHANNEL_OUT_DEFAULT,
-                node[Key.AudioEncoding] ?: AudioFormat.ENCODING_PCM_16BIT,
-                node[Key.AudioSource] ?: MediaRecorder.AudioSource.DEFAULT
-            )
+            Node.Type.Microphone -> AudioSourceNode(node.properties)
             Node.Type.Image -> TODO()
             Node.Type.AudioFile -> TODO()
-            Node.Type.MediaFile -> DecoderNode(glesManager, context, node[Key.Uri] ?: "")
+            Node.Type.MediaFile -> DecoderNode(glesManager, context, node.properties)
             Node.Type.LutFilter -> GlNode(glesManager, assetManager)
             Node.Type.ShaderFilter -> TODO()
             Node.Type.Speakers -> AudioPlayerNode()
-            Node.Type.Screen -> SurfaceViewNode(assetManager, glesManager, mapOf("cropCenter" to true))
+            Node.Type.Screen -> SurfaceViewNode(assetManager, glesManager, node.properties + graph.properties)
 
             Node.Type.Properties,
             Node.Type.Creation,

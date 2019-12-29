@@ -15,11 +15,13 @@ import xyz.rthqks.synapse.assets.AssetManager
 import xyz.rthqks.synapse.exec.NodeExecutor
 import xyz.rthqks.synapse.exec.edge.*
 import xyz.rthqks.synapse.gl.*
+import xyz.rthqks.synapse.logic.Properties
+import xyz.rthqks.synapse.logic.Property.Type.ScaleFactor
 
 class GrayscaleNode(
     private val glesManager: GlesManager,
     private val assetManager: AssetManager,
-    private val scale: Int
+    private val properties: Properties
 ) : NodeExecutor() {
     private var startJob: Job? = null
     private val connectMutex = Mutex(true)
@@ -32,6 +34,8 @@ class GrayscaleNode(
 
     private val mesh = Quad()
     private val program = Program()
+
+    private val scale: Int get() = properties[ScaleFactor]
 
     override suspend fun create() {
 

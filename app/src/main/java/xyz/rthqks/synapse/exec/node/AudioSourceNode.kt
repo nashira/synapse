@@ -6,19 +6,23 @@ import android.util.Log
 import kotlinx.coroutines.*
 import xyz.rthqks.synapse.exec.NodeExecutor
 import xyz.rthqks.synapse.exec.edge.*
+import xyz.rthqks.synapse.logic.Properties
+import xyz.rthqks.synapse.logic.Property.Type.*
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
 
 class AudioSourceNode(
-    private val sampleRate: Int,
-    private val channelMask: Int,
-    private val audioEncoding: Int,
-    private val source: Int
+    private val properties: Properties
 ) : NodeExecutor() {
     private lateinit var recorder: AudioRecord
     private lateinit var audioFormat: AudioFormat
     private var bufferSize = 0
     private var recordJob: Job? = null
+
+    private val sampleRate: Int get() = properties[AudioSampleRate]
+    private val channelMask: Int get() = properties[AudioChannel]
+    private val audioEncoding: Int get() = properties[AudioEncoding]
+    private val source: Int get() = properties[AudioSource]
 
     override suspend fun create() {
         bufferSize = AudioRecord.getMinBufferSize(

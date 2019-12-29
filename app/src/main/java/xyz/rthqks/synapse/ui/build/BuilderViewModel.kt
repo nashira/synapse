@@ -15,6 +15,7 @@ import xyz.rthqks.synapse.data.NodeData
 import xyz.rthqks.synapse.data.SynapseDao
 import xyz.rthqks.synapse.exec.Executor
 import xyz.rthqks.synapse.logic.*
+import xyz.rthqks.synapse.logic.Property.Type.ScreenCrop
 import xyz.rthqks.synapse.util.Consumable
 import javax.inject.Inject
 
@@ -187,7 +188,7 @@ class BuilderViewModel @Inject constructor(
         executor.stop()
         executor.releaseGraph()
         executor.initializeGraph(graph)
-        executor.start()
+        updateStartState()
         graphChannel.postValue(graph)
     }
 
@@ -314,6 +315,11 @@ class BuilderViewModel @Inject constructor(
         viewModelScope.launch(Dispatchers.IO) {
             dao.deleteFullGraph(graph.id)
         }
+    }
+
+    fun setCropCenter(crop: Boolean) {
+        graph.properties[ScreenCrop] = crop
+        restartGraph()
     }
 
     companion object {

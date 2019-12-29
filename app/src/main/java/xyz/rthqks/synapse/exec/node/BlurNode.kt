@@ -14,13 +14,13 @@ import xyz.rthqks.synapse.assets.AssetManager
 import xyz.rthqks.synapse.exec.NodeExecutor
 import xyz.rthqks.synapse.exec.edge.*
 import xyz.rthqks.synapse.gl.*
+import xyz.rthqks.synapse.logic.Properties
+import xyz.rthqks.synapse.logic.Property.Type.*
 
 class BlurNode(
     private val glesManager: GlesManager,
     private val assetManager: AssetManager,
-    private val blurSize: Int = 9,
-    private val passes: Int = 1,
-    private val scale: Int = 1
+    private val properties: Properties
 ) : NodeExecutor() {
     private var startJob: Job? = null
     private val connectMutex = Mutex(true)
@@ -36,6 +36,10 @@ class BlurNode(
     private val mesh = Quad()
     private val program1 = Program()
     private val program2 = Program()
+
+    private val blurSize: Int get() = properties[BlurSize]
+    private val passes: Int get() = properties[NumPasses]
+    private val scale: Int get() = properties[ScaleFactor]
 
     override suspend fun create() {
 
@@ -188,6 +192,8 @@ class BlurNode(
     }
 
     private fun executeGl(inputTexture: Texture) {
+        val passes = passes
+
         glViewport(0, 0, size.width, size.height)
 
         framebuffer1.bind()

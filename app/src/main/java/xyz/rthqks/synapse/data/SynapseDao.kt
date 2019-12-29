@@ -77,16 +77,6 @@ abstract class SynapseDao {
     @Query("DELETE FROM property WHERE graphId = :graphId")
     abstract suspend fun deleteProperties(graphId: Int)
 
-    suspend fun getFullGraphData(graphId: Int): GraphData {
-        val graph = getGraph(graphId)
-        graph.nodes.addAll(getNodes(graphId))
-        graph.edges.addAll(getEdges(graphId))
-        graph.nodes.forEach {
-            it.properties.putAll(getProperties(graphId, it.id).map { Key[it.type]!! to it })
-        }
-        return graph
-    }
-
     suspend fun getGraphs(): List<Graph> {
         return getGraphData().map {
             it.toGraph()

@@ -8,6 +8,7 @@ class Graph(
     private val nodes = mutableMapOf<Int, Node>()
     private val edges = mutableSetOf<Edge>()
     private val edgeIndex = mutableMapOf<Int, MutableSet<Edge>>()
+    val properties = Properties()
     private var maxNodeId = 0
 
     fun addNode(node: Node) {
@@ -130,6 +131,7 @@ class Graph(
             val ei = mutableMapOf<Int, MutableSet<Edge>>()
             edgeIndex.forEach { ei[it.key] = it.value.toMutableSet() }
             it.edgeIndex.putAll(ei)
+            it.properties.putAll(properties)
             it.maxNodeId = maxNodeId + COPY_ID_SKIP
         }
     }

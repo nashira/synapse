@@ -8,6 +8,8 @@ import android.view.inputmethod.InputMethodManager
 import androidx.lifecycle.ViewModelProvider
 import dagger.android.support.DaggerFragment
 import kotlinx.android.synthetic.main.fragment_graph.*
+import kotlinx.android.synthetic.main.property_toggle.*
+import kotlinx.android.synthetic.main.property_toggle.view.*
 import xyz.rthqks.synapse.R
 import javax.inject.Inject
 
@@ -49,6 +51,19 @@ class GraphFragment : DaggerFragment() {
             }
             touchMediator.onTouch(v, event)
         }
+
+        val property = ToggleProperty(property_toggle)
+        property.iconView.setImageResource(R.drawable.ic_crop)
+        property.titleView.setText(R.string.property_title_crop_to_fit)
+        property.subtitleView.setText(R.string.property_subtitle_crop_to_fit_disabled)
+        property.toggleButton.setOnClickListener {
+            viewModel.setCropCenter(property.toggleButton.isChecked)
+            if (property.toggleButton.isChecked) {
+                property.subtitleView.setText(R.string.property_subtitle_crop_to_fit_enabled)
+            } else {
+                property.subtitleView.setText(R.string.property_subtitle_crop_to_fit_disabled)
+            }
+        }
     }
 
     private fun setupEditTitle() {
@@ -83,4 +98,13 @@ class GraphFragment : DaggerFragment() {
         const val TAG = "GraphFragment"
         fun newInstance(): GraphFragment = GraphFragment()
     }
+}
+
+class ToggleProperty(
+    val view: View
+) {
+    val iconView = view.icon
+    val titleView = view.title
+    val subtitleView = view.subtitle
+    val toggleButton = view.button_toggle
 }

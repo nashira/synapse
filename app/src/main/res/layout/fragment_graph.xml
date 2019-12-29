@@ -28,6 +28,13 @@
         app:layout_constraintStart_toEndOf="@id/edit_title"
         app:layout_constraintTop_toTopOf="parent" />
 
+    <include
+        layout="@layout/property_toggle"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        app:layout_constraintBottom_toTopOf="@id/swipe_to_nodes"
+        app:layout_constraintTop_toBottomOf="@id/edit_title" />
+
     <TextView
         android:id="@+id/swipe_to_nodes"
         style="@style/Widget.AppCompat.Button.Borderless"

@@ -1,6 +1,7 @@
 package xyz.rthqks.synapse.exec.node
 
 import android.graphics.SurfaceTexture
+import android.hardware.camera2.CameraCharacteristics
 import android.opengl.GLES11Ext
 import android.opengl.GLES32
 import android.opengl.GLES32.GL_CLAMP_TO_EDGE
@@ -19,13 +20,13 @@ import xyz.rthqks.synapse.exec.NodeExecutor
 import xyz.rthqks.synapse.exec.edge.*
 import xyz.rthqks.synapse.gl.GlesManager
 import xyz.rthqks.synapse.gl.Texture
+import xyz.rthqks.synapse.logic.Properties
+import xyz.rthqks.synapse.logic.Property.Type.*
 
 class CameraNode(
     private val cameraManager: CameraManager,
     private val glesManager: GlesManager,
-    private val facing: Int,
-    private val requestedSize: Size,
-    private val frameRate: Int
+    private val properties: Properties
 ) : NodeExecutor() {
     private lateinit var size: Size
     private lateinit var cameraId: String
@@ -38,6 +39,10 @@ class CameraNode(
         GL_CLAMP_TO_EDGE,
         GL_LINEAR
     )
+
+    private val facing: Int get() =  properties[CameraFacing] ?: CameraCharacteristics.LENS_FACING_BACK
+    private val requestedSize: Size get() = properties[CameraCaptureSize] ?: Size(640, 480)
+    private val frameRate: Int get() = properties[CameraFrameRate] ?: 30
 
     override suspend fun create() {
         val conf = cameraManager.resolve(facing, requestedSize, frameRate)

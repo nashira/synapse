@@ -16,7 +16,6 @@ import androidx.recyclerview.widget.RecyclerView
 import dagger.android.support.DaggerFragment
 import kotlinx.android.synthetic.main.fragment_connection.*
 import kotlinx.android.synthetic.main.layout_connection.view.*
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import xyz.rthqks.synapse.R
 import xyz.rthqks.synapse.logic.Connector

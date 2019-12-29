@@ -20,11 +20,13 @@ import xyz.rthqks.synapse.exec.NodeExecutor
 import xyz.rthqks.synapse.exec.edge.*
 import xyz.rthqks.synapse.gl.GlesManager
 import xyz.rthqks.synapse.gl.Texture
+import xyz.rthqks.synapse.logic.Properties
+import xyz.rthqks.synapse.logic.Property.Type.Uri
 
 class DecoderNode(
     private val glesManager: GlesManager,
     private val context: Context,
-    private val uri: String
+    private val properties: Properties
 ) : NodeExecutor() {
     private lateinit var size: Size
     private var surfaceRotation = 0
@@ -42,6 +44,8 @@ class DecoderNode(
         GL_LINEAR
     )
     private val decoder = Decoder(context, glesManager.backgroundHandler)
+
+    private val uri: String get() = properties[Uri]
 
     override suspend fun create() {
         decoder.setDataSource(uri)

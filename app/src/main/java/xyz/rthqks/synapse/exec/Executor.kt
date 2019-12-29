@@ -31,7 +31,7 @@ class Executor @Inject constructor(
     private val commandChannel = scope.actor<Operation>(capacity = Channel.UNLIMITED) {
         for (msg in channel) {
             Log.d(TAG, "handling $msg")
-            withTimeoutOrNull(2000) {
+            withTimeoutOrNull(msg.timeout) {
                 when (msg) {
                     is Operation.Initialize -> doInitialize(msg.isPreview)
                     is Operation.InitGraph -> doInitializeGraph(msg.graph)
@@ -220,9 +220,11 @@ class Executor @Inject constructor(
         const val TAG = "Executor"
     }
 
-    private sealed class Operation {
+    private sealed class Operation(
+        val timeout: Long = 2000
+    ) {
         data class Initialize(val isPreview: Boolean) : Operation()
-        data class InitGraph(val graph: Graph) : Operation()
+        data class InitGraph(val graph: Graph) : Operation(10000)
         class Start : Operation()
         class Stop : Operation()
         class ReleaseGraph() : Operation()

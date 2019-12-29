@@ -14,12 +14,14 @@ import xyz.rthqks.synapse.assets.AssetManager
 import xyz.rthqks.synapse.exec.NodeExecutor
 import xyz.rthqks.synapse.exec.edge.*
 import xyz.rthqks.synapse.gl.*
+import xyz.rthqks.synapse.logic.Properties
+import xyz.rthqks.synapse.logic.Property.Type.AccumulateFactor
+import xyz.rthqks.synapse.logic.Property.Type.MultiplyFactor
 
 class MacNode(
     private val glesManager: GlesManager,
     private val assetManager: AssetManager,
-    private val multiplyFactor: Float,
-    private val accumulateFactor: Float
+    private val properties: Properties
 ) : NodeExecutor() {
     private var startJob: Job? = null
     private var size = Size(0, 0)
@@ -41,6 +43,9 @@ class MacNode(
     private val framebuffer2 = Framebuffer()
 
     private var framebuffer = framebuffer1
+
+    private val multiplyFactor: Float get() = properties[MultiplyFactor]
+    private val accumulateFactor: Float get() = properties[AccumulateFactor]
 
     override suspend fun create() {
     }

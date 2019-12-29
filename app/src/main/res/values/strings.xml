@@ -110,4 +110,8 @@
     <string name="name_node_type_properties">Graph Properties</string>
     <string name="menu_title_delete_graph">Delete Graph</string>
     <string name="menu_title_jump_to_graph">Graph Settings</string>
+    <string name="content_description_icon">Icon</string>
+    <string name="property_title_crop_to_fit">Crop to Fit</string>
+    <string name="property_subtitle_crop_to_fit_disabled">Show full frame</string>
+    <string name="property_subtitle_crop_to_fit_enabled">Crop to fill frame</string>
 </resources>
