@@ -1,12 +1,8 @@
 package xyz.rthqks.synapse.logic
 
-import android.hardware.camera2.CameraCharacteristics
 import androidx.annotation.DrawableRes
 import androidx.annotation.StringRes
 import xyz.rthqks.synapse.R
-import xyz.rthqks.synapse.logic.Port.Type.Audio
-import xyz.rthqks.synapse.logic.Port.Type.Video
-import xyz.rthqks.synapse.logic.Property.Type.CameraFacing
 
 class Node(
     val type: Type
@@ -19,6 +15,10 @@ class Node(
 
     fun add(port: Port) {
         ports[port.id] = port
+    }
+
+    fun <T> add(key: Property.Key<T>, property: Property<T>) {
+        properties.put(key, property)
     }
 
     fun copy(graphId: Int = this.graphId, id: Int = this.id): Node = Node(type).also {
@@ -59,63 +59,12 @@ class Node(
         Creation("creation", 0, 0),
         Connection("connection", 0, 0);
 
-        fun node(): Node = toNode[this] ?: error("missing node $this")
-
         companion object {
             private val byKey = values().map { it.key to it }.toMap()
-            val toNode = All.map { it.type to it }.toMap()
             operator fun get(key: String) = byKey[key]
         }
     }
 
     companion object {
-        val All = listOf(
-            Node(Type.Camera).apply {
-                add(Port(Video, "video_1", "Video", true))
-                properties[CameraFacing] = CameraCharacteristics.LENS_FACING_BACK
-            },
-            Node(Type.Microphone).apply {
-                add(Port(Audio, "audio_1", "Audio", true))
-            },
-            Node(Type.MediaFile).apply {
-                add(Port(Video, "video_1", "Video", true))
-                add(Port(Audio, "audio_1", "Audio", true))
-            },
-            Node(Type.FrameDifference).apply {
-                add(Port(Video, "video_1", "Source", false))
-                add(Port(Video, "video_2", "Difference", true))
-            },
-            Node(Type.GrayscaleFilter).apply {
-                add(Port(Video, "video_1", "Source", false))
-                add(Port(Video, "video_2", "Grayscale", true))
-            },
-            Node(Type.MultiplyAccumulate).apply {
-                add(Port(Video, "video_1", "Source", false))
-                add(Port(Video, "video_2", "Accumulated", true))
-            },
-            Node(Type.OverlayFilter).apply {
-                add(Port(Video, "video_1", "Content", false))
-                add(Port(Video, "video_2", "Mask", false))
-                add(Port(Video, "video_3", "Combined", true))
-            },
-            Node(Type.BlurFilter).apply {
-                add(Port(Video, "video_1", "Source", false))
-                add(Port(Video, "video_2", "Blurred", true))
-            },
-            Node(Type.LutFilter).apply {
-                add(Port(Video, "video_1", "Source", false))
-                add(Port(Video, "video_2", "Colored", true))
-            },
-            Node(Type.Screen).apply {
-                add(Port(Video, "video_1", "Source", false))
-                properties[Property.Type.ScreenCrop] = false
-            },
-            Node(Type.Speakers).apply {
-                add(Port(Audio, "audio_1", "Audio", false))
-            },
-            Node(Type.Properties).also { it.id = -2 },
-            Node(Type.Connection).also { it.id = -3 },
-            Node(Type.Creation).also { it.id = -4 }
-        )
     }
 }

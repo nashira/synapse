@@ -3,6 +3,7 @@ package xyz.rthqks.synapse.ui.build
 import android.os.Bundle
 import android.util.Log
 import android.view.*
+import android.widget.ImageView
 import android.widget.LinearLayout
 import androidx.appcompat.view.menu.MenuPopupHelper
 import androidx.appcompat.widget.PopupMenu
@@ -17,6 +18,7 @@ import kotlinx.android.synthetic.main.fragment_node.*
 import kotlinx.android.synthetic.main.layout_port_fragment_node.view.*
 import xyz.rthqks.synapse.R
 import xyz.rthqks.synapse.logic.Connector
+import xyz.rthqks.synapse.logic.Node
 import javax.inject.Inject
 
 class NodeFragment : DaggerFragment() {
@@ -27,6 +29,7 @@ class NodeFragment : DaggerFragment() {
     private lateinit var touchMediator: TouchMediator
     private lateinit var inputsAdapter: PortsAdapter
     private lateinit var outputsAdapter: PortsAdapter
+    private lateinit var propertiesAdapter: PropertiesAdapter
     private var nodeId = -1
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -52,6 +55,10 @@ class NodeFragment : DaggerFragment() {
         outputsAdapter = PortsAdapter(false)
         inputs_list.adapter = inputsAdapter
         outputs_list.adapter = outputsAdapter
+
+        tool_list.layoutManager =
+            LinearLayoutManager(context, LinearLayoutManager.HORIZONTAL, false)
+
     }
 
     override fun onActivityCreated(savedInstanceState: Bundle?) {
@@ -59,6 +66,11 @@ class NodeFragment : DaggerFragment() {
 //        Log.d(TAG, "onActivityCreated $nodeId")
         viewModel = ViewModelProvider(activity!!, viewModelFactory)[BuilderViewModel::class.java]
         touchMediator = TouchMediator(context!!, viewModel::swipeEvent)
+
+        viewModel.graph.getNode(nodeId)?.let {
+            propertiesAdapter = PropertiesAdapter(viewModel, it)
+            tool_list.adapter = propertiesAdapter
+        }
 
         viewModel.graphChannel.observe(viewLifecycleOwner, Observer {
             Log.d(TAG, "graph change $nodeId ${viewModel.graph.getNode(nodeId)}")
@@ -155,6 +167,26 @@ class NodeFragment : DaggerFragment() {
 
         menu.show()
     }
+
+    class PropertiesAdapter(
+        private val viewModel: BuilderViewModel,
+        private val node: Node
+    ) : RecyclerView.Adapter<PropertyViewHolder>() {
+        private val properties = node.properties.keys.toList()
+        override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): PropertyViewHolder {
+            return PropertyViewHolder(ImageView(parent.context))
+        }
+
+        override fun getItemCount(): Int = properties.size
+
+        override fun onBindViewHolder(holder: PropertyViewHolder, position: Int) {
+            val key = properties[position]
+            val property = node.properties[key]
+            Log.d(TAG, "onBind $position $key ${property}")
+        }
+    }
+
+    class PropertyViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView)
 
     inner class PortsAdapter(
         private val isStartAligned: Boolean

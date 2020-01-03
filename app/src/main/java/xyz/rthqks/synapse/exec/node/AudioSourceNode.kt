@@ -6,8 +6,7 @@ import android.util.Log
 import kotlinx.coroutines.*
 import xyz.rthqks.synapse.exec.NodeExecutor
 import xyz.rthqks.synapse.exec.edge.*
-import xyz.rthqks.synapse.logic.Properties
-import xyz.rthqks.synapse.logic.Property.Type.*
+import xyz.rthqks.synapse.logic.*
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
 

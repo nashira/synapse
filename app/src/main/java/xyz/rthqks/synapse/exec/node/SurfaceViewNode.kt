@@ -15,8 +15,8 @@ import xyz.rthqks.synapse.assets.AssetManager
 import xyz.rthqks.synapse.exec.NodeExecutor
 import xyz.rthqks.synapse.exec.edge.*
 import xyz.rthqks.synapse.gl.*
+import xyz.rthqks.synapse.logic.CropToFit
 import xyz.rthqks.synapse.logic.Properties
-import xyz.rthqks.synapse.logic.Property
 
 class SurfaceViewNode(
     private val assetManager: AssetManager,
@@ -34,7 +34,7 @@ class SurfaceViewNode(
     private val program = Program()
     private var windowSurface: WindowSurface? = null
 
-    private val cropCenter: Boolean by properties.delegate(Property.Type.ScreenCrop, false)
+    private val cropCenter: Boolean = properties[CropToFit]
 
     override suspend fun create() {
 //        Log.d(TAG, "adding callback ${surfaceView.holder.surface}")

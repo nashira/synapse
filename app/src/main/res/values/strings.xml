@@ -114,4 +114,6 @@
     <string name="property_title_crop_to_fit">Crop to Fit</string>
     <string name="property_subtitle_crop_to_fit_disabled">Show full frame</string>
     <string name="property_subtitle_crop_to_fit_enabled">Crop to fill frame</string>
+    <string name="property_label_camera_fps_10">10</string>
+    <string name="property_label_camera_capture_size_2160">2160p</string>
 </resources>

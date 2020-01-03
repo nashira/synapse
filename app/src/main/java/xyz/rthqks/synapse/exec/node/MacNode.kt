@@ -14,9 +14,9 @@ import xyz.rthqks.synapse.assets.AssetManager
 import xyz.rthqks.synapse.exec.NodeExecutor
 import xyz.rthqks.synapse.exec.edge.*
 import xyz.rthqks.synapse.gl.*
+import xyz.rthqks.synapse.logic.AccumulateFactor
+import xyz.rthqks.synapse.logic.MultiplyFactor
 import xyz.rthqks.synapse.logic.Properties
-import xyz.rthqks.synapse.logic.Property.Type.AccumulateFactor
-import xyz.rthqks.synapse.logic.Property.Type.MultiplyFactor
 
 class MacNode(
     private val glesManager: GlesManager,

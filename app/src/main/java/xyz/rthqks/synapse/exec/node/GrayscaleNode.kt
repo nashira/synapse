@@ -16,7 +16,7 @@ import xyz.rthqks.synapse.exec.NodeExecutor
 import xyz.rthqks.synapse.exec.edge.*
 import xyz.rthqks.synapse.gl.*
 import xyz.rthqks.synapse.logic.Properties
-import xyz.rthqks.synapse.logic.Property.Type.ScaleFactor
+import xyz.rthqks.synapse.logic.ScaleFactor
 
 class GrayscaleNode(
     private val glesManager: GlesManager,

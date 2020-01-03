@@ -2,8 +2,7 @@ package xyz.rthqks.synapse.data
 
 import androidx.room.*
 import xyz.rthqks.synapse.logic.Graph
-import xyz.rthqks.synapse.logic.toGraph
-import xyz.rthqks.synapse.logic.toNode
+import xyz.rthqks.synapse.logic.node
 
 @Dao
 abstract class SynapseDao {
@@ -79,20 +78,20 @@ abstract class SynapseDao {
 
     suspend fun getGraphs(): List<Graph> {
         return getGraphData().map {
-            it.toGraph()
+            Graph(it.id, it.name)
         }
     }
 
     @Transaction
     open suspend fun getFullGraph(graphId: Int): Graph {
         val graphData = getGraph(graphId)
-        val graph = graphData.toGraph()
+        val graph = Graph(graphData.id, graphData.name)
         val nodes = getNodes(graphId)
         val edges = getEdges(graphId)
         val properties = getProperties(graphId)
 
         nodes.forEach {
-            graph.addNode(it.toNode())
+            graph.addNode(it.type.node().copy(it.graphId, it.id))
         }
 
         edges.forEach {

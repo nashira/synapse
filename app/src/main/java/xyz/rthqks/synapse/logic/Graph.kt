@@ -100,7 +100,7 @@ class Graph(
     fun getPotentialConnectors(connector: Connector): List<Connector> {
         val port = connector.port
         val connectors = mutableListOf<Connector>()
-        Node.All.filter { it.type != Node.Type.OverlayFilter }.forEach { n ->
+        Nodes.filter { it.type != Node.Type.OverlayFilter }.forEach { n ->
             connectors += n.ports.filter { it.value.type == port.type
                     && it.value.output != port.output }
                 .map { Connector(n.copy(id), it.value) }
@@ -110,7 +110,7 @@ class Graph(
 
     fun getCreationConnectors(): List<Connector> {
         val connectors = mutableListOf<Connector>()
-        Node.All.forEach { n ->
+        Nodes.forEach { n ->
             connectors += n.ports.filter { it.value.output }
                 .map { Connector(n.copy(id), it.value) }
         }

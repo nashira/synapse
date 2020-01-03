@@ -14,8 +14,10 @@ import xyz.rthqks.synapse.assets.AssetManager
 import xyz.rthqks.synapse.exec.NodeExecutor
 import xyz.rthqks.synapse.exec.edge.*
 import xyz.rthqks.synapse.gl.*
+import xyz.rthqks.synapse.logic.BlurSize
+import xyz.rthqks.synapse.logic.NumPasses
 import xyz.rthqks.synapse.logic.Properties
-import xyz.rthqks.synapse.logic.Property.Type.*
+import xyz.rthqks.synapse.logic.ScaleFactor
 
 class BlurNode(
     private val glesManager: GlesManager,

@@ -21,7 +21,7 @@ import xyz.rthqks.synapse.exec.edge.*
 import xyz.rthqks.synapse.gl.GlesManager
 import xyz.rthqks.synapse.gl.Texture
 import xyz.rthqks.synapse.logic.Properties
-import xyz.rthqks.synapse.logic.Property.Type.Uri
+import xyz.rthqks.synapse.logic.Uri
 
 class DecoderNode(
     private val glesManager: GlesManager,

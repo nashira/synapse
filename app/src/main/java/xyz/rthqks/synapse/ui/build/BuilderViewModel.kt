@@ -15,7 +15,6 @@ import xyz.rthqks.synapse.data.NodeData
 import xyz.rthqks.synapse.data.SynapseDao
 import xyz.rthqks.synapse.exec.Executor
 import xyz.rthqks.synapse.logic.*
-import xyz.rthqks.synapse.logic.Property.Type.ScreenCrop
 import xyz.rthqks.synapse.util.Consumable
 import javax.inject.Inject
 
@@ -318,15 +317,15 @@ class BuilderViewModel @Inject constructor(
     }
 
     fun setCropCenter(crop: Boolean) {
-        graph.properties[ScreenCrop] = crop
+        graph.properties[CropToFit] = crop
         restartGraph()
     }
 
     companion object {
         const val TAG = "BuilderViewModel"
-        val PROPERTIES_NODE = Node.Type.Properties.node()
-        val CONNECTION_NODE = Node.Type.Connection.node()
-        val CREATION_NODE = Node.Type.Creation.node()
+        val PROPERTIES_NODE: Node by lazy { Node.Type.Properties.node() }
+        val CONNECTION_NODE: Node by lazy { Node.Type.Connection.node() }
+        val CREATION_NODE: Node by lazy { Node.Type.Creation.node() }
         val FAKE_PORT = Port(Port.Type.Video, "", "", false)
     }
 }
