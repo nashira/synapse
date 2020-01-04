@@ -2,7 +2,7 @@ package xyz.rthqks.synapse.data
 
 import androidx.room.*
 import xyz.rthqks.synapse.logic.Graph
-import xyz.rthqks.synapse.logic.node
+import xyz.rthqks.synapse.logic.NewNode
 
 @Dao
 abstract class SynapseDao {
@@ -91,7 +91,7 @@ abstract class SynapseDao {
         val properties = getProperties(graphId)
 
         nodes.forEach {
-            graph.addNode(it.type.node().copy(it.graphId, it.id))
+            graph.addNode(NewNode(it.type, it.graphId, it.id))
         }
 
         edges.forEach {

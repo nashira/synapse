@@ -30,44 +30,45 @@ class Properties {
         return map[key] as? Property<T>
     }
 
-    operator fun plus(other: Properties): Properties {
-        return Properties().also {
-            it.putAll(this)
-            it.putAll(other)
-        }
+    operator fun plus(other: Properties): Properties = Properties().also {
+        it += this
+        it += other
     }
 
-    fun putAll(properties: Properties) {
+    operator fun plusAssign(properties: Properties) {
         map.putAll(properties.map)
+    }
+
+    fun copyTo(properties: Properties): Properties = properties.also {
+        map.mapValuesTo(it.map) { entry ->
+            entry.value.copy()
+        }
     }
 }
 
-class Property<T>(
+data class Property<T>(
     val type: Type<T>,
     var value: T
 ) {
 
-    fun copy(value: T = this.value): Property<T> = Property(type, value)
-
     data class Key<T>(val name: String)
 
-    sealed class Type<T>(
+    abstract class Type<T>(
         @StringRes val title: Int = 0,
         @DrawableRes val icon: Int = 0
-    ) {
-
-        class ChoiceType<T>(
-            @StringRes title: Int,
-            @DrawableRes icon: Int,
-            vararg val choices: Choice<T>
-        ): Type<T>(title, icon)
-
-        class RangeType<T: Comparable<T>>(
-            @StringRes title: Int,
-            @DrawableRes icon: Int,
-            val range: ClosedRange<T>
-        ): Type<T>(title, icon)
-    }
+    )
 }
+
+class ChoiceType<T>(
+    @StringRes title: Int,
+    @DrawableRes icon: Int,
+    vararg val choices: Choice<T>
+) : Property.Type<T>(title, icon)
+
+class RangeType<T : Comparable<T>>(
+    @StringRes title: Int,
+    @DrawableRes icon: Int,
+    val range: ClosedRange<T>
+) : Property.Type<T>(title, icon)
 
 class Choice<T>(item: T, @StringRes label: Int)

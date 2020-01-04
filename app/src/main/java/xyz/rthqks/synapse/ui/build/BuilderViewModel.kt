@@ -264,7 +264,7 @@ class BuilderViewModel @Inject constructor(
 
     private fun updateStartState() {
         nodesChannel.value?.also {
-            val current = it.items.any { it.id != Node.Type.Properties.node().id }
+            val current = it.items.any { it.id != NodeMap[Node.Type.Properties]?.id }
             if (current) {
                 executor.start()
             } else {
@@ -296,9 +296,9 @@ class BuilderViewModel @Inject constructor(
     fun onBackPressed(): Boolean {
         return nodesChannel.value?.let {
             when (it.items[it.currentItem].id) {
-                Node.Type.Properties.node().id -> false
-                Node.Type.Creation.node().id,
-                Node.Type.Connection.node().id -> {
+                PROPERTIES_NODE.id -> false
+                CREATION_NODE.id,
+                CONNECTION_NODE.id -> {
                     cancelConnection()
                     true
                 }
@@ -317,15 +317,17 @@ class BuilderViewModel @Inject constructor(
     }
 
     fun setCropCenter(crop: Boolean) {
+        Log.d(TAG, "setting crop $crop")
         graph.properties[CropToFit] = crop
+        Log.d(TAG, "prop ${graph.properties.find(CropToFit)}")
         restartGraph()
     }
 
     companion object {
         const val TAG = "BuilderViewModel"
-        val PROPERTIES_NODE: Node by lazy { Node.Type.Properties.node() }
-        val CONNECTION_NODE: Node by lazy { Node.Type.Connection.node() }
-        val CREATION_NODE: Node by lazy { Node.Type.Creation.node() }
+        val PROPERTIES_NODE: Node by lazy { GetNode(Node.Type.Properties) }
+        val CONNECTION_NODE: Node by lazy { GetNode(Node.Type.Connection) }
+        val CREATION_NODE: Node by lazy { GetNode(Node.Type.Creation) }
         val FAKE_PORT = Port(Port.Type.Video, "", "", false)
     }
 }

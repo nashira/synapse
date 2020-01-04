@@ -25,7 +25,7 @@ class Node(
         it.graphId = graphId
         it.id = id
         it.ports.putAll(ports)
-        it.properties.putAll(properties)
+        properties.copyTo(it.properties)
     }
 
     fun getPort(id: String): Port = ports[id]!!

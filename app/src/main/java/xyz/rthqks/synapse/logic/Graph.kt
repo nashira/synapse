@@ -11,6 +11,19 @@ class Graph(
     val properties = Properties()
     private var maxNodeId = 0
 
+    init {
+        properties.put(
+            CropToFit,
+            Property(
+                ChoiceType(
+                    0, 0,
+                    Choice(true, 0),
+                    Choice(false, 0)
+                ), false
+            )
+        )
+    }
+
     fun addNode(node: Node) {
         if (node.id == -1) {
             node.id = ++maxNodeId
@@ -88,9 +101,11 @@ class Graph(
         nodes.forEach {
             val n = it.value
             if (n.id != node.id) {
-                connectors += n.ports.filter { it.value.type == port.type
-                        && it.value.output != port.output
-                        && (it.value.output || !isConnected(n, it.value)) }
+                connectors += n.ports.filter {
+                    it.value.type == port.type
+                            && it.value.output != port.output
+                            && (it.value.output || !isConnected(n, it.value))
+                }
                     .map { Connector(n, it.value) }
             }
         }
@@ -101,8 +116,10 @@ class Graph(
         val port = connector.port
         val connectors = mutableListOf<Connector>()
         Nodes.filter { it.type != Node.Type.OverlayFilter }.forEach { n ->
-            connectors += n.ports.filter { it.value.type == port.type
-                    && it.value.output != port.output }
+            connectors += n.ports.filter {
+                it.value.type == port.type
+                        && it.value.output != port.output
+            }
                 .map { Connector(n.copy(id), it.value) }
         }
         return connectors
@@ -126,12 +143,12 @@ class Graph(
 
     fun copy(): Graph {
         return Graph(id, name).also {
-            it.nodes.putAll(nodes)
-            it.edges.addAll(edges)
+            it.nodes += nodes
+            it.edges += edges
+            it.properties += properties
             val ei = mutableMapOf<Int, MutableSet<Edge>>()
             edgeIndex.forEach { ei[it.key] = it.value.toMutableSet() }
-            it.edgeIndex.putAll(ei)
-            it.properties.putAll(properties)
+            it.edgeIndex += ei
             it.maxNodeId = maxNodeId + COPY_ID_SKIP
         }
     }

@@ -24,7 +24,7 @@ val Nodes = listOf(
         add(Port(Port.Type.Video, "video_1", "Video", true))
         add(
             CameraFacing, Property(
-                Property.Type.ChoiceType(
+                ChoiceType(
                     R.string.property_name_camera_device,
                     R.drawable.ic_camera,
                     Choice(
@@ -40,7 +40,7 @@ val Nodes = listOf(
         )
         add(
             CameraFrameRate, Property(
-                Property.Type.ChoiceType(
+                ChoiceType(
                     R.string.property_name_camera_frame_rate,
                     R.drawable.ic_camera,
                     Choice(10, R.string.property_label_camera_fps_10),
@@ -53,7 +53,7 @@ val Nodes = listOf(
         )
         add(
             CameraCaptureSize, Property(
-                Property.Type.ChoiceType(
+                ChoiceType(
                     R.string.property_name_camera_capture_size,
                     R.drawable.ic_camera,
                     Choice(Size(3840, 2160), R.string.property_label_camera_capture_size_2160),
@@ -78,18 +78,22 @@ val Nodes = listOf(
     Node(Node.Type.GrayscaleFilter).apply {
         add(Port(Port.Type.Video, "video_1", "Source", false))
         add(Port(Port.Type.Video, "video_2", "Grayscale", true))
-        add(ScaleFactor, Property(Property.Type.RangeType(
-            R.string.property_name_scale_factor,
-            R.drawable.ic_photo_size_select,
-            (1..10)
-        ), 1))
+        add(
+            ScaleFactor, Property(
+                RangeType(
+                    R.string.property_name_scale_factor,
+                    R.drawable.ic_photo_size_select,
+                    (1..10)
+                ), 1
+            )
+        )
     },
     Node(Node.Type.MultiplyAccumulate).apply {
         add(Port(Port.Type.Video, "video_1", "Source", false))
         add(Port(Port.Type.Video, "video_2", "Accumulated", true))
         add(
             MultiplyFactor, Property(
-                Property.Type.RangeType(
+                RangeType(
                     R.string.property_name_multiply_factor,
                     R.drawable.ic_blur,
                     (0f..2f)
@@ -98,7 +102,7 @@ val Nodes = listOf(
         )
         add(
             AccumulateFactor, Property(
-                Property.Type.RangeType(
+                RangeType(
                     R.string.property_name_accumulate_factor,
                     R.drawable.ic_blur,
                     (0f..2f)
@@ -114,20 +118,27 @@ val Nodes = listOf(
     Node(Node.Type.BlurFilter).apply {
         add(Port(Port.Type.Video, "video_1", "Source", false))
         add(Port(Port.Type.Video, "video_2", "Blurred", true))
-        add(ScaleFactor, Property(Property.Type.RangeType(
-            R.string.property_name_scale_factor,
-            R.drawable.ic_photo_size_select,
-            (1..10)
-        ), 1))
         add(
-            NumPasses, Property(Property.Type.RangeType(
-            R.string.property_name_num_passes,
-            R.drawable.ic_blur,
-            (1..10)
-        ), 1))
+            ScaleFactor, Property(
+                RangeType(
+                    R.string.property_name_scale_factor,
+                    R.drawable.ic_photo_size_select,
+                    (1..10)
+                ), 1
+            )
+        )
+        add(
+            NumPasses, Property(
+                RangeType(
+                    R.string.property_name_num_passes,
+                    R.drawable.ic_blur,
+                    (1..10)
+                ), 1
+            )
+        )
         add(
             BlurSize, Property(
-                Property.Type.ChoiceType(
+                ChoiceType(
                     R.string.property_name_blur_size,
                     R.drawable.ic_blur,
                     Choice(5, R.string.property_label_blur_size_5),
@@ -145,7 +156,7 @@ val Nodes = listOf(
         add(Port(Port.Type.Video, "video_1", "Source", false))
         add(
             CropToFit, Property(
-                Property.Type.ChoiceType(
+                ChoiceType(
                     R.string.property_title_crop_to_fit,
                     R.drawable.ic_crop,
                     Choice(true, R.string.property_subtitle_crop_to_fit_enabled),
@@ -163,4 +174,8 @@ val Nodes = listOf(
 )
 
 val NodeMap = Nodes.map { it.type to it }.toMap()
-fun Node.Type.node(): Node = NodeMap[this] ?: error("missing node $this")
+
+fun GetNode(type: Node.Type) = NodeMap[type] ?: error("missing node $type")
+
+fun NewNode(type: Node.Type, graphId: Int = -1, id: Int = -1) =
+    (NodeMap[type] ?: error("missing node $type")).copy(graphId, id)

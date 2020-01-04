@@ -165,7 +165,7 @@ class Executor @Inject constructor(
                 source.ports.values.firstOrNull {
                     it.output && it.type == Port.Type.Video
                 }?.id?.let {
-                    val node = Node.Type.Screen.node().copy(graphNew.id)
+                    val node = NewNode(Node.Type.Screen, graphNew.id)
                     graphNew.addNode(node)
                     graphNew.addEdge(source.id, it, node.id, SurfaceViewNode.INPUT.id)
                 }
@@ -205,7 +205,7 @@ class Executor @Inject constructor(
             target.ports.values.firstOrNull {
                 it.output && it.type == Port.Type.Video
             }?.id?.let {
-                val screen = Node.Type.Screen.node().copy(graph.id)
+                val screen = NewNode(Node.Type.Screen, graph.id)
                 graph.addNode(screen)
                 val se = graph.addEdge(target.id, it, screen.id, SurfaceViewNode.INPUT.id)
                 data.add(screen to se)

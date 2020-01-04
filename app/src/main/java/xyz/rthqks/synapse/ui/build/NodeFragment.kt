@@ -3,8 +3,8 @@ package xyz.rthqks.synapse.ui.build
 import android.os.Bundle
 import android.util.Log
 import android.view.*
-import android.widget.ImageView
 import android.widget.LinearLayout
+import android.widget.TextView
 import androidx.appcompat.view.menu.MenuPopupHelper
 import androidx.appcompat.widget.PopupMenu
 import androidx.core.view.isEmpty
@@ -16,9 +16,11 @@ import androidx.recyclerview.widget.RecyclerView
 import dagger.android.support.DaggerFragment
 import kotlinx.android.synthetic.main.fragment_node.*
 import kotlinx.android.synthetic.main.layout_port_fragment_node.view.*
+import kotlinx.android.synthetic.main.layout_property.view.*
 import xyz.rthqks.synapse.R
 import xyz.rthqks.synapse.logic.Connector
 import xyz.rthqks.synapse.logic.Node
+import xyz.rthqks.synapse.logic.Property
 import javax.inject.Inject
 
 class NodeFragment : DaggerFragment() {
@@ -55,10 +57,6 @@ class NodeFragment : DaggerFragment() {
         outputsAdapter = PortsAdapter(false)
         inputs_list.adapter = inputsAdapter
         outputs_list.adapter = outputsAdapter
-
-        tool_list.layoutManager =
-            LinearLayoutManager(context, LinearLayoutManager.HORIZONTAL, false)
-
     }
 
     override fun onActivityCreated(savedInstanceState: Bundle?) {
@@ -68,7 +66,7 @@ class NodeFragment : DaggerFragment() {
         touchMediator = TouchMediator(context!!, viewModel::swipeEvent)
 
         viewModel.graph.getNode(nodeId)?.let {
-            propertiesAdapter = PropertiesAdapter(viewModel, it)
+            propertiesAdapter = PropertiesAdapter(viewModel, it, tool_main)
             tool_list.adapter = propertiesAdapter
         }
 
@@ -170,23 +168,49 @@ class NodeFragment : DaggerFragment() {
 
     class PropertiesAdapter(
         private val viewModel: BuilderViewModel,
-        private val node: Node
+        private val node: Node,
+        private val toolLayout: ViewGroup
     ) : RecyclerView.Adapter<PropertyViewHolder>() {
         private val properties = node.properties.keys.toList()
         override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): PropertyViewHolder {
-            return PropertyViewHolder(ImageView(parent.context))
+            val inflater = LayoutInflater.from(parent.context)
+            val view = inflater.inflate(R.layout.layout_property, parent, false)
+            return PropertyViewHolder(view, toolLayout)
         }
 
         override fun getItemCount(): Int = properties.size
 
         override fun onBindViewHolder(holder: PropertyViewHolder, position: Int) {
             val key = properties[position]
-            val property = node.properties[key]
-            Log.d(TAG, "onBind $position $key ${property}")
+            val property = node.properties.find(key)!!
+            holder.bind(key, property)
+            Log.d(TAG, "onBind $position $key $property")
         }
     }
 
-    class PropertyViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView)
+    class PropertyViewHolder(itemView: View, toolLayout: ViewGroup) : RecyclerView.ViewHolder(itemView) {
+        private val iconView = itemView.icon
+        private val inflater = LayoutInflater.from(itemView.context)
+
+        init {
+            itemView.setOnClickListener {
+                itemView.isSelected = !itemView.isSelected
+                if (itemView.isSelected) {
+                    toolLayout.removeAllViews()
+                    val textView = TextView(itemView.context)
+                    textView.text = "Hello"
+                    toolLayout.addView(textView)
+                    toolLayout.visibility = View.VISIBLE
+                } else {
+                    toolLayout.visibility = View.GONE
+                }
+            }
+        }
+
+        fun bind(key: Property.Key<*>, property: Property<*>) {
+            iconView.setImageResource(property.type.icon)
+        }
+    }
 
     inner class PortsAdapter(
         private val isStartAligned: Boolean

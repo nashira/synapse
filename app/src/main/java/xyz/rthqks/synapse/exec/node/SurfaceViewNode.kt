@@ -37,6 +37,7 @@ class SurfaceViewNode(
     private val cropCenter: Boolean = properties[CropToFit]
 
     override suspend fun create() {
+        Log.d(TAG, "crop prop ${properties.find(CropToFit)}")
 //        Log.d(TAG, "adding callback ${surfaceView.holder.surface}")
 //        setSurfaceView(surfaceView)
     }
@@ -235,7 +236,7 @@ class SurfaceViewNode(
         size: Size,
         rotation: Int
     ) {
-        Log.d(TAG, "updateSurfaceViewConfig")
+        Log.d(TAG, "updateSurfaceViewConfig $cropCenter")
         val surfaceView = surfaceView ?: return
         withContext(Dispatchers.Main) {
             if (cropCenter) {
