@@ -18,21 +18,30 @@
         android:id="@+id/inputs_list"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager"
+        app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintStart_toStartOf="parent" />
+        tools:itemCount="3"
+        tools:listitem="@layout/layout_port_fragment_node" />
 
     <xyz.rthqks.synapse.ui.build.TouchRecyclerView
         android:id="@+id/outputs_list"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
+        app:layout_constraintTop_toTopOf="parent"
+        tools:itemCount="3"
+        tools:listitem="@layout/layout_port_fragment_node" />
 
-    <FrameLayout
+    <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/tool_main"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        app:layout_constraintBottom_toTopOf="@id/tool_list" />
+        app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager"
+        app:layout_constraintBottom_toTopOf="@id/tool_list"
+        tools:itemCount="1"
+        tools:listitem="@layout/property_type_range" />
 
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/tool_list"
@@ -43,7 +52,7 @@
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        tools:itemCount="4"
+        tools:itemCount="3"
         tools:listitem="@layout/layout_property" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

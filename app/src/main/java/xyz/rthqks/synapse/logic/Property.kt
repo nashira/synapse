@@ -43,6 +43,8 @@ class Properties {
         map.mapValuesTo(it.map) { entry ->
             entry.value.copy()
         }
+
+        1f.rangeTo(0f)
     }
 }
 
@@ -57,6 +59,20 @@ data class Property<T>(
         @StringRes val title: Int = 0,
         @DrawableRes val icon: Int = 0
     )
+
+    companion object {
+        fun <T : Comparable<T>> RangeType(
+            @StringRes title: Int,
+            @DrawableRes icon: Int,
+            range: ClosedFloatingPointRange<T>
+        ): FloatRangeType<T> = FloatRangeType(title, icon, range)
+
+        fun RangeType(
+            @StringRes title: Int,
+            @DrawableRes icon: Int,
+            range: IntRange
+        ): IntRangeType = IntRangeType(title, icon, range)
+    }
 }
 
 class ChoiceType<T>(
@@ -65,10 +81,16 @@ class ChoiceType<T>(
     vararg val choices: Choice<T>
 ) : Property.Type<T>(title, icon)
 
-class RangeType<T : Comparable<T>>(
+class FloatRangeType<T : Comparable<T>>(
     @StringRes title: Int,
     @DrawableRes icon: Int,
-    val range: ClosedRange<T>
+    val range: ClosedFloatingPointRange<T>
 ) : Property.Type<T>(title, icon)
 
-class Choice<T>(item: T, @StringRes label: Int)
+class IntRangeType(
+    @StringRes title: Int,
+    @DrawableRes icon: Int,
+    val range: IntRange
+) : Property.Type<Int>(title, icon)
+
+data class Choice<T>(val item: T, @StringRes val label: Int)

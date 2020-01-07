@@ -4,14 +4,12 @@ import android.os.Bundle
 import android.util.Log
 import android.view.*
 import android.widget.LinearLayout
-import android.widget.TextView
 import androidx.appcompat.view.menu.MenuPopupHelper
 import androidx.appcompat.widget.PopupMenu
 import androidx.core.view.isEmpty
 import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModelProvider
 import androidx.recyclerview.widget.DiffUtil
-import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import dagger.android.support.DaggerFragment
 import kotlinx.android.synthetic.main.fragment_node.*
@@ -32,6 +30,7 @@ class NodeFragment : DaggerFragment() {
     private lateinit var inputsAdapter: PortsAdapter
     private lateinit var outputsAdapter: PortsAdapter
     private lateinit var propertiesAdapter: PropertiesAdapter
+    private lateinit var propertyBinder: PropertyBinder
     private var nodeId = -1
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -51,8 +50,6 @@ class NodeFragment : DaggerFragment() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
 //        Log.d(TAG, "onViewCreated $nodeId")
-        inputs_list.layoutManager = LinearLayoutManager(context)
-        outputs_list.layoutManager = LinearLayoutManager(context)
         inputsAdapter = PortsAdapter(true)
         outputsAdapter = PortsAdapter(false)
         inputs_list.adapter = inputsAdapter
@@ -64,9 +61,21 @@ class NodeFragment : DaggerFragment() {
 //        Log.d(TAG, "onActivityCreated $nodeId")
         viewModel = ViewModelProvider(activity!!, viewModelFactory)[BuilderViewModel::class.java]
         touchMediator = TouchMediator(context!!, viewModel::swipeEvent)
+        propertyBinder = PropertyBinder(tool_main)
 
         viewModel.graph.getNode(nodeId)?.let {
-            propertiesAdapter = PropertiesAdapter(viewModel, it, tool_main)
+            propertiesAdapter = PropertiesAdapter(it) { key, selected, view ->
+                for (i in 0 until tool_list.childCount) {
+                    tool_list.findViewHolderForAdapterPosition(i)?.let {
+                        if (it.itemView != view) it.itemView.isSelected = false
+                    }
+                }
+                if (selected) {
+                    propertyBinder.show(it.properties.find(key)!!)
+                } else {
+                    propertyBinder.hide()
+                }
+            }
             tool_list.adapter = propertiesAdapter
         }
 
@@ -167,47 +176,45 @@ class NodeFragment : DaggerFragment() {
     }
 
     class PropertiesAdapter(
-        private val viewModel: BuilderViewModel,
         private val node: Node,
-        private val toolLayout: ViewGroup
+        private val onSelected: (Property.Key<*>, Boolean, View) -> Unit
     ) : RecyclerView.Adapter<PropertyViewHolder>() {
-        private val properties = node.properties.keys.toList()
+        private val keys = node.properties.keys.toList()
+
         override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): PropertyViewHolder {
             val inflater = LayoutInflater.from(parent.context)
             val view = inflater.inflate(R.layout.layout_property, parent, false)
-            return PropertyViewHolder(view, toolLayout)
+            return PropertyViewHolder(view) { position ->
+                val selected = !view.isSelected
+                onSelected(keys[position], selected, view)
+                view.isSelected = selected
+            }
         }
 
-        override fun getItemCount(): Int = properties.size
+        override fun getItemCount(): Int = keys.size
 
         override fun onBindViewHolder(holder: PropertyViewHolder, position: Int) {
-            val key = properties[position]
+            val key = keys[position]
             val property = node.properties.find(key)!!
             holder.bind(key, property)
             Log.d(TAG, "onBind $position $key $property")
         }
     }
 
-    class PropertyViewHolder(itemView: View, toolLayout: ViewGroup) : RecyclerView.ViewHolder(itemView) {
+    class PropertyViewHolder(
+        itemView: View, clickListener: (position: Int) -> Unit
+    ) :
+        RecyclerView.ViewHolder(itemView) {
         private val iconView = itemView.icon
-        private val inflater = LayoutInflater.from(itemView.context)
 
         init {
             itemView.setOnClickListener {
-                itemView.isSelected = !itemView.isSelected
-                if (itemView.isSelected) {
-                    toolLayout.removeAllViews()
-                    val textView = TextView(itemView.context)
-                    textView.text = "Hello"
-                    toolLayout.addView(textView)
-                    toolLayout.visibility = View.VISIBLE
-                } else {
-                    toolLayout.visibility = View.GONE
-                }
+                clickListener(adapterPosition)
             }
         }
 
         fun bind(key: Property.Key<*>, property: Property<*>) {
+            itemView.isSelected = false
             iconView.setImageResource(property.type.icon)
         }
     }

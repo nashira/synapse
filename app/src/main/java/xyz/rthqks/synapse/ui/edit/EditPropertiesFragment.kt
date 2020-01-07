@@ -98,7 +98,7 @@ class EditPropertiesFragment : DaggerFragment() {
 //            .inflate(viewType, parent, false)
 //        return when (viewType) {
 //            R.layout.property_item_uri -> UriPropertyViewHolder(view, viewModel)
-//            R.layout.property_item_discrete -> DiscretePropertyViewHolder(view, viewModel)
+//            R.layout.property_type_choice -> DiscretePropertyViewHolder(view, viewModel)
 //            R.layout.property_item_text -> TextPropertyViewHolder(view, viewModel)
 //            else -> error("unknown property type: $viewType")
 //        }
@@ -118,7 +118,7 @@ class EditPropertiesFragment : DaggerFragment() {
 //        return when {
 //            type == PropertyType.Uri -> R.layout.property_item_uri
 //            type is PropertyType.Text -> R.layout.property_item_text
-//            type is PropertyType.Discrete -> R.layout.property_item_discrete
+//            type is PropertyType.Discrete -> R.layout.property_type_choice
 //            else -> 0
 //        }
 //    }

@@ -3,6 +3,7 @@ package xyz.rthqks.synapse.logic
 import android.hardware.camera2.CameraCharacteristics
 import android.util.Size
 import xyz.rthqks.synapse.R
+import xyz.rthqks.synapse.logic.Property.Companion.RangeType
 
 val AudioSampleRate = Property.Key<Int>("audio_sample_rate")
 val AudioEncoding = Property.Key<Int>("audio_encoding")
