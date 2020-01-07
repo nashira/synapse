@@ -155,6 +155,16 @@ class MacNode(
                     uniform.dirty = true
                 }
 
+                program.getUniform(Uniform.Type.Float, "multiply_factor").apply {
+                    dirty = true
+                    data = multiplyFactor
+                }
+
+                program.getUniform(Uniform.Type.Float, "accumulate_factor").apply {
+                    dirty = true
+                    data = accumulateFactor
+                }
+
                 glesManager.withGlContext {
                     framebuffer.bind()
                     executeGl(inEvent.texture)

@@ -43,14 +43,14 @@ class Properties {
         map.mapValuesTo(it.map) { entry ->
             entry.value.copy()
         }
-
-        1f.rangeTo(0f)
     }
 }
 
 data class Property<T>(
+    val key: Key<T>,
     val type: Type<T>,
-    var value: T
+    var value: T,
+    val requiresRestart: Boolean = false
 ) {
 
     data class Key<T>(val name: String)
@@ -61,11 +61,11 @@ data class Property<T>(
     )
 
     companion object {
-        fun <T : Comparable<T>> RangeType(
+        fun RangeType(
             @StringRes title: Int,
             @DrawableRes icon: Int,
-            range: ClosedFloatingPointRange<T>
-        ): FloatRangeType<T> = FloatRangeType(title, icon, range)
+            range: ClosedFloatingPointRange<Float>
+        ): FloatRangeType = FloatRangeType(title, icon, range)
 
         fun RangeType(
             @StringRes title: Int,
@@ -81,11 +81,11 @@ class ChoiceType<T>(
     vararg val choices: Choice<T>
 ) : Property.Type<T>(title, icon)
 
-class FloatRangeType<T : Comparable<T>>(
+class FloatRangeType(
     @StringRes title: Int,
     @DrawableRes icon: Int,
-    val range: ClosedFloatingPointRange<T>
-) : Property.Type<T>(title, icon)
+    val range: ClosedFloatingPointRange<Float>
+) : Property.Type<Float>(title, icon)
 
 class IntRangeType(
     @StringRes title: Int,

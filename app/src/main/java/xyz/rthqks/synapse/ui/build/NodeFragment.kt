@@ -61,7 +61,10 @@ class NodeFragment : DaggerFragment() {
 //        Log.d(TAG, "onActivityCreated $nodeId")
         viewModel = ViewModelProvider(activity!!, viewModelFactory)[BuilderViewModel::class.java]
         touchMediator = TouchMediator(context!!, viewModel::swipeEvent)
-        propertyBinder = PropertyBinder(tool_main)
+        propertyBinder = PropertyBinder(tool_main) {
+            Log.d(TAG, "onChange ${it.key.name} ${it.value}")
+            viewModel.onPropertyChange(it)
+        }
 
         viewModel.graph.getNode(nodeId)?.let {
             propertiesAdapter = PropertiesAdapter(it) { key, selected, view ->

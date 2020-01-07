@@ -17,8 +17,8 @@ class Node(
         ports[port.id] = port
     }
 
-    fun <T> add(key: Property.Key<T>, property: Property<T>) {
-        properties.put(key, property)
+    fun <T> add(property: Property<T>) {
+        properties.put(property.key, property)
     }
 
     fun copy(graphId: Int = this.graphId, id: Int = this.id): Node = Node(type).also {

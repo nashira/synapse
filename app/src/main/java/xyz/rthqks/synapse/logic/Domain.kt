@@ -24,7 +24,8 @@ val Nodes = listOf(
     Node(Node.Type.Camera).apply {
         add(Port(Port.Type.Video, "video_1", "Video", true))
         add(
-            CameraFacing, Property(
+            Property(
+                CameraFacing,
                 ChoiceType(
                     R.string.property_name_camera_device,
                     R.drawable.ic_camera,
@@ -36,11 +37,12 @@ val Nodes = listOf(
                         CameraCharacteristics.LENS_FACING_FRONT,
                         R.string.property_label_camera_lens_facing_front
                     )
-                ), CameraCharacteristics.LENS_FACING_FRONT
+                ), CameraCharacteristics.LENS_FACING_FRONT, true
             )
         )
         add(
-            CameraFrameRate, Property(
+            Property(
+                CameraFrameRate,
                 ChoiceType(
                     R.string.property_name_camera_frame_rate,
                     R.drawable.ic_camera,
@@ -49,11 +51,12 @@ val Nodes = listOf(
                     Choice(20, R.string.property_label_camera_fps_20),
                     Choice(30, R.string.property_label_camera_fps_30),
                     Choice(60, R.string.property_label_camera_fps_60)
-                ), 30
+                ), 30, true
             )
         )
         add(
-            CameraCaptureSize, Property(
+            Property(
+                CameraCaptureSize,
                 ChoiceType(
                     R.string.property_name_camera_capture_size,
                     R.drawable.ic_camera,
@@ -61,7 +64,7 @@ val Nodes = listOf(
                     Choice(Size(1920, 1080), R.string.property_label_camera_capture_size_1080),
                     Choice(Size(1280, 720), R.string.property_label_camera_capture_size_720),
                     Choice(Size(640, 480), R.string.property_label_camera_capture_size_480)
-                ), Size(1920, 1080)
+                ), Size(1920, 1080), true
             )
         )
     },
@@ -80,12 +83,13 @@ val Nodes = listOf(
         add(Port(Port.Type.Video, "video_1", "Source", false))
         add(Port(Port.Type.Video, "video_2", "Grayscale", true))
         add(
-            ScaleFactor, Property(
+            Property(
+                ScaleFactor,
                 RangeType(
                     R.string.property_name_scale_factor,
                     R.drawable.ic_photo_size_select,
                     (1..10)
-                ), 1
+                ), 1, true
             )
         )
     },
@@ -93,16 +97,18 @@ val Nodes = listOf(
         add(Port(Port.Type.Video, "video_1", "Source", false))
         add(Port(Port.Type.Video, "video_2", "Accumulated", true))
         add(
-            MultiplyFactor, Property(
+            Property(
+                MultiplyFactor,
                 RangeType(
                     R.string.property_name_multiply_factor,
                     R.drawable.ic_blur,
-                    (0f..2f)
+                    (0f..1f)
                 ), 0.9f
             )
         )
         add(
-            AccumulateFactor, Property(
+            Property(
+                AccumulateFactor,
                 RangeType(
                     R.string.property_name_accumulate_factor,
                     R.drawable.ic_blur,
@@ -120,16 +126,18 @@ val Nodes = listOf(
         add(Port(Port.Type.Video, "video_1", "Source", false))
         add(Port(Port.Type.Video, "video_2", "Blurred", true))
         add(
-            ScaleFactor, Property(
+            Property(
+                ScaleFactor,
                 RangeType(
                     R.string.property_name_scale_factor,
                     R.drawable.ic_photo_size_select,
                     (1..10)
-                ), 1
+                ), 1, true
             )
         )
         add(
-            NumPasses, Property(
+            Property(
+                NumPasses,
                 RangeType(
                     R.string.property_name_num_passes,
                     R.drawable.ic_blur,
@@ -138,7 +146,8 @@ val Nodes = listOf(
             )
         )
         add(
-            BlurSize, Property(
+            Property(
+                BlurSize,
                 ChoiceType(
                     R.string.property_name_blur_size,
                     R.drawable.ic_blur,
@@ -156,7 +165,8 @@ val Nodes = listOf(
     Node(Node.Type.Screen).apply {
         add(Port(Port.Type.Video, "video_1", "Source", false))
         add(
-            CropToFit, Property(
+            Property(
+                CropToFit,
                 ChoiceType(
                     R.string.property_title_crop_to_fit,
                     R.drawable.ic_crop,

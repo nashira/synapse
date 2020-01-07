@@ -18,12 +18,14 @@ import xyz.rthqks.synapse.logic.FloatRangeType
 import xyz.rthqks.synapse.logic.IntRangeType
 import xyz.rthqks.synapse.logic.Property
 import xyz.rthqks.synapse.ui.build.PropertyBinder.Companion.TAG
+import kotlin.math.roundToInt
 
 class PropertyBinder(
-    private val recyclerView: RecyclerView
+    private val recyclerView: RecyclerView,
+    private val onChange: (Property<*>) -> Unit
 ) {
     private val inflater = LayoutInflater.from(recyclerView.context)
-    private val adapter = PropertyAdapter(inflater)
+    private val adapter = PropertyAdapter(inflater, onChange)
 
     init {
         recyclerView.adapter = adapter
@@ -44,7 +46,8 @@ class PropertyBinder(
 }
 
 class PropertyAdapter(
-    private val inflater: LayoutInflater
+    private val inflater: LayoutInflater,
+    private val onChange: (Property<*>) -> Unit
 ) :
     RecyclerView.Adapter<PropertyViewHolder>() {
     private var property: Property<*>? = null
@@ -52,12 +55,8 @@ class PropertyAdapter(
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): PropertyViewHolder {
         val layout = inflater.inflate(viewType, parent, false)
         return when (viewType) {
-            R.layout.property_type_choice -> ChoicePropertyViewHolder(layout)
-            R.layout.property_type_range -> if (property?.type is FloatRangeType) {
-                RangePropertyViewHolder(layout)
-            } else {
-                RangePropertyViewHolder(layout)
-            }
+            R.layout.property_type_choice -> ChoicePropertyViewHolder(layout, onChange)
+            R.layout.property_type_range -> RangePropertyViewHolder(layout, onChange)
             else -> error("unknown type $viewType")
         }
     }
@@ -69,20 +68,12 @@ class PropertyAdapter(
     }
 
     override fun getItemViewType(position: Int): Int {
-
-        val type = property!!.type
-
-        return when (type) {
+        return when (val type = property?.type) {
             is ChoiceType<*> -> {
-                Log.d(TAG, "choice type ${type.choices.joinToString()}")
                 R.layout.property_type_choice
             }
-            is FloatRangeType<*> -> {
-                Log.d(TAG, "range type ${type.range}")
-                R.layout.property_type_range
-            }
+            is FloatRangeType,
             is IntRangeType -> {
-                Log.d(TAG, "range type ${type.range}")
                 R.layout.property_type_range
             }
             else -> error("unknown property type $type")
@@ -101,21 +92,42 @@ class PropertyAdapter(
     }
 }
 
-abstract class PropertyViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
+abstract class PropertyViewHolder(
+    itemView: View
+) : RecyclerView.ViewHolder(itemView) {
     abstract fun bind(property: Property<*>)
 }
 
 class RangePropertyViewHolder(
-    itemView: View
+    itemView: View,
+    private val onChange: (Property<*>) -> Unit
 ) : SeekBar.OnSeekBarChangeListener, PropertyViewHolder(itemView) {
+    private var property: Property<*>? = null
 
     init {
         itemView.seekbar.setOnSeekBarChangeListener(this)
-        itemView.seekbar.max = 1000
+        itemView.seekbar.max = MAX
     }
 
+    @Suppress("UNCHECKED_CAST")
     override fun onProgressChanged(seekBar: SeekBar?, progress: Int, fromUser: Boolean) {
-        Log.d(TAG, "onProgressChanged $progress")
+//        Log.d(TAG, "onProgressChanged $progress")
+        property?.let {
+            val normalized = itemView.seekbar.progress / MAX.toFloat()
+
+            val type = it.type
+            when (type) {
+                is FloatRangeType -> {
+                    val scale = (type.range.endInclusive - type.range.start)
+                    (it as Property<Any?>).value = type.range.start + (normalized * scale)
+                }
+                is IntRangeType -> {
+                    val scale = (type.range.last - type.range.first).toFloat()
+                    (it as Property<Any?>).value = type.range.first + (normalized * scale).roundToInt()
+                }
+                else -> error("unknown range type $type")
+            }
+        }
     }
 
     override fun onStartTrackingTouch(seekBar: SeekBar?) {
@@ -124,18 +136,42 @@ class RangePropertyViewHolder(
 
     override fun onStopTrackingTouch(seekBar: SeekBar?) {
         Log.d(TAG, "onStopTrackingTouch")
+        property?.let(onChange)
     }
 
     override fun bind(property: Property<*>) {
+        // set to null so changing seek position won't fire onChange
+        this.property = null
         val type = property.type
-//        val range = type.range
+
+        when (type) {
+            is FloatRangeType -> {
+                Log.d(TAG, "range type ${type.range}")
+                val progress =
+                    (property.value as Float - type.range.start) / (type.range.endInclusive - type.range.start)
+                itemView.seekbar.progress = (progress * MAX).roundToInt()
+            }
+            is IntRangeType -> {
+                Log.d(TAG, "range type ${type.range}")
+                val progress =
+                    (property.value as Int - type.range.first) / (type.range.last - type.range.first).toFloat()
+                itemView.seekbar.progress = (progress * MAX).roundToInt()
+            }
+        }
         itemView.title.setText(type.title)
+        // set once seek position is set
+        this.property = property
+    }
+
+    companion object {
+        const val MAX = 1000
     }
 }
 
 class ChoicePropertyViewHolder(
-    itemView: View
-): PropertyViewHolder(itemView) {
+    itemView: View,
+    private val onChange: (Property<*>) -> Unit
+) : PropertyViewHolder(itemView) {
     private val arrayAdapter: ArrayAdapter<String> =
         ArrayAdapter(itemView.context, android.R.layout.simple_spinner_item)
 
@@ -165,7 +201,9 @@ class ChoicePropertyViewHolder(
                     return
                 }
 
+                @Suppress("UNCHECKED_CAST")
                 (property as Property<Any?>).value = type.choices[position].item
+                onChange(property)
             }
         }
     }
@@ -180,12 +218,12 @@ class ChoicePropertyViewHolder(
         itemView.spinner.setSelection(type.choices.indexOfFirst {
             it.item == property.value
         })
+        Log.d(TAG, "choice type ${type.choices.joinToString()}")
 
         arrayAdapter.notifyDataSetChanged()
-
     }
 
     companion object {
-        const val TAG = "ChoicePropertyViewHolder"
+        const val TAG = "ChoicePropertyViewHold"
     }
 }

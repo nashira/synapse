@@ -323,6 +323,12 @@ class BuilderViewModel @Inject constructor(
         restartGraph()
     }
 
+    fun onPropertyChange(property: Property<*>) {
+        if (property.requiresRestart) {
+            restartGraph()
+        }
+    }
+
     companion object {
         const val TAG = "BuilderViewModel"
         val PROPERTIES_NODE: Node by lazy { GetNode(Node.Type.Properties) }

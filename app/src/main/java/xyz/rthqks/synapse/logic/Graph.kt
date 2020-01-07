@@ -15,6 +15,7 @@ class Graph(
         properties.put(
             CropToFit,
             Property(
+                CropToFit,
                 ChoiceType(
                     0, 0,
                     Choice(true, 0),
