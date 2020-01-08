@@ -11,12 +11,12 @@ import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModelProvider
 import androidx.viewpager2.adapter.FragmentStateAdapter
 import androidx.viewpager2.widget.ViewPager2
-import dagger.android.support.DaggerAppCompatActivity
-import kotlinx.android.synthetic.main.activity_builder.*
 import com.rthqks.synapse.R
 import com.rthqks.synapse.logic.Node
 import com.rthqks.synapse.ui.build.BuilderActivity.Companion.TAG
 import com.rthqks.synapse.ui.exec.ExecGraphActivity
+import dagger.android.support.DaggerAppCompatActivity
+import kotlinx.android.synthetic.main.activity_builder.*
 import javax.inject.Inject
 
 class BuilderActivity : DaggerAppCompatActivity() {
@@ -43,6 +43,7 @@ class BuilderActivity : DaggerAppCompatActivity() {
         val nodeAdapter = NodeAdapter(this)
         view_pager.adapter = nodeAdapter
         view_pager.isUserInputEnabled = false
+        view_pager.offscreenPageLimit = 1
 
 //        view_pager.setPageTransformer { page, position ->
 ////            Log.d(TAG, "page $page $position")

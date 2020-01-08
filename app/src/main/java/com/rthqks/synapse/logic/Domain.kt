@@ -28,7 +28,7 @@ val Nodes = listOf(
                 CameraFacing,
                 ChoiceType(
                     R.string.property_name_camera_device,
-                    R.drawable.ic_camera,
+                    R.drawable.ic_switch_camera,
                     Choice(
                         CameraCharacteristics.LENS_FACING_BACK,
                         R.string.property_label_camera_lens_facing_back
@@ -45,7 +45,7 @@ val Nodes = listOf(
                 CameraFrameRate,
                 ChoiceType(
                     R.string.property_name_camera_frame_rate,
-                    R.drawable.ic_camera,
+                    R.drawable.ic_speed,
                     Choice(10, R.string.property_label_camera_fps_10),
                     Choice(15, R.string.property_label_camera_fps_15),
                     Choice(20, R.string.property_label_camera_fps_20),
@@ -59,7 +59,7 @@ val Nodes = listOf(
                 CameraCaptureSize,
                 ChoiceType(
                     R.string.property_name_camera_capture_size,
-                    R.drawable.ic_camera,
+                    R.drawable.ic_photo_size_select,
                     Choice(Size(3840, 2160), R.string.property_label_camera_capture_size_2160),
                     Choice(Size(1920, 1080), R.string.property_label_camera_capture_size_1080),
                     Choice(Size(1280, 720), R.string.property_label_camera_capture_size_720),
@@ -86,7 +86,7 @@ val Nodes = listOf(
             Property(
                 ScaleFactor,
                 RangeType(
-                    R.string.property_name_scale_factor,
+                    R.string.property_name_downsample_factor,
                     R.drawable.ic_photo_size_select,
                     (1..10)
                 ), 1, true
@@ -101,7 +101,7 @@ val Nodes = listOf(
                 MultiplyFactor,
                 RangeType(
                     R.string.property_name_multiply_factor,
-                    R.drawable.ic_blur,
+                    R.drawable.ic_clear,
                     (0f..1f)
                 ), 0.9f
             )
@@ -111,7 +111,7 @@ val Nodes = listOf(
                 AccumulateFactor,
                 RangeType(
                     R.string.property_name_accumulate_factor,
-                    R.drawable.ic_blur,
+                    R.drawable.ic_add,
                     (0f..2f)
                 ), 0.9f
             )
@@ -140,7 +140,7 @@ val Nodes = listOf(
                 NumPasses,
                 RangeType(
                     R.string.property_name_num_passes,
-                    R.drawable.ic_blur,
+                    R.drawable.ic_repeat,
                     (1..10)
                 ), 1
             )
@@ -154,7 +154,7 @@ val Nodes = listOf(
                     Choice(5, R.string.property_label_blur_size_5),
                     Choice(9, R.string.property_label_blur_size_9),
                     Choice(13, R.string.property_label_blur_size_13)
-                ), 9
+                ), 9, true
             )
         )
     },

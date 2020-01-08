@@ -1,9 +1,9 @@
 package com.rthqks.synapse
 
-import com.facebook.stetho.Stetho
+import com.rthqks.synapse.inject.DaggerAppComponent
+import com.rthqks.synapse.util.StethoWrapper
 import dagger.android.AndroidInjector
 import dagger.android.support.DaggerApplication
-import com.rthqks.synapse.inject.DaggerAppComponent
 
 class SynapseApp : DaggerApplication() {
 
@@ -14,6 +14,6 @@ class SynapseApp : DaggerApplication() {
 
     override fun onCreate() {
         super.onCreate()
-        Stetho.initializeWithDefaults(this)
+        StethoWrapper.init(this)
     }
 }

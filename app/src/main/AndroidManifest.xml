@@ -22,17 +22,23 @@
         android:theme="@style/AppTheme.NoActionBar"
         tools:ignore="GoogleAppIndexingWarning">
 
-        <activity android:name="com.rthqks.synapse.ui.browse.GraphListActivity">
+        <activity android:name="com.rthqks.synapse.ui.browse.GraphListActivity" />
+
+        <activity android:name="com.rthqks.synapse.ui.exec.ExecGraphActivity" />
+        <activity
+            android:name="com.rthqks.synapse.ui.build.BuilderActivity"
+            android:screenOrientation="portrait" />
+
+        <activity
+            android:name=".ui.splash.SplashActivity"
+            android:screenOrientation="portrait">
+
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-
-        <activity android:name="com.rthqks.synapse.ui.exec.ExecGraphActivity" />
-        <activity android:name="com.rthqks.synapse.ui.build.BuilderActivity"
-            android:screenOrientation="portrait" />
     </application>
 
 </manifest>

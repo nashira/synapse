@@ -6,20 +6,41 @@ apply plugin: 'kotlin-android-extensions'
 
 apply plugin: 'kotlin-kapt'
 
+def keystorePropertiesFile = rootProject.file("keystore.properties")
+def keystoreProperties = new Properties()
+keystoreProperties.load(new FileInputStream(keystorePropertiesFile))
+
 android {
+    def dateCode = (System.currentTimeMillis() / 10_000).toInteger()
+    if (dateCode > 173571120) {
+        throw new RuntimeException("bad version code '$dateCode', check clock")
+    }
     compileSdkVersion 29
     defaultConfig {
         applicationId "com.rthqks.synapse"
         minSdkVersion 23
         targetSdkVersion 29
-        versionCode 1
+        versionCode dateCode
         versionName "1.0"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
     }
+    signingConfigs {
+        release {
+            keyAlias keystoreProperties['keyAlias']
+            keyPassword keystoreProperties['keyPassword']
+            storeFile file(keystoreProperties['storeFile'])
+            storePassword keystoreProperties['storePassword']
+        }
+    }
     buildTypes {
         release {
-            minifyEnabled false
+            signingConfig signingConfigs.release
+            minifyEnabled true
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+        }
+        debug {
+            applicationIdSuffix ".debug"
+            versionNameSuffix "-debug"
         }
     }
     compileOptions {
@@ -66,8 +87,7 @@ dependencies {
     implementation 'com.google.code.gson:gson:2.8.6'
 
     // stetho
-    // TODO: remove for release
-    implementation 'com.facebook.stetho:stetho:1.5.1'
+    debugImplementation 'com.facebook.stetho:stetho:1.5.1'
 
     testImplementation 'junit:junit:4.12'
     androidTestImplementation 'androidx.test:runner:1.2.0'
