@@ -14,21 +14,23 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
 
-    <xyz.rthqks.synapse.ui.build.TouchRecyclerView
+    <com.rthqks.synapse.ui.build.TouchRecyclerView
         android:id="@+id/inputs_list"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager"
+        app:layout_constraintBottom_toTopOf="@id/tool_list"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
         tools:itemCount="3"
         tools:listitem="@layout/layout_port_fragment_node" />
 
-    <xyz.rthqks.synapse.ui.build.TouchRecyclerView
+    <com.rthqks.synapse.ui.build.TouchRecyclerView
         android:id="@+id/outputs_list"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager"
+        app:layout_constraintBottom_toTopOf="@id/tool_list"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintTop_toTopOf="parent"
         tools:itemCount="3"

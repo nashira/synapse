@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
-    package="xyz.rthqks.synapse">
+    package="com.rthqks.synapse">
 
     <uses-permission android:name="android.permission.RECORD_AUDIO" />
     <uses-permission android:name="android.permission.CAMERA" />
@@ -13,7 +13,7 @@
         android:required="true" />
 
     <application
-        android:name=".SynapseApp"
+        android:name="com.rthqks.synapse.SynapseApp"
         android:allowBackup="true"
         android:icon="@mipmap/ic_launcher"
         android:label="@string/app_name"
@@ -22,7 +22,7 @@
         android:theme="@style/AppTheme.NoActionBar"
         tools:ignore="GoogleAppIndexingWarning">
 
-        <activity android:name=".ui.browse.GraphListActivity">
+        <activity android:name="com.rthqks.synapse.ui.browse.GraphListActivity">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 
@@ -30,8 +30,8 @@
             </intent-filter>
         </activity>
 
-        <activity android:name=".ui.exec.ExecGraphActivity" />
-        <activity android:name=".ui.build.BuilderActivity"
+        <activity android:name="com.rthqks.synapse.ui.exec.ExecGraphActivity" />
+        <activity android:name="com.rthqks.synapse.ui.build.BuilderActivity"
             android:screenOrientation="portrait" />
     </application>
 
