@@ -101,13 +101,16 @@ abstract class SynapseDao {
         properties.forEach {
             graph.getNode(it.nodeId)?.let { node ->
                 node.properties[it.key] = it.value
+            } ?: run {
+                graph.properties[it.key] = it.value
             }
         }
 
         return graph
     }
 
-    suspend fun deleteFullGraph(graphId: Int) {
+    @Transaction
+    open suspend fun deleteFullGraph(graphId: Int) {
         deleteProperties(graphId)
         deleteEdges(graphId)
         deleteNodes(graphId)

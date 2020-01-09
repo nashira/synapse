@@ -56,7 +56,7 @@ class Node(
         Speakers("speakers", R.string.name_node_type_speaker, R.drawable.ic_speaker),
         Screen("screen", R.string.name_node_type_screen, R.drawable.ic_display),
         Properties("properties", R.string.name_node_type_properties, R.drawable.ic_tune),
-        Creation("creation", 0, 0),
+        Creation("creation", R.string.name_node_type_create, R.drawable.ic_add),
         Connection("connection", 0, 0);
 
         companion object {

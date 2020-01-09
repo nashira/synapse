@@ -117,4 +117,7 @@
     <string name="property_subtitle_crop_to_fit_enabled">Crop to fill frame</string>
     <string name="property_label_camera_capture_size_2160">2160p</string>
     <string name="property_name_downsample_factor">Downsample Factor</string>
+    <string name="property_label_true">True</string>
+    <string name="property_label_false">False</string>
+    <string name="name_node_type_create">Add a Node</string>
 </resources>

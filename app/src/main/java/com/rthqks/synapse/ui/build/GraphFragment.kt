@@ -3,20 +3,27 @@ package com.rthqks.synapse.ui.build
 import android.app.Activity
 import android.os.Bundle
 import android.util.Log
-import android.view.*
+import android.view.KeyEvent
+import android.view.LayoutInflater
+import android.view.View
+import android.view.ViewGroup
 import android.view.inputmethod.InputMethodManager
 import androidx.lifecycle.ViewModelProvider
+import androidx.recyclerview.widget.RecyclerView
 import com.rthqks.synapse.R
+import com.rthqks.synapse.logic.GetNode
+import com.rthqks.synapse.logic.Node
 import dagger.android.support.DaggerFragment
 import kotlinx.android.synthetic.main.fragment_graph.*
-import kotlinx.android.synthetic.main.property_toggle.*
-import kotlinx.android.synthetic.main.property_toggle.view.*
+import kotlinx.android.synthetic.main.layout_port_fragment_graph.view.*
 import javax.inject.Inject
+import kotlin.math.max
 
 class GraphFragment : DaggerFragment() {
     @Inject
     lateinit var viewModelFactory: ViewModelProvider.Factory
-    lateinit var viewModel: BuilderViewModel
+    private lateinit var viewModel: BuilderViewModel
+    private lateinit var propertyBinder: PropertyBinder
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -44,26 +51,28 @@ class GraphFragment : DaggerFragment() {
             handleNameSave()
         }
 
-        val touchMediator = TouchMediator(context!!, viewModel::swipeEvent)
-        swipe_to_nodes.setOnTouchListener { v, event ->
-            if (event.actionMasked == MotionEvent.ACTION_DOWN) {
-                viewModel.showFirstNode()
-            }
-            touchMediator.onTouch(v, event)
+        val properties = viewModel.graph.properties
+
+        propertyBinder = PropertyBinder(properties, tool_list, tool_main) {
+            Log.d(TAG, "onChange ${it.key.name} ${it.value}")
+            viewModel.onPropertyChange(-1, it, properties)
         }
 
-        val property = ToggleProperty(property_toggle)
-        property.iconView.setImageResource(R.drawable.ic_crop)
-        property.titleView.setText(R.string.property_title_crop_to_fit)
-        property.subtitleView.setText(R.string.property_subtitle_crop_to_fit_disabled)
-        property.toggleButton.setOnClickListener {
-            viewModel.setCropCenter(property.toggleButton.isChecked)
-            if (property.toggleButton.isChecked) {
-                property.subtitleView.setText(R.string.property_subtitle_crop_to_fit_enabled)
-            } else {
-                property.subtitleView.setText(R.string.property_subtitle_crop_to_fit_disabled)
-            }
-        }
+        val touchMediator = TouchMediator(context!!, viewModel::swipeEvent)
+
+        val connectorAdapter = NodeAdapter()
+        val nodes = viewModel.graph.getNodes()
+        connectorAdapter.setNodes(nodes)
+        node_list.adapter = connectorAdapter
+
+//        swipe_to_nodes.setOnTouchListener { v, event ->
+//            if (event.actionMasked == MotionEvent.ACTION_DOWN) {
+//                viewModel.showFirstNode()
+//            }
+//            touchMediator.onTouch(v, event)
+//        }
+
+//        val property = ToggleProperty(property_type_toggle)
     }
 
     private fun setupEditTitle() {
@@ -100,11 +109,68 @@ class GraphFragment : DaggerFragment() {
     }
 }
 
-class ToggleProperty(
-    val view: View
-) {
-    val iconView = view.icon
-    val titleView = view.title
-    val subtitleView = view.subtitle
-    val toggleButton = view.button_toggle
+private class NodeAdapter : RecyclerView.Adapter<NodeViewHolder>() {
+    private val nodes = mutableListOf<Node>()
+
+    fun setNodes(nodes: List<Node>) {
+        this.nodes.clear()
+        this.nodes.addAll(nodes)
+        if (nodes.isEmpty()) {
+            this.nodes.add(GetNode(Node.Type.Creation))
+        }
+        notifyDataSetChanged()
+    }
+
+    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): NodeViewHolder {
+        val view = LayoutInflater.from(parent.context).inflate(
+            R.layout.layout_port_fragment_graph,
+            parent,
+            false
+        )
+        return NodeViewHolder(view)
+    }
+
+    override fun getItemCount() = max(1, nodes.size)
+
+    override fun onBindViewHolder(holder: NodeViewHolder, position: Int) {
+        holder.bind(nodes[position])
+    }
+}
+
+private class NodeViewHolder(
+    itemView: View
+) : RecyclerView.ViewHolder(itemView) {
+    private val button = itemView.button
+    private val label = itemView.label
+    private var node: Node? = null
+
+    init {
+//            button.setOnTouchListener { v, event ->
+//                if (event.actionMasked == MotionEvent.ACTION_DOWN) {
+//                    connector?.let { it1 -> onConnectorTouch(it1) }
+//                }
+//                touchMediator.onTouch(v, event, connector)
+//            }
+//            button.setOnClickListener {
+//                connector?.let { it1 -> onConnectorClick(it1) }
+//            }
+//            button.setOnLongClickListener {
+//                connector?.let { it1 -> onConnectorLongClick(it, it1) }
+//                true
+//            }
+    }
+
+    fun bind(node: Node) {
+        this.node = node
+//            connector.edge?.let {
+//                val otherPort =
+//                    if (startAligned) viewModel.getConnector(it.fromNodeId, it.fromPortId).port
+//                    else viewModel.getConnector(it.toNodeId, it.toPortId).port
+//                label.text = "${connector.port.name} (${otherPort.name})"
+//            } ?: run {
+//                label.text = connector.port.name
+//            }
+        label.setText(node.type.title)
+        button.setImageResource(node.type.icon)
+    }
 }

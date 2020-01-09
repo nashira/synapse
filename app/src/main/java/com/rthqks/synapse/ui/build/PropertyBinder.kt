@@ -10,33 +10,48 @@ import android.widget.ArrayAdapter
 import android.widget.SeekBar
 import androidx.recyclerview.widget.RecyclerView
 import com.rthqks.synapse.R
-import com.rthqks.synapse.logic.ChoiceType
-import com.rthqks.synapse.logic.FloatRangeType
-import com.rthqks.synapse.logic.IntRangeType
-import com.rthqks.synapse.logic.Property
+import com.rthqks.synapse.logic.*
 import com.rthqks.synapse.ui.build.PropertyBinder.Companion.TAG
+import kotlinx.android.synthetic.main.layout_property.view.icon
 import kotlinx.android.synthetic.main.property_type_choice.view.*
 import kotlinx.android.synthetic.main.property_type_choice.view.title
 import kotlinx.android.synthetic.main.property_type_range.view.*
+import kotlinx.android.synthetic.main.property_type_toggle.view.*
 import kotlin.math.roundToInt
 
 class PropertyBinder(
-    private val recyclerView: RecyclerView,
+    private val properties: Properties,
+    private val listView: RecyclerView,
+    private val detailView: RecyclerView,
     private val onChange: (Property<*>) -> Unit
 ) {
-    private val inflater = LayoutInflater.from(recyclerView.context)
-    private val adapter = PropertyAdapter(inflater, onChange)
+    private val inflater = LayoutInflater.from(detailView.context)
+    private val detailAdapter = PropertyAdapter(inflater, onChange)
+    private val listAdapter: PropertiesAdapter
 
     init {
-        recyclerView.adapter = adapter
+        detailView.adapter = detailAdapter
+        listAdapter = PropertiesAdapter(properties) { key, selected, view ->
+            for (i in 0 until listView.childCount) {
+                listView.findViewHolderForAdapterPosition(i)?.let {
+                    if (it.itemView != view) it.itemView.isSelected = false
+                }
+            }
+            if (selected) {
+                show(properties.find(key)!!)
+            } else {
+                hide()
+            }
+        }
+        listView.adapter = listAdapter
     }
 
     fun hide() {
-        adapter.setProperty(null)
+        detailAdapter.setProperty(null)
     }
 
     fun show(property: Property<out Any?>) {
-        adapter.setProperty(property)
+        detailAdapter.setProperty(property)
 
     }
 
@@ -45,7 +60,54 @@ class PropertyBinder(
     }
 }
 
-class PropertyAdapter(
+private class PropertiesAdapter(
+    private val properties: Properties,
+    private val onSelected: (Property.Key<*>, Boolean, View) -> Unit
+) : RecyclerView.Adapter<PropertiesViewHolder>() {
+    private val keys = properties.keys.toList()
+
+    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): PropertiesViewHolder {
+        val inflater = LayoutInflater.from(parent.context)
+        val view = inflater.inflate(R.layout.layout_property, parent, false)
+        return PropertiesViewHolder(view) { position ->
+            val selected = !view.isSelected
+            onSelected(keys[position], selected, view)
+            view.isSelected = selected
+        }
+    }
+
+    override fun getItemCount(): Int = keys.size
+
+    override fun onBindViewHolder(holder: PropertiesViewHolder, position: Int) {
+        val key = keys[position]
+        val property = properties.find(key)!!
+        holder.bind(key, property)
+        Log.d(TAG, "onBind $position $key $property")
+    }
+
+    companion object {
+        const val TAG = "PropertiesAdapter"
+    }
+}
+
+private class PropertiesViewHolder(
+    itemView: View, clickListener: (position: Int) -> Unit
+) : RecyclerView.ViewHolder(itemView) {
+    private val iconView = itemView.icon
+
+    init {
+        itemView.setOnClickListener {
+            clickListener(adapterPosition)
+        }
+    }
+
+    fun bind(key: Property.Key<*>, property: Property<*>) {
+        itemView.isSelected = false
+        iconView.setImageResource(property.type.icon)
+    }
+}
+
+private class PropertyAdapter(
     private val inflater: LayoutInflater,
     private val onChange: (Property<*>) -> Unit
 ) :
@@ -57,6 +119,7 @@ class PropertyAdapter(
         return when (viewType) {
             R.layout.property_type_choice -> ChoicePropertyViewHolder(layout, onChange)
             R.layout.property_type_range -> RangePropertyViewHolder(layout, onChange)
+            R.layout.property_type_toggle -> TogglePropertyViewHolder(layout, onChange)
             else -> error("unknown type $viewType")
         }
     }
@@ -69,13 +132,10 @@ class PropertyAdapter(
 
     override fun getItemViewType(position: Int): Int {
         return when (val type = property?.type) {
-            is ChoiceType<*> -> {
-                R.layout.property_type_choice
-            }
+            is ChoiceType<*> -> R.layout.property_type_choice
             is FloatRangeType,
-            is IntRangeType -> {
-                R.layout.property_type_range
-            }
+            is IntRangeType -> R.layout.property_type_range
+            is ToggleType -> R.layout.property_type_toggle
             else -> error("unknown property type $type")
         }
     }
@@ -92,13 +152,13 @@ class PropertyAdapter(
     }
 }
 
-abstract class PropertyViewHolder(
+private abstract class PropertyViewHolder(
     itemView: View
 ) : RecyclerView.ViewHolder(itemView) {
     abstract fun bind(property: Property<*>)
 }
 
-class RangePropertyViewHolder(
+private class RangePropertyViewHolder(
     itemView: View,
     private val onChange: (Property<*>) -> Unit
 ) : SeekBar.OnSeekBarChangeListener, PropertyViewHolder(itemView) {
@@ -123,7 +183,8 @@ class RangePropertyViewHolder(
                 }
                 is IntRangeType -> {
                     val scale = (type.range.last - type.range.first).toFloat()
-                    (it as Property<Any?>).value = type.range.first + (normalized * scale).roundToInt()
+                    (it as Property<Any?>).value =
+                        type.range.first + (normalized * scale).roundToInt()
                 }
                 else -> error("unknown range type $type")
             }
@@ -168,7 +229,7 @@ class RangePropertyViewHolder(
     }
 }
 
-class ChoicePropertyViewHolder(
+private class ChoicePropertyViewHolder(
     itemView: View,
     private val onChange: (Property<*>) -> Unit
 ) : PropertyViewHolder(itemView) {
@@ -226,4 +287,49 @@ class ChoicePropertyViewHolder(
     companion object {
         const val TAG = "ChoicePropertyViewHold"
     }
+}
+
+private class TogglePropertyViewHolder(
+    itemView: View,
+    private val onChange: (Property<*>) -> Unit
+) : PropertyViewHolder(itemView) {
+    private val iconView = itemView.icon
+    private val titleView = itemView.title
+    private val subtitleView = itemView.subtitle
+    private val toggleButton = itemView.button_toggle
+    private var property: Property<Boolean>? = null
+
+    init {
+        toggleButton.setOnCheckedChangeListener { _, isChecked ->
+            property?.let {
+                it.value = isChecked
+                onChange(it)
+                subtitle(it, it.type as ToggleType)
+            }
+        }
+    }
+
+    override fun bind(property: Property<*>) {
+        @Suppress("UNCHECKED_CAST")
+        this.property = property as Property<Boolean>
+        val type = property.type as ToggleType
+        iconView.setImageResource(type.icon)
+        titleView.setText(type.title)
+
+        toggleButton.isChecked = property.value
+
+        subtitle(property, type)
+    }
+
+    private fun subtitle(
+        property: Property<Boolean>,
+        type: ToggleType
+    ) {
+        if (property.value) {
+            subtitleView.setText(type.enabled)
+        } else {
+            subtitleView.setText(type.disabled)
+        }
+    }
+
 }

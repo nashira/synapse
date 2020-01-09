@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/root_view"
     android:layout_width="match_parent"
     android:layout_height="match_parent">
@@ -28,23 +29,37 @@
         app:layout_constraintStart_toEndOf="@id/edit_title"
         app:layout_constraintTop_toTopOf="parent" />
 
-    <include
-        layout="@layout/property_toggle"
+    <com.rthqks.synapse.ui.build.TouchRecyclerView
+        android:id="@+id/node_list"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager"
+        app:layout_constraintBottom_toTopOf="@id/tool_list"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        tools:itemCount="3"
+        tools:listitem="@layout/layout_port_fragment_graph" />
+
+
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/tool_main"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        app:layout_constraintBottom_toTopOf="@id/swipe_to_nodes"
-        app:layout_constraintTop_toBottomOf="@id/edit_title" />
+        app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager"
+        app:layout_constraintBottom_toTopOf="@id/tool_list"
+        tools:itemCount="1"
+        tools:listitem="@layout/property_type_toggle" />
 
-    <TextView
-        android:id="@+id/swipe_to_nodes"
-        style="@style/Widget.AppCompat.Button.Borderless"
-        android:layout_width="match_parent"
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/tool_list"
+        android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:background="?attr/selectableItemBackground"
-        android:drawableEnd="@drawable/ic_arrow_forward_ios"
-        android:drawableTint="@color/colorAccent"
-        android:text="Swipe to view Nodes"
-        app:layout_constraintBottom_toBottomOf="parent" />
-
+        android:orientation="horizontal"
+        app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        tools:itemCount="3"
+        tools:listitem="@layout/layout_property" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

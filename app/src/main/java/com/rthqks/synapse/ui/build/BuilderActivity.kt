@@ -11,9 +11,9 @@ import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModelProvider
 import androidx.viewpager2.adapter.FragmentStateAdapter
 import androidx.viewpager2.widget.ViewPager2
+import com.google.firebase.analytics.FirebaseAnalytics
 import com.rthqks.synapse.R
 import com.rthqks.synapse.logic.Node
-import com.rthqks.synapse.ui.build.BuilderActivity.Companion.TAG
 import com.rthqks.synapse.ui.exec.ExecGraphActivity
 import dagger.android.support.DaggerAppCompatActivity
 import kotlinx.android.synthetic.main.activity_builder.*
@@ -27,6 +27,8 @@ class BuilderActivity : DaggerAppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_builder)
+
+
 
         viewModel = ViewModelProvider(this, viewModelFactory)[BuilderViewModel::class.java]
         Log.d(TAG, "viewModel $viewModel")
@@ -70,6 +72,8 @@ class BuilderActivity : DaggerAppCompatActivity() {
         savedInstanceState ?: run {
             val graphId = intent.getIntExtra(GRAPH_ID, -1)
             viewModel.setGraphId(graphId)
+            FirebaseAnalytics.getInstance(this)
+                .logEvent("EditGraph", Bundle().also { it.putInt("graph_id", graphId) })
         }
 
         toolbar.setOnMenuItemClickListener {
@@ -161,36 +165,36 @@ class BuilderActivity : DaggerAppCompatActivity() {
                 it.putExtra(GRAPH_ID, graphId)
             }
     }
-}
 
-class NodeAdapter(
-    activity: AppCompatActivity
-) : FragmentStateAdapter(activity) {
-    val nodes = mutableListOf<Node>()
+    private class NodeAdapter(
+        activity: AppCompatActivity
+    ) : FragmentStateAdapter(activity) {
+        val nodes = mutableListOf<Node>()
 
-    override fun getItemCount(): Int = nodes.size
+        override fun getItemCount(): Int = nodes.size
 
-    override fun getItemId(position: Int): Long {
-        return nodes[position].id.toLong()
-    }
-
-    override fun createFragment(position: Int): Fragment {
-        val node = nodes[position]
-        return when (node.type) {
-            Node.Type.Properties -> GraphFragment.newInstance()
-            Node.Type.Creation,
-            Node.Type.Connection -> ConnectionFragment.newInstance()
-            else -> NodeFragment.newInstance(node.id)
+        override fun getItemId(position: Int): Long {
+            return nodes[position].id.toLong()
         }
-    }
 
-    fun setState(adapterState: AdapterState<Node>) {
-        val update = adapterState.items != nodes
-        if (update) {
-            Log.d(TAG, "updating adapter items")
-            nodes.clear()
-            nodes.addAll(adapterState.items)
-            notifyDataSetChanged()
+        override fun createFragment(position: Int): Fragment {
+            val node = nodes[position]
+            return when (node.type) {
+                Node.Type.Properties -> GraphFragment.newInstance()
+                Node.Type.Creation,
+                Node.Type.Connection -> ConnectionFragment.newInstance()
+                else -> NodeFragment.newInstance(node.id)
+            }
+        }
+
+        fun setState(adapterState: AdapterState<Node>) {
+            val update = adapterState.items != nodes
+            if (update) {
+                Log.d(TAG, "updating adapter items")
+                nodes.clear()
+                nodes.addAll(adapterState.items)
+                notifyDataSetChanged()
+            }
         }
     }
 }

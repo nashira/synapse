@@ -1,5 +1,7 @@
 package com.rthqks.synapse.logic
 
+import com.rthqks.synapse.R
+
 
 class Graph(
     val id: Int,
@@ -16,11 +18,11 @@ class Graph(
             CropToFit,
             Property(
                 CropToFit,
-                ChoiceType(
-                    0, 0,
-                    Choice(true, 0),
-                    Choice(false, 0)
-                ), false
+                ToggleType(
+                    R.string.property_title_crop_to_fit, R.drawable.ic_crop,
+                    R.string.property_subtitle_crop_to_fit_enabled,
+                    R.string.property_subtitle_crop_to_fit_disabled
+                ), true
             ), BooleanConverter
         )
     }

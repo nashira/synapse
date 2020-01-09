@@ -20,26 +20,6 @@ val MultiplyFactor = Property.Key<Float>("multiply_factor")
 val Uri = Property.Key<String>("uri")
 val CropToFit = Property.Key<Boolean>("crop_to_fit")
 
-object IntConverter: Converter<Int> {
-    override fun toString(value: Int): String = value.toString()
-    override fun fromString(value: String): Int = value.toInt()
-}
-
-object SizeConverter: Converter<Size> {
-    override fun toString(value: Size): String = "${value.width}x${value.height}"
-    override fun fromString(value: String): Size = Size.parseSize(value)
-}
-
-object FloatConverter: Converter<Float> {
-    override fun toString(value: Float): String  = value.toString()
-    override fun fromString(value: String): Float  = value.toFloat()
-}
-
-object BooleanConverter: Converter<Boolean> {
-    override fun toString(value: Boolean): String = value.toString()
-    override fun fromString(value: String): Boolean = value.toBoolean()
-}
-
 val Nodes = listOf(
     Node(Node.Type.Camera).apply {
         add(Port(Port.Type.Video, "video_1", "Video", true))
@@ -57,7 +37,7 @@ val Nodes = listOf(
                         CameraCharacteristics.LENS_FACING_FRONT,
                         R.string.property_label_camera_lens_facing_front
                     )
-                ), CameraCharacteristics.LENS_FACING_FRONT, true
+                ), CameraCharacteristics.LENS_FACING_BACK, true
             ), IntConverter
         )
         add(

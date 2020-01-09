@@ -15,13 +15,10 @@ import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.RecyclerView
 import com.rthqks.synapse.R
 import com.rthqks.synapse.logic.Connector
-import com.rthqks.synapse.logic.Node
 import com.rthqks.synapse.logic.Port
-import com.rthqks.synapse.logic.Property
 import dagger.android.support.DaggerFragment
 import kotlinx.android.synthetic.main.fragment_node.*
 import kotlinx.android.synthetic.main.layout_port_fragment_node.view.*
-import kotlinx.android.synthetic.main.layout_property.view.*
 import javax.inject.Inject
 
 class NodeFragment : DaggerFragment() {
@@ -32,7 +29,6 @@ class NodeFragment : DaggerFragment() {
     private lateinit var touchMediator: TouchMediator
     private lateinit var inputsAdapter: PortsAdapter
     private lateinit var outputsAdapter: PortsAdapter
-    private lateinit var propertiesAdapter: PropertiesAdapter
     private lateinit var propertyBinder: PropertyBinder
     private var nodeId = -1
 
@@ -64,25 +60,12 @@ class NodeFragment : DaggerFragment() {
 //        Log.d(TAG, "onActivityCreated $nodeId")
         viewModel = ViewModelProvider(activity!!, viewModelFactory)[BuilderViewModel::class.java]
         touchMediator = TouchMediator(context!!, viewModel::swipeEvent)
-        propertyBinder = PropertyBinder(tool_main) {
-            Log.d(TAG, "onChange ${it.key.name} ${it.value}")
-            viewModel.onPropertyChange(nodeId, it)
-        }
 
-        viewModel.graph.getNode(nodeId)?.let {
-            propertiesAdapter = PropertiesAdapter(it) { key, selected, view ->
-                for (i in 0 until tool_list.childCount) {
-                    tool_list.findViewHolderForAdapterPosition(i)?.let {
-                        if (it.itemView != view) it.itemView.isSelected = false
-                    }
-                }
-                if (selected) {
-                    propertyBinder.show(it.properties.find(key)!!)
-                } else {
-                    propertyBinder.hide()
-                }
+        viewModel.graph.getNode(nodeId)?.let { node ->
+            propertyBinder = PropertyBinder(node.properties, tool_list, tool_main) {
+                Log.d(TAG, "onChange ${it.key.name} ${it.value}")
+                viewModel.onPropertyChange(nodeId, it, node.properties)
             }
-            tool_list.adapter = propertiesAdapter
         }
 
         viewModel.graphChannel.observe(viewLifecycleOwner, Observer {
@@ -181,51 +164,7 @@ class NodeFragment : DaggerFragment() {
         menu.show()
     }
 
-    class PropertiesAdapter(
-        private val node: Node,
-        private val onSelected: (Property.Key<*>, Boolean, View) -> Unit
-    ) : RecyclerView.Adapter<PropertyViewHolder>() {
-        private val keys = node.properties.keys.toList()
-
-        override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): PropertyViewHolder {
-            val inflater = LayoutInflater.from(parent.context)
-            val view = inflater.inflate(R.layout.layout_property, parent, false)
-            return PropertyViewHolder(view) { position ->
-                val selected = !view.isSelected
-                onSelected(keys[position], selected, view)
-                view.isSelected = selected
-            }
-        }
-
-        override fun getItemCount(): Int = keys.size
-
-        override fun onBindViewHolder(holder: PropertyViewHolder, position: Int) {
-            val key = keys[position]
-            val property = node.properties.find(key)!!
-            holder.bind(key, property)
-            Log.d(TAG, "onBind $position $key $property")
-        }
-    }
-
-    class PropertyViewHolder(
-        itemView: View, clickListener: (position: Int) -> Unit
-    ) :
-        RecyclerView.ViewHolder(itemView) {
-        private val iconView = itemView.icon
-
-        init {
-            itemView.setOnClickListener {
-                clickListener(adapterPosition)
-            }
-        }
-
-        fun bind(key: Property.Key<*>, property: Property<*>) {
-            itemView.isSelected = false
-            iconView.setImageResource(property.type.icon)
-        }
-    }
-
-    inner class PortsAdapter(
+    private inner class PortsAdapter(
         private val isStartAligned: Boolean
     ) : RecyclerView.Adapter<PortViewHolder>() {
         private val ports = mutableListOf<Connector>()
@@ -274,13 +213,13 @@ class NodeFragment : DaggerFragment() {
         }
     }
 
-    inner class PortViewHolder(
+    private inner class PortViewHolder(
         itemView: View
     ) : RecyclerView.ViewHolder(itemView) {
         private val button = itemView.button
         private val label = itemView.label
         private val arrowForward = itemView.arrow_forward
-        private val arrowBackward = itemView.arrow_backward
+        private val arrowBackward = itemView.title
         private var connector: Connector? = null
 
         init {

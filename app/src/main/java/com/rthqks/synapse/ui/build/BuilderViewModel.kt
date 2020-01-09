@@ -320,18 +320,17 @@ class BuilderViewModel @Inject constructor(
         restartGraph()
     }
 
-    fun onPropertyChange(nodeId: Int, property: Property<*>) {
+    fun onPropertyChange(nodeId: Int, property: Property<*>, properties: Properties) {
         if (property.requiresRestart) {
             restartGraph()
         }
         viewModelScope.launch(Dispatchers.IO) {
-            val node = graph.getNode(nodeId) ?: return@launch
             dao.insertProperty(
                 PropertyData(
                     graph.id,
                     nodeId,
                     property.key.name,
-                    node.properties.toString(property.key)
+                    properties.toString(property.key)
                 )
             )
         }
