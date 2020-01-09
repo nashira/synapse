@@ -3,10 +3,7 @@ package com.rthqks.synapse.ui.build
 import android.app.Activity
 import android.os.Bundle
 import android.util.Log
-import android.view.KeyEvent
-import android.view.LayoutInflater
-import android.view.View
-import android.view.ViewGroup
+import android.view.*
 import android.view.inputmethod.InputMethodManager
 import androidx.lifecycle.ViewModelProvider
 import androidx.recyclerview.widget.RecyclerView
@@ -15,7 +12,7 @@ import com.rthqks.synapse.logic.GetNode
 import com.rthqks.synapse.logic.Node
 import dagger.android.support.DaggerFragment
 import kotlinx.android.synthetic.main.fragment_graph.*
-import kotlinx.android.synthetic.main.layout_port_fragment_graph.view.*
+import kotlinx.android.synthetic.main.layout_node_item.view.*
 import javax.inject.Inject
 import kotlin.math.max
 
@@ -60,19 +57,22 @@ class GraphFragment : DaggerFragment() {
 
         val touchMediator = TouchMediator(context!!, viewModel::swipeEvent)
 
-        val connectorAdapter = NodeAdapter()
+        val connectorAdapter = NodeAdapter({ view: View, event: MotionEvent, node: Node ->
+            if (event.actionMasked == MotionEvent.ACTION_DOWN) {
+                if (node.type == Node.Type.Creation) {
+                    viewModel.showFirstNode()
+                } else {
+                    viewModel.swipeToNode(node)
+                }
+            }
+            touchMediator.onTouch(view, event)
+        },{ longClick: Boolean, node: Node ->
+
+            true
+        })
         val nodes = viewModel.graph.getNodes()
         connectorAdapter.setNodes(nodes)
         node_list.adapter = connectorAdapter
-
-//        swipe_to_nodes.setOnTouchListener { v, event ->
-//            if (event.actionMasked == MotionEvent.ACTION_DOWN) {
-//                viewModel.showFirstNode()
-//            }
-//            touchMediator.onTouch(v, event)
-//        }
-
-//        val property = ToggleProperty(property_type_toggle)
     }
 
     private fun setupEditTitle() {
@@ -109,7 +109,10 @@ class GraphFragment : DaggerFragment() {
     }
 }
 
-private class NodeAdapter : RecyclerView.Adapter<NodeViewHolder>() {
+private class NodeAdapter(
+    private val touchListener: (View, MotionEvent, Node) -> Boolean,
+    private val clickListener: (Boolean, Node) -> Boolean
+) : RecyclerView.Adapter<NodeViewHolder>() {
     private val nodes = mutableListOf<Node>()
 
     fun setNodes(nodes: List<Node>) {
@@ -123,11 +126,11 @@ private class NodeAdapter : RecyclerView.Adapter<NodeViewHolder>() {
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): NodeViewHolder {
         val view = LayoutInflater.from(parent.context).inflate(
-            R.layout.layout_port_fragment_graph,
+            R.layout.layout_node_item,
             parent,
             false
         )
-        return NodeViewHolder(view)
+        return NodeViewHolder(view, touchListener, clickListener)
     }
 
     override fun getItemCount() = max(1, nodes.size)
@@ -138,38 +141,35 @@ private class NodeAdapter : RecyclerView.Adapter<NodeViewHolder>() {
 }
 
 private class NodeViewHolder(
-    itemView: View
+    itemView: View,
+    touchListener: (View, MotionEvent, Node) -> Boolean,
+    clickListener: (Boolean, Node) -> Boolean
 ) : RecyclerView.ViewHolder(itemView) {
     private val button = itemView.button
     private val label = itemView.label
     private var node: Node? = null
 
     init {
-//            button.setOnTouchListener { v, event ->
-//                if (event.actionMasked == MotionEvent.ACTION_DOWN) {
-//                    connector?.let { it1 -> onConnectorTouch(it1) }
-//                }
-//                touchMediator.onTouch(v, event, connector)
+        button.setOnTouchListener { v, event ->
+            touchListener(v, event, node!!)
+//            if (event.actionMasked == MotionEvent.ACTION_DOWN) {
+//                connector?.let { it1 -> onConnectorTouch(it1) }
 //            }
-//            button.setOnClickListener {
-//                connector?.let { it1 -> onConnectorClick(it1) }
-//            }
-//            button.setOnLongClickListener {
-//                connector?.let { it1 -> onConnectorLongClick(it, it1) }
-//                true
-//            }
+//            touchMediator.onTouch(v, event, connector)
+        }
+        button.setOnClickListener {
+            clickListener(false, node!!)
+//            connector?.let { it1 -> onConnectorClick(it1) }
+        }
+        button.setOnLongClickListener {
+//            connector?.let { it1 -> onConnectorLongClick(it, it1) }
+//            true
+            clickListener(true, node!!)
+        }
     }
 
     fun bind(node: Node) {
         this.node = node
-//            connector.edge?.let {
-//                val otherPort =
-//                    if (startAligned) viewModel.getConnector(it.fromNodeId, it.fromPortId).port
-//                    else viewModel.getConnector(it.toNodeId, it.toPortId).port
-//                label.text = "${connector.port.name} (${otherPort.name})"
-//            } ?: run {
-//                label.text = connector.port.name
-//            }
         label.setText(node.type.title)
         button.setImageResource(node.type.icon)
     }

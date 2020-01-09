@@ -70,6 +70,11 @@ class BuilderViewModel @Inject constructor(
         updateStartState()
     }
 
+    fun swipeToNode(node: Node) {
+        nodesChannel.value = AdapterState(0, listOf(PROPERTIES_NODE, node))
+        updateStartState()
+    }
+
     fun swipeEvent(event: SwipeEvent) {
         consumable.item = event
         onSwipeEvent.value = consumable

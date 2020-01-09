@@ -38,7 +38,7 @@
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintTop_toTopOf="parent"
         tools:itemCount="3"
-        tools:listitem="@layout/layout_port_fragment_graph" />
+        tools:listitem="@layout/layout_node_item" />
 
 
     <androidx.recyclerview.widget.RecyclerView
