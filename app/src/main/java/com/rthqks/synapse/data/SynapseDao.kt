@@ -98,6 +98,12 @@ abstract class SynapseDao {
             graph.addEdge(it.fromNodeId, it.fromKey, it.toNodeId, it.toKey)
         }
 
+        properties.forEach {
+            graph.getNode(it.nodeId)?.let { node ->
+                node.properties[it.key] = it.value
+            }
+        }
+
         return graph
     }
 

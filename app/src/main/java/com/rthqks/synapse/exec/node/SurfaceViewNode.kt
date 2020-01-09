@@ -9,7 +9,6 @@ import android.view.SurfaceHolder
 import android.view.SurfaceView
 import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.constraintlayout.widget.ConstraintSet
-import kotlinx.coroutines.*
 import com.rthqks.synapse.R
 import com.rthqks.synapse.assets.AssetManager
 import com.rthqks.synapse.exec.NodeExecutor
@@ -17,6 +16,7 @@ import com.rthqks.synapse.exec.edge.*
 import com.rthqks.synapse.gl.*
 import com.rthqks.synapse.logic.CropToFit
 import com.rthqks.synapse.logic.Properties
+import kotlinx.coroutines.*
 
 class SurfaceViewNode(
     private val assetManager: AssetManager,

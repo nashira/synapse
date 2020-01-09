@@ -12,10 +12,10 @@ import androidx.fragment.app.DialogFragment
 import androidx.lifecycle.ViewModelProvider
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
-import dagger.android.support.AndroidSupportInjection
-import kotlinx.android.synthetic.main.layout_node_list_item.view.*
 import com.rthqks.synapse.R
 import com.rthqks.synapse.logic.Node
+import dagger.android.support.AndroidSupportInjection
+import kotlinx.android.synthetic.main.layout_node_list_item.view.*
 import javax.inject.Inject
 
 class NodeListDialog : DialogFragment() {

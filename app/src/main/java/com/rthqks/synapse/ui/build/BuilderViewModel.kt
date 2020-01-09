@@ -7,15 +7,12 @@ import androidx.annotation.StringRes
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
-import com.rthqks.synapse.data.EdgeData
-import com.rthqks.synapse.data.GraphData
-import com.rthqks.synapse.data.NodeData
-import com.rthqks.synapse.data.SynapseDao
+import com.rthqks.synapse.data.*
 import com.rthqks.synapse.exec.Executor
 import com.rthqks.synapse.logic.*
 import com.rthqks.synapse.util.Consumable
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 class BuilderViewModel @Inject constructor(
@@ -323,9 +320,20 @@ class BuilderViewModel @Inject constructor(
         restartGraph()
     }
 
-    fun onPropertyChange(property: Property<*>) {
+    fun onPropertyChange(nodeId: Int, property: Property<*>) {
         if (property.requiresRestart) {
             restartGraph()
+        }
+        viewModelScope.launch(Dispatchers.IO) {
+            val node = graph.getNode(nodeId) ?: return@launch
+            dao.insertProperty(
+                PropertyData(
+                    graph.id,
+                    nodeId,
+                    property.key.name,
+                    node.properties.toString(property.key)
+                )
+            )
         }
     }
 

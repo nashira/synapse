@@ -1,10 +1,10 @@
 package com.rthqks.synapse
 
+import com.rthqks.synapse.exec.edge.*
 import kotlinx.coroutines.*
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotEquals
 import org.junit.Test
-import com.rthqks.synapse.exec.edge.*
 
 /**
  * Example local unit test, which will execute on the development machine (host).

@@ -9,15 +9,15 @@ import android.widget.AdapterView
 import android.widget.ArrayAdapter
 import android.widget.SeekBar
 import androidx.recyclerview.widget.RecyclerView
-import kotlinx.android.synthetic.main.property_type_choice.view.*
-import kotlinx.android.synthetic.main.property_type_choice.view.title
-import kotlinx.android.synthetic.main.property_type_range.view.*
 import com.rthqks.synapse.R
 import com.rthqks.synapse.logic.ChoiceType
 import com.rthqks.synapse.logic.FloatRangeType
 import com.rthqks.synapse.logic.IntRangeType
 import com.rthqks.synapse.logic.Property
 import com.rthqks.synapse.ui.build.PropertyBinder.Companion.TAG
+import kotlinx.android.synthetic.main.property_type_choice.view.*
+import kotlinx.android.synthetic.main.property_type_choice.view.title
+import kotlinx.android.synthetic.main.property_type_range.view.*
 import kotlin.math.roundToInt
 
 class PropertyBinder(

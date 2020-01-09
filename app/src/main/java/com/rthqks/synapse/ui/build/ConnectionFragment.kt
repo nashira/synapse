@@ -13,14 +13,14 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.RecyclerView
-import dagger.android.support.DaggerFragment
-import kotlinx.android.synthetic.main.fragment_connection.*
-import kotlinx.android.synthetic.main.layout_connection.view.*
-import kotlinx.coroutines.launch
 import com.rthqks.synapse.R
 import com.rthqks.synapse.logic.Connector
 import com.rthqks.synapse.logic.Graph
 import com.rthqks.synapse.logic.Node
+import dagger.android.support.DaggerFragment
+import kotlinx.android.synthetic.main.fragment_connection.*
+import kotlinx.android.synthetic.main.layout_connection.view.*
+import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 class ConnectionFragment : DaggerFragment() {

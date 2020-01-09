@@ -2,14 +2,14 @@ package com.rthqks.synapse.inject
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
-import dagger.Binds
-import dagger.MapKey
-import dagger.Module
-import dagger.multibindings.IntoMap
 import com.rthqks.synapse.ui.browse.GraphListViewModel
 import com.rthqks.synapse.ui.build.BuilderViewModel
 import com.rthqks.synapse.ui.edit.EditGraphViewModel
 import com.rthqks.synapse.ui.exec.ExecGraphViewModel
+import dagger.Binds
+import dagger.MapKey
+import dagger.Module
+import dagger.multibindings.IntoMap
 import javax.inject.Inject
 import javax.inject.Provider
 import kotlin.reflect.KClass

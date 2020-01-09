@@ -5,9 +5,15 @@ import androidx.annotation.StringRes
 
 class Properties {
     private val map = mutableMapOf<Property.Key<*>, Property<*>>()
+    private val converters = mutableMapOf<Property.Key<*>, Converter<*>>()
     val size: Int = map.size
     val keys = map.keys
     val values = map.values
+
+    fun <T> put(key: Property.Key<T>, property: Property<T>, converter: Converter<T>) {
+        map[key] = property
+        converters[key] = converter
+    }
 
     @Suppress("UNCHECKED_CAST")
     operator fun <T> set(key: Property.Key<T>, value: T) {
@@ -21,8 +27,24 @@ class Properties {
         return map[key]?.value as T
     }
 
-    fun <T> put(key: Property.Key<T>, property: Property<T>) {
-        map[key] = property
+    @Suppress("UNCHECKED_CAST")
+    operator fun set(keyName: String, value: String?) {
+        value ?: return
+
+//        val key = keys.first { it.name == keyName }
+        val key = Property.Key<Unit>(keyName)
+        val converter = converters[key]
+
+        (map[key] as? Property<Any?>)?.let { property ->
+            converter?.let {
+                property.value = it.fromString(value)
+            }
+        }
+    }
+
+    @Suppress("UNCHECKED_CAST")
+    fun <T> toString(key: Property.Key<T>): String? {
+        return (converters[key] as? Converter<T>)?.toString(this[key])
     }
 
     @Suppress("UNCHECKED_CAST")
@@ -37,13 +59,20 @@ class Properties {
 
     operator fun plusAssign(properties: Properties) {
         map.putAll(properties.map)
+        converters.putAll(properties.converters)
     }
 
     fun copyTo(properties: Properties): Properties = properties.also {
         map.mapValuesTo(it.map) { entry ->
             entry.value.copy()
         }
+        properties.converters.putAll(converters)
     }
+}
+
+interface Converter<T> {
+    fun toString(value: T): String
+    fun fromString(value: String): T
 }
 
 data class Property<T>(
@@ -52,7 +81,6 @@ data class Property<T>(
     var value: T,
     val requiresRestart: Boolean = false
 ) {
-
     data class Key<T>(val name: String)
 
     abstract class Type<T>(

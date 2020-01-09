@@ -10,9 +10,9 @@ import android.view.View
 import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.ViewModelProviders
+import com.rthqks.synapse.R
 import dagger.android.support.DaggerAppCompatActivity
 import kotlinx.android.synthetic.main.activity_exec_graph.*
-import com.rthqks.synapse.R
 import javax.inject.Inject
 
 class ExecGraphActivity : DaggerAppCompatActivity() {

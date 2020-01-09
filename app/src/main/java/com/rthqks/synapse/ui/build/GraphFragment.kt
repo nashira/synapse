@@ -6,11 +6,11 @@ import android.util.Log
 import android.view.*
 import android.view.inputmethod.InputMethodManager
 import androidx.lifecycle.ViewModelProvider
+import com.rthqks.synapse.R
 import dagger.android.support.DaggerFragment
 import kotlinx.android.synthetic.main.fragment_graph.*
 import kotlinx.android.synthetic.main.property_toggle.*
 import kotlinx.android.synthetic.main.property_toggle.view.*
-import com.rthqks.synapse.R
 import javax.inject.Inject
 
 class GraphFragment : DaggerFragment() {

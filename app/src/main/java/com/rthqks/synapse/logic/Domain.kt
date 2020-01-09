@@ -20,6 +20,26 @@ val MultiplyFactor = Property.Key<Float>("multiply_factor")
 val Uri = Property.Key<String>("uri")
 val CropToFit = Property.Key<Boolean>("crop_to_fit")
 
+object IntConverter: Converter<Int> {
+    override fun toString(value: Int): String = value.toString()
+    override fun fromString(value: String): Int = value.toInt()
+}
+
+object SizeConverter: Converter<Size> {
+    override fun toString(value: Size): String = "${value.width}x${value.height}"
+    override fun fromString(value: String): Size = Size.parseSize(value)
+}
+
+object FloatConverter: Converter<Float> {
+    override fun toString(value: Float): String  = value.toString()
+    override fun fromString(value: String): Float  = value.toFloat()
+}
+
+object BooleanConverter: Converter<Boolean> {
+    override fun toString(value: Boolean): String = value.toString()
+    override fun fromString(value: String): Boolean = value.toBoolean()
+}
+
 val Nodes = listOf(
     Node(Node.Type.Camera).apply {
         add(Port(Port.Type.Video, "video_1", "Video", true))
@@ -38,7 +58,7 @@ val Nodes = listOf(
                         R.string.property_label_camera_lens_facing_front
                     )
                 ), CameraCharacteristics.LENS_FACING_FRONT, true
-            )
+            ), IntConverter
         )
         add(
             Property(
@@ -52,7 +72,7 @@ val Nodes = listOf(
                     Choice(30, R.string.property_label_camera_fps_30),
                     Choice(60, R.string.property_label_camera_fps_60)
                 ), 30, true
-            )
+            ), IntConverter
         )
         add(
             Property(
@@ -65,7 +85,7 @@ val Nodes = listOf(
                     Choice(Size(1280, 720), R.string.property_label_camera_capture_size_720),
                     Choice(Size(640, 480), R.string.property_label_camera_capture_size_480)
                 ), Size(1920, 1080), true
-            )
+            ), SizeConverter
         )
     },
     Node(Node.Type.Microphone).apply {
@@ -90,7 +110,7 @@ val Nodes = listOf(
                     R.drawable.ic_photo_size_select,
                     (1..10)
                 ), 1, true
-            )
+            ), IntConverter
         )
     },
     Node(Node.Type.MultiplyAccumulate).apply {
@@ -104,7 +124,7 @@ val Nodes = listOf(
                     R.drawable.ic_clear,
                     (0f..1f)
                 ), 0.9f
-            )
+            ), FloatConverter
         )
         add(
             Property(
@@ -114,7 +134,7 @@ val Nodes = listOf(
                     R.drawable.ic_add,
                     (0f..2f)
                 ), 0.9f
-            )
+            ), FloatConverter
         )
     },
     Node(Node.Type.OverlayFilter).apply {
@@ -133,7 +153,7 @@ val Nodes = listOf(
                     R.drawable.ic_photo_size_select,
                     (1..10)
                 ), 1, true
-            )
+            ), IntConverter
         )
         add(
             Property(
@@ -143,7 +163,7 @@ val Nodes = listOf(
                     R.drawable.ic_repeat,
                     (1..10)
                 ), 1
-            )
+            ), IntConverter
         )
         add(
             Property(
@@ -155,7 +175,7 @@ val Nodes = listOf(
                     Choice(9, R.string.property_label_blur_size_9),
                     Choice(13, R.string.property_label_blur_size_13)
                 ), 9, true
-            )
+            ), IntConverter
         )
     },
     Node(Node.Type.LutFilter).apply {
@@ -173,7 +193,7 @@ val Nodes = listOf(
                     Choice(true, R.string.property_subtitle_crop_to_fit_enabled),
                     Choice(false, R.string.property_subtitle_crop_to_fit_disabled)
                 ), false
-            )
+            ), BooleanConverter
         )
     },
     Node(Node.Type.Speakers).apply {

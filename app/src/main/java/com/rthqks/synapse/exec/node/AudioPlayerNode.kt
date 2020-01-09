@@ -5,13 +5,13 @@ import android.media.AudioFormat
 import android.media.AudioRecord
 import android.media.AudioTrack
 import android.util.Log
-import kotlinx.coroutines.Job
-import kotlinx.coroutines.coroutineScope
-import kotlinx.coroutines.launch
 import com.rthqks.synapse.exec.NodeExecutor
 import com.rthqks.synapse.exec.edge.AudioConfig
 import com.rthqks.synapse.exec.edge.AudioEvent
 import com.rthqks.synapse.exec.edge.Connection
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.launch
 
 class AudioPlayerNode : NodeExecutor() {
     private var audioTrack: AudioTrack? = null

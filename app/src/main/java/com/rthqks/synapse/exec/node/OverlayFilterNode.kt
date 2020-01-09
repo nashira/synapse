@@ -5,6 +5,10 @@ import android.opengl.Matrix
 import android.util.Log
 import android.util.Size
 import android.view.Surface
+import com.rthqks.synapse.assets.AssetManager
+import com.rthqks.synapse.exec.NodeExecutor
+import com.rthqks.synapse.exec.edge.*
+import com.rthqks.synapse.gl.*
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.isActive
@@ -12,10 +16,6 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.selects.whileSelect
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
-import com.rthqks.synapse.assets.AssetManager
-import com.rthqks.synapse.exec.NodeExecutor
-import com.rthqks.synapse.exec.edge.*
-import com.rthqks.synapse.gl.*
 
 class OverlayFilterNode(
     private val glesManager: GlesManager,

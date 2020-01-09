@@ -3,13 +3,13 @@ package com.rthqks.synapse.exec
 import android.content.Context
 import android.util.Log
 import android.view.SurfaceView
-import kotlinx.coroutines.*
-import kotlinx.coroutines.channels.Channel
-import kotlinx.coroutines.channels.actor
 import com.rthqks.synapse.assets.AssetManager
 import com.rthqks.synapse.exec.node.SurfaceViewNode
 import com.rthqks.synapse.gl.GlesManager
 import com.rthqks.synapse.logic.*
+import kotlinx.coroutines.*
+import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.channels.actor
 import java.util.*
 import java.util.concurrent.Executors
 import javax.inject.Inject

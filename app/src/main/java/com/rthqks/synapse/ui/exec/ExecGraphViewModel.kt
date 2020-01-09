@@ -5,13 +5,13 @@ import android.util.Log
 import android.view.SurfaceView
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
-import kotlinx.coroutines.*
 import com.rthqks.synapse.assets.AssetManager
 import com.rthqks.synapse.data.SynapseDao
 import com.rthqks.synapse.exec.CameraManager
 import com.rthqks.synapse.exec.GraphExecutor
 import com.rthqks.synapse.gl.GlesManager
 import com.rthqks.synapse.logic.Graph
+import kotlinx.coroutines.*
 import java.util.concurrent.Executors
 import javax.inject.Inject
 

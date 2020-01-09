@@ -4,12 +4,6 @@ import android.opengl.GLES32.*
 import android.opengl.Matrix
 import android.util.Log
 import android.util.Size
-import kotlinx.coroutines.Job
-import kotlinx.coroutines.coroutineScope
-import kotlinx.coroutines.isActive
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.sync.Mutex
-import kotlinx.coroutines.sync.withLock
 import com.rthqks.synapse.assets.AssetManager
 import com.rthqks.synapse.exec.NodeExecutor
 import com.rthqks.synapse.exec.edge.*
@@ -18,6 +12,12 @@ import com.rthqks.synapse.logic.BlurSize
 import com.rthqks.synapse.logic.NumPasses
 import com.rthqks.synapse.logic.Properties
 import com.rthqks.synapse.logic.ScaleFactor
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.isActive
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 
 class BlurNode(
     private val glesManager: GlesManager,

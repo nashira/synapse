@@ -49,8 +49,8 @@ class SplashActivity : DaggerAppCompatActivity() {
     }
 
     private fun quit() {
-        finish()
         startActivity(Intent(this, GraphListActivity::class.java))
+        finish()
     }
 
     private fun checkPermissions(): List<Permission> {

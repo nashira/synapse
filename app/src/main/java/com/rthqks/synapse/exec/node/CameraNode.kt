@@ -9,11 +9,6 @@ import android.opengl.Matrix
 import android.util.Log
 import android.util.Size
 import android.view.Surface
-import kotlinx.coroutines.Job
-import kotlinx.coroutines.channels.Channel
-import kotlinx.coroutines.coroutineScope
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.runBlocking
 import com.rthqks.synapse.exec.CameraManager
 import com.rthqks.synapse.exec.NodeExecutor
 import com.rthqks.synapse.exec.edge.*
@@ -23,6 +18,11 @@ import com.rthqks.synapse.logic.CameraCaptureSize
 import com.rthqks.synapse.logic.CameraFacing
 import com.rthqks.synapse.logic.CameraFrameRate
 import com.rthqks.synapse.logic.Properties
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 
 class CameraNode(
     private val cameraManager: CameraManager,

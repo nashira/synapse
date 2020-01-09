@@ -1,11 +1,11 @@
 package com.rthqks.synapse.inject
 
 
+import com.rthqks.synapse.SynapseApp
 import dagger.BindsInstance
 import dagger.Component
 import dagger.android.AndroidInjector
 import dagger.android.support.AndroidSupportInjectionModule
-import com.rthqks.synapse.SynapseApp
 import javax.inject.Singleton
 
 @Singleton

@@ -1,5 +1,6 @@
 package com.rthqks.synapse.exec
 
+import com.rthqks.synapse.exec.edge.*
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.channels.Channel
@@ -8,7 +9,6 @@ import kotlinx.coroutines.channels.actor
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
-import com.rthqks.synapse.exec.edge.*
 
 abstract class NodeExecutor {
     abstract suspend fun create()

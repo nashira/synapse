@@ -21,7 +21,7 @@ class Graph(
                     Choice(true, 0),
                     Choice(false, 0)
                 ), false
-            )
+            ), BooleanConverter
         )
     }
 

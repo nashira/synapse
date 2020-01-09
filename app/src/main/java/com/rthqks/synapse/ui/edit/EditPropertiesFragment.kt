@@ -8,10 +8,10 @@ import android.view.View
 import android.view.ViewGroup
 import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModelProvider
-import dagger.android.support.DaggerFragment
 import com.rthqks.synapse.R
 import com.rthqks.synapse.data.NodeData
 import com.rthqks.synapse.data.PropertyData
+import dagger.android.support.DaggerFragment
 import javax.inject.Inject
 
 class EditPropertiesFragment : DaggerFragment() {

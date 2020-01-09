@@ -10,12 +10,12 @@ import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModelProvider
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
-import dagger.android.support.DaggerAppCompatActivity
-import kotlinx.android.synthetic.main.activity_graph_list.*
-import kotlinx.android.synthetic.main.graph_list_item.view.*
 import com.rthqks.synapse.R
 import com.rthqks.synapse.logic.Graph
 import com.rthqks.synapse.ui.build.BuilderActivity
+import dagger.android.support.DaggerAppCompatActivity
+import kotlinx.android.synthetic.main.activity_graph_list.*
+import kotlinx.android.synthetic.main.graph_list_item.view.*
 import javax.inject.Inject
 
 class GraphListActivity : DaggerAppCompatActivity() {

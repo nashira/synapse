@@ -3,7 +3,6 @@ package com.rthqks.synapse.exec
 import android.content.Context
 import android.util.Log
 import android.view.SurfaceView
-import kotlinx.coroutines.*
 import com.rthqks.synapse.assets.AssetManager
 import com.rthqks.synapse.exec.edge.Config
 import com.rthqks.synapse.exec.edge.Connection
@@ -13,6 +12,7 @@ import com.rthqks.synapse.gl.GlesManager
 import com.rthqks.synapse.logic.Edge
 import com.rthqks.synapse.logic.Graph
 import com.rthqks.synapse.logic.Node
+import kotlinx.coroutines.*
 import java.util.concurrent.atomic.AtomicReference
 
 class GraphExecutor(

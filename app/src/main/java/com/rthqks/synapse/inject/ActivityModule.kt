@@ -1,12 +1,12 @@
 package com.rthqks.synapse.inject
 
-import dagger.Module
-import dagger.android.ContributesAndroidInjector
 import com.rthqks.synapse.ui.build.ConnectionFragment
 import com.rthqks.synapse.ui.build.GraphFragment
 import com.rthqks.synapse.ui.build.NodeFragment
 import com.rthqks.synapse.ui.build.NodeListDialog
 import com.rthqks.synapse.ui.edit.EditPropertiesFragment
+import dagger.Module
+import dagger.android.ContributesAndroidInjector
 
 @Module(includes = [ViewModels::class])
 abstract class ActivityModule {

@@ -6,13 +6,13 @@ import androidx.room.Index
 @Entity(
     tableName = "property",
     indices = [
-        Index("graphId", "nodeId", "type", unique = true)
+        Index("graphId", "nodeId", "key", unique = true)
     ],
-    primaryKeys = ["graphId", "nodeId", "type"]
+    primaryKeys = ["graphId", "nodeId", "key"]
 )
 data class PropertyData(
     val graphId: Int,
     val nodeId: Int,
-    val type: String,
-    var value: String
+    val key: String,
+    var value: String?
 )

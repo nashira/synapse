@@ -2,7 +2,10 @@ package com.rthqks.synapse.ui.build
 
 import android.os.Bundle
 import android.util.Log
-import android.view.*
+import android.view.LayoutInflater
+import android.view.MotionEvent
+import android.view.View
+import android.view.ViewGroup
 import androidx.appcompat.view.menu.MenuPopupHelper
 import androidx.appcompat.widget.PopupMenu
 import androidx.core.view.isEmpty
@@ -10,15 +13,15 @@ import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModelProvider
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.RecyclerView
-import dagger.android.support.DaggerFragment
-import kotlinx.android.synthetic.main.fragment_node.*
-import kotlinx.android.synthetic.main.layout_port_fragment_node.view.*
-import kotlinx.android.synthetic.main.layout_property.view.*
 import com.rthqks.synapse.R
 import com.rthqks.synapse.logic.Connector
 import com.rthqks.synapse.logic.Node
 import com.rthqks.synapse.logic.Port
 import com.rthqks.synapse.logic.Property
+import dagger.android.support.DaggerFragment
+import kotlinx.android.synthetic.main.fragment_node.*
+import kotlinx.android.synthetic.main.layout_port_fragment_node.view.*
+import kotlinx.android.synthetic.main.layout_property.view.*
 import javax.inject.Inject
 
 class NodeFragment : DaggerFragment() {
@@ -63,7 +66,7 @@ class NodeFragment : DaggerFragment() {
         touchMediator = TouchMediator(context!!, viewModel::swipeEvent)
         propertyBinder = PropertyBinder(tool_main) {
             Log.d(TAG, "onChange ${it.key.name} ${it.value}")
-            viewModel.onPropertyChange(it)
+            viewModel.onPropertyChange(nodeId, it)
         }
 
         viewModel.graph.getNode(nodeId)?.let {

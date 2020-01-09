@@ -5,13 +5,13 @@ import android.util.Log
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
 import com.rthqks.synapse.data.GraphData
 import com.rthqks.synapse.data.NodeData
 import com.rthqks.synapse.data.PropertyData
 import com.rthqks.synapse.data.SynapseDao
 import com.rthqks.synapse.util.Consumable
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 class EditGraphViewModel @Inject constructor(
