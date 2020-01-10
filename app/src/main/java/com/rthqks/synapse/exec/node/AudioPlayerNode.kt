@@ -6,9 +6,9 @@ import android.media.AudioRecord
 import android.media.AudioTrack
 import android.util.Log
 import com.rthqks.synapse.exec.NodeExecutor
-import com.rthqks.synapse.exec.edge.AudioConfig
-import com.rthqks.synapse.exec.edge.AudioEvent
-import com.rthqks.synapse.exec.edge.Connection
+import com.rthqks.synapse.exec.link.AudioConfig
+import com.rthqks.synapse.exec.link.AudioEvent
+import com.rthqks.synapse.exec.link.Connection
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch

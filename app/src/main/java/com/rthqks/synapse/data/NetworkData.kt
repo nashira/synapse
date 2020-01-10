@@ -4,17 +4,17 @@ import androidx.room.Entity
 import androidx.room.Ignore
 import androidx.room.PrimaryKey
 
-@Entity(tableName = "graph")
-data class GraphData(
+@Entity(tableName = "network")
+data class NetworkData(
     @PrimaryKey(autoGenerate = true) var id: Int,
     var name: String
 ) {
     @Ignore
     val nodes = mutableListOf<NodeData>()
     @Ignore
-    val edges = mutableListOf<EdgeData>()
+    val edges = mutableListOf<LinkData>()
 
     override fun toString(): String {
-        return "GraphData(id=$id, name='$name', nodes=$nodes, edges=$edges)"
+        return "NetworkData(id=$id, name='$name', nodes=$nodes, links=$edges)"
     }
 }

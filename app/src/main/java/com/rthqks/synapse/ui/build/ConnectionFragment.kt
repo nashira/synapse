@@ -15,7 +15,7 @@ import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.rthqks.synapse.R
 import com.rthqks.synapse.logic.Connector
-import com.rthqks.synapse.logic.Graph
+import com.rthqks.synapse.logic.Network
 import com.rthqks.synapse.logic.Node
 import dagger.android.support.DaggerFragment
 import kotlinx.android.synthetic.main.fragment_connection.*
@@ -27,7 +27,7 @@ class ConnectionFragment : DaggerFragment() {
     @Inject
     lateinit var viewModelFactory: ViewModelProvider.Factory
     private lateinit var viewModel: BuilderViewModel
-    private val graph: Graph get() = viewModel.graph
+    private val network: Network get() = viewModel.network
     private lateinit var connectionAdapter: ConnectionAdapter
 
     override fun onCreateView(
@@ -53,12 +53,12 @@ class ConnectionFragment : DaggerFragment() {
             Log.d(TAG, "changed ${it.node.type} ${it.port.name}")
 
             if (it.node.type == Node.Type.Creation) {
-                val connectors = graph.getCreationConnectors()
+                val connectors = network.getCreationConnectors()
 //                viewModel.addConnectionPreview(it, connectors)
                 connectionAdapter.setData(emptyList(), connectors)
             } else {
-                val openConnectors = graph.getOpenConnectors(it)
-                val potentialConnectors = graph.getPotentialConnectors(it)
+                val openConnectors = network.getOpenConnectors(it)
+                val potentialConnectors = network.getPotentialConnectors(it)
                 viewModel.viewModelScope.launch {
                     viewModel.addConnectionPreview(it, potentialConnectors)
                     viewModel.waitForExecutor()

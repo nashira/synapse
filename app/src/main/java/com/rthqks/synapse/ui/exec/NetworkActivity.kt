@@ -12,45 +12,45 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.ViewModelProviders
 import com.rthqks.synapse.R
 import dagger.android.support.DaggerAppCompatActivity
-import kotlinx.android.synthetic.main.activity_exec_graph.*
+import kotlinx.android.synthetic.main.activity_exec_network.*
 import javax.inject.Inject
 
-class ExecGraphActivity : DaggerAppCompatActivity() {
+class NetworkActivity : DaggerAppCompatActivity() {
 
     @Inject
     lateinit var viewModelFactory: ViewModelProvider.Factory
-    private lateinit var viewModel: ExecGraphViewModel
+    private lateinit var viewModel: NetworkViewModel
     private var playing = true
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_exec_graph)
+        setContentView(R.layout.activity_exec_network)
         setSupportActionBar(toolbar)
 
-        viewModel = ViewModelProviders.of(this, viewModelFactory)[ExecGraphViewModel::class.java]
+        viewModel = ViewModelProviders.of(this, viewModelFactory)[NetworkViewModel::class.java]
         viewModel.setSurfaceView(surface_view)
 
-        val graphId = intent.getIntExtra(GRAPH_ID, -1)
-        Log.d(TAG, "graphid: $graphId")
+        val networkId = intent.getIntExtra(NETWORK_ID, -1)
+        Log.d(TAG, "networkid: $networkId")
 
         if (savedInstanceState == null) {
-            viewModel.loadGraph(graphId)
+            viewModel.loadNetwork(networkId)
         }
 
-        viewModel.graphLoaded.observe(this, Observer {
+        viewModel.networkLoaded.observe(this, Observer {
             toolbar.title = it.name
         })
 
         /*
         viewModel.surfaceViewRequest.observe(this, Observer {
-            // create surface views needed by graph, pass view objects back
+            // create surface views needed by network, pass view objects back
         })
          */
         hideSystemUI()
     }
 
     override fun onCreateOptionsMenu(menu: Menu?): Boolean {
-        menuInflater.inflate(R.menu.exec_graph, menu)
+        menuInflater.inflate(R.menu.exec_network, menu)
         return true
     }
 
@@ -98,11 +98,11 @@ class ExecGraphActivity : DaggerAppCompatActivity() {
     }
 
     companion object {
-        private val TAG = ExecGraphActivity::class.java.simpleName
-        private const val GRAPH_ID = "graph_id"
-        fun getIntent(activity: Activity, graphId: Int): Intent {
-            val intent = Intent(activity, ExecGraphActivity::class.java)
-            intent.putExtra(GRAPH_ID, graphId)
+        private val TAG = NetworkActivity::class.java.simpleName
+        private const val NETWORK_ID = "network_id"
+        fun getIntent(activity: Activity, networkId: Int): Intent {
+            val intent = Intent(activity, NetworkActivity::class.java)
+            intent.putExtra(NETWORK_ID, networkId)
             return intent
         }
     }

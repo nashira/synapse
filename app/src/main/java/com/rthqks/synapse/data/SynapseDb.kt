@@ -6,9 +6,9 @@ import androidx.room.TypeConverters
 
 @Database(
     entities = [
-        GraphData::class,
+        NetworkData::class,
         NodeData::class,
-        EdgeData::class,
+        LinkData::class,
         PropertyData::class
     ],
     version = SynapseDb.VERSION,
@@ -20,7 +20,7 @@ abstract class SynapseDb : RoomDatabase() {
     abstract fun dao(): SynapseDao
 
     companion object {
-        const val VERSION = 6
+        const val VERSION = 7
         const val NAME = "synapse.db"
     }
 }

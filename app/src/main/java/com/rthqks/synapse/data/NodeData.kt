@@ -6,13 +6,13 @@ import com.rthqks.synapse.logic.Node
 
 @Entity(
     tableName = "node",
-    primaryKeys = ["graphId", "id"],
+    primaryKeys = ["networkId", "id"],
     indices = [
-        Index("graphId", "id", unique = true)
+        Index("networkId", "id", unique = true)
     ]
 )
 data class NodeData(
     val id: Int,
-    val graphId: Int,
+    val networkId: Int,
     val type: Node.Type
 )

@@ -33,7 +33,7 @@ class NodeListDialog : DialogFragment() {
     override fun onActivityCreated(savedInstanceState: Bundle?) {
         super.onActivityCreated(savedInstanceState)
         viewModel = ViewModelProvider(activity!!, viewModelFactory)[BuilderViewModel::class.java]
-        val nodes = viewModel.graph.getNodes()
+        val nodes = viewModel.network.getNodes()
         adapter.setNodes(nodes)
         Log.d("NodeList", "nodes $nodes")
     }

@@ -4,14 +4,14 @@ import androidx.room.Entity
 import androidx.room.Index
 
 @Entity(
-    tableName = "edge",
-    primaryKeys = ["graphId", "fromKey", "toKey", "fromNodeId", "toNodeId"],
+    tableName = "link",
+    primaryKeys = ["networkId", "fromKey", "toKey", "fromNodeId", "toNodeId"],
     indices = [
-        Index("graphId")
+        Index("networkId")
     ]
 )
-data class EdgeData(
-    val graphId: Int,
+data class LinkData(
+    val networkId: Int,
     val fromNodeId: Int,
     val fromKey: String,
     val toNodeId: Int,

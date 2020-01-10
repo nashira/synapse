@@ -1,6 +1,6 @@
 package com.rthqks.synapse
 
-import com.rthqks.synapse.exec.edge.*
+import com.rthqks.synapse.exec.link.*
 import kotlinx.coroutines.*
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotEquals
@@ -243,7 +243,7 @@ class ExampleUnitTest {
     }
 
     @Test
-    fun graphCoroutines() {
+    fun networkCoroutines() {
         runBlocking {
             val gTest = GTest()
             gTest.initialize()
@@ -258,14 +258,14 @@ class ExampleUnitTest {
 }
 
 class GTest {
-    val graphJob = SupervisorJob()
+    val networkJob = SupervisorJob()
     val glDispatcher = newSingleThreadContext("GLDispatcher")
-    val scope = CoroutineScope(Dispatchers.Default + graphJob)
+    val scope = CoroutineScope(Dispatchers.Default + networkJob)
     val nodes = (1..5).map { NTest(glDispatcher, it) }
 
     suspend fun initialize() {
         println("initialize")
-        val job = Job(graphJob)
+        val job = Job(networkJob)
         val ex = CoroutineExceptionHandler { coroutineContext, throwable ->
             println("caught exception")
 //            throw throwable

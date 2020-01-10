@@ -4,24 +4,24 @@ import android.content.Context
 import android.util.Log
 import android.view.SurfaceView
 import com.rthqks.synapse.assets.AssetManager
-import com.rthqks.synapse.exec.edge.Config
-import com.rthqks.synapse.exec.edge.Connection
-import com.rthqks.synapse.exec.edge.Event
+import com.rthqks.synapse.exec.link.Config
+import com.rthqks.synapse.exec.link.Connection
+import com.rthqks.synapse.exec.link.Event
 import com.rthqks.synapse.exec.node.*
 import com.rthqks.synapse.gl.GlesManager
-import com.rthqks.synapse.logic.Edge
-import com.rthqks.synapse.logic.Graph
+import com.rthqks.synapse.logic.Link
+import com.rthqks.synapse.logic.Network
 import com.rthqks.synapse.logic.Node
 import kotlinx.coroutines.*
 import java.util.concurrent.atomic.AtomicReference
 
-class GraphExecutor(
+class NetworkExecutor(
     private val context: Context,
     private val dispatcher: CoroutineDispatcher,
     private val glesManager: GlesManager,
     private val cameraManager: CameraManager,
     private val assetManager: AssetManager,
-    private val graph: Graph
+    private val network: Network
 ) {
     private val exceptionHandler = CoroutineExceptionHandler { _, throwable ->
         Log.e(TAG, "error", throwable)
@@ -40,7 +40,7 @@ class GraphExecutor(
                 error("unexpected state $it")
             }
         }
-        graph.getNodes().forEach {
+        network.getNodes().forEach {
             val node = nodeExecutor(it)
             nodes[it.id] = node
         }
@@ -51,7 +51,7 @@ class GraphExecutor(
             Log.d(TAG, "create complete $it")
         }
 
-        parallelJoin(graph.getEdges()) { edge ->
+        parallelJoin(network.getEdges()) { edge ->
             Log.d(TAG, "connect $edge")
             addEdge(edge)
             Log.d(TAG, "connect complete $edge")
@@ -80,7 +80,7 @@ class GraphExecutor(
             Node.Type.LutFilter -> GlNode(glesManager, assetManager)
             Node.Type.ShaderFilter -> TODO()
             Node.Type.Speakers -> AudioPlayerNode()
-            Node.Type.Screen -> SurfaceViewNode(assetManager, glesManager, node.properties + graph.properties)
+            Node.Type.Screen -> SurfaceViewNode(assetManager, glesManager, node.properties + network.properties)
 
             Node.Type.Properties,
             Node.Type.Creation,
@@ -88,11 +88,11 @@ class GraphExecutor(
         }
     }
 
-    private suspend fun addEdge(edge: Edge) {
-        val fromNode = nodes[edge.fromNodeId]!!
-        val toNode = nodes[edge.toNodeId]!!
-        val fromKey = Connection.Key<Config, Event>(edge.fromPortId)
-        val toKey = Connection.Key<Config, Event>(edge.toPortId)
+    private suspend fun addEdge(link: Link) {
+        val fromNode = nodes[link.fromNodeId]!!
+        val toNode = nodes[link.toNodeId]!!
+        val fromKey = Connection.Key<Config, Event>(link.fromPortId)
+        val toKey = Connection.Key<Config, Event>(link.toPortId)
 
         val config = fromNode.getConfig(fromKey)
         toNode.setConfig(toKey, config)
@@ -178,17 +178,17 @@ class GraphExecutor(
         }
     }
 
-    suspend fun addNode(node: Node, edge: Edge) {
+    suspend fun addNode(node: Node, link: Link) {
         val executor = nodeExecutor(node)
         nodes[node.id] = executor
         executor.create()
-        addEdge(edge)
+        addEdge(link)
         executor.initialize()
     }
 
     fun getNode(nodeId: Int): NodeExecutor = nodes[nodeId] ?: error("no node for id $nodeId")
 
-    suspend fun add(newNodes: List<Node>, newEdges: List<Edge>) {
+    suspend fun add(newNodes: List<Node>, newLinks: List<Link>) {
         val addedNodes = newNodes.map {
             val node = nodeExecutor(it)
             nodes[it.id] = node
@@ -201,7 +201,7 @@ class GraphExecutor(
             Log.d(TAG, "create complete $it")
         }
 
-        parallelJoin(newEdges) { edge ->
+        parallelJoin(newLinks) { edge ->
             Log.d(TAG, "connect $edge")
             addEdge(edge)
             Log.d(TAG, "connect complete $edge")
@@ -216,7 +216,7 @@ class GraphExecutor(
     }
 
     companion object {
-        const val TAG = "GraphExecutor"
+        const val TAG = "NetworkExecutor"
     }
 
     enum class State {

@@ -12,7 +12,7 @@ import androidx.constraintlayout.widget.ConstraintSet
 import com.rthqks.synapse.R
 import com.rthqks.synapse.assets.AssetManager
 import com.rthqks.synapse.exec.NodeExecutor
-import com.rthqks.synapse.exec.edge.*
+import com.rthqks.synapse.exec.link.*
 import com.rthqks.synapse.gl.*
 import com.rthqks.synapse.logic.CropToFit
 import com.rthqks.synapse.logic.Properties

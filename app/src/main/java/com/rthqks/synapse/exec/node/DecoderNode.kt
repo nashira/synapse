@@ -15,7 +15,7 @@ import android.util.Size
 import android.view.Surface
 import com.rthqks.synapse.codec.Decoder
 import com.rthqks.synapse.exec.NodeExecutor
-import com.rthqks.synapse.exec.edge.*
+import com.rthqks.synapse.exec.link.*
 import com.rthqks.synapse.gl.GlesManager
 import com.rthqks.synapse.gl.Texture
 import com.rthqks.synapse.logic.Properties

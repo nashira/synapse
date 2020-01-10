@@ -1,6 +1,6 @@
 package com.rthqks.synapse.exec
 
-import com.rthqks.synapse.exec.edge.*
+import com.rthqks.synapse.exec.link.*
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.channels.Channel

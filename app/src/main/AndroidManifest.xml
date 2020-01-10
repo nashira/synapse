@@ -22,9 +22,9 @@
         android:theme="@style/AppTheme.NoActionBar"
         tools:ignore="GoogleAppIndexingWarning">
 
-        <activity android:name="com.rthqks.synapse.ui.browse.GraphListActivity" />
+        <activity android:name="com.rthqks.synapse.ui.browse.NetworkListActivity" />
 
-        <activity android:name="com.rthqks.synapse.ui.exec.ExecGraphActivity" />
+        <activity android:name="com.rthqks.synapse.ui.exec.NetworkActivity" />
         <activity
             android:name="com.rthqks.synapse.ui.build.BuilderActivity"
             android:screenOrientation="portrait" />

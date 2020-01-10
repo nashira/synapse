@@ -7,7 +7,7 @@ import android.util.Size
 import android.view.Surface
 import com.rthqks.synapse.assets.AssetManager
 import com.rthqks.synapse.exec.NodeExecutor
-import com.rthqks.synapse.exec.edge.*
+import com.rthqks.synapse.exec.link.*
 import com.rthqks.synapse.gl.*
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.coroutineScope

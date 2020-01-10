@@ -11,12 +11,12 @@ import com.rthqks.synapse.R
 import com.rthqks.synapse.logic.GetNode
 import com.rthqks.synapse.logic.Node
 import dagger.android.support.DaggerFragment
-import kotlinx.android.synthetic.main.fragment_graph.*
+import kotlinx.android.synthetic.main.fragment_network.*
 import kotlinx.android.synthetic.main.layout_node_item.view.*
 import javax.inject.Inject
 import kotlin.math.max
 
-class GraphFragment : DaggerFragment() {
+class NetworkFragment : DaggerFragment() {
     @Inject
     lateinit var viewModelFactory: ViewModelProvider.Factory
     private lateinit var viewModel: BuilderViewModel
@@ -32,23 +32,23 @@ class GraphFragment : DaggerFragment() {
         container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View? {
-        return inflater.inflate(R.layout.fragment_graph, container, false)
+        return inflater.inflate(R.layout.fragment_network, container, false)
     }
 
     override fun onActivityCreated(savedInstanceState: Bundle?) {
         super.onActivityCreated(savedInstanceState)
         viewModel = ViewModelProvider(activity!!, viewModelFactory)[BuilderViewModel::class.java]
         viewModel.setTitle(R.string.name_node_type_properties)
-        viewModel.setMenu(R.menu.fragment_graph)
+        viewModel.setMenu(R.menu.fragment_network)
 
         setupEditTitle()
-        edit_title.setText(viewModel.graph.name)
+        edit_title.setText(viewModel.network.name)
 
         button_save.setOnClickListener {
             handleNameSave()
         }
 
-        val properties = viewModel.graph.properties
+        val properties = viewModel.network.properties
 
         propertyBinder = PropertyBinder(properties, tool_list, tool_main) {
             Log.d(TAG, "onChange ${it.key.name} ${it.value}")
@@ -70,7 +70,7 @@ class GraphFragment : DaggerFragment() {
 
             true
         })
-        val nodes = viewModel.graph.getNodes()
+        val nodes = viewModel.network.getNodes()
         connectorAdapter.setNodes(nodes)
         node_list.adapter = connectorAdapter
     }
@@ -91,21 +91,21 @@ class GraphFragment : DaggerFragment() {
         val imm = context!!.getSystemService(Activity.INPUT_METHOD_SERVICE) as InputMethodManager
         imm.hideSoftInputFromWindow(edit_title.windowToken, 0)
         edit_title.clearFocus()
-        viewModel.setGraphName(edit_title.text.toString())
+        viewModel.setNetworkName(edit_title.text.toString())
     }
 
     override fun onResume() {
         super.onResume()
         activity?.let {
             viewModel.setTitle(R.string.name_node_type_properties)
-            viewModel.setMenu(R.menu.fragment_graph)
+            viewModel.setMenu(R.menu.fragment_network)
         }
         Log.d(TAG, "onResume")
     }
 
     companion object {
-        const val TAG = "GraphFragment"
-        fun newInstance(): GraphFragment = GraphFragment()
+        const val TAG = "NetworkFragment"
+        fun newInstance(): NetworkFragment = NetworkFragment()
     }
 }
 

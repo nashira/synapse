@@ -6,7 +6,7 @@ import android.util.Log
 import android.util.Size
 import com.rthqks.synapse.assets.AssetManager
 import com.rthqks.synapse.exec.NodeExecutor
-import com.rthqks.synapse.exec.edge.*
+import com.rthqks.synapse.exec.link.*
 import com.rthqks.synapse.gl.*
 import com.rthqks.synapse.logic.BlurSize
 import com.rthqks.synapse.logic.NumPasses

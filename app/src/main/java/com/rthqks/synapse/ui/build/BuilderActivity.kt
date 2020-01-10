@@ -14,7 +14,7 @@ import androidx.viewpager2.widget.ViewPager2
 import com.google.firebase.analytics.FirebaseAnalytics
 import com.rthqks.synapse.R
 import com.rthqks.synapse.logic.Node
-import com.rthqks.synapse.ui.exec.ExecGraphActivity
+import com.rthqks.synapse.ui.exec.NetworkActivity
 import dagger.android.support.DaggerAppCompatActivity
 import kotlinx.android.synthetic.main.activity_builder.*
 import javax.inject.Inject
@@ -70,22 +70,22 @@ class BuilderActivity : DaggerAppCompatActivity() {
         })
 
         savedInstanceState ?: run {
-            val graphId = intent.getIntExtra(GRAPH_ID, -1)
-            viewModel.setGraphId(graphId)
+            val networkId = intent.getIntExtra(NETWORK_ID, -1)
+            viewModel.setNetworkId(networkId)
             FirebaseAnalytics.getInstance(this)
-                .logEvent("EditGraph", Bundle().also { it.putInt("graph_id", graphId) })
+                .logEvent("EditNetwork", Bundle().also { it.putInt("network_id", networkId) })
         }
 
         toolbar.setOnMenuItemClickListener {
             when (it.itemId) {
                 R.id.add_node -> viewModel.onAddNode()
                 R.id.delete_node -> onDeleteNode()
-                R.id.delete_graph -> onDeleteGraph()
+                R.id.delete_network -> onDeleteNetwork()
                 R.id.jump_to_node -> onJumpToNode()
-                R.id.jump_to_graph -> viewModel.jumpToNode(BuilderViewModel.PROPERTIES_NODE)
+                R.id.jump_to_network -> viewModel.jumpToNode(BuilderViewModel.PROPERTIES_NODE)
                 R.id.cancel -> viewModel.cancelConnection()
                 R.id.execute -> startActivity(
-                    ExecGraphActivity.getIntent(this, viewModel.graph.id)
+                    NetworkActivity.getIntent(this, viewModel.network.id)
                 )
             }
             true
@@ -136,15 +136,15 @@ class BuilderActivity : DaggerAppCompatActivity() {
         }.show(supportFragmentManager, null)
     }
 
-    private fun onDeleteGraph() {
+    private fun onDeleteNetwork() {
         ConfirmDialog(
-            R.string.menu_title_delete_graph,
+            R.string.menu_title_delete_network,
             R.string.button_cancel,
             R.string.confirm_delete
         ) {
             Log.d(TAG, "onDelete $it")
             if (it) {
-                viewModel.deleteGraph()
+                viewModel.deleteNetwork()
                 finish()
             }
         }.show(supportFragmentManager, null)
@@ -158,11 +158,11 @@ class BuilderActivity : DaggerAppCompatActivity() {
 
     companion object {
         const val TAG = "BuilderActivity"
-        const val GRAPH_ID = "graph_id"
+        const val NETWORK_ID = "network_id"
 
-        fun getIntent(activity: Activity, graphId: Int = -1): Intent =
+        fun getIntent(activity: Activity, networkId: Int = -1): Intent =
             Intent(activity, BuilderActivity::class.java).also {
-                it.putExtra(GRAPH_ID, graphId)
+                it.putExtra(NETWORK_ID, networkId)
             }
     }
 
@@ -180,7 +180,7 @@ class BuilderActivity : DaggerAppCompatActivity() {
         override fun createFragment(position: Int): Fragment {
             val node = nodes[position]
             return when (node.type) {
-                Node.Type.Properties -> GraphFragment.newInstance()
+                Node.Type.Properties -> NetworkFragment.newInstance()
                 Node.Type.Creation,
                 Node.Type.Connection -> ConnectionFragment.newInstance()
                 else -> NodeFragment.newInstance(node.id)

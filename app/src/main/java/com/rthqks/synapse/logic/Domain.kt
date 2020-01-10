@@ -188,5 +188,5 @@ val NodeMap = Nodes.map { it.type to it }.toMap()
 
 fun GetNode(type: Node.Type) = NodeMap[type] ?: error("missing node $type")
 
-fun NewNode(type: Node.Type, graphId: Int = -1, id: Int = -1) =
-    (NodeMap[type] ?: error("missing node $type")).copy(graphId, id)
+fun NewNode(type: Node.Type, networkId: Int = -1, id: Int = -1) =
+    (NodeMap[type] ?: error("missing node $type")).copy(networkId, id)

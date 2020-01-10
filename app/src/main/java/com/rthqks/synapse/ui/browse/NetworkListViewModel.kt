@@ -4,23 +4,23 @@ import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.rthqks.synapse.data.SynapseDao
-import com.rthqks.synapse.logic.Graph
+import com.rthqks.synapse.logic.Network
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
-class GraphListViewModel @Inject constructor(
+class NetworkListViewModel @Inject constructor(
     private val dao: SynapseDao
 ): ViewModel() {
-    val graphList = MutableLiveData<List<Graph>>()
+    val networkList = MutableLiveData<List<Network>>()
 
     init {
-        loadGraphs()
+        loadNetworks()
     }
 
-    fun loadGraphs() {
+    fun loadNetworks() {
         viewModelScope.launch(Dispatchers.IO) {
-            graphList.postValue(dao.getGraphs())
+            networkList.postValue(dao.getNetworks())
         }
     }
 }

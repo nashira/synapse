@@ -17,8 +17,8 @@ import javax.inject.Inject
 class Executor @Inject constructor(
     private val context: Context
 ) {
-    private var graphExecutor: GraphExecutor? = null
-    private var graph: Graph? = null
+    private var networkExecutor: NetworkExecutor? = null
+    private var network: Network? = null
     private val dispatcher = Executors.newFixedThreadPool(6).asCoroutineDispatcher()
     private val glesManager = GlesManager()
     private val cameraManager = CameraManager(context)
@@ -34,8 +34,8 @@ class Executor @Inject constructor(
             withTimeoutOrNull(msg.timeout) {
                 when (msg) {
                     is Operation.Initialize -> doInitialize(msg.isPreview)
-                    is Operation.InitGraph -> doInitializeGraph(msg.graph)
-                    is Operation.ReleaseGraph -> doReleaseGraph()
+                    is Operation.InitNetwork -> doInitializeNetwork(msg.network)
+                    is Operation.ReleaseNetwork -> doReleaseNetwork()
                     is Operation.Release -> doRelease()
                     is Operation.Start -> doStart()
                     is Operation.Stop -> doStop()
@@ -56,9 +56,9 @@ class Executor @Inject constructor(
         }
     }
 
-    fun initializeGraph(graph: Graph) {
+    fun initializeNetwork(network: Network) {
         runBlocking {
-            commandChannel.send(Operation.InitGraph(graph))
+            commandChannel.send(Operation.InitNetwork(network))
         }
     }
 
@@ -68,9 +68,9 @@ class Executor @Inject constructor(
         }
     }
 
-    fun releaseGraph() {
+    fun releaseNetwork() {
         runBlocking {
-            commandChannel.send(Operation.ReleaseGraph())
+            commandChannel.send(Operation.ReleaseNetwork())
         }
     }
 
@@ -105,9 +105,9 @@ class Executor @Inject constructor(
     }
 
     private suspend fun doSetSurfaceView(nodeId: Int, surfaceView: SurfaceView) {
-        val graphExecutor = graphExecutor ?: return
+        val networkExecutor = networkExecutor ?: return
         val nodes = LinkedList<Pair<Int, NodeExecutor>>()
-        nodes.add(nodeId to graphExecutor.getNode(nodeId))
+        nodes.add(nodeId to networkExecutor.getNode(nodeId))
 
         do {
             val (id, node) = nodes.remove()
@@ -118,9 +118,9 @@ class Executor @Inject constructor(
                 return
             }
 
-            graph?.getEdges(id)?.forEach {
-                if (it.fromNodeId == id && it.toNodeId > Graph.COPY_ID_SKIP) {
-                    nodes.add(it.toNodeId to graphExecutor.getNode(it.toNodeId))
+            network?.getEdges(id)?.forEach {
+                if (it.fromNodeId == id && it.toNodeId > Network.COPY_ID_SKIP) {
+                    nodes.add(it.toNodeId to networkExecutor.getNode(it.toNodeId))
                 }
             }
         } while (nodes.isNotEmpty())
@@ -149,71 +149,71 @@ class Executor @Inject constructor(
     }
 
     private suspend fun doStart() {
-        graphExecutor?.start()
+        networkExecutor?.start()
     }
 
     private suspend fun doStop() {
-        graphExecutor?.stop()
+        networkExecutor?.stop()
     }
 
-    private suspend fun doInitializeGraph(graph: Graph) {
-        Log.d(TAG, "initialize graph ${graph.id}")
-        var graphNew = graph
+    private suspend fun doInitializeNetwork(network: Network) {
+        Log.d(TAG, "initialize network ${network.id}")
+        var networkNew = network
         if (preview) {
-            graphNew = graph.copy()
-            graphNew.getNodes().forEach { source ->
+            networkNew = network.copy()
+            networkNew.getNodes().forEach { source ->
                 source.ports.values.firstOrNull {
                     it.output && it.type == Port.Type.Video
                 }?.id?.let {
-                    val node = NewNode(Node.Type.Screen, graphNew.id)
-                    graphNew.addNode(node)
-                    graphNew.addEdge(source.id, it, node.id, SurfaceViewNode.INPUT.id)
+                    val node = NewNode(Node.Type.Screen, networkNew.id)
+                    networkNew.addNode(node)
+                    networkNew.addLink(source.id, it, node.id, SurfaceViewNode.INPUT.id)
                 }
             }
         }
 
-        this.graph = graphNew
+        this.network = networkNew
 
-        graphExecutor = GraphExecutor(
+        networkExecutor = NetworkExecutor(
             context,
             dispatcher,
             glesManager,
             cameraManager,
             assetManager,
-            graphNew
+            networkNew
         )
-        graphExecutor?.initialize()
+        networkExecutor?.initialize()
     }
 
-    private suspend fun doReleaseGraph() {
-        Log.d(TAG, "release graph ${graph?.id}")
-        graphExecutor?.release()
+    private suspend fun doReleaseNetwork() {
+        Log.d(TAG, "release network ${network?.id}")
+        networkExecutor?.release()
     }
 
     private suspend fun doAddConnectionPreviews(source: Connector, targets: List<Connector>) {
-        val graph = graph ?: return
+        val network = network ?: return
         Log.d(TAG, "source node ${source.node.type} ${source.node.id} ${source.port.id}")
-        val data = mutableListOf<Pair<Node, Edge>>()
+        val data = mutableListOf<Pair<Node, Link>>()
         targets.forEach {
             val target = it.node
             Log.d(TAG, "adding node ${target.type} ${target.id} ${it.port.id}")
-            graph.addNode(target)
+            network.addNode(target)
             Log.d(TAG, "added node ${target.type} ${target.id} ${it.port.id}")
-            val edge = graph.addEdge(source.node.id, source.port.id, target.id, it.port.id)
+            val edge = network.addLink(source.node.id, source.port.id, target.id, it.port.id)
             data.add(target to edge)
 
             target.ports.values.firstOrNull {
                 it.output && it.type == Port.Type.Video
             }?.id?.let {
-                val screen = NewNode(Node.Type.Screen, graph.id)
-                graph.addNode(screen)
-                val se = graph.addEdge(target.id, it, screen.id, SurfaceViewNode.INPUT.id)
+                val screen = NewNode(Node.Type.Screen, network.id)
+                network.addNode(screen)
+                val se = network.addLink(target.id, it, screen.id, SurfaceViewNode.INPUT.id)
                 data.add(screen to se)
             }
         }
 
         val (nodes, edges) = data.unzip()
-        graphExecutor?.add(nodes, edges)
+        networkExecutor?.add(nodes, edges)
     }
 
     companion object {
@@ -224,10 +224,10 @@ class Executor @Inject constructor(
         val timeout: Long = 2000
     ) {
         data class Initialize(val isPreview: Boolean) : Operation()
-        data class InitGraph(val graph: Graph) : Operation(10000)
+        data class InitNetwork(val network: Network) : Operation(10000)
         class Start : Operation()
         class Stop : Operation()
-        class ReleaseGraph() : Operation()
+        class ReleaseNetwork() : Operation()
         class Release : Operation()
         data class ConnectPreview(val source: Connector, val targets: List<Connector>) : Operation()
         data class SetSurfaceView(val nodeId: Int, val surfaceView: SurfaceView) : Operation()

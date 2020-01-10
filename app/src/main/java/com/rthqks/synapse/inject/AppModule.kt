@@ -5,9 +5,9 @@ import androidx.room.Room
 import com.rthqks.synapse.SynapseApp
 import com.rthqks.synapse.data.SynapseDao
 import com.rthqks.synapse.data.SynapseDb
-import com.rthqks.synapse.ui.browse.GraphListActivity
+import com.rthqks.synapse.ui.browse.NetworkListActivity
 import com.rthqks.synapse.ui.build.BuilderActivity
-import com.rthqks.synapse.ui.exec.ExecGraphActivity
+import com.rthqks.synapse.ui.exec.NetworkActivity
 import com.rthqks.synapse.ui.splash.SplashActivity
 import dagger.Module
 import dagger.Provides
@@ -19,11 +19,11 @@ abstract class AppModule {
 
     @ActivityScope
     @ContributesAndroidInjector(modules = [ActivityModule::class])
-    abstract fun contributeGraphListActivity(): GraphListActivity
+    abstract fun contributeNetworkListActivity(): NetworkListActivity
 
     @ActivityScope
     @ContributesAndroidInjector(modules = [ActivityModule::class])
-    abstract fun contributeExecGraphActivity(): ExecGraphActivity
+    abstract fun contributeExecNetworkActivity(): NetworkActivity
 
     @ActivityScope
     @ContributesAndroidInjector(modules = [ActivityModule::class])

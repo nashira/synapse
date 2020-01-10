@@ -6,7 +6,6 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModelProvider
 import com.rthqks.synapse.R
 import com.rthqks.synapse.data.NodeData
@@ -17,7 +16,6 @@ import javax.inject.Inject
 class EditPropertiesFragment : DaggerFragment() {
     @Inject
     lateinit var viewModelFactory: ViewModelProvider.Factory
-    private lateinit var graphViewModel: EditGraphViewModel
     private var nodeId: Int = -1
     private var fileSelectData: PropertyData? = null
 
@@ -36,23 +34,21 @@ class EditPropertiesFragment : DaggerFragment() {
 
     override fun onActivityCreated(savedInstanceState: Bundle?) {
         super.onActivityCreated(savedInstanceState)
-        graphViewModel =
-            ViewModelProvider(activity!!, viewModelFactory)[EditGraphViewModel::class.java]
 //        toolbar.setTitle(node.type.name)
 //        recycler_view.layoutManager = LinearLayoutManager(context)
-//        recycler_view.adapter = PropertyAdapter(node, graphViewModel)
+//        recycler_view.adapter = PropertyAdapter(node, networkViewModel)
 
-        graphViewModel.onSelectFile.observe(viewLifecycleOwner, Observer {
-            it.consume()?.let {
-                fileSelectData = it
-                Intent(Intent.ACTION_OPEN_DOCUMENT).apply {
-                    addCategory(Intent.CATEGORY_OPENABLE)
-                    type = "video/*"
-                    flags = flags or Intent.FLAG_GRANT_READ_URI_PERMISSION
-                    startActivityForResult(this, OPEN_DOC_REQUEST)
-                }
-            }
-        })
+//        networkViewModel.onSelectFile.observe(viewLifecycleOwner, Observer {
+//            it.consume()?.let {
+//                fileSelectData = it
+//                Intent(Intent.ACTION_OPEN_DOCUMENT).apply {
+//                    addCategory(Intent.CATEGORY_OPENABLE)
+//                    type = "video/*"
+//                    flags = flags or Intent.FLAG_GRANT_READ_URI_PERMISSION
+//                    startActivityForResult(this, OPEN_DOC_REQUEST)
+//                }
+//            }
+//        })
     }
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
@@ -62,7 +58,7 @@ class EditPropertiesFragment : DaggerFragment() {
                     data.data!!,
                     Intent.FLAG_GRANT_READ_URI_PERMISSION
                 )
-                fileSelectData?.let { p -> graphViewModel.onFileSelected(data.data, p) }
+//                fileSelectData?.let { p -> networkViewModel.onFileSelected(data.data, p) }
                 fileSelectData = null
             }
 //        Log.d(TAG, "data $data $fileDescriptor")
@@ -87,7 +83,7 @@ class EditPropertiesFragment : DaggerFragment() {
 //
 //class PropertyAdapter(
 //    private val nodeData: NodeData,
-//    private val viewModel: EditGraphViewModel
+//    private val viewModel: EditNetworkViewModel
 //) : RecyclerView.Adapter<PropertyViewHolder>() {
 //    val properties = nodeData.properties.values.toList()
 //    val propertyTypes: List<PropertyType<*>> =
@@ -135,7 +131,7 @@ class EditPropertiesFragment : DaggerFragment() {
 //
 //class UriPropertyViewHolder(
 //    itemView: View,
-//    private val viewModel: EditGraphViewModel
+//    private val viewModel: EditNetworkViewModel
 //) : PropertyViewHolder(itemView) {
 //    private var property: PropertyType.Text? = null
 //    private var data: PropertyData? = null
@@ -161,7 +157,7 @@ class EditPropertiesFragment : DaggerFragment() {
 //
 //class TextPropertyViewHolder(
 //    itemView: View,
-//    private val viewModel: EditGraphViewModel
+//    private val viewModel: EditNetworkViewModel
 //) : PropertyViewHolder(itemView) {
 //    private var property: PropertyType.Text? = null
 //    private var data: PropertyData? = null
@@ -206,7 +202,7 @@ class EditPropertiesFragment : DaggerFragment() {
 //
 //class DiscretePropertyViewHolder(
 //    itemView: View,
-//    private val viewModel: EditGraphViewModel
+//    private val viewModel: EditNetworkViewModel
 //) : PropertyViewHolder(itemView) {
 //    private val arrayAdapter: ArrayAdapter<String> =
 //        ArrayAdapter(itemView.context, android.R.layout.simple_spinner_item)

@@ -8,20 +8,20 @@ import androidx.lifecycle.ViewModel
 import com.rthqks.synapse.assets.AssetManager
 import com.rthqks.synapse.data.SynapseDao
 import com.rthqks.synapse.exec.CameraManager
-import com.rthqks.synapse.exec.GraphExecutor
+import com.rthqks.synapse.exec.NetworkExecutor
 import com.rthqks.synapse.gl.GlesManager
-import com.rthqks.synapse.logic.Graph
+import com.rthqks.synapse.logic.Network
 import kotlinx.coroutines.*
 import java.util.concurrent.Executors
 import javax.inject.Inject
 
-class ExecGraphViewModel @Inject constructor(
+class NetworkViewModel @Inject constructor(
     private val context: Context,
     private val dao: SynapseDao
 ) : ViewModel() {
     private lateinit var surfaceView: SurfaceView
-    val graphLoaded = MutableLiveData<Graph>()
-    private lateinit var graphExecutor: GraphExecutor
+    val networkLoaded = MutableLiveData<Network>()
+    private lateinit var networkExecutor: NetworkExecutor
     private var initJob: Job? = null
     private var startJob: Job? = null
     private var stopJob: Job? = null
@@ -32,25 +32,25 @@ class ExecGraphViewModel @Inject constructor(
     private val cameraManager = CameraManager(context)
     private val assetManager = AssetManager(context)
 
-    fun loadGraph(graphId: Int) {
-        Log.d(TAG, "loadGraph")
+    fun loadNetwork(networkId: Int) {
+        Log.d(TAG, "loadNetwork")
         initJob = scope.launch {
-            val graph = dao.getFullGraph(graphId)
-            graphLoaded.postValue(graph)
-            Log.d(TAG, "loaded graph: $graph")
+            val network = dao.getFullNetwork(networkId)
+            networkLoaded.postValue(network)
+            Log.d(TAG, "loaded network: $network")
 
             cameraManager.initialize()
             glesManager.withGlContext { it.initialize() }
 
-            graphExecutor = GraphExecutor(
-                context, dispatcher, glesManager, cameraManager, assetManager, graph
+            networkExecutor = NetworkExecutor(
+                context, dispatcher, glesManager, cameraManager, assetManager, network
             )
 
             Log.d(TAG, "initialize")
-            graphExecutor.initialize()
+            networkExecutor.initialize()
             Log.d(TAG, "initialized")
 
-            graphExecutor.tmpSetSurfaceView(surfaceView)
+            networkExecutor.tmpSetSurfaceView(surfaceView)
         }
     }
 
@@ -60,7 +60,7 @@ class ExecGraphViewModel @Inject constructor(
             initJob?.join()
             stopJob?.join()
             Log.d(TAG, "starting")
-            graphExecutor.start()
+            networkExecutor.start()
             // right now start launches coroutines and does not join them.
             // there is a period after start during which calling stop
             // will result in hung coroutines.
@@ -77,8 +77,8 @@ class ExecGraphViewModel @Inject constructor(
         stopJob = scope.launch {
             Log.d(TAG, "stopping")
             startJob?.join()
-            Log.d(TAG, "calling graph.stop")
-            graphExecutor.stop()
+            Log.d(TAG, "calling network.stop")
+            networkExecutor.stop()
             Log.d(TAG, "done stopping")
         }
     }
@@ -94,7 +94,7 @@ class ExecGraphViewModel @Inject constructor(
 //                Toast.makeText(context, "TIMEOUT", Toast.LENGTH_LONG).show()
                 stopJob?.cancel()
             }
-            graphExecutor.release()
+            networkExecutor.release()
             glesManager.release()
             cameraManager.release()
             dispatcher.close()
@@ -109,12 +109,12 @@ class ExecGraphViewModel @Inject constructor(
         this.surfaceView = surfaceView
         initJob?.let {
             scope.launch {
-                graphExecutor.tmpSetSurfaceView(surfaceView)
+                networkExecutor.tmpSetSurfaceView(surfaceView)
             }
         }
     }
 
     companion object {
-        private val TAG = ExecGraphViewModel::class.java.simpleName
+        private val TAG = NetworkViewModel::class.java.simpleName
     }
 }

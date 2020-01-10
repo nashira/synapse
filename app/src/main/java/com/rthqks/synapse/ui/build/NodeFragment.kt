@@ -61,16 +61,16 @@ class NodeFragment : DaggerFragment() {
         viewModel = ViewModelProvider(activity!!, viewModelFactory)[BuilderViewModel::class.java]
         touchMediator = TouchMediator(context!!, viewModel::swipeEvent)
 
-        viewModel.graph.getNode(nodeId)?.let { node ->
+        viewModel.network.getNode(nodeId)?.let { node ->
             propertyBinder = PropertyBinder(node.properties, tool_list, tool_main) {
                 Log.d(TAG, "onChange ${it.key.name} ${it.value}")
                 viewModel.onPropertyChange(nodeId, it, node.properties)
             }
         }
 
-        viewModel.graphChannel.observe(viewLifecycleOwner, Observer {
-            Log.d(TAG, "graph change $nodeId ${viewModel.graph.getNode(nodeId)}")
-            viewModel.graph.getNode(nodeId)?.let {
+        viewModel.networkChannel.observe(viewLifecycleOwner, Observer {
+            Log.d(TAG, "network change $nodeId ${viewModel.network.getNode(nodeId)}")
+            viewModel.network.getNode(nodeId)?.let {
                 reloadConnectors()
                 viewModel.setSurfaceView(nodeId, surface_view)
             }
@@ -104,8 +104,8 @@ class NodeFragment : DaggerFragment() {
 
     private fun reloadConnectors() {
         Log.d(TAG, "reloadConnectors $nodeId")
-        val graph = viewModel.graph
-        val connectors = graph.getConnectors(nodeId).groupBy { it.port.output }
+        val network = viewModel.network
+        val connectors = network.getConnectors(nodeId).groupBy { it.port.output }
         inputsAdapter.setPorts(connectors[false] ?: emptyList())
         outputsAdapter.setPorts(connectors[true] ?: emptyList())
     }
@@ -124,7 +124,7 @@ class NodeFragment : DaggerFragment() {
         val menu = PopupMenu(context!!, view)
         menu.inflate(R.menu.layout_connector)
 
-        if (connector.edge == null) {
+        if (connector.link == null) {
             menu.menu.findItem(R.id.delete_connection)?.isVisible = false
         }
 
@@ -149,7 +149,7 @@ class NodeFragment : DaggerFragment() {
         menu.setOnMenuItemClickListener {
             when (it.itemId) {
                 R.id.delete_connection -> {
-                    connector.edge?.let { it1 ->
+                    connector.link?.let { it1 ->
                         viewModel.deleteEdge(it1)
                         reloadConnectors()
                     }
@@ -188,7 +188,7 @@ class NodeFragment : DaggerFragment() {
                 ): Boolean {
                     val o = oldPorts[oldItemPosition]
                     val n = ports[newItemPosition]
-                    return o.edge == n.edge
+                    return o.link == n.link
                 }
 
             })
@@ -240,7 +240,7 @@ class NodeFragment : DaggerFragment() {
 
         fun bind(connector: Connector, startAligned: Boolean) {
             this.connector = connector
-            connector.edge?.let {
+            connector.link?.let {
                 val otherPort =
                     if (startAligned) viewModel.getConnector(it.fromNodeId, it.fromPortId).port
                     else viewModel.getConnector(it.toNodeId, it.toPortId).port

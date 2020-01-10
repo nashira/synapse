@@ -10,9 +10,9 @@
         app:showAsAction="ifRoom" />
 
     <item
-        android:id="@+id/delete_graph"
+        android:id="@+id/delete_network"
         android:icon="@drawable/ic_delete"
-        android:title="@string/menu_title_delete_graph"
+        android:title="@string/menu_title_delete_network"
         app:iconTint="@color/white"
         app:showAsAction="ifRoom" />
 </menu>

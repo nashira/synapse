@@ -4,7 +4,7 @@ import android.media.AudioFormat
 import android.media.AudioRecord
 import android.util.Log
 import com.rthqks.synapse.exec.NodeExecutor
-import com.rthqks.synapse.exec.edge.*
+import com.rthqks.synapse.exec.link.*
 import com.rthqks.synapse.logic.*
 import kotlinx.coroutines.*
 import java.nio.ByteBuffer

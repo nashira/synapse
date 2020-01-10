@@ -3,5 +3,5 @@ package com.rthqks.synapse.logic
 data class Connector(
     val node: Node,
     val port: Port,
-    val edge: Edge? = null
+    val link: Link? = null
 )

@@ -9,7 +9,7 @@ import android.os.Bundle
 import android.util.Log
 import androidx.core.content.edit
 import com.rthqks.synapse.R
-import com.rthqks.synapse.ui.browse.GraphListActivity
+import com.rthqks.synapse.ui.browse.NetworkListActivity
 import dagger.android.support.DaggerAppCompatActivity
 
 class SplashActivity : DaggerAppCompatActivity() {
@@ -49,7 +49,7 @@ class SplashActivity : DaggerAppCompatActivity() {
     }
 
     private fun quit() {
-        startActivity(Intent(this, GraphListActivity::class.java))
+        startActivity(Intent(this, NetworkListActivity::class.java))
         finish()
     }
 

@@ -11,7 +11,7 @@
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:layout_marginStart="12dp"
-        android:hint="@string/edit_graph_name"
+        android:hint="@string/edit_network_name"
         android:inputType="textCapWords"
         app:layout_constraintBottom_toBottomOf="@id/button_save"
         app:layout_constraintEnd_toStartOf="@id/button_save"

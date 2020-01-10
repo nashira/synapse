@@ -21,9 +21,9 @@ class BuilderViewModel @Inject constructor(
 ) : ViewModel() {
     private val consumable = Consumable<SwipeEvent>()
     val onSwipeEvent = MutableLiveData<Consumable<SwipeEvent>>()
-    lateinit var graph: Graph
+    lateinit var network: Network
 
-    val graphChannel = MutableLiveData<Graph>()
+    val networkChannel = MutableLiveData<Network>()
     val connectionChannel = MutableLiveData<Connector>()
     val nodesChannel = MutableLiveData<AdapterState<Node>>()
     val titleChannel = MutableLiveData<Int>()
@@ -34,35 +34,35 @@ class BuilderViewModel @Inject constructor(
         executor.initialize(true)
     }
 
-    fun setGraphId(graphId: Int) {
+    fun setNetworkId(networkId: Int) {
         viewModelScope.launch(Dispatchers.IO) {
-            if (graphId == -1) {
-                val rowId = dao.insertGraph(GraphData(0, "Graph"))
+            if (networkId == -1) {
+                val rowId = dao.insertNetwork(NetworkData(0, "Network"))
 
-                graph = Graph(rowId.toInt(), "Graph")
-                Log.d(TAG, "created: $graph")
+                network = Network(rowId.toInt(), "Network")
+                Log.d(TAG, "created: $network")
             } else {
-                graph = dao.getFullGraph(graphId)
-                Log.d(TAG, "loaded: $graph")
+                network = dao.getFullNetwork(networkId)
+                Log.d(TAG, "loaded: $network")
             }
-            graphChannel.postValue(graph)
+            networkChannel.postValue(network)
 
             nodesChannel.postValue(AdapterState(0, listOf(PROPERTIES_NODE)))
 
-            executor.initializeGraph(graph)
+            executor.initializeNetwork(network)
         }
     }
 
-    fun setGraphName(name: String) {
-        graph.name = name
+    fun setNetworkName(name: String) {
+        network.name = name
         viewModelScope.launch(Dispatchers.IO) {
-            dao.insertGraph(GraphData(graph.id, graph.name))
-            Log.d(TAG, "saved: $graph")
+            dao.insertNetwork(NetworkData(network.id, network.name))
+            Log.d(TAG, "saved: $network")
         }
     }
 
     fun showFirstNode() {
-        val nextNode = graph.getFirstNode() ?: run {
+        val nextNode = network.getFirstNode() ?: run {
             connectionChannel.postValue(Connector(CREATION_NODE, FAKE_PORT))
             CREATION_NODE
         }
@@ -82,9 +82,9 @@ class BuilderViewModel @Inject constructor(
 
     fun preparePortSwipe(connector: Connector) {
         val port = connector.port
-        connector.edge?.let {
-            val leftNode = graph.getNode(it.fromNodeId)!!
-            val rightNode = graph.getNode(it.toNodeId)!!
+        connector.link?.let {
+            val leftNode = network.getNode(it.fromNodeId)!!
+            val rightNode = network.getNode(it.toNodeId)!!
             val current = if (port.output) 0 else 1
             nodesChannel.value = AdapterState(current, listOf(leftNode, rightNode))
         } ?: run {
@@ -107,7 +107,7 @@ class BuilderViewModel @Inject constructor(
         }
     }
 
-    fun getNode(nodeId: Int): Node = graph.getNode(nodeId)!!
+    fun getNode(nodeId: Int): Node = network.getNode(nodeId)!!
 
     fun updateCurrentItem(currentItem: Int) {
         nodesChannel.value?.let {
@@ -117,7 +117,7 @@ class BuilderViewModel @Inject constructor(
     }
 
     fun cancelConnection() {
-        restartGraph()
+        restartNetwork()
 
         nodeAfterCancel?.let {
             nodesChannel.value = AdapterState(0, listOf(it))
@@ -141,12 +141,12 @@ class BuilderViewModel @Inject constructor(
             if (addNode) {
                 // new node
                 nodeAfterCancel = null
-                graph.addNode(connector.node)
+                network.addNode(connector.node)
                 viewModelScope.launch(Dispatchers.IO) {
                     dao.insertNode(
                         NodeData(
                             connector.node.id,
-                            graph.id,
+                            network.id,
                             connector.node.type
                         )
                     )
@@ -164,11 +164,11 @@ class BuilderViewModel @Inject constructor(
                     "connecting ${from.node.type}:${from.port.id} to ${to.node.type}:${to.port.id}"
                 )
 
-                graph.addEdge(from.node.id, from.port.id, to.node.id, to.port.id)
+                network.addLink(from.node.id, from.port.id, to.node.id, to.port.id)
                 viewModelScope.launch(Dispatchers.IO) {
-                    dao.insertEdge(
-                        EdgeData(
-                            graph.id,
+                    dao.insertLink(
+                        LinkData(
+                            network.id,
                             from.node.id,
                             from.port.id,
                             to.node.id,
@@ -179,18 +179,18 @@ class BuilderViewModel @Inject constructor(
             }
 
             if (addNode) {
-                restartGraph()
+                restartNetwork()
                 nodesChannel.value = AdapterState(0, listOf(connector.node))
             }
         }
     }
 
-    private fun restartGraph() {
+    private fun restartNetwork() {
         executor.stop()
-        executor.releaseGraph()
-        executor.initializeGraph(graph)
+        executor.releaseNetwork()
+        executor.initializeNetwork(network)
         updateStartState()
-        graphChannel.postValue(graph)
+        networkChannel.postValue(network)
     }
 
     fun setTitle(@StringRes resId: Int) {
@@ -209,13 +209,13 @@ class BuilderViewModel @Inject constructor(
         nodesChannel.postValue(AdapterState(0, listOf(CREATION_NODE)))
     }
 
-    fun deleteEdge(edge: Edge) {
-        graph.removeEdge(edge)
+    fun deleteEdge(link: Link) {
+        network.removeEdge(link)
         viewModelScope.launch(Dispatchers.IO) {
-            dao.deleteEdge(
-                graph.id,
-                edge.fromNodeId, edge.fromPortId,
-                edge.toNodeId, edge.toPortId
+            dao.deleteLink(
+                network.id,
+                link.fromNodeId, link.fromPortId,
+                link.toNodeId, link.toPortId
             )
         }
     }
@@ -223,10 +223,10 @@ class BuilderViewModel @Inject constructor(
     fun deleteNode() {
         nodesChannel.value?.let {
             val node = it.items[it.currentItem]
-            graph.removeEdges(node.id)
-            graph.removeNode(node.id)
+            network.removeEdges(node.id)
+            network.removeNode(node.id)
 
-            val firstNode = graph.getFirstNode()
+            val firstNode = network.getFirstNode()
 
             firstNode?.let {
                 nodesChannel.value = AdapterState(0, listOf(firstNode))
@@ -235,11 +235,11 @@ class BuilderViewModel @Inject constructor(
                 nodesChannel.value = AdapterState(0, listOf(CREATION_NODE))
             }
 
-            restartGraph()
+            restartNetwork()
 
             viewModelScope.launch(Dispatchers.IO) {
-                dao.deleteNode(node.graphId, node.id)
-                dao.deleteEdgesForNode(node.graphId, node.id)
+                dao.deleteNode(node.networkId, node.id)
+                dao.deleteLinksForNode(node.networkId, node.id)
             }
         }
     }
@@ -258,7 +258,7 @@ class BuilderViewModel @Inject constructor(
     override fun onCleared() {
         Log.d(TAG, "onCleared")
         Log.d(TAG, "release")
-        executor.releaseGraph()
+        executor.releaseNetwork()
         executor.release()
         Log.d(TAG, "released")
         super.onCleared()
@@ -312,27 +312,27 @@ class BuilderViewModel @Inject constructor(
         } ?: false
     }
 
-    fun deleteGraph() {
+    fun deleteNetwork() {
         viewModelScope.launch(Dispatchers.IO) {
-            dao.deleteFullGraph(graph.id)
+            dao.deleteFullNetwork(network.id)
         }
     }
 
     fun setCropCenter(crop: Boolean) {
         Log.d(TAG, "setting crop $crop")
-        graph.properties[CropToFit] = crop
-        Log.d(TAG, "prop ${graph.properties.find(CropToFit)}")
-        restartGraph()
+        network.properties[CropToFit] = crop
+        Log.d(TAG, "prop ${network.properties.find(CropToFit)}")
+        restartNetwork()
     }
 
     fun onPropertyChange(nodeId: Int, property: Property<*>, properties: Properties) {
         if (property.requiresRestart) {
-            restartGraph()
+            restartNetwork()
         }
         viewModelScope.launch(Dispatchers.IO) {
             dao.insertProperty(
                 PropertyData(
-                    graph.id,
+                    network.id,
                     nodeId,
                     property.key.name,
                     properties.toString(property.key)

@@ -7,7 +7,7 @@ import com.rthqks.synapse.R
 class Node(
     val type: Type
 ) {
-    var graphId: Int = -1
+    var networkId: Int = -1
     var id: Int = -1
 
     val ports = mutableMapOf<String, Port>()
@@ -21,8 +21,8 @@ class Node(
         properties.put(property.key, property, converter)
     }
 
-    fun copy(graphId: Int = this.graphId, id: Int = this.id): Node = Node(type).also {
-        it.graphId = graphId
+    fun copy(networkId: Int = this.networkId, id: Int = this.id): Node = Node(type).also {
+        it.networkId = networkId
         it.id = id
         it.ports.putAll(ports)
         properties.copyTo(it.properties)

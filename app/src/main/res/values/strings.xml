@@ -1,6 +1,6 @@
 <resources>
     <string name="app_name">Synapse</string>
-    <string name="title_activity_graph_edit">Edit Graph</string>
+    <string name="title_activity_network_edit">Edit Network</string>
     <string name="property_name_sample_rate">Sample Rate</string>
     <string name="property_label_sample_rate_16000">16000</string>
     <string name="property_label_sample_rate_22050">22050</string>
@@ -38,10 +38,10 @@
     <string name="heading_node_inputs">Inputs</string>
     <string name="heading_node_outputs">Outputs</string>
     <string name="node_edit_properties">Properties</string>
-    <string name="menu_view_graph">View</string>
-    <string name="menu_delete_graph">Delete</string>
-    <string name="edit_graph_name">Graph Name</string>
-    <string name="title_graph_list">Graphs</string>
+    <string name="menu_view_network">View</string>
+    <string name="menu_delete_network">Delete</string>
+    <string name="edit_network_name">Network Name</string>
+    <string name="title_network_list">Networks</string>
     <string name="confirm_delete">Delete</string>
     <string name="confirm">Confirm</string>
     <string name="property_name_camera_device">Camera Device</string>
@@ -108,9 +108,9 @@
     <string name="menu_title_execute">Execute</string>
     <string name="add_connection">Add Connection</string>
     <string name="delete_connection">Delete Connection</string>
-    <string name="name_node_type_properties">Graph Properties</string>
-    <string name="menu_title_delete_graph">Delete Graph</string>
-    <string name="menu_title_jump_to_graph">Graph Settings</string>
+    <string name="name_node_type_properties">Network Properties</string>
+    <string name="menu_title_delete_network">Delete Network</string>
+    <string name="menu_title_jump_to_network">Network Settings</string>
     <string name="content_description_icon">Icon</string>
     <string name="property_title_crop_to_fit">Crop to Fit</string>
     <string name="property_subtitle_crop_to_fit_disabled">Show full frame</string>

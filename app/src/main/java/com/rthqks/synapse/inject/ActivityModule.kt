@@ -1,10 +1,9 @@
 package com.rthqks.synapse.inject
 
 import com.rthqks.synapse.ui.build.ConnectionFragment
-import com.rthqks.synapse.ui.build.GraphFragment
+import com.rthqks.synapse.ui.build.NetworkFragment
 import com.rthqks.synapse.ui.build.NodeFragment
 import com.rthqks.synapse.ui.build.NodeListDialog
-import com.rthqks.synapse.ui.edit.EditPropertiesFragment
 import dagger.Module
 import dagger.android.ContributesAndroidInjector
 
@@ -13,11 +12,7 @@ abstract class ActivityModule {
 
     @FragmentScope
     @ContributesAndroidInjector
-    abstract fun contributeEditPropertiesFragment(): EditPropertiesFragment
-
-    @FragmentScope
-    @ContributesAndroidInjector
-    abstract fun contributeGraphFragment(): GraphFragment
+    abstract fun contributeNetworkFragment(): NetworkFragment
 
     @FragmentScope
     @ContributesAndroidInjector

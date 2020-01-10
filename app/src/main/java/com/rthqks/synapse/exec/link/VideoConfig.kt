@@ -1,4 +1,4 @@
-package com.rthqks.synapse.exec.edge
+package com.rthqks.synapse.exec.link
 
 import android.opengl.GLES11Ext
 import android.util.Size

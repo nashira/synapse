@@ -2,10 +2,9 @@ package com.rthqks.synapse.inject
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
-import com.rthqks.synapse.ui.browse.GraphListViewModel
+import com.rthqks.synapse.ui.browse.NetworkListViewModel
 import com.rthqks.synapse.ui.build.BuilderViewModel
-import com.rthqks.synapse.ui.edit.EditGraphViewModel
-import com.rthqks.synapse.ui.exec.ExecGraphViewModel
+import com.rthqks.synapse.ui.exec.NetworkViewModel
 import dagger.Binds
 import dagger.MapKey
 import dagger.Module
@@ -42,18 +41,13 @@ abstract class ViewModels {
 
     @Binds
     @IntoMap
-    @ViewModelKey(EditGraphViewModel::class)
-    internal abstract fun provideEditGraphViewModel(graphViewModel: EditGraphViewModel): ViewModel
+    @ViewModelKey(NetworkListViewModel::class)
+    internal abstract fun provideNetworkListViewModel(networkListViewModel: NetworkListViewModel): ViewModel
 
     @Binds
     @IntoMap
-    @ViewModelKey(GraphListViewModel::class)
-    internal abstract fun provideGraphListViewModel(graphListViewModel: GraphListViewModel): ViewModel
-
-    @Binds
-    @IntoMap
-    @ViewModelKey(ExecGraphViewModel::class)
-    internal abstract fun provideExecGraphViewModel(execGraphViewModel: ExecGraphViewModel): ViewModel
+    @ViewModelKey(NetworkViewModel::class)
+    internal abstract fun provideExecNetworkViewModel(networkViewModel: NetworkViewModel): ViewModel
 
     @Binds
     @IntoMap

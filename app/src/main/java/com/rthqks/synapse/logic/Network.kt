@@ -3,13 +3,13 @@ package com.rthqks.synapse.logic
 import com.rthqks.synapse.R
 
 
-class Graph(
+class Network(
     val id: Int,
     var name: String
 ) {
     private val nodes = mutableMapOf<Int, Node>()
-    private val edges = mutableSetOf<Edge>()
-    private val edgeIndex = mutableMapOf<Int, MutableSet<Edge>>()
+    private val edges = mutableSetOf<Link>()
+    private val edgeIndex = mutableMapOf<Int, MutableSet<Link>>()
     val properties = Properties()
     private var maxNodeId = 0
 
@@ -52,31 +52,31 @@ class Graph(
         return nodes.values.toList()
     }
 
-    fun getEdges(): Set<Edge> = edges
+    fun getEdges(): Set<Link> = edges
 
-    fun getEdges(nodeId: Int): Set<Edge> = edgeIndex[nodeId] ?: emptySet()
+    fun getEdges(nodeId: Int): Set<Link> = edgeIndex[nodeId] ?: emptySet()
 
-    fun addEdge(
+    fun addLink(
         fromNodeId: Int,
         fromKey: String,
         toNodeId: Int,
         toKey: String
-    ): Edge {
-        val edge = Edge(fromNodeId, fromKey, toNodeId, toKey)
+    ): Link {
+        val edge = Link(fromNodeId, fromKey, toNodeId, toKey)
         edges.add(edge)
         edgeIndex.getOrPut(fromNodeId) { mutableSetOf() } += edge
         edgeIndex.getOrPut(toNodeId) { mutableSetOf() } += edge
         return edge
     }
 
-    fun removeEdge(edge: Edge) {
-        edges.remove(edge)
-        edgeIndex[edge.fromNodeId]?.remove(edge)
-        edgeIndex[edge.toNodeId]?.remove(edge)
+    fun removeEdge(link: Link) {
+        edges.remove(link)
+        edgeIndex[link.fromNodeId]?.remove(link)
+        edgeIndex[link.toNodeId]?.remove(link)
     }
 
-    fun removeEdges(nodeId: Int): Set<Edge> {
-        val removed = edgeIndex.remove(nodeId) ?: emptySet<Edge>()
+    fun removeEdges(nodeId: Int): Set<Link> {
+        val removed = edgeIndex.remove(nodeId) ?: emptySet<Link>()
         removed.forEach(this::removeEdge)
         return removed
     }
@@ -144,12 +144,12 @@ class Graph(
         } ?: false
     }
 
-    fun copy(): Graph {
-        return Graph(id, name).also {
+    fun copy(): Network {
+        return Network(id, name).also {
             it.nodes += nodes
             it.edges += edges
             it.properties += properties
-            val ei = mutableMapOf<Int, MutableSet<Edge>>()
+            val ei = mutableMapOf<Int, MutableSet<Link>>()
             edgeIndex.forEach { ei[it.key] = it.value.toMutableSet() }
             it.edgeIndex += ei
             it.maxNodeId = maxNodeId + COPY_ID_SKIP
@@ -159,7 +159,7 @@ class Graph(
     private fun max(i: Int, j: Int) = if (i > j) i else j
 
     companion object {
-        const val TAG = "Graph"
+        const val TAG = "Network"
         const val COPY_ID_SKIP = 10_000
     }
 }
