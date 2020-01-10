@@ -6,6 +6,7 @@ import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.view.animation.AccelerateInterpolator
 import android.widget.AdapterView
 import android.widget.ArrayAdapter
 import android.widget.SeekBar
@@ -31,9 +32,7 @@ class PropertyBinder(
     private val inflater = LayoutInflater.from(detailView.context)
     private val detailAdapter = PropertyAdapter(inflater, {
         onChange(it)
-        listView.postDelayed({
-            hide()
-        }, 750)
+        hide(200)
     }, uriProvider)
     private val listAdapter: PropertiesAdapter
 
@@ -54,13 +53,24 @@ class PropertyBinder(
         listView.adapter = listAdapter
     }
 
-    fun hide() {
+    fun hide(startDelay: Long = 0) {
+        clearSelectedState()
+        detailView.animate()
+            .setStartDelay(startDelay)
+            .setDuration(100)
+            .setInterpolator(AccelerateInterpolator())
+            .alpha(0f).withEndAction {
+                detailAdapter.setProperty(null)
+                detailView.alpha = 1f
+            }.start()
+    }
+
+    private fun clearSelectedState() {
         for (i in 0 until listView.childCount) {
             listView.findViewHolderForAdapterPosition(i)?.let {
                 it.itemView.isSelected = false
             }
         }
-        detailAdapter.setProperty(null)
     }
 
     fun show(property: Property<out Any?>) {
@@ -292,10 +302,11 @@ private class ChoicePropertyViewHolder(
         itemView.title.setText(type.title)
         arrayAdapter.clear()
         arrayAdapter.addAll(type.choices.map { itemView.context.getString(it.label) })
-        suppressSave = true
-        itemView.spinner.setSelection(type.choices.indexOfFirst {
+        val indexOfSelected = type.choices.indexOfFirst {
             it.item == property.value
-        })
+        }
+        suppressSave = itemView.spinner.selectedItemPosition != indexOfSelected
+        itemView.spinner.setSelection(indexOfSelected)
         Log.d(TAG, "choice type ${type.choices.joinToString()}")
 
         arrayAdapter.notifyDataSetChanged()
