@@ -8,8 +8,8 @@ class Network(
     var name: String
 ) {
     private val nodes = mutableMapOf<Int, Node>()
-    private val edges = mutableSetOf<Link>()
-    private val edgeIndex = mutableMapOf<Int, MutableSet<Link>>()
+    private val links = mutableSetOf<Link>()
+    private val linkIndex = mutableMapOf<Int, MutableSet<Link>>()
     val properties = Properties()
     private var maxNodeId = 0
 
@@ -22,7 +22,7 @@ class Network(
                     R.string.property_title_crop_to_fit, R.drawable.ic_crop,
                     R.string.property_subtitle_crop_to_fit_enabled,
                     R.string.property_subtitle_crop_to_fit_disabled
-                ), true
+                ), true, true
             ), BooleanConverter
         )
     }
@@ -52,9 +52,9 @@ class Network(
         return nodes.values.toList()
     }
 
-    fun getEdges(): Set<Link> = edges
+    fun getLinks(): Set<Link> = links
 
-    fun getEdges(nodeId: Int): Set<Link> = edgeIndex[nodeId] ?: emptySet()
+    fun getLinks(nodeId: Int): Set<Link> = linkIndex[nodeId] ?: emptySet()
 
     fun addLink(
         fromNodeId: Int,
@@ -62,31 +62,31 @@ class Network(
         toNodeId: Int,
         toKey: String
     ): Link {
-        val edge = Link(fromNodeId, fromKey, toNodeId, toKey)
-        edges.add(edge)
-        edgeIndex.getOrPut(fromNodeId) { mutableSetOf() } += edge
-        edgeIndex.getOrPut(toNodeId) { mutableSetOf() } += edge
-        return edge
+        val link = Link(fromNodeId, fromKey, toNodeId, toKey)
+        links.add(link)
+        linkIndex.getOrPut(fromNodeId) { mutableSetOf() } += link
+        linkIndex.getOrPut(toNodeId) { mutableSetOf() } += link
+        return link
     }
 
-    fun removeEdge(link: Link) {
-        edges.remove(link)
-        edgeIndex[link.fromNodeId]?.remove(link)
-        edgeIndex[link.toNodeId]?.remove(link)
+    fun removeLink(link: Link) {
+        links.remove(link)
+        linkIndex[link.fromNodeId]?.remove(link)
+        linkIndex[link.toNodeId]?.remove(link)
     }
 
-    fun removeEdges(nodeId: Int): Set<Link> {
-        val removed = edgeIndex.remove(nodeId) ?: emptySet<Link>()
-        removed.forEach(this::removeEdge)
+    fun removeLinks(nodeId: Int): Set<Link> {
+        val removed = linkIndex.remove(nodeId) ?: emptySet<Link>()
+        removed.forEach(this::removeLink)
         return removed
     }
 
     fun getConnectors(nodeId: Int): List<Connector> {
         val node = getNode(nodeId) ?: return emptyList()
         val ports = node.getPortIds().toMutableSet()
-        val nodeEdges = getEdges(nodeId)
+        val nodeLinks = getLinks(nodeId)
 
-        return (nodeEdges.map {
+        return (nodeLinks.map {
             if (it.fromNodeId == nodeId) {
                 ports.remove(it.fromPortId)
                 Connector(node, node.getPort(it.fromPortId), it)
@@ -138,7 +138,7 @@ class Network(
     }
 
     private fun isConnected(node: Node, port: Port): Boolean {
-        return edgeIndex[node.id]?.any {
+        return linkIndex[node.id]?.any {
             it.fromNodeId == node.id && it.fromPortId == port.id
                     || it.toNodeId == node.id && it.toPortId == port.id
         } ?: false
@@ -147,11 +147,11 @@ class Network(
     fun copy(): Network {
         return Network(id, name).also {
             it.nodes += nodes
-            it.edges += edges
+            it.links += links
             it.properties += properties
             val ei = mutableMapOf<Int, MutableSet<Link>>()
-            edgeIndex.forEach { ei[it.key] = it.value.toMutableSet() }
-            it.edgeIndex += ei
+            linkIndex.forEach { ei[it.key] = it.value.toMutableSet() }
+            it.linkIndex += ei
             it.maxNodeId = maxNodeId + COPY_ID_SKIP
         }
     }

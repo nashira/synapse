@@ -51,10 +51,10 @@ class NetworkExecutor(
             Log.d(TAG, "create complete $it")
         }
 
-        parallelJoin(network.getEdges()) { edge ->
-            Log.d(TAG, "connect $edge")
-            addEdge(edge)
-            Log.d(TAG, "connect complete $edge")
+        parallelJoin(network.getLinks()) { link ->
+            Log.d(TAG, "connect $link")
+            addLink(link)
+            Log.d(TAG, "connect complete $link")
         }
 
         parallelJoin(nodes.values) {
@@ -88,7 +88,7 @@ class NetworkExecutor(
         }
     }
 
-    private suspend fun addEdge(link: Link) {
+    private suspend fun addLink(link: Link) {
         val fromNode = nodes[link.fromNodeId]!!
         val toNode = nodes[link.toNodeId]!!
         val fromKey = Connection.Key<Config, Event>(link.fromPortId)
@@ -182,7 +182,7 @@ class NetworkExecutor(
         val executor = nodeExecutor(node)
         nodes[node.id] = executor
         executor.create()
-        addEdge(link)
+        addLink(link)
         executor.initialize()
     }
 
@@ -201,10 +201,10 @@ class NetworkExecutor(
             Log.d(TAG, "create complete $it")
         }
 
-        parallelJoin(newLinks) { edge ->
-            Log.d(TAG, "connect $edge")
-            addEdge(edge)
-            Log.d(TAG, "connect complete $edge")
+        parallelJoin(newLinks) { link ->
+            Log.d(TAG, "connect $link")
+            addLink(link)
+            Log.d(TAG, "connect complete $link")
         }
 
         parallelJoin(addedNodes) {

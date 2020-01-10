@@ -1,6 +1,7 @@
 package com.rthqks.synapse.ui.build
 
 import android.app.Activity
+import android.content.Intent
 import android.os.Bundle
 import android.util.Log
 import android.view.*
@@ -21,6 +22,7 @@ class NetworkFragment : DaggerFragment() {
     lateinit var viewModelFactory: ViewModelProvider.Factory
     private lateinit var viewModel: BuilderViewModel
     private lateinit var propertyBinder: PropertyBinder
+    private lateinit var uriProvider: UriProvider
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -37,6 +39,9 @@ class NetworkFragment : DaggerFragment() {
 
     override fun onActivityCreated(savedInstanceState: Bundle?) {
         super.onActivityCreated(savedInstanceState)
+        uriProvider = UriProvider {
+            startActivityForResult(it, OPEN_DOC_REQUEST)
+        }
         viewModel = ViewModelProvider(activity!!, viewModelFactory)[BuilderViewModel::class.java]
         viewModel.setTitle(R.string.name_node_type_properties)
         viewModel.setMenu(R.menu.fragment_network)
@@ -50,7 +55,7 @@ class NetworkFragment : DaggerFragment() {
 
         val properties = viewModel.network.properties
 
-        propertyBinder = PropertyBinder(properties, tool_list, tool_main) {
+        propertyBinder = PropertyBinder(properties, tool_list, tool_main, uriProvider) {
             Log.d(TAG, "onChange ${it.key.name} ${it.value}")
             viewModel.onPropertyChange(-1, it, properties)
         }
@@ -73,6 +78,12 @@ class NetworkFragment : DaggerFragment() {
         val nodes = viewModel.network.getNodes()
         connectorAdapter.setNodes(nodes)
         node_list.adapter = connectorAdapter
+    }
+
+    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+        if (requestCode == OPEN_DOC_REQUEST && resultCode == Activity.RESULT_OK) {
+            data?.data?.let { uriProvider.onActivityResult(activity!!, it) }
+        }
     }
 
     private fun setupEditTitle() {
@@ -105,6 +116,7 @@ class NetworkFragment : DaggerFragment() {
 
     companion object {
         const val TAG = "NetworkFragment"
+        const val OPEN_DOC_REQUEST = 431
         fun newInstance(): NetworkFragment = NetworkFragment()
     }
 }

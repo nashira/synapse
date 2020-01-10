@@ -118,7 +118,7 @@ class Executor @Inject constructor(
                 return
             }
 
-            network?.getEdges(id)?.forEach {
+            network?.getLinks(id)?.forEach {
                 if (it.fromNodeId == id && it.toNodeId > Network.COPY_ID_SKIP) {
                     nodes.add(it.toNodeId to networkExecutor.getNode(it.toNodeId))
                 }
@@ -199,8 +199,8 @@ class Executor @Inject constructor(
             Log.d(TAG, "adding node ${target.type} ${target.id} ${it.port.id}")
             network.addNode(target)
             Log.d(TAG, "added node ${target.type} ${target.id} ${it.port.id}")
-            val edge = network.addLink(source.node.id, source.port.id, target.id, it.port.id)
-            data.add(target to edge)
+            val link = network.addLink(source.node.id, source.port.id, target.id, it.port.id)
+            data.add(target to link)
 
             target.ports.values.firstOrNull {
                 it.output && it.type == Port.Type.Video
@@ -212,8 +212,8 @@ class Executor @Inject constructor(
             }
         }
 
-        val (nodes, edges) = data.unzip()
-        networkExecutor?.add(nodes, edges)
+        val (nodes, links) = data.unzip()
+        networkExecutor?.add(nodes, links)
     }
 
     companion object {

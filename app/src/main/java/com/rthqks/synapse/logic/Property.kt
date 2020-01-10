@@ -1,6 +1,5 @@
 package com.rthqks.synapse.logic
 
-import android.util.Size
 import androidx.annotation.DrawableRes
 import androidx.annotation.StringRes
 
@@ -71,82 +70,11 @@ class Properties {
     }
 }
 
-interface Converter<T> {
-    fun toString(value: T): String
-    fun fromString(value: String): T
-}
-
-object IntConverter: Converter<Int> {
-    override fun toString(value: Int): String = value.toString()
-    override fun fromString(value: String): Int = value.toInt()
-}
-
-object SizeConverter: Converter<Size> {
-    override fun toString(value: Size): String = "${value.width}x${value.height}"
-    override fun fromString(value: String): Size = Size.parseSize(value)
-}
-
-object FloatConverter: Converter<Float> {
-    override fun toString(value: Float): String  = value.toString()
-    override fun fromString(value: String): Float  = value.toFloat()
-}
-
-object BooleanConverter: Converter<Boolean> {
-    override fun toString(value: Boolean): String = value.toString()
-    override fun fromString(value: String): Boolean = value.toBoolean()
-}
-
 data class Property<T>(
     val key: Key<T>,
-    val type: Type<T>,
+    val type: PropertyType<T>,
     var value: T,
     val requiresRestart: Boolean = false
 ) {
     data class Key<T>(val name: String)
-
-    abstract class Type<T>(
-        @StringRes val title: Int = 0,
-        @DrawableRes val icon: Int = 0
-    )
-
-    companion object {
-        fun RangeType(
-            @StringRes title: Int,
-            @DrawableRes icon: Int,
-            range: ClosedFloatingPointRange<Float>
-        ): FloatRangeType = FloatRangeType(title, icon, range)
-
-        fun RangeType(
-            @StringRes title: Int,
-            @DrawableRes icon: Int,
-            range: IntRange
-        ): IntRangeType = IntRangeType(title, icon, range)
-    }
 }
-
-class ChoiceType<T>(
-    @StringRes title: Int,
-    @DrawableRes icon: Int,
-    vararg val choices: Choice<T>
-) : Property.Type<T>(title, icon)
-
-data class Choice<T>(val item: T, @StringRes val label: Int)
-
-class FloatRangeType(
-    @StringRes title: Int,
-    @DrawableRes icon: Int,
-    val range: ClosedFloatingPointRange<Float>
-) : Property.Type<Float>(title, icon)
-
-class IntRangeType(
-    @StringRes title: Int,
-    @DrawableRes icon: Int,
-    val range: IntRange
-) : Property.Type<Int>(title, icon)
-
-class ToggleType(
-    @StringRes title: Int,
-    @DrawableRes icon: Int,
-    @StringRes val enabled: Int,
-    @StringRes val disabled: Int
-) : Property.Type<Boolean>(title, icon)

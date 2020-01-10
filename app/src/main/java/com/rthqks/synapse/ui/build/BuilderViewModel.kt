@@ -209,8 +209,8 @@ class BuilderViewModel @Inject constructor(
         nodesChannel.postValue(AdapterState(0, listOf(CREATION_NODE)))
     }
 
-    fun deleteEdge(link: Link) {
-        network.removeEdge(link)
+    fun deleteLink(link: Link) {
+        network.removeLink(link)
         viewModelScope.launch(Dispatchers.IO) {
             dao.deleteLink(
                 network.id,
@@ -223,7 +223,7 @@ class BuilderViewModel @Inject constructor(
     fun deleteNode() {
         nodesChannel.value?.let {
             val node = it.items[it.currentItem]
-            network.removeEdges(node.id)
+            network.removeLinks(node.id)
             network.removeNode(node.id)
 
             val firstNode = network.getFirstNode()

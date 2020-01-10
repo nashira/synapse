@@ -1,5 +1,7 @@
 package com.rthqks.synapse.ui.build
 
+import android.app.Activity
+import android.content.Intent
 import android.os.Bundle
 import android.util.Log
 import android.view.LayoutInflater
@@ -16,6 +18,7 @@ import androidx.recyclerview.widget.RecyclerView
 import com.rthqks.synapse.R
 import com.rthqks.synapse.logic.Connector
 import com.rthqks.synapse.logic.Port
+import com.rthqks.synapse.ui.build.NetworkFragment.Companion.OPEN_DOC_REQUEST
 import dagger.android.support.DaggerFragment
 import kotlinx.android.synthetic.main.fragment_node.*
 import kotlinx.android.synthetic.main.layout_port_fragment_node.view.*
@@ -30,7 +33,9 @@ class NodeFragment : DaggerFragment() {
     private lateinit var inputsAdapter: PortsAdapter
     private lateinit var outputsAdapter: PortsAdapter
     private lateinit var propertyBinder: PropertyBinder
+    private lateinit var uriProvider: UriProvider
     private var nodeId = -1
+
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -58,11 +63,14 @@ class NodeFragment : DaggerFragment() {
     override fun onActivityCreated(savedInstanceState: Bundle?) {
         super.onActivityCreated(savedInstanceState)
 //        Log.d(TAG, "onActivityCreated $nodeId")
+        uriProvider = UriProvider {
+            startActivityForResult(it, OPEN_DOC_REQUEST)
+        }
         viewModel = ViewModelProvider(activity!!, viewModelFactory)[BuilderViewModel::class.java]
         touchMediator = TouchMediator(context!!, viewModel::swipeEvent)
 
         viewModel.network.getNode(nodeId)?.let { node ->
-            propertyBinder = PropertyBinder(node.properties, tool_list, tool_main) {
+            propertyBinder = PropertyBinder(node.properties, tool_list, tool_main, uriProvider) {
                 Log.d(TAG, "onChange ${it.key.name} ${it.value}")
                 viewModel.onPropertyChange(nodeId, it, node.properties)
             }
@@ -75,6 +83,12 @@ class NodeFragment : DaggerFragment() {
                 viewModel.setSurfaceView(nodeId, surface_view)
             }
         })
+    }
+
+    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+        if (requestCode == OPEN_DOC_REQUEST && resultCode == Activity.RESULT_OK) {
+            data?.data?.let { uriProvider.onActivityResult(activity!!, it) }
+        }
     }
 
     override fun onPause() {
@@ -150,7 +164,7 @@ class NodeFragment : DaggerFragment() {
             when (it.itemId) {
                 R.id.delete_connection -> {
                     connector.link?.let { it1 ->
-                        viewModel.deleteEdge(it1)
+                        viewModel.deleteLink(it1)
                         reloadConnectors()
                     }
                 }

@@ -5,6 +5,7 @@ import android.graphics.SurfaceTexture
 import android.media.AudioFormat
 import android.media.MediaCodec
 import android.media.MediaFormat
+import android.net.Uri
 import android.opengl.GLES11Ext
 import android.opengl.GLES32
 import android.opengl.GLES32.GL_CLAMP_TO_EDGE
@@ -19,7 +20,7 @@ import com.rthqks.synapse.exec.link.*
 import com.rthqks.synapse.gl.GlesManager
 import com.rthqks.synapse.gl.Texture
 import com.rthqks.synapse.logic.Properties
-import com.rthqks.synapse.logic.Uri
+import com.rthqks.synapse.logic.MediaUri
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.Channel
 
@@ -45,7 +46,7 @@ class DecoderNode(
     )
     private val decoder = Decoder(context, glesManager.backgroundHandler)
 
-    private val uri: String get() = properties[Uri]
+    private val uri: Uri get() = properties[MediaUri]
 
     override suspend fun create() {
         decoder.setDataSource(uri)

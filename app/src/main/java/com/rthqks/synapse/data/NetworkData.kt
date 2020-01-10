@@ -12,9 +12,9 @@ data class NetworkData(
     @Ignore
     val nodes = mutableListOf<NodeData>()
     @Ignore
-    val edges = mutableListOf<LinkData>()
+    val links = mutableListOf<LinkData>()
 
     override fun toString(): String {
-        return "NetworkData(id=$id, name='$name', nodes=$nodes, links=$edges)"
+        return "NetworkData(id=$id, name='$name', nodes=$nodes, links=$links)"
     }
 }

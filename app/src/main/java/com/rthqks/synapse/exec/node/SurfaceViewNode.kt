@@ -239,18 +239,19 @@ class SurfaceViewNode(
         Log.d(TAG, "updateSurfaceViewConfig $cropCenter")
         val surfaceView = surfaceView ?: return
         withContext(Dispatchers.Main) {
-            if (cropCenter) {
-                outputSize = Size(surfaceView.measuredWidth, surfaceView.measuredHeight)
+            val _size = if (cropCenter) {
+                Size(surfaceView.measuredWidth, surfaceView.measuredHeight)
             } else {
-                outputSize = size
+                surfaceView.holder.setFixedSize(size.width, size.height)
+                size
+            }
+            outputSize = _size
 //                if (rotation == 90 || rotation == 270) Size(size.height, size.width) else size
-                surfaceView.holder.setFixedSize(outputSize.width, outputSize.height)
-                ConstraintSet().also {
-                    val constraintLayout = surfaceView.parent as ConstraintLayout
-                    it.clone(constraintLayout)
-                    it.setDimensionRatio(R.id.surface_view, "${size.width}:${size.height}")
-                    it.applyTo(constraintLayout)
-                }
+            ConstraintSet().also {
+                val constraintLayout = surfaceView.parent as ConstraintLayout
+                it.clone(constraintLayout)
+                it.setDimensionRatio(R.id.surface_view, "${outputSize.width}:${outputSize.height}")
+                it.applyTo(constraintLayout)
             }
         }
         setSurface(surfaceView.holder.surface)

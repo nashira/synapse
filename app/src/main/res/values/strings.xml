@@ -98,7 +98,7 @@
     <string name="property_name_multiply_factor">Multiply Factor</string>
     <string name="property_name_accumulate_factor">Accumulate Factor</string>
     <string name="property_name_uri">Uri</string>
-    <string name="button_select_file">Select File</string>
+    <string name="button_select_file">Open</string>
     <string name="button_cancel">Cancel</string>
     <string name="title_connect">Connect</string>
     <string name="name_node_type_media_file">Media File</string>

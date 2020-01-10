@@ -1,6 +1,7 @@
 package com.rthqks.synapse.ui.build
 
 
+import android.net.Uri
 import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
@@ -17,16 +18,23 @@ import kotlinx.android.synthetic.main.property_type_choice.view.*
 import kotlinx.android.synthetic.main.property_type_choice.view.title
 import kotlinx.android.synthetic.main.property_type_range.view.*
 import kotlinx.android.synthetic.main.property_type_toggle.view.*
+import kotlinx.android.synthetic.main.property_type_uri.view.*
 import kotlin.math.roundToInt
 
 class PropertyBinder(
     private val properties: Properties,
     private val listView: RecyclerView,
     private val detailView: RecyclerView,
+    private val uriProvider: UriProvider,
     private val onChange: (Property<*>) -> Unit
 ) {
     private val inflater = LayoutInflater.from(detailView.context)
-    private val detailAdapter = PropertyAdapter(inflater, onChange)
+    private val detailAdapter = PropertyAdapter(inflater, {
+        onChange(it)
+        listView.postDelayed({
+            hide()
+        }, 750)
+    }, uriProvider)
     private val listAdapter: PropertiesAdapter
 
     init {
@@ -47,6 +55,11 @@ class PropertyBinder(
     }
 
     fun hide() {
+        for (i in 0 until listView.childCount) {
+            listView.findViewHolderForAdapterPosition(i)?.let {
+                it.itemView.isSelected = false
+            }
+        }
         detailAdapter.setProperty(null)
     }
 
@@ -109,7 +122,8 @@ private class PropertiesViewHolder(
 
 private class PropertyAdapter(
     private val inflater: LayoutInflater,
-    private val onChange: (Property<*>) -> Unit
+    private val onChange: (Property<*>) -> Unit,
+    private val uriProvider: UriProvider
 ) :
     RecyclerView.Adapter<PropertyViewHolder>() {
     private var property: Property<*>? = null
@@ -120,6 +134,7 @@ private class PropertyAdapter(
             R.layout.property_type_choice -> ChoicePropertyViewHolder(layout, onChange)
             R.layout.property_type_range -> RangePropertyViewHolder(layout, onChange)
             R.layout.property_type_toggle -> TogglePropertyViewHolder(layout, onChange)
+            R.layout.property_type_uri -> UriPropertyViewHolder(layout, onChange, uriProvider)
             else -> error("unknown type $viewType")
         }
     }
@@ -131,12 +146,14 @@ private class PropertyAdapter(
     }
 
     override fun getItemViewType(position: Int): Int {
-        return when (val type = property?.type) {
+        return when (property?.type) {
             is ChoiceType<*> -> R.layout.property_type_choice
             is FloatRangeType,
             is IntRangeType -> R.layout.property_type_range
             is ToggleType -> R.layout.property_type_toggle
-            else -> error("unknown property type $type")
+            is UriType -> R.layout.property_type_uri
+            null -> error("null type")
+
         }
     }
 
@@ -298,9 +315,14 @@ private class TogglePropertyViewHolder(
     private val subtitleView = itemView.subtitle
     private val toggleButton = itemView.button_toggle
     private var property: Property<Boolean>? = null
+    private var suppressSave = false
 
     init {
         toggleButton.setOnCheckedChangeListener { _, isChecked ->
+            if (suppressSave) {
+                suppressSave = false
+                return@setOnCheckedChangeListener
+            }
             property?.let {
                 it.value = isChecked
                 onChange(it)
@@ -316,6 +338,7 @@ private class TogglePropertyViewHolder(
         iconView.setImageResource(type.icon)
         titleView.setText(type.title)
 
+        suppressSave = toggleButton.isChecked != property.value
         toggleButton.isChecked = property.value
 
         subtitle(property, type)
@@ -331,5 +354,34 @@ private class TogglePropertyViewHolder(
             subtitleView.setText(type.disabled)
         }
     }
+}
 
+private class UriPropertyViewHolder(
+    itemView: View,
+    private val onChange: (Property<*>) -> Unit,
+    private val uriProvider: UriProvider
+) : PropertyViewHolder(itemView) {
+    private val titleView = itemView.title
+    private val uriView = itemView.uri_view
+    private val button = itemView.button
+    private var property: Property<Uri>? = null
+
+    init {
+        button.setOnClickListener {
+            uriProvider.getUri("video/*") {
+                property?.let { p ->
+                    p.value = it
+                    onChange(p)
+                }
+            }
+        }
+    }
+
+    override fun bind(property: Property<*>) {
+        @Suppress("UNCHECKED_CAST")
+        this.property = property as Property<Uri>
+        val type = property.type as UriType
+        titleView.setText(type.title)
+        uriView.setText(property.value.toString())
+    }
 }

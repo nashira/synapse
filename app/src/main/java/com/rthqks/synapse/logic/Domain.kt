@@ -1,9 +1,10 @@
 package com.rthqks.synapse.logic
 
 import android.hardware.camera2.CameraCharacteristics
+import android.net.Uri
 import android.util.Size
 import com.rthqks.synapse.R
-import com.rthqks.synapse.logic.Property.Companion.RangeType
+import com.rthqks.synapse.logic.PropertyType.Companion.RangeType
 
 val AudioSampleRate = Property.Key<Int>("audio_sample_rate")
 val AudioEncoding = Property.Key<Int>("audio_encoding")
@@ -17,7 +18,7 @@ val NumPasses = Property.Key<Int>("num_passes")
 val ScaleFactor = Property.Key<Int>("scale_factor")
 val AccumulateFactor = Property.Key<Float>("accumulate_factor")
 val MultiplyFactor = Property.Key<Float>("multiply_factor")
-val Uri = Property.Key<String>("uri")
+val MediaUri = Property.Key<Uri>("media_uri")
 val CropToFit = Property.Key<Boolean>("crop_to_fit")
 
 val Nodes = listOf(
@@ -74,6 +75,13 @@ val Nodes = listOf(
     Node(Node.Type.MediaFile).apply {
         add(Port(Port.Type.Video, "video_1", "Video", true))
         add(Port(Port.Type.Audio, "audio_1", "Audio", true))
+        add(
+            Property(
+                MediaUri,
+                UriType(R.string.property_name_uri, R.drawable.ic_movie),
+                Uri.parse("https://www.sample-videos.com/video123/mp4/720/big_buck_bunny_720p_2mb.mp4"), true
+            ), UriConverter
+        )
     },
     Node(Node.Type.FrameDifference).apply {
         add(Port(Port.Type.Video, "video_1", "Source", false))

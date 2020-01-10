@@ -4,6 +4,7 @@ import android.content.Context
 import android.media.MediaCodec
 import android.media.MediaExtractor
 import android.media.MediaFormat
+import android.net.Uri
 import android.os.Handler
 import android.util.Log
 import android.util.Size
@@ -41,7 +42,7 @@ class Decoder(
     private var extractState = STOPPED
     private var releaseState = EOS
     private var eventIndex = 0
-    private val events = Array(20) {
+    private val events = Array(30) {
         Event(0, MediaCodec.BufferInfo(), null)
     }
 
@@ -49,15 +50,15 @@ class Decoder(
     private var audioChannel: SendChannel<Event>? = null
 
     @Suppress("BlockingMethodInNonBlockingContext")
-    suspend fun setDataSource(uri: String) {
+    suspend fun setDataSource(uri: Uri) {
         Log.d(TAG, "setDataSource $uri")
-        if (uri.startsWith("content")) {
-            val afd = context.contentResolver.openAssetFileDescriptor(uri.toUri(), "r")
+        if (uri.scheme == "content") {
+            val afd = context.contentResolver.openAssetFileDescriptor(uri, "r")
             val fd = afd!!.fileDescriptor
             extractor.setDataSource(fd!!)
             afd.close()
         } else {
-            extractor.setDataSource(context, uri.toUri(), emptyMap())
+            extractor.setDataSource(context, uri, emptyMap())
         }
 
         findTrack("video/")?.let {
