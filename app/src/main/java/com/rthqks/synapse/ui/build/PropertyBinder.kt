@@ -1,12 +1,15 @@
 package com.rthqks.synapse.ui.build
 
 
+import android.app.Activity
 import android.net.Uri
 import android.util.Log
+import android.view.KeyEvent
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.view.animation.AccelerateInterpolator
+import android.view.inputmethod.InputMethodManager
 import android.widget.AdapterView
 import android.widget.ArrayAdapter
 import android.widget.SeekBar
@@ -18,8 +21,10 @@ import kotlinx.android.synthetic.main.layout_property.view.icon
 import kotlinx.android.synthetic.main.property_type_choice.view.*
 import kotlinx.android.synthetic.main.property_type_choice.view.title
 import kotlinx.android.synthetic.main.property_type_range.view.*
+import kotlinx.android.synthetic.main.property_type_text.view.*
 import kotlinx.android.synthetic.main.property_type_toggle.view.*
 import kotlinx.android.synthetic.main.property_type_uri.view.*
+import kotlinx.android.synthetic.main.property_type_uri.view.button
 import kotlin.math.roundToInt
 
 class PropertyBinder(
@@ -145,6 +150,7 @@ private class PropertyAdapter(
             R.layout.property_type_range -> RangePropertyViewHolder(layout, onChange)
             R.layout.property_type_toggle -> TogglePropertyViewHolder(layout, onChange)
             R.layout.property_type_uri -> UriPropertyViewHolder(layout, onChange, uriProvider)
+            R.layout.property_type_text -> TextPropertyViewHolder(layout, onChange)
             else -> error("unknown type $viewType")
         }
     }
@@ -162,8 +168,8 @@ private class PropertyAdapter(
             is IntRangeType -> R.layout.property_type_range
             is ToggleType -> R.layout.property_type_toggle
             is UriType -> R.layout.property_type_uri
+            is TextType -> R.layout.property_type_text
             null -> error("null type")
-
         }
     }
 
@@ -391,8 +397,57 @@ private class UriPropertyViewHolder(
     override fun bind(property: Property<*>) {
         @Suppress("UNCHECKED_CAST")
         this.property = property as Property<Uri>
-        val type = property.type as UriType
+        val type = property.type
         titleView.setText(type.title)
         uriView.setText(property.value.toString())
+    }
+}
+
+private class TextPropertyViewHolder(
+    itemView: View,
+    private val onChange: (Property<*>) -> Unit
+) : PropertyViewHolder(itemView) {
+    private val titleView = itemView.title
+    private val editText = itemView.edit_text
+    private val button = itemView.button
+    private var property: Property<String>? = null
+
+    init {
+        button.setOnClickListener {
+            handleNameSave()
+        }
+        setupEditTitle()
+    }
+
+
+    private fun setupEditTitle() {
+        editText.setOnKeyListener(object : View.OnKeyListener {
+            override fun onKey(v: View, keyCode: Int, event: KeyEvent): Boolean {
+                if (event.action == KeyEvent.ACTION_DOWN && keyCode == KeyEvent.KEYCODE_ENTER) {
+                    handleNameSave()
+                    return true
+                }
+                return false
+            }
+        })
+    }
+
+    private fun handleNameSave() {
+        val imm =
+            itemView.context.getSystemService(Activity.INPUT_METHOD_SERVICE) as InputMethodManager
+        imm.hideSoftInputFromWindow(editText.windowToken, 0)
+        editText.clearFocus()
+        property?.let {
+            it.value = editText.text.toString()
+            onChange(it)
+        }
+    }
+
+    override fun bind(property: Property<*>) {
+        @Suppress("UNCHECKED_CAST")
+        this.property = property as Property<String>
+        val type = property.type
+        titleView.setText(type.title)
+        editText.setText(property.value)
     }
 }

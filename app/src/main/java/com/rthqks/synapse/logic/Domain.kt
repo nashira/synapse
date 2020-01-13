@@ -20,6 +20,7 @@ val AccumulateFactor = Property.Key<Float>("accumulate_factor")
 val MultiplyFactor = Property.Key<Float>("multiply_factor")
 val MediaUri = Property.Key<Uri>("media_uri")
 val CropToFit = Property.Key<Boolean>("crop_to_fit")
+val NetworkName = Property.Key<String>("network_name")
 
 val Nodes = listOf(
     Node(Node.Type.Camera).apply {

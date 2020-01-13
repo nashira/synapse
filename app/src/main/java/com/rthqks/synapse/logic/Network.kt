@@ -2,10 +2,8 @@ package com.rthqks.synapse.logic
 
 import com.rthqks.synapse.R
 
-
 class Network(
-    val id: Int,
-    var name: String
+    val id: Int
 ) {
     private val nodes = mutableMapOf<Int, Node>()
     private val links = mutableSetOf<Link>()
@@ -13,16 +11,26 @@ class Network(
     val properties = Properties()
     private var maxNodeId = 0
 
+    val name: String get() = properties[NetworkName]
+
     init {
         properties.put(
-            CropToFit,
+            Property(
+                NetworkName,
+                TextType(
+                    R.string.property_name_network_name,
+                    R.drawable.ic_text_fields
+                ), "Network"
+            ), TextConverter
+        )
+        properties.put(
             Property(
                 CropToFit,
                 ToggleType(
                     R.string.property_title_crop_to_fit, R.drawable.ic_crop,
                     R.string.property_subtitle_crop_to_fit_enabled,
                     R.string.property_subtitle_crop_to_fit_disabled
-                ), true, true
+                ), value = true, requiresRestart = true
             ), BooleanConverter
         )
     }
@@ -145,7 +153,7 @@ class Network(
     }
 
     fun copy(): Network {
-        return Network(id, name).also {
+        return Network(id).also {
             it.nodes += nodes
             it.links += links
             it.properties += properties

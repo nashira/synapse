@@ -37,9 +37,9 @@ class BuilderViewModel @Inject constructor(
     fun setNetworkId(networkId: Int) {
         viewModelScope.launch(Dispatchers.IO) {
             if (networkId == -1) {
-                val rowId = dao.insertNetwork(NetworkData(0, "Network"))
+                val rowId = dao.insertNetwork(NetworkData(0))
 
-                network = Network(rowId.toInt(), "Network")
+                network = Network(rowId.toInt())
                 Log.d(TAG, "created: $network")
             } else {
                 network = dao.getFullNetwork(networkId)
@@ -50,14 +50,6 @@ class BuilderViewModel @Inject constructor(
             nodesChannel.postValue(AdapterState(0, listOf(PROPERTIES_NODE)))
 
             executor.initializeNetwork(network)
-        }
-    }
-
-    fun setNetworkName(name: String) {
-        network.name = name
-        viewModelScope.launch(Dispatchers.IO) {
-            dao.insertNetwork(NetworkData(network.id, network.name))
-            Log.d(TAG, "saved: $network")
         }
     }
 
@@ -339,6 +331,36 @@ class BuilderViewModel @Inject constructor(
                 )
             )
         }
+    }
+
+    fun getSortedNodeList(): List<Node> {
+        data class P(val node: Node, var average: Float)
+        var nodes = network.getNodes().map { P(it, 0f) }
+
+        repeat(10) {
+            nodes.forEachIndexed { index, node -> node.node.position = index }
+
+            nodes.forEach {
+                val nodeId = it.node.id
+                var sum = 0
+                val links = network.getLinks(nodeId)
+                links.forEach { link ->
+                    sum += if (link.fromNodeId == nodeId) {
+                        network.getNode(link.toNodeId)?.position
+                    } else {
+                        network.getNode(link.fromNodeId)?.position
+                    } ?: error("missing node $nodeId")
+                }
+                it.average = sum / links.size.toFloat()
+            }
+
+            nodes = nodes.sortedBy { it.average }
+        }
+        nodes.forEachIndexed { index, node -> node.node.position = index }
+
+        Log.d(TAG, nodes.map { Triple(it.node.type.name, it.average, it.node.position) }.joinToString())
+
+        return nodes.map { it.node }
     }
 
     companion object {

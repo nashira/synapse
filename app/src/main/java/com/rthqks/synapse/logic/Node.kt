@@ -13,12 +13,14 @@ class Node(
     val ports = mutableMapOf<String, Port>()
     val properties = Properties()
 
+    var position: Int = 0
+
     fun add(port: Port) {
         ports[port.id] = port
     }
 
     fun <T> add(property: Property<T>, converter: Converter<T>) {
-        properties.put(property.key, property, converter)
+        properties.put(property, converter)
     }
 
     fun copy(networkId: Int = this.networkId, id: Int = this.id): Node = Node(type).also {

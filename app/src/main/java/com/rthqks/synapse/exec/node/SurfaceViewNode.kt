@@ -39,7 +39,6 @@ class SurfaceViewNode(
     override suspend fun create() {
         Log.d(TAG, "crop prop ${properties.find(CropToFit)}")
 //        Log.d(TAG, "adding callback ${surfaceView.holder.surface}")
-//        setSurfaceView(surfaceView)
     }
 
     suspend fun setSurfaceView(surfaceView: SurfaceView) {

@@ -56,7 +56,10 @@ class UriType(
     @DrawableRes icon: Int
 ) : PropertyType<Uri>(title, icon)
 
-
+class TextType(
+    @StringRes title: Int,
+    @DrawableRes icon: Int
+) : PropertyType<String>(title, icon)
 
 interface Converter<T> {
     fun toString(value: T): String
@@ -86,4 +89,9 @@ object BooleanConverter: Converter<Boolean> {
 object UriConverter: Converter<Uri> {
     override fun toString(value: Uri): String = value.toString()
     override fun fromString(value: String): Uri = Uri.parse(value)
+}
+
+object TextConverter: Converter<String> {
+    override fun toString(value: String): String = value
+    override fun fromString(value: String): String  = value
 }

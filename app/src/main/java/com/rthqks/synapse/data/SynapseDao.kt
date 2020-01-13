@@ -78,14 +78,19 @@ abstract class SynapseDao {
 
     suspend fun getNetworks(): List<Network> {
         return getNetworkData().map {
-            Network(it.id, it.name)
+            val properties = getProperties(it.id)
+            Network(it.id).also { network ->
+                properties.filter { it.nodeId == -1 }.forEach {
+                    network.properties[it.key] = it.value
+                }
+            }
         }
     }
 
     @Transaction
     open suspend fun getFullNetwork(networkId: Int): Network {
         val networkData = getNetwork(networkId)
-        val network = Network(networkData.id, networkData.name)
+        val network = Network(networkData.id)
         val nodes = getNodes(networkId)
         val links = getLinks(networkId)
         val properties = getProperties(networkId)

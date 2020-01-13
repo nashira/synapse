@@ -1,8 +1,5 @@
 package com.rthqks.synapse.logic
 
-import androidx.annotation.DrawableRes
-import androidx.annotation.StringRes
-
 class Properties {
     private val map = mutableMapOf<Property.Key<*>, Property<*>>()
     private val converters = mutableMapOf<Property.Key<*>, Converter<*>>()
@@ -10,7 +7,8 @@ class Properties {
     val keys = map.keys
     val values = map.values
 
-    fun <T> put(key: Property.Key<T>, property: Property<T>, converter: Converter<T>) {
+    fun <T> put(property: Property<T>, converter: Converter<T>) {
+        val key = property.key
         map[key] = property
         converters[key] = converter
     }

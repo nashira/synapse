@@ -1,6 +1,6 @@
 package com.rthqks.synapse.logic
 
-class Link(
+data class Link(
     val fromNodeId: Int,
     val fromPortId: String,
     val toNodeId: Int,

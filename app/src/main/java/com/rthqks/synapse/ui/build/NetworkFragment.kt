@@ -4,8 +4,10 @@ import android.app.Activity
 import android.content.Intent
 import android.os.Bundle
 import android.util.Log
-import android.view.*
-import android.view.inputmethod.InputMethodManager
+import android.view.LayoutInflater
+import android.view.MotionEvent
+import android.view.View
+import android.view.ViewGroup
 import androidx.lifecycle.ViewModelProvider
 import androidx.recyclerview.widget.RecyclerView
 import com.rthqks.synapse.R
@@ -46,13 +48,6 @@ class NetworkFragment : DaggerFragment() {
         viewModel.setTitle(R.string.name_node_type_properties)
         viewModel.setMenu(R.menu.fragment_network)
 
-        setupEditTitle()
-        edit_title.setText(viewModel.network.name)
-
-        button_save.setOnClickListener {
-            handleNameSave()
-        }
-
         val properties = viewModel.network.properties
 
         propertyBinder = PropertyBinder(properties, tool_list, tool_main, uriProvider) {
@@ -75,34 +70,28 @@ class NetworkFragment : DaggerFragment() {
 
             true
         })
-        val nodes = viewModel.network.getNodes()
-        connectorAdapter.setNodes(nodes)
+
+        val sorted = viewModel.getSortedNodeList()
+        connectorAdapter.setNodes(sorted)
         node_list.adapter = connectorAdapter
+
+        graph.setData(sorted, viewModel.network.getLinks())
+
+//        graph.setData(viewModel.network)
+//
+//        Log.d(TAG, sorted.joinToString())
+//        viewModel.viewModelScope.launch {
+//            while (isActive) {
+//                graph.iterate()
+//                delay(30)
+//            }
+//        }
     }
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         if (requestCode == OPEN_DOC_REQUEST && resultCode == Activity.RESULT_OK) {
             data?.data?.let { uriProvider.onActivityResult(activity!!, it) }
         }
-    }
-
-    private fun setupEditTitle() {
-        edit_title.setOnKeyListener(object : View.OnKeyListener {
-            override fun onKey(v: View, keyCode: Int, event: KeyEvent): Boolean {
-                if (event.action == KeyEvent.ACTION_DOWN && keyCode == KeyEvent.KEYCODE_ENTER) {
-                    handleNameSave()
-                    return true
-                }
-                return false
-            }
-        })
-    }
-
-    private fun handleNameSave() {
-        val imm = context!!.getSystemService(Activity.INPUT_METHOD_SERVICE) as InputMethodManager
-        imm.hideSoftInputFromWindow(edit_title.windowToken, 0)
-        edit_title.clearFocus()
-        viewModel.setNetworkName(edit_title.text.toString())
     }
 
     override fun onResume() {
@@ -164,18 +153,11 @@ private class NodeViewHolder(
     init {
         button.setOnTouchListener { v, event ->
             touchListener(v, event, node!!)
-//            if (event.actionMasked == MotionEvent.ACTION_DOWN) {
-//                connector?.let { it1 -> onConnectorTouch(it1) }
-//            }
-//            touchMediator.onTouch(v, event, connector)
         }
         button.setOnClickListener {
             clickListener(false, node!!)
-//            connector?.let { it1 -> onConnectorClick(it1) }
         }
         button.setOnLongClickListener {
-//            connector?.let { it1 -> onConnectorLongClick(it, it1) }
-//            true
             clickListener(true, node!!)
         }
     }

@@ -10,11 +10,11 @@
     <ImageButton
         android:id="@+id/button"
         style="@style/Widget.AppCompat.Button.Borderless"
-        android:layout_width="48dp"
-        android:layout_height="48dp"
+        android:layout_width="56dp"
+        android:layout_height="56dp"
+        android:background="@drawable/selectable_grey"
         android:padding="8dp"
         android:tint="@color/white"
-        android:background="@drawable/selectable_grey"
         app:layout_constraintEnd_toStartOf="@id/arrow_forward"
         app:layout_constraintStart_toEndOf="@id/title"
         app:layout_constraintTop_toTopOf="parent"
@@ -35,9 +35,8 @@
         android:id="@+id/title"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:src="@drawable/ic_arrow_back_ios"
+        android:src="@drawable/ic_arrow_back"
         android:tint="@color/colorAccent"
-        android:layout_marginStart="4dp"
         app:layout_constraintBottom_toBottomOf="@id/button"
         app:layout_constraintEnd_toStartOf="@id/button"
         app:layout_constraintStart_toStartOf="parent"
@@ -45,24 +44,12 @@
 
     <TextView
         android:id="@+id/label"
-        tools:text="Grayscale"
-        android:visibility="gone"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        android:visibility="gone"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/button" />
-
-    <!--    <Button-->
-    <!--        android:id="@+id/button"-->
-    <!--        style="@style/Widget.AppCompat.Button.Borderless"-->
-    <!--        android:layout_width="wrap_content"-->
-    <!--        android:layout_height="wrap_content"-->
-    <!--        android:background="@drawable/selectable_grey"-->
-    <!--        android:drawableEnd="@drawable/ic_arrow_forward_ios"-->
-    <!--        android:drawableTint="@color/colorAccent"-->
-    <!--        android:padding="8dp"-->
-    <!--        android:textColor="@color/white"-->
-    <!--        tools:text="Video (grayscale)" />-->
+        app:layout_constraintTop_toBottomOf="@id/button"
+        tools:text="Grayscale" />
 </androidx.constraintlayout.widget.ConstraintLayout>
