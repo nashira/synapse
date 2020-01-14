@@ -14,6 +14,7 @@ import androidx.viewpager2.widget.ViewPager2
 import com.google.firebase.analytics.FirebaseAnalytics
 import com.rthqks.synapse.R
 import com.rthqks.synapse.logic.Node
+import com.rthqks.synapse.logic.NodeType
 import com.rthqks.synapse.ui.exec.NetworkActivity
 import dagger.android.support.DaggerAppCompatActivity
 import kotlinx.android.synthetic.main.activity_builder.*
@@ -180,9 +181,9 @@ class BuilderActivity : DaggerAppCompatActivity() {
         override fun createFragment(position: Int): Fragment {
             val node = nodes[position]
             return when (node.type) {
-                Node.Type.Properties -> NetworkFragment.newInstance()
-                Node.Type.Creation,
-                Node.Type.Connection -> ConnectionFragment.newInstance()
+                NodeType.Properties -> NetworkFragment.newInstance()
+                NodeType.Creation,
+                NodeType.Connection -> ConnectionFragment.newInstance()
                 else -> NodeFragment.newInstance(node.id)
             }
         }

@@ -165,7 +165,7 @@ class Executor @Inject constructor(
                 source.ports.values.firstOrNull {
                     it.output && it.type == Port.Type.Video
                 }?.id?.let {
-                    val node = NewNode(Node.Type.Screen, networkNew.id)
+                    val node = NewNode(NodeType.Screen, networkNew.id)
                     networkNew.addNode(node)
                     networkNew.addLink(source.id, it, node.id, SurfaceViewNode.INPUT.id)
                 }
@@ -205,7 +205,7 @@ class Executor @Inject constructor(
             target.ports.values.firstOrNull {
                 it.output && it.type == Port.Type.Video
             }?.id?.let {
-                val screen = NewNode(Node.Type.Screen, network.id)
+                val screen = NewNode(NodeType.Screen, network.id)
                 network.addNode(screen)
                 val se = network.addLink(target.id, it, screen.id, SurfaceViewNode.INPUT.id)
                 data.add(screen to se)

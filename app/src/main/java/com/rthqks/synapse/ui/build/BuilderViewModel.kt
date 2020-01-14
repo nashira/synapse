@@ -117,7 +117,7 @@ class BuilderViewModel @Inject constructor(
             return
         }
         nodesChannel.value?.let {
-            val index = it.items.indexOfFirst { it.type != Node.Type.Connection }
+            val index = it.items.indexOfFirst { it.type != NodeType.Connection }
             nodesChannel.value = AdapterState(index, it.items, true)
         }
     }
@@ -146,7 +146,7 @@ class BuilderViewModel @Inject constructor(
                 }
             }
 
-            if (it.node.type != Node.Type.Creation) {
+            if (it.node.type != NodeType.Creation) {
                 // new edge
                 val from = if (connector.port.output) connector else it
                 val to = if (connector.port.output) it else connector
@@ -258,7 +258,7 @@ class BuilderViewModel @Inject constructor(
 
     private fun updateStartState() {
         nodesChannel.value?.also {
-            val current = it.items.any { it.id != NodeMap[Node.Type.Properties]?.id }
+            val current = it.items.any { it.id != NodeMap[NodeType.Properties]?.id }
             if (current) {
                 executor.start()
             } else {
@@ -310,13 +310,6 @@ class BuilderViewModel @Inject constructor(
         }
     }
 
-    fun setCropCenter(crop: Boolean) {
-        Log.d(TAG, "setting crop $crop")
-        network.properties[CropToFit] = crop
-        Log.d(TAG, "prop ${network.properties.find(CropToFit)}")
-        restartNetwork()
-    }
-
     fun onPropertyChange(nodeId: Int, property: Property<*>, properties: Properties) {
         if (property.requiresRestart) {
             restartNetwork()
@@ -358,16 +351,14 @@ class BuilderViewModel @Inject constructor(
         }
         nodes.forEachIndexed { index, node -> node.node.position = index }
 
-        Log.d(TAG, nodes.map { Triple(it.node.type.name, it.average, it.node.position) }.joinToString())
-
         return nodes.map { it.node }
     }
 
     companion object {
         const val TAG = "BuilderViewModel"
-        val PROPERTIES_NODE: Node by lazy { GetNode(Node.Type.Properties) }
-        val CONNECTION_NODE: Node by lazy { GetNode(Node.Type.Connection) }
-        val CREATION_NODE: Node by lazy { GetNode(Node.Type.Creation) }
+        val PROPERTIES_NODE: Node by lazy { GetNode(NodeType.Properties) }
+        val CONNECTION_NODE: Node by lazy { GetNode(NodeType.Connection) }
+        val CREATION_NODE: Node by lazy { GetNode(NodeType.Creation) }
         val FAKE_PORT = Port(Port.Type.Video, "", "", false)
     }
 }

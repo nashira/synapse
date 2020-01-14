@@ -12,6 +12,7 @@ import com.rthqks.synapse.gl.GlesManager
 import com.rthqks.synapse.logic.Link
 import com.rthqks.synapse.logic.Network
 import com.rthqks.synapse.logic.Node
+import com.rthqks.synapse.logic.NodeType
 import kotlinx.coroutines.*
 import java.util.concurrent.atomic.AtomicReference
 
@@ -67,24 +68,24 @@ class NetworkExecutor(
 
     private fun nodeExecutor(node: Node): NodeExecutor {
         return when (node.type) {
-            Node.Type.Camera -> CameraNode(cameraManager, glesManager, node.properties)
-            Node.Type.FrameDifference -> FrameDifferenceNode(glesManager, assetManager)
-            Node.Type.GrayscaleFilter -> GrayscaleNode(glesManager, assetManager, node.properties)
-            Node.Type.BlurFilter -> BlurNode(glesManager, assetManager, node.properties)
-            Node.Type.MultiplyAccumulate -> MacNode(glesManager, assetManager, node.properties)
-            Node.Type.OverlayFilter -> OverlayFilterNode(glesManager, assetManager)
-            Node.Type.Microphone -> AudioSourceNode(node.properties)
-            Node.Type.Image -> TODO()
-            Node.Type.AudioFile -> TODO()
-            Node.Type.MediaFile -> DecoderNode(glesManager, context, node.properties)
-            Node.Type.LutFilter -> GlNode(glesManager, assetManager)
-            Node.Type.ShaderFilter -> TODO()
-            Node.Type.Speakers -> AudioPlayerNode()
-            Node.Type.Screen -> SurfaceViewNode(assetManager, glesManager, node.properties + network.properties)
+            NodeType.Camera -> CameraNode(cameraManager, glesManager, node.properties)
+            NodeType.FrameDifference -> FrameDifferenceNode(glesManager, assetManager)
+            NodeType.GrayscaleFilter -> GrayscaleNode(glesManager, assetManager, node.properties)
+            NodeType.BlurFilter -> BlurNode(glesManager, assetManager, node.properties)
+            NodeType.MultiplyAccumulate -> MacNode(glesManager, assetManager, node.properties)
+            NodeType.OverlayFilter -> OverlayFilterNode(glesManager, assetManager)
+            NodeType.Microphone -> AudioSourceNode(node.properties)
+            NodeType.Image -> TODO()
+            NodeType.AudioFile -> TODO()
+            NodeType.MediaFile -> DecoderNode(glesManager, context, node.properties)
+            NodeType.LutFilter -> GlNode(glesManager, assetManager)
+            NodeType.ShaderFilter -> TODO()
+            NodeType.Speakers -> AudioPlayerNode()
+            NodeType.Screen -> SurfaceViewNode(assetManager, glesManager, node.properties + network.properties)
 
-            Node.Type.Properties,
-            Node.Type.Creation,
-            Node.Type.Connection -> error("not an executable node type: ${node.type}")
+            NodeType.Properties,
+            NodeType.Creation,
+            NodeType.Connection -> error("not an executable node type: ${node.type}")
         }
     }
 

@@ -2,7 +2,7 @@ package com.rthqks.synapse.data
 
 import androidx.room.Entity
 import androidx.room.Index
-import com.rthqks.synapse.logic.Node
+import com.rthqks.synapse.logic.NodeType
 
 @Entity(
     tableName = "node",
@@ -14,5 +14,5 @@ import com.rthqks.synapse.logic.Node
 data class NodeData(
     val id: Int,
     val networkId: Int,
-    val type: Node.Type
+    val type: NodeType
 )

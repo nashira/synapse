@@ -23,7 +23,7 @@ val CropToFit = Property.Key<Boolean>("crop_to_fit")
 val NetworkName = Property.Key<String>("network_name")
 
 val Nodes = listOf(
-    Node(Node.Type.Camera).apply {
+    Node(NodeType.Camera).apply {
         add(Port(Port.Type.Video, "video_1", "Video", true))
         add(
             Property(
@@ -70,10 +70,10 @@ val Nodes = listOf(
             ), SizeConverter
         )
     },
-    Node(Node.Type.Microphone).apply {
+    Node(NodeType.Microphone).apply {
         add(Port(Port.Type.Audio, "audio_1", "Audio", true))
     },
-    Node(Node.Type.MediaFile).apply {
+    Node(NodeType.MediaFile).apply {
         add(Port(Port.Type.Video, "video_1", "Video", true))
         add(Port(Port.Type.Audio, "audio_1", "Audio", true))
         add(
@@ -84,11 +84,11 @@ val Nodes = listOf(
             ), UriConverter
         )
     },
-    Node(Node.Type.FrameDifference).apply {
+    Node(NodeType.FrameDifference).apply {
         add(Port(Port.Type.Video, "video_1", "Source", false))
         add(Port(Port.Type.Video, "video_2", "Difference", true))
     },
-    Node(Node.Type.GrayscaleFilter).apply {
+    Node(NodeType.GrayscaleFilter).apply {
         add(Port(Port.Type.Video, "video_1", "Source", false))
         add(Port(Port.Type.Video, "video_2", "Grayscale", true))
         add(
@@ -102,7 +102,7 @@ val Nodes = listOf(
             ), IntConverter
         )
     },
-    Node(Node.Type.MultiplyAccumulate).apply {
+    Node(NodeType.MultiplyAccumulate).apply {
         add(Port(Port.Type.Video, "video_1", "Source", false))
         add(Port(Port.Type.Video, "video_2", "Accumulated", true))
         add(
@@ -126,12 +126,12 @@ val Nodes = listOf(
             ), FloatConverter
         )
     },
-    Node(Node.Type.OverlayFilter).apply {
+    Node(NodeType.OverlayFilter).apply {
         add(Port(Port.Type.Video, "video_1", "Content", false))
         add(Port(Port.Type.Video, "video_2", "Mask", false))
         add(Port(Port.Type.Video, "video_3", "Combined", true))
     },
-    Node(Node.Type.BlurFilter).apply {
+    Node(NodeType.BlurFilter).apply {
         add(Port(Port.Type.Video, "video_1", "Source", false))
         add(Port(Port.Type.Video, "video_2", "Blurred", true))
         add(
@@ -167,11 +167,11 @@ val Nodes = listOf(
             ), IntConverter
         )
     },
-    Node(Node.Type.LutFilter).apply {
+    Node(NodeType.LutFilter).apply {
         add(Port(Port.Type.Video, "video_1", "Source", false))
         add(Port(Port.Type.Video, "video_2", "Colored", true))
     },
-    Node(Node.Type.Screen).apply {
+    Node(NodeType.Screen).apply {
         add(Port(Port.Type.Video, "video_1", "Source", false))
         add(
             Property(
@@ -185,17 +185,37 @@ val Nodes = listOf(
             ), BooleanConverter
         )
     },
-    Node(Node.Type.Speakers).apply {
+    Node(NodeType.Speakers).apply {
         add(Port(Port.Type.Audio, "audio_1", "Audio", false))
     },
-    Node(Node.Type.Properties).also { it.id = -2 },
-    Node(Node.Type.Connection).also { it.id = -3 },
-    Node(Node.Type.Creation).also { it.id = -4 }
+    Node(NodeType.Properties).also { it.id = -2 },
+    Node(NodeType.Connection).also { it.id = -3 },
+    Node(NodeType.Creation).also { it.id = -4 }
 )
 
 val NodeMap = Nodes.map { it.type to it }.toMap()
 
-fun GetNode(type: Node.Type) = NodeMap[type] ?: error("missing node $type")
+val NodeTypes = mapOf(
+    NodeType.Camera.key to NodeType.Camera,
+    NodeType.Microphone.key to NodeType.Microphone,
+    NodeType.MediaFile.key to NodeType.MediaFile,
+    NodeType.FrameDifference.key to NodeType.FrameDifference,
+    NodeType.GrayscaleFilter.key to NodeType.GrayscaleFilter,
+    NodeType.MultiplyAccumulate.key to NodeType.MultiplyAccumulate,
+    NodeType.OverlayFilter.key to NodeType.OverlayFilter,
+    NodeType.BlurFilter.key to NodeType.BlurFilter,
+    NodeType.Image.key to NodeType.Image,
+    NodeType.AudioFile.key to NodeType.AudioFile,
+    NodeType.LutFilter.key to NodeType.LutFilter,
+    NodeType.ShaderFilter.key to NodeType.ShaderFilter,
+    NodeType.Speakers.key to NodeType.Speakers,
+    NodeType.Screen.key to NodeType.Screen,
+    NodeType.Properties.key to NodeType.Properties,
+    NodeType.Creation.key to NodeType.Creation,
+    NodeType.Connection.key to NodeType.Connection
+)
 
-fun NewNode(type: Node.Type, networkId: Int = -1, id: Int = -1) =
+fun GetNode(type: NodeType) = NodeMap[type] ?: error("missing node $type")
+
+fun NewNode(type: NodeType, networkId: Int = -1, id: Int = -1) =
     (NodeMap[type] ?: error("missing node $type")).copy(networkId, id)

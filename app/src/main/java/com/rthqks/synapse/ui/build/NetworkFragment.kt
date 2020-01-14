@@ -13,6 +13,7 @@ import androidx.recyclerview.widget.RecyclerView
 import com.rthqks.synapse.R
 import com.rthqks.synapse.logic.GetNode
 import com.rthqks.synapse.logic.Node
+import com.rthqks.synapse.logic.NodeType
 import dagger.android.support.DaggerFragment
 import kotlinx.android.synthetic.main.fragment_network.*
 import kotlinx.android.synthetic.main.layout_node_item.view.*
@@ -59,7 +60,7 @@ class NetworkFragment : DaggerFragment() {
 
         val connectorAdapter = NodeAdapter({ view: View, event: MotionEvent, node: Node ->
             if (event.actionMasked == MotionEvent.ACTION_DOWN) {
-                if (node.type == Node.Type.Creation) {
+                if (node.type == NodeType.Creation) {
                     viewModel.showFirstNode()
                 } else {
                     viewModel.swipeToNode(node)
@@ -120,7 +121,7 @@ private class NodeAdapter(
         this.nodes.clear()
         this.nodes.addAll(nodes)
         if (nodes.isEmpty()) {
-            this.nodes.add(GetNode(Node.Type.Creation))
+            this.nodes.add(GetNode(NodeType.Creation))
         }
         notifyDataSetChanged()
     }

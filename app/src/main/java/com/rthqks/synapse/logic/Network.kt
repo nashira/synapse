@@ -126,7 +126,7 @@ class Network(
     fun getPotentialConnectors(connector: Connector): List<Connector> {
         val port = connector.port
         val connectors = mutableListOf<Connector>()
-        Nodes.filter { it.type != Node.Type.OverlayFilter }.forEach { n ->
+        Nodes.filter { it.type != NodeType.OverlayFilter }.forEach { n ->
             connectors += n.ports.filter {
                 it.value.type == port.type
                         && it.value.output != port.output
@@ -138,7 +138,7 @@ class Network(
 
     fun getCreationConnectors(): List<Connector> {
         val connectors = mutableListOf<Connector>()
-        Nodes.forEach { n ->
+        Nodes.filter { it.producer }.forEach { n ->
             connectors += n.ports.filter { it.value.output }
                 .map { Connector(n.copy(id), it.value) }
         }

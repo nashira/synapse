@@ -16,7 +16,7 @@ import androidx.recyclerview.widget.RecyclerView
 import com.rthqks.synapse.R
 import com.rthqks.synapse.logic.Connector
 import com.rthqks.synapse.logic.Network
-import com.rthqks.synapse.logic.Node
+import com.rthqks.synapse.logic.NodeType
 import dagger.android.support.DaggerFragment
 import kotlinx.android.synthetic.main.fragment_connection.*
 import kotlinx.android.synthetic.main.layout_connection.view.*
@@ -52,7 +52,7 @@ class ConnectionFragment : DaggerFragment() {
         viewModel.connectionChannel.observe(viewLifecycleOwner, Observer {
             Log.d(TAG, "changed ${it.node.type} ${it.port.name}")
 
-            if (it.node.type == Node.Type.Creation) {
+            if (it.node.type == NodeType.Creation) {
                 val connectors = network.getCreationConnectors()
 //                viewModel.addConnectionPreview(it, connectors)
                 connectionAdapter.setData(emptyList(), connectors)
