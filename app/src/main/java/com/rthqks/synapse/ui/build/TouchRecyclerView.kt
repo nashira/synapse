@@ -14,10 +14,4 @@ class TouchRecyclerView @JvmOverloads constructor(
     override fun onInterceptTouchEvent(e: MotionEvent?): Boolean {
         return false
     }
-
-    override fun onDraw(c: Canvas?) {
-        super.onDraw(c)
-
-        val l = layoutManager as LinearLayoutManager
-    }
 }

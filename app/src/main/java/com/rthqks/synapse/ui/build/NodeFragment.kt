@@ -259,7 +259,9 @@ class NodeFragment : DaggerFragment() {
                     if (startAligned) viewModel.getConnector(it.fromNodeId, it.fromPortId).port
                     else viewModel.getConnector(it.toNodeId, it.toPortId).port
                 label.text = "${connector.port.name} (${otherPort.name})"
+                button.setBackgroundResource(R.drawable.selectable_accent)
             } ?: run {
+                button.setBackgroundResource(R.drawable.selectable_grey)
                 label.text = connector.port.name
             }
 

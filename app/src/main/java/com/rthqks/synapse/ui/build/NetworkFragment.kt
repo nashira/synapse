@@ -75,7 +75,7 @@ class NetworkFragment : DaggerFragment() {
         connectorAdapter.setNodes(sorted)
         node_list.adapter = connectorAdapter
 
-        graph.setData(sorted, viewModel.network.getLinks())
+        node_list.setData(sorted, viewModel.network.getLinks())
 
 //        graph.setData(viewModel.network)
 //
@@ -151,6 +151,9 @@ private class NodeViewHolder(
     private var node: Node? = null
 
     init {
+//        itemView.setOnTouchListener { v, event ->
+//            touchListener(v, event, node!!)
+//        }
         button.setOnTouchListener { v, event ->
             touchListener(v, event, node!!)
         }
