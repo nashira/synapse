@@ -75,7 +75,7 @@ class NetworkExecutor(
             NodeType.MultiplyAccumulate -> MacNode(glesManager, assetManager, node.properties)
             NodeType.OverlayFilter -> OverlayFilterNode(glesManager, assetManager)
             NodeType.Microphone -> AudioSourceNode(node.properties)
-            NodeType.Image -> TODO()
+            NodeType.Image -> ImageSourceNode(context, glesManager, node.properties)
             NodeType.AudioFile -> TODO()
             NodeType.MediaFile -> DecoderNode(glesManager, context, node.properties)
             NodeType.LutFilter -> GlNode(glesManager, assetManager)

@@ -15,8 +15,6 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.sync.Mutex
-import kotlinx.coroutines.sync.withLock
 
 class GrayscaleNode(
     private val glesManager: GlesManager,
@@ -24,7 +22,6 @@ class GrayscaleNode(
     private val properties: Properties
 ) : NodeExecutor() {
     private var startJob: Job? = null
-    private val connectMutex = Mutex(true)
     private var size = Size(0, 0)
 
     private var texture: Texture? = null
@@ -115,6 +112,7 @@ class GrayscaleNode(
             while (isActive) {
                 val inEvent = input.receive()
 
+                Log.d(TAG, "event received ${inEvent.count}")
                 val outEvent = output.receive()
                 outEvent.eos = inEvent.eos
                 outEvent.count = inEvent.count
@@ -228,8 +226,7 @@ class GrayscaleNode(
     override suspend fun <C : Config, E : Event> makeConfig(key: Connection.Key<C, E>): C {
         return when (key) {
             OUTPUT -> {
-                connectMutex.withLock {}
-                val config = config(INPUT)!!
+                val config = configAsync(INPUT).await()
 
                 val inputSize = config.size
                 size = Size(inputSize.width / scale, inputSize.height / scale)
@@ -246,11 +243,6 @@ class GrayscaleNode(
             }
             else -> error("unknown key $key")
         }
-    }
-
-    override suspend fun <C : Config, E : Event> setConfig(key: Connection.Key<C, E>, config: C) {
-        super.setConfig(key, config)
-        if (key == INPUT) connectMutex.unlock()
     }
 
     companion object {

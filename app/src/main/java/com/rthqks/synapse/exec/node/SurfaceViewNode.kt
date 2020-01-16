@@ -36,6 +36,12 @@ class SurfaceViewNode(
 
     private val cropCenter: Boolean = properties[CropToFit]
 
+    private var surfaceState = SurfaceState.Unavailable
+    private var previousTexture: Texture? = null
+//    private var surfaceDeferred: CompletableDeferred<Unit>? = null
+    val string = toString()
+    private val TAG = "SVN ${string.substring(string.length-8, string.length)}"
+
     override suspend fun create() {
         Log.d(TAG, "crop prop ${properties.find(CropToFit)}")
 //        Log.d(TAG, "adding callback ${surfaceView.holder.surface}")
@@ -43,6 +49,8 @@ class SurfaceViewNode(
 
     suspend fun setSurfaceView(surfaceView: SurfaceView) {
         Log.d(TAG, "setSurfaceView ${surfaceView.holder}")
+        surfaceState = SurfaceState.Waiting
+//        surfaceDeferred = CompletableDeferred()
         this.surfaceView?.holder?.removeCallback(this)
         this.surfaceView = surfaceView
         surfaceView.holder.addCallback(this)
@@ -62,9 +70,7 @@ class SurfaceViewNode(
     ) {
         Log.d(TAG, "surfaceChanged: $holder $format $width $height")
         runBlocking {
-            if (cropCenter) {
-                outputSize = Size(width, height)
-            }
+            outputSize = Size(width, height)
             setSurface(holder!!.surface)
         }
     }
@@ -141,11 +147,20 @@ class SurfaceViewNode(
         glesManager.withGlContext {
             windowSurface?.release()
             windowSurface = null
-            surface?.let { surface ->
+            surface?.also { surface ->
                 if (surface.isValid) {
+                    Log.d(TAG, "surf creating new input surface")
                     windowSurface = it.createWindowSurface(surface)
                 }
             }
+
+            if (windowSurface == null) {
+                surfaceState = SurfaceState.Unavailable
+            } else {
+                surfaceState = SurfaceState.Available
+//                surfaceDeferred?.complete(Unit)
+            }
+            Log.d(TAG, "surfaceState $surfaceState")
         }
     }
 
@@ -156,8 +171,11 @@ class SurfaceViewNode(
             var copyMatrix = true
             while (isActive) {
                 val inEvent = input.receive()
+                previousTexture = inEvent.texture
 
-                if (copyMatrix && windowSurface != null) {
+                Log.d(TAG, "loop surfaceState $surfaceState")
+
+                if (copyMatrix) {
                     copyMatrix = false
                     val uniform = program.getUniform(Uniform.Type.Mat4, "texture_matrix0")
                     val matrix = uniform.data!!
@@ -167,8 +185,8 @@ class SurfaceViewNode(
                         val inAspect = inputSize.width / inputSize.height.toFloat()
                         val outAspect = outputSize.width / outputSize.height.toFloat()
 
-                        val scaleX = if (inAspect > outAspect) outAspect / inAspect else 1f
-                        val scaleY = if (inAspect < outAspect) inAspect / outAspect else 1f
+                        val scaleX = if (inAspect >= outAspect) outAspect / inAspect else 1f
+                        val scaleY = if (inAspect <= outAspect) inAspect / outAspect else 1f
 
                         Matrix.translateM(matrix, 0, 0.5f, 0.5f, 0f)
                         Matrix.scaleM(matrix, 0, scaleX, scaleY, 1f)
@@ -178,8 +196,10 @@ class SurfaceViewNode(
                     uniform.dirty = true
                 }
 
-                if (surface != null && windowSurface != null) {
+                if (windowSurface != null) {
+                    Log.d(TAG, "loop pre render")
                     glesManager.withGlContext {
+                        Log.d(TAG, "loop render")
                         windowSurface?.makeCurrent()
                         GLES32.glBindFramebuffer(GLES32.GL_FRAMEBUFFER, 0)
                         executeGl(inEvent.texture)
@@ -193,6 +213,7 @@ class SurfaceViewNode(
                     Log.d(TAG, "got EOS ${inEvent.count}")
                     playJob?.cancel()
                 }
+
             }
         }
     }
@@ -219,6 +240,7 @@ class SurfaceViewNode(
             mesh.release()
             program.release()
         }
+        debug.remove(this)
     }
 
     override suspend fun <C : Config, E : Event> setConfig(key: Connection.Key<C, E>, config: C) {
@@ -241,15 +263,14 @@ class SurfaceViewNode(
             val _size = if (cropCenter) {
                 Size(surfaceView.measuredWidth, surfaceView.measuredHeight)
             } else {
-                surfaceView.holder.setFixedSize(size.width, size.height)
                 size
             }
-            outputSize = _size
+            outputSize = Size(surfaceView.measuredWidth, surfaceView.measuredHeight)
 //                if (rotation == 90 || rotation == 270) Size(size.height, size.width) else size
             ConstraintSet().also {
                 val constraintLayout = surfaceView.parent as ConstraintLayout
                 it.clone(constraintLayout)
-                it.setDimensionRatio(R.id.surface_view, "${outputSize.width}:${outputSize.height}")
+                it.setDimensionRatio(R.id.surface_view, "${_size.width}:${_size.height}")
                 it.applyTo(constraintLayout)
             }
         }
@@ -257,7 +278,8 @@ class SurfaceViewNode(
     }
 
     private suspend fun setSurface(surface: Surface?) {
-        Log.d(TAG, "setSurface ${surface?.isValid}")
+        Log.d(TAG, "setSurface prev ${this.surface} new $surface ${surface?.isValid}")
+        val hasChanged = this.surface != surface
         this.surface = surface
 
         if (surface?.isValid == true) {
@@ -267,13 +289,32 @@ class SurfaceViewNode(
             debug.remove(this)
         }
         updateWindowSurface()
+        if (hasChanged) {
+//            updateWindowSurface()
+        }
+
+        previousTexture?.let { texture ->
+            Log.d(TAG, "surf render")
+            windowSurface ?: return@let
+            glesManager.withGlContext {
+                windowSurface?.makeCurrent()
+                GLES32.glBindFramebuffer(GLES32.GL_FRAMEBUFFER, 0)
+                executeGl(texture)
+                windowSurface?.swapBuffers()
+            }
+        }
         Log.d(TAG, "active surfaces ${debug.size}")
-        Log.d(TAG, debug.joinToString())
     }
 
     companion object {
-        const val TAG = "SurfaceViewNode"
+//        const val TAG = "SurfaceViewNode"
         val INPUT = Connection.Key<VideoConfig, VideoEvent>("video_1")
         val debug = mutableSetOf<SurfaceViewNode>()
     }
+}
+
+private enum class SurfaceState {
+    Waiting,
+    Available,
+    Unavailable
 }

@@ -79,8 +79,18 @@ val Nodes = listOf(
         add(
             Property(
                 MediaUri,
-                UriType(R.string.property_name_uri, R.drawable.ic_movie),
+                UriType(R.string.property_name_uri, R.drawable.ic_movie, "video/*"),
                 Uri.parse("https://www.sample-videos.com/video123/mp4/720/big_buck_bunny_720p_2mb.mp4"), true
+            ), UriConverter
+        )
+    },
+    Node(NodeType.Image).apply {
+        add(Port(Port.Type.Video, "image_1", "Image", true))
+        add(
+            Property(
+                MediaUri,
+                UriType(R.string.property_name_uri, R.drawable.ic_image, "image/*"),
+                Uri.parse("assets:///img/ic_launcher_web.png"), true
             ), UriConverter
         )
     },

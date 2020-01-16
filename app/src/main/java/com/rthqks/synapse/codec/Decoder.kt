@@ -9,7 +9,6 @@ import android.os.Handler
 import android.util.Log
 import android.util.Size
 import android.view.Surface
-import androidx.core.net.toUri
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.SendChannel
 import kotlinx.coroutines.runBlocking
@@ -52,13 +51,22 @@ class Decoder(
     @Suppress("BlockingMethodInNonBlockingContext")
     suspend fun setDataSource(uri: Uri) {
         Log.d(TAG, "setDataSource $uri")
-        if (uri.scheme == "content") {
-            val afd = context.contentResolver.openAssetFileDescriptor(uri, "r")
-            val fd = afd!!.fileDescriptor
-            extractor.setDataSource(fd!!)
-            afd.close()
-        } else {
-            extractor.setDataSource(context, uri, emptyMap())
+        when (uri.scheme) {
+            "content" -> {
+                val afd = context.contentResolver.openAssetFileDescriptor(uri, "r")
+                val fd = afd!!.fileDescriptor
+                extractor.setDataSource(fd!!)
+                afd.close()
+            }
+            "assets" -> {
+                val afd = context.assets.openFd(uri.path!!)
+                val fd = afd.fileDescriptor
+                extractor.setDataSource(fd!!)
+                afd.close()
+            }
+            else -> {
+                extractor.setDataSource(context, uri, emptyMap())
+            }
         }
 
         findTrack("video/")?.let {

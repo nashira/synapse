@@ -53,7 +53,8 @@ class ToggleType(
 
 class UriType(
     @StringRes title: Int,
-    @DrawableRes icon: Int
+    @DrawableRes icon: Int,
+    val mime: String
 ) : PropertyType<Uri>(title, icon)
 
 class TextType(

@@ -1,6 +1,8 @@
 package com.rthqks.synapse.gl
 
+import android.graphics.Bitmap
 import android.opengl.GLES32.*
+import android.opengl.GLUtils
 
 class Texture(
     val target: Int,
@@ -75,6 +77,12 @@ class Texture(
             type,
             buffer
         )
+        glBindTexture(target, 0)
+    }
+
+    fun initData(level: Int, bitmap: Bitmap, border: Int = 0) {
+        glBindTexture(target, id)
+        GLUtils.texImage2D(target, level, bitmap, border)
         glBindTexture(target, 0)
     }
 

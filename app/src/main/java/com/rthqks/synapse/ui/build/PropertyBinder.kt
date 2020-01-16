@@ -382,10 +382,12 @@ private class UriPropertyViewHolder(
     private val uriView = itemView.uri_view
     private val button = itemView.button
     private var property: Property<Uri>? = null
+    private var type: UriType? = null
 
     init {
         button.setOnClickListener {
-            uriProvider.getUri("video/*") {
+            val mime = type?.mime ?: return@setOnClickListener
+            uriProvider.getUri(mime) {
                 property?.let { p ->
                     p.value = it
                     onChange(p)
@@ -398,6 +400,7 @@ private class UriPropertyViewHolder(
         @Suppress("UNCHECKED_CAST")
         this.property = property as Property<Uri>
         val type = property.type
+        this.type = type as UriType
         titleView.setText(type.title)
         uriView.setText(property.value.toString())
     }

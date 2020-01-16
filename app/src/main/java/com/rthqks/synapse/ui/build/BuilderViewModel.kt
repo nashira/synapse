@@ -103,13 +103,22 @@ class BuilderViewModel @Inject constructor(
 
     fun updateCurrentItem(currentItem: Int) {
         nodesChannel.value?.let {
-            nodesChannel.value = AdapterState(currentItem, it.items)
+            val item = it.items[currentItem]
+            val other = it.items.firstOrNull { it != item }
+            if (item.type != NodeType.Connection && item.type != NodeType.Creation) {
+                nodesChannel.value = AdapterState(0, listOf(item))
+            } else {
+                nodesChannel.value = AdapterState(currentItem, it.items)
+            }
+            if (other?.type == NodeType.Connection || other?.type == NodeType.Creation) {
+                restartNetwork()
+            }
             updateStartState()
         }
     }
 
     fun cancelConnection() {
-        restartNetwork()
+//        restartNetwork()
 
         nodeAfterCancel?.let {
             nodesChannel.value = AdapterState(0, listOf(it))
@@ -330,7 +339,7 @@ class BuilderViewModel @Inject constructor(
         data class P(val node: Node, var average: Float)
         var nodes = network.getNodes().map { P(it, 0f) }
 
-        repeat(10) {
+        repeat(30) {
             nodes.forEachIndexed { index, node -> node.node.position = index }
 
             nodes.forEach {

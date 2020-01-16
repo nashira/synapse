@@ -20,7 +20,8 @@ abstract class NodeExecutor {
     private val connections = mutableMapOf<Connection.Key<*, *>, Connection<*, *>>()
     private val channels = mutableMapOf<Connection.Key<*, *>, Channel<*>>()
     private val configs = mutableMapOf<Connection.Key<*, *>, Config>()
-    private val waitingConfigs = mutableMapOf<Connection.Key<*, *>, MutableSet<CompletableDeferred<Config>>>()
+    private val waitingConfigs =
+        mutableMapOf<Connection.Key<*, *>, MutableSet<CompletableDeferred<Config>>>()
     private val connectMutex = Mutex()
     private lateinit var commands: SendChannel<() -> Unit>
 
@@ -78,8 +79,10 @@ abstract class NodeExecutor {
     }
 
     open suspend fun <C : Config, E : Event> setConfig(key: Connection.Key<C, E>, config: C) {
-        configs[key] = config
-        waitingConfigs.remove(key)?.forEach { it.complete(config) }
+        synchronized(configs) {
+            configs[key] = config
+            waitingConfigs.remove(key)?.forEach { it.complete(config) }
+        }
     }
 
     @Suppress("UNCHECKED_CAST")
@@ -98,12 +101,16 @@ abstract class NodeExecutor {
     }
 
     @Suppress("UNCHECKED_CAST")
-    protected fun <C : Config, E : Event> deferredConfig(key: Connection.Key<C, E>): Deferred<C> {
-        configs[key]?.let { return@deferredConfig CompletableDeferred(it as C) }
+    protected fun <C : Config, E : Event> configAsync(key: Connection.Key<C, E>): Deferred<C> {
+        synchronized(configs) {
+            configs[key]?.let { return@configAsync CompletableDeferred(it as C) }
 
-        val deferred = CompletableDeferred<C>()
-        waitingConfigs.getOrPut(key) { mutableSetOf() }.add(deferred as CompletableDeferred<Config>)
-        return deferred
+            val deferred = CompletableDeferred<C>()
+            waitingConfigs.getOrPut(key) { mutableSetOf() }
+                .add(deferred as CompletableDeferred<Config>)
+
+            return deferred
+        }
     }
 
     companion object {
