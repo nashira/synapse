@@ -26,7 +26,7 @@ class SingleConsumer<C : Config, E : Event>(
     override fun consumer(): Channel<E> = duplex.client
 
     override suspend fun prime(item: E) {
-        item._counter.set(1)
+        item.inFlight.set(1)
         duplex.rx.send(item)
     }
 
@@ -41,7 +41,7 @@ class MultiConsumer<C : Config, E : Event>(
     protected val consumers = mutableListOf<Duplex<E>>()
     protected val producer = object : Channel<E> by Channel() {
         override suspend fun send(element: E) {
-            element._counter.set(consumers.size)
+            element.inFlight.set(consumers.size)
             consumers.forEach {
                 it.tx.send(element)
             }
@@ -52,7 +52,7 @@ class MultiConsumer<C : Config, E : Event>(
                 val item = select<E?> {
                     consumers.forEach {
                         it.rx.onReceive { item ->
-                            if (item._counter.decrementAndGet() == 0) {
+                            if (item.inFlight.decrementAndGet() == 0) {
                                 item
                             } else {
                                 null
@@ -69,7 +69,7 @@ class MultiConsumer<C : Config, E : Event>(
         override fun poll(): E? {
             consumers.forEach {
                 it.rx.poll()?.let { item ->
-                    if (item._counter.decrementAndGet() == 0) {
+                    if (item.inFlight.decrementAndGet() == 0) {
                         return item
                     }
                 }
@@ -94,7 +94,7 @@ class MultiConsumer<C : Config, E : Event>(
     }
 
     override suspend fun prime(item: E) {
-        item._counter.set(consumers.size)
+        item.inFlight.set(consumers.size)
         consumers.forEach {
             it.rx.send(item)
         }
@@ -108,7 +108,7 @@ class MultiConsumer<C : Config, E : Event>(
 interface Config
 
 abstract class Event {
-    val _counter = AtomicInteger()
+    val inFlight = AtomicInteger()
     var eos: Boolean = false
     var count: Int = 0
     var timestamp: Long = 0

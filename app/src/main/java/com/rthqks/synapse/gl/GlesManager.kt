@@ -46,6 +46,6 @@ class GlesManager {
 
     companion object {
         private val TAG = GlesManager::class.java.simpleName
-        val IDENTITY = FloatArray(16).also { Matrix.setIdentityM(it, 0) }
+        fun identityMat() = FloatArray(16).also { Matrix.setIdentityM(it, 0) }
     }
 }

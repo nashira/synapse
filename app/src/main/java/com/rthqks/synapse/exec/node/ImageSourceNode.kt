@@ -36,6 +36,7 @@ class ImageSourceNode(
         }
     }
 
+    @Suppress("BlockingMethodInNonBlockingContext")
     override suspend fun create() {
         val asset = getInputStream() ?: return
         val options = BitmapFactory.Options().apply {

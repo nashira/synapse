@@ -1,11 +1,19 @@
 package com.rthqks.synapse.logic
 
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.channels.ConflatedBroadcastChannel
+import kotlinx.coroutines.launch
+
 class Properties {
     private val map = mutableMapOf<Property.Key<*>, Property<*>>()
     private val converters = mutableMapOf<Property.Key<*>, Converter<*>>()
     val size: Int = map.size
     val keys = map.keys
-    val values = map.values
+    private val scope = CoroutineScope(Dispatchers.Default)
+    private val changeChannel = ConflatedBroadcastChannel<Property<*>>()
+
+    fun subscribe() = changeChannel.openSubscription()
 
     fun <T> put(property: Property<T>, converter: Converter<T>) {
         val key = property.key
@@ -17,6 +25,9 @@ class Properties {
     operator fun <T> set(key: Property.Key<T>, value: T) {
         (map[key] as? Property<T>)?.let {
             it.value = value
+            scope.launch {
+                changeChannel.send(it)
+            }
         }
     }
 

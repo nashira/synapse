@@ -4,6 +4,10 @@ import android.opengl.Matrix
 import com.rthqks.synapse.gl.Texture
 
 class VideoEvent(
-    var texture: Texture = Texture(0, 0, 0),
+    var texture: Texture = EMPTY_TEXTURE,
     var matrix: FloatArray = FloatArray(16).also { Matrix.setIdentityM(it, 0) }
-) : Event()
+) : Event() {
+    companion object {
+        private val EMPTY_TEXTURE = Texture(0, 0, 0)
+    }
+}

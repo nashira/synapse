@@ -1,7 +1,6 @@
 package com.rthqks.synapse.exec.node
 
 import android.opengl.GLES32.*
-import android.opengl.Matrix
 import android.util.Log
 import android.util.Size
 import android.view.Surface
@@ -34,8 +33,9 @@ class GrayscaleNode(
 
     private val scale: Int get() = properties[ScaleFactor]
 
-    override suspend fun create() {
+    private var prevEvent: VideoEvent? = null
 
+    override suspend fun create() {
     }
 
     override suspend fun initialize() {
@@ -67,14 +67,16 @@ class GrayscaleNode(
 
             program.apply {
                 initialize(vertexSource, fragmentSource)
+
                 addUniform(
                     Uniform.Type.Mat4,
                     "vertex_matrix0",
-                    FloatArray(16).also { Matrix.setIdentityM(it, 0) })
+                    GlesManager.identityMat())
+
                 addUniform(
                     Uniform.Type.Mat4,
                     "texture_matrix0",
-                    FloatArray(16).also { Matrix.setIdentityM(it, 0) })
+                    GlesManager.identityMat())
 
                 addUniform(
                     Uniform.Type.Int,
@@ -110,14 +112,19 @@ class GrayscaleNode(
             var copyMatrix = true
 
             while (isActive) {
+
                 val inEvent = input.receive()
+
+//                prevEvent?.let {
+//                    input.send(it)
+//                    prevEvent = null
+//                }
 
                 Log.d(TAG, "event received ${inEvent.count}")
                 val outEvent = output.receive()
                 outEvent.eos = inEvent.eos
                 outEvent.count = inEvent.count
                 outEvent.timestamp = inEvent.timestamp
-
 
                 if (copyMatrix) {
                     copyMatrix = false
@@ -130,11 +137,14 @@ class GrayscaleNode(
                     executeGl(inEvent.texture)
                 }
 
+//                prevEvent = inEvent
                 input.send(inEvent)
                 output.send(outEvent)
 
                 if (outEvent.eos) {
                     Log.d(TAG, "got EOS")
+//                    input.send(inEvent)
+//                    prevEvent = null
                     startJob?.cancel()
                 }
             }

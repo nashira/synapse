@@ -37,7 +37,7 @@ class PropertyBinder(
     private val inflater = LayoutInflater.from(detailView.context)
     private val detailAdapter = PropertyAdapter(inflater, {
         onChange(it)
-        hide(200)
+//        hide(200)
     }, uriProvider)
     private val listAdapter: PropertiesAdapter
 

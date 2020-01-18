@@ -44,7 +44,6 @@ class BlurNode(
     private val scale: Int get() = properties[ScaleFactor]
 
     override suspend fun create() {
-
     }
 
     override suspend fun initialize() {
@@ -178,6 +177,7 @@ class BlurNode(
                     System.arraycopy(inEvent.matrix, 0, uniform.data!!, 0, 16)
                     uniform.dirty = true
                 }
+
                 glesManager.withGlContext {
                     executeGl(inEvent.texture)
                 }
