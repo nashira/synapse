@@ -1,13 +1,14 @@
 package com.rthqks.synapse.gl
 
 import android.graphics.Bitmap
+import android.opengl.GLES20
 import android.opengl.GLES32.*
 import android.opengl.GLUtils
 
 class Texture(
-    val target: Int,
-    val repeat: Int,
-    val filter: Int
+    val target: Int = GL_TEXTURE_2D,
+    val repeat: Int = GL_CLAMP_TO_EDGE,
+    val filter: Int = GL_LINEAR
 ) {
     var id: Int = 0
         private set

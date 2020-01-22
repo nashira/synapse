@@ -173,7 +173,7 @@ class SurfaceViewNode(
                 val inEvent = input.receive()
                 previousTexture = inEvent.texture
 
-                Log.d(TAG, "loop surfaceState $surfaceState")
+//                Log.d(TAG, "loop surfaceState $surfaceState")
 
                 if (copyMatrix) {
                     copyMatrix = false
@@ -197,9 +197,9 @@ class SurfaceViewNode(
                 }
 
                 if (windowSurface != null) {
-                    Log.d(TAG, "loop pre render")
+//                    Log.d(TAG, "loop pre render")
                     glesManager.withGlContext {
-                        Log.d(TAG, "loop render")
+//                        Log.d(TAG, "loop render")
                         windowSurface?.makeCurrent()
                         GLES32.glBindFramebuffer(GLES32.GL_FRAMEBUFFER, 0)
                         executeGl(inEvent.texture)

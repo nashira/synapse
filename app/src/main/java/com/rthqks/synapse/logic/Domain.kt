@@ -4,6 +4,7 @@ import android.hardware.camera2.CameraCharacteristics
 import android.net.Uri
 import android.util.Size
 import com.rthqks.synapse.R
+import com.rthqks.synapse.exec.node.PhysarumNode
 import com.rthqks.synapse.logic.PropertyType.Companion.RangeType
 
 val AudioSampleRate = Property.Key<Int>("audio_sample_rate")
@@ -21,6 +22,7 @@ val MultiplyFactor = Property.Key<Float>("multiply_factor")
 val MediaUri = Property.Key<Uri>("media_uri")
 val CropToFit = Property.Key<Boolean>("crop_to_fit")
 val NetworkName = Property.Key<String>("network_name")
+val NumAgents = Property.Key<Int>("num_agents")
 
 val Nodes = listOf(
     Node(NodeType.Camera).apply {
@@ -80,7 +82,8 @@ val Nodes = listOf(
             Property(
                 MediaUri,
                 UriType(R.string.property_name_uri, R.drawable.ic_movie, "video/*"),
-                Uri.parse("https://www.sample-videos.com/video123/mp4/720/big_buck_bunny_720p_2mb.mp4"), true
+                Uri.parse("https://www.sample-videos.com/video123/mp4/720/big_buck_bunny_720p_2mb.mp4"),
+                true
             ), UriConverter
         )
     },
@@ -198,6 +201,22 @@ val Nodes = listOf(
     Node(NodeType.Speakers).apply {
         add(Port(Port.Type.Audio, "audio_1", "Audio", false))
     },
+    Node(NodeType.SlimeMold).apply {
+        add(Port(Port.Type.Video, PhysarumNode.INPUT_ENV.id, "Environment", false))
+        add(Port(Port.Type.Video, PhysarumNode.OUTPUT_ENV.id, "Environment", true))
+        add(Port(Port.Type.Video, PhysarumNode.INPUT_AGENT.id, "Agent", false))
+        add(Port(Port.Type.Video, PhysarumNode.OUTPUT_AGENT.id, "Agent", true))
+        add(
+            Property(
+                NumAgents,
+                RangeType(
+                    R.string.property_name_num_agents,
+                    R.drawable.ic_scatter_plot,
+                    1000..1_000_000
+                ), 10_000, true
+            ), IntConverter
+        )
+    },
     Node(NodeType.Properties).also { it.id = -2 },
     Node(NodeType.Connection).also { it.id = -3 },
     Node(NodeType.Creation).also { it.id = -4 }
@@ -220,6 +239,7 @@ val NodeTypes = mapOf(
     NodeType.ShaderFilter.key to NodeType.ShaderFilter,
     NodeType.Speakers.key to NodeType.Speakers,
     NodeType.Screen.key to NodeType.Screen,
+    NodeType.SlimeMold.key to NodeType.SlimeMold,
     NodeType.Properties.key to NodeType.Properties,
     NodeType.Creation.key to NodeType.Creation,
     NodeType.Connection.key to NodeType.Connection

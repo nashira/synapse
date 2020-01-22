@@ -64,11 +64,13 @@ class CameraNode(
                 outputTexture.initialize()
             }
 
-            outputSurfaceTexture = SurfaceTexture(outputTexture.id)
-            outputSurfaceTexture?.setDefaultBufferSize(size.width, size.height)
-            outputSurface = Surface(outputSurfaceTexture)
+            outputSurfaceTexture = SurfaceTexture(outputTexture.id).also {
+                it.setDefaultBufferSize(size.width, size.height)
+                outputSurface = Surface(it)
+            }
 
             connection.prime(
+                VideoEvent(outputTexture),
                 VideoEvent(outputTexture)
             )
         }

@@ -122,4 +122,6 @@
     <string name="name_node_type_create">Add a Node</string>
     <string name="button_save">Save</string>
     <string name="property_name_network_name">Network Name</string>
+    <string name="name_node_type_slime_mold">Slime Mold</string>
+    <string name="property_name_num_agents">Number of Agents</string>
 </resources>

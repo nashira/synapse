@@ -23,8 +23,11 @@ class GrayscaleNode(
     private var startJob: Job? = null
     private var size = Size(0, 0)
 
-    private var texture: Texture? = null
-    private var framebuffer: Framebuffer? = null
+    private var texture1: Texture? = null
+    private var framebuffer1: Framebuffer? = null
+
+    private var texture2: Texture? = null
+    private var framebuffer2: Framebuffer? = null
 
     private var outputSurfaceWindow: WindowSurface? = null
 
@@ -48,21 +51,27 @@ class GrayscaleNode(
                 it
             }
         }
-        texture = Texture(
-            GL_TEXTURE_2D,
-            GL_CLAMP_TO_EDGE,
-            GL_LINEAR
-        )
-        framebuffer = Framebuffer()
+
         glesManager.withGlContext {
-            val texture = texture!!
-            val framebuffer = framebuffer!!
 
-            texture.initialize()
-            texture.initData(0, GL_R8, size.width, size.height, GL_RED, GL_UNSIGNED_BYTE)
-            Log.d(TAG, "glGetError() ${glGetError()}")
+            texture1 = Texture().also { texture ->
+                texture.initialize()
+                texture.initData(0, GL_R8, size.width, size.height, GL_RED, GL_UNSIGNED_BYTE)
+                Log.d(TAG, "glGetError() ${glGetError()}")
+                framebuffer1 = Framebuffer().also {
+                    it.initialize(texture.id)
+                }
+            }
 
-            framebuffer.initialize(texture.id)
+            texture2 = Texture().also { texture ->
+                texture.initialize()
+                texture.initData(0, GL_R8, size.width, size.height, GL_RED, GL_UNSIGNED_BYTE)
+                Log.d(TAG, "glGetError() ${glGetError()}")
+                framebuffer2 = Framebuffer().also {
+                    it.initialize(texture.id)
+                }
+            }
+
             mesh.initialize()
 
             program.apply {
@@ -91,7 +100,7 @@ class GrayscaleNode(
             if (it.config.acceptsSurface) {
                 repeat(3) { n -> it.prime(VideoEvent()) }
             } else {
-                it.prime(VideoEvent(texture!!))
+                it.prime(VideoEvent(texture1!!), VideoEvent(texture2!!))
             }
         }
     }
@@ -120,7 +129,7 @@ class GrayscaleNode(
 //                    prevEvent = null
 //                }
 
-                Log.d(TAG, "event received ${inEvent.count}")
+//                Log.d(TAG, "event received ${inEvent.count}")
                 val outEvent = output.receive()
                 outEvent.eos = inEvent.eos
                 outEvent.count = inEvent.count
@@ -133,7 +142,11 @@ class GrayscaleNode(
                     uniform.dirty = true
                 }
                 glesManager.withGlContext {
-                    framebuffer?.bind()
+                    if (outEvent.texture == texture1) {
+                        framebuffer1?.bind()
+                    } else {
+                        framebuffer2?.bind()
+                    }
                     executeGl(inEvent.texture)
                 }
 
@@ -227,8 +240,10 @@ class GrayscaleNode(
             mesh.release()
             program.release()
 
-            texture?.release()
-            framebuffer?.release()
+            texture1?.release()
+            framebuffer1?.release()
+            texture2?.release()
+            framebuffer2?.release()
         }
     }
 

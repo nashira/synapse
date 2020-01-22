@@ -82,6 +82,7 @@ class NetworkExecutor(
             NodeType.ShaderFilter -> TODO()
             NodeType.Speakers -> AudioPlayerNode()
             NodeType.Screen -> SurfaceViewNode(assetManager, glesManager, node.properties + network.properties)
+            NodeType.SlimeMold -> PhysarumNode(assetManager, glesManager, node.properties)
 
             NodeType.Properties,
             NodeType.Creation,

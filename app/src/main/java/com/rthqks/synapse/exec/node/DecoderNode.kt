@@ -87,7 +87,7 @@ class DecoderNode(
                     outputSurfaceTexture = SurfaceTexture(outputTexture.id)
                     outputSurfaceTexture?.setDefaultBufferSize(size.width, size.height)
                     outputSurface = Surface(outputSurfaceTexture)
-                    it.prime(VideoEvent(outputTexture))
+                    it.prime(VideoEvent(outputTexture), VideoEvent(outputTexture))
                 }
                 videoInput = Channel(Channel.UNLIMITED)
             }

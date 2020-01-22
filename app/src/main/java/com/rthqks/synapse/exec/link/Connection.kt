@@ -3,6 +3,7 @@ package com.rthqks.synapse.exec.link
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.ReceiveChannel
 import kotlinx.coroutines.channels.SendChannel
+import kotlinx.coroutines.selects.SelectClause1
 import kotlinx.coroutines.selects.select
 import java.util.concurrent.atomic.AtomicInteger
 
@@ -10,7 +11,7 @@ interface Connection<C : Config, E : Event> {
     val config: C
     fun producer(): Channel<E>
     fun consumer(): Channel<E>
-    suspend fun prime(item: E)
+    suspend fun prime(vararg item: E)
     data class Key<C : Config, E : Event>(val id: String)
 }
 
@@ -25,9 +26,11 @@ class SingleConsumer<C : Config, E : Event>(
     override fun producer(): Channel<E> = duplex.host
     override fun consumer(): Channel<E> = duplex.client
 
-    override suspend fun prime(item: E) {
-        item.inFlight.set(1)
-        duplex.rx.send(item)
+    override suspend fun prime(vararg item: E) {
+        item.forEach {
+            it.inFlight.set(1)
+            duplex.rx.send(it)
+        }
     }
 
     companion object {
@@ -93,10 +96,12 @@ class MultiConsumer<C : Config, E : Event>(
         return duplex.client
     }
 
-    override suspend fun prime(item: E) {
-        item.inFlight.set(consumers.size)
-        consumers.forEach {
-            it.rx.send(item)
+    override suspend fun prime(vararg item: E) {
+        item.forEach { item ->
+            item.inFlight.set(consumers.size)
+            consumers.forEach {
+                it.rx.send(item)
+            }
         }
     }
 
@@ -125,4 +130,4 @@ class Duplex<E : Event>(
 class Simplex<E>(
     tx: Channel<E>,
     rx: Channel<E>
-) : Channel<E>, SendChannel<E> by tx, ReceiveChannel<E> by rx
+) : Channel<E>, SendChannel<E> by tx, ReceiveChannel<E> by rx, SelectClause1<E> by rx.onReceive

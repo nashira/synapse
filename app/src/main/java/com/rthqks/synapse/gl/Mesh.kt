@@ -47,6 +47,8 @@ abstract class Mesh(
         when (operation) {
             DRAW_ARRAYS -> glDrawArrays(mode, start, count)
             DRAW_ELEMENTS -> glDrawElements(mode, count, elementType, start)
+            DRAW_ARRAYS_INSTANCED -> glDrawArraysInstanced(mode, start, count, instances)
+            DRAW_ELEMENTS_INSTANCED -> glDrawElementsInstanced(mode, count, elementType, start, instances)
         }
         glBindVertexArray(0)
     }

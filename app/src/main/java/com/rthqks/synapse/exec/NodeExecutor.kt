@@ -23,23 +23,6 @@ abstract class NodeExecutor {
     private val waitingConfigs =
         mutableMapOf<Connection.Key<*, *>, MutableSet<CompletableDeferred<Config>>>()
     private val connectMutex = Mutex()
-    private lateinit var commands: SendChannel<() -> Unit>
-
-    suspend fun foo() = coroutineScope {
-        commands = actor {
-            for (action in channel) action()
-        }
-    }
-
-    suspend fun bar(action: () -> Unit) {
-        commands.send(action)
-        commands.send {
-        }
-
-        bar {
-
-        }
-    }
 
     open suspend fun <C : Config, E : Event> makeConfig(key: Connection.Key<C, E>): C {
         error("makeConfig not implemented")

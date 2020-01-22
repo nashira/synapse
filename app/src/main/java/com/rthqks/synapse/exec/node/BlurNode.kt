@@ -35,6 +35,9 @@ class BlurNode(
     private lateinit var texture2: Texture
     private lateinit var framebuffer2: Framebuffer
 
+    private lateinit var texture3: Texture
+    private lateinit var framebuffer3: Framebuffer
+
     private val mesh = Quad()
     private val program1 = Program()
     private val program2 = Program()
@@ -49,26 +52,35 @@ class BlurNode(
     override suspend fun initialize() {
         connection(INPUT)?.let {
             val config = it.config
-            texture1 = Texture(
-                GL_TEXTURE_2D,
-                GL_CLAMP_TO_EDGE,
-                GL_LINEAR
-            )
+            texture1 = Texture()
             framebuffer1 = Framebuffer()
 
-            texture2 = Texture(
-                GL_TEXTURE_2D,
-                GL_CLAMP_TO_EDGE,
-                GL_LINEAR
-            )
+            texture2 = Texture()
             framebuffer2 = Framebuffer()
+
+            texture3 = Texture()
+            framebuffer3 = Framebuffer()
 
             glesManager.withGlContext {
                 mesh.initialize()
+
+                texture3.initialize()
+                texture3.initData(
+                    0,
+                    config.internalFormat,
+                    size.width,
+                    size.height,
+                    config.format,
+                    config.type
+                )
+                Log.d(TAG, "glGetError() ${glGetError()}")
+
+                framebuffer3.initialize(texture3.id)
             }
 
             initializeProgram(program1, texture1, framebuffer1, config.isOes)
             initializeProgram(program2, texture2, framebuffer2, false)
+
             program2.getUniform(Uniform.Type.Vec2, "direction").let {
                 val data = it.data!!
                 data[0] = 0f
@@ -81,7 +93,7 @@ class BlurNode(
             }
         }
 
-        connection(OUTPUT)?.prime(VideoEvent(texture2))
+        connection(OUTPUT)?.prime(VideoEvent(texture2), VideoEvent(texture3))
     }
 
     private suspend fun initializeProgram(
@@ -127,11 +139,13 @@ class BlurNode(
                 addUniform(
                     Uniform.Type.Mat4,
                     "vertex_matrix0",
-                    FloatArray(16).also { Matrix.setIdentityM(it, 0) })
+                    GlesManager.identityMat()
+                )
                 addUniform(
                     Uniform.Type.Mat4,
                     "texture_matrix0",
-                    FloatArray(16).also { Matrix.setIdentityM(it, 0) })
+                    GlesManager.identityMat()
+                )
 
                 addUniform(
                     Uniform.Type.Int,
@@ -178,8 +192,18 @@ class BlurNode(
                     uniform.dirty = true
                 }
 
+                val (targetTexture, targetFB) = if (outEvent.texture == texture2) {
+                    Pair(texture2, framebuffer2)
+                } else {
+                    Pair(texture3, framebuffer3)
+                }
+
                 glesManager.withGlContext {
-                    executeGl(inEvent.texture)
+                    executeGl(
+                        inEvent.texture,
+                        framebuffer1, texture1,
+                        targetFB, targetTexture
+                    )
                 }
 
                 input.send(inEvent)
@@ -193,7 +217,11 @@ class BlurNode(
         }
     }
 
-    private fun executeGl(inputTexture: Texture) {
+    private fun executeGl(
+        inputTexture: Texture,
+        framebuffer1: Framebuffer, texture1: Texture,
+        framebuffer2: Framebuffer, texture2: Texture
+    ) {
         val passes = passes
 
         glViewport(0, 0, size.width, size.height)
@@ -246,8 +274,10 @@ class BlurNode(
 
             texture1.release()
             texture2.release()
+            texture3.release()
             framebuffer1.release()
             framebuffer2.release()
+            framebuffer3.release()
             program1.release()
             program2.release()
         }
