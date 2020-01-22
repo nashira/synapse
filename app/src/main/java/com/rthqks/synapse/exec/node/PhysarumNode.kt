@@ -28,18 +28,17 @@ class PhysarumNode(
     private val agentDimension = ceil(sqrt(numAgents.toDouble())).toInt()
     private val debounce = AtomicBoolean()
 
-    private val agentTexture1 =
-        Texture(GLES32.GL_TEXTURE_2D, GLES32.GL_CLAMP_TO_EDGE, GLES32.GL_NEAREST)
-    private val agentTexture2 =
-        Texture(GLES32.GL_TEXTURE_2D, GLES32.GL_CLAMP_TO_EDGE, GLES32.GL_NEAREST)
-    private val envTexture1 = Texture(GLES32.GL_TEXTURE_2D, GLES32.GL_REPEAT, GLES32.GL_LINEAR)
-    private val envTexture2 = Texture(GLES32.GL_TEXTURE_2D, GLES32.GL_REPEAT, GLES32.GL_LINEAR)
+    private val agentTexture1 = Texture(filter = GLES32.GL_NEAREST)
+    private val agentTexture2 = Texture(filter = GLES32.GL_NEAREST)
+    private val envTexture1 = Texture(repeat = GLES32.GL_REPEAT)
+    private val envTexture2 = Texture(repeat = GLES32.GL_REPEAT)
 
     private var agentTexture = agentTexture1
     private var envTexture = envTexture1
 
     private var agentEvent: VideoEvent? = null
     private var envEvent: VideoEvent? = null
+    private var running = false
 
     @Suppress("UNCHECKED_CAST")
     override suspend fun <C : Config, E : Event> makeConfig(key: Connection.Key<C, E>): C {
@@ -57,11 +56,12 @@ class PhysarumNode(
             }
             OUTPUT_ENV -> {
 
-                Log.d(TAG, "output $envSize")
+                Log.d(TAG, "before output $envSize")
                 withTimeoutOrNull(20) {
-                    configAsync(INPUT_ENV).await()
+                    val config = configAsync(INPUT_ENV).await()
+                    envSize = config.size
                 }
-                Log.d(TAG, "output $envSize")
+                Log.d(TAG, "after output $envSize")
 
                 VideoConfig(
                     GLES32.GL_TEXTURE_2D,
@@ -77,13 +77,6 @@ class PhysarumNode(
         }
     }
 
-    override suspend fun <C : Config, E : Event> setConfig(key: Connection.Key<C, E>, config: C) {
-        when (key) {
-            INPUT_ENV -> envSize = (config as VideoConfig).size
-        }
-        super.setConfig(key, config)
-    }
-
     override suspend fun create() {
         Log.d(TAG, "numAgents $numAgents agentDimension $agentDimension")
     }
@@ -95,11 +88,12 @@ class PhysarumNode(
         val envOut = connection(OUTPUT_ENV)
         Log.d(TAG, "$agentIn\n$agentOut\n\n$envIn\n$envOut")
 
-        agentOut?.prime(VideoEvent(), VideoEvent())
-        envOut?.prime(VideoEvent(), VideoEvent())
+        agentOut?.prime(VideoEvent(agentTexture2), VideoEvent(agentTexture1))
+        envOut?.prime(VideoEvent(envTexture2), VideoEvent(envTexture1))
     }
 
     override suspend fun start() = coroutineScope {
+        running = true
         startJob = launch {
 
             val agentIn = channel(INPUT_AGENT)
@@ -131,8 +125,8 @@ class PhysarumNode(
                 if (agentIn == null && envIn == null) {
                     onTimeout(frameDuration) {
                         Log.d(TAG, "timeout")
-                        debounceExecute()
-                        isActive
+                        execute()
+                        running
                     }
                 }
             }
@@ -142,6 +136,7 @@ class PhysarumNode(
     }
 
     override suspend fun stop() {
+        running = false
         startJob?.join()
         val agentOut = channel(OUTPUT_AGENT)
         val envOut = channel(OUTPUT_ENV)
@@ -163,7 +158,29 @@ class PhysarumNode(
     private suspend fun execute() {
         val agentOut = channel(OUTPUT_AGENT)
         val envOut = channel(OUTPUT_ENV)
-//        Log.d(TAG, "execute")
+        val agentOutEvent = agentOut?.receive()
+        val envOutEvent = envOut?.receive()
+
+        val agentInTexture = agentEvent?.texture ?: agentTexture
+        val envInTexture = envEvent?.texture ?: envTexture
+
+        agentTexture = if (agentTexture == agentTexture1) agentTexture2 else agentTexture1
+        envTexture = if (envTexture == envTexture1) envTexture2 else envTexture1
+
+        val agentOutTexture = agentTexture
+        val envOutTexture = envTexture
+
+        // draw
+
+        agentOutEvent?.let {
+//            it.texture = agentOutTexture
+            agentOut.send(it)
+        }
+
+        envOutEvent?.let {
+//            it.texture = envOutTexture
+            envOut.send(it)
+        }
     }
 
     private suspend fun debounceExecute() {

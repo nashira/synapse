@@ -1,7 +1,6 @@
 package com.rthqks.synapse.exec.node
 
 import android.opengl.GLES32.*
-import android.opengl.Matrix
 import android.util.Log
 import android.util.Size
 import com.rthqks.synapse.assets.AssetManager

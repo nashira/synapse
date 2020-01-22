@@ -46,23 +46,29 @@ class NetworkExecutor(
             nodes[it.id] = node
         }
 
+        Log.d(TAG, "create start")
         parallelJoin(nodes.values) {
             Log.d(TAG, "create $it")
             it.create()
             Log.d(TAG, "create complete $it")
         }
+        Log.d(TAG, "create done")
 
+        Log.d(TAG, "connect start")
         parallelJoin(network.getLinks()) { link ->
             Log.d(TAG, "connect $link")
             addLink(link)
             Log.d(TAG, "connect complete $link")
         }
+        Log.d(TAG, "connect done")
 
+        Log.d(TAG, "initialize start")
         parallelJoin(nodes.values) {
             Log.d(TAG, "initialize $it")
             it.initialize()
             Log.d(TAG, "initialize complete $it")
         }
+        Log.d(TAG, "initialize done")
         logCoroutineInfo(scope.coroutineContext[Job])
     }
 
