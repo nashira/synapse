@@ -20,7 +20,7 @@ class GlesManager {
     val backgroundHandler: Handler get() = handler
 
     // use to wrap calls that need an OpenGL context
-    suspend fun <T> withGlContext(block: suspend CoroutineScope.(GlesManager) -> T): T =
+    suspend fun <T> glContext(block: suspend CoroutineScope.(GlesManager) -> T): T =
         withContext(dispatcher) { block(this@GlesManager) }
 
     fun initialize() {

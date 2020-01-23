@@ -53,7 +53,7 @@ class OverlayFilterNode(
             GL_LINEAR
         )
         framebuffer = Framebuffer()
-        glesManager.withGlContext {
+        glesManager.glContext {
             val texture = texture!!
             val framebuffer = framebuffer!!
 
@@ -137,7 +137,7 @@ class OverlayFilterNode(
                     System.arraycopy(inEvent1.matrix, 0, uniform.data!!, 0, 16)
                     uniform.dirty = true
                 }
-                glesManager.withGlContext {
+                glesManager.glContext {
                     framebuffer?.bind()
                     executeGl(inEvent1.texture, maskEvent.texture)
                 }
@@ -204,7 +204,7 @@ class OverlayFilterNode(
                         System.arraycopy(inEvent.matrix, 0, uniform.data!!, 0, 16)
                         uniform.dirty = true
                     }
-                    glesManager.withGlContext {
+                    glesManager.glContext {
                         glBindFramebuffer(GL_FRAMEBUFFER, 0)
                         executeGl(inEvent.texture, maskEvent.texture)
                         outputSurfaceWindow?.swapBuffers()
@@ -251,7 +251,7 @@ class OverlayFilterNode(
 
     private suspend fun updateOutputSurface(surface: Surface) {
         Log.d(TAG, "creating output surface")
-        glesManager.withGlContext {
+        glesManager.glContext {
             outputSurfaceWindow?.release()
             outputSurfaceWindow = it.createWindowSurface(surface)
             outputSurfaceWindow?.makeCurrent()
@@ -277,7 +277,7 @@ class OverlayFilterNode(
     override suspend fun release() {
         outputSurfaceWindow?.release()
 
-        glesManager.withGlContext {
+        glesManager.glContext {
             mesh.release()
             program.release()
 

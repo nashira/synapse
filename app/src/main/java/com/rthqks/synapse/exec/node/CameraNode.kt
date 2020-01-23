@@ -60,7 +60,7 @@ class CameraNode(
         if (config.acceptsSurface) {
             repeat(3) { connection.prime(VideoEvent()) }
         } else {
-            glesManager.withGlContext {
+            glesManager.glContext {
                 outputTexture.initialize()
             }
 
@@ -155,7 +155,7 @@ class CameraNode(
     ) {
 
         val event = channel.receive()
-        glesManager.withGlContext {
+        glesManager.glContext {
             surfaceTexture.updateTexImage()
             if (copyMatrix) {
                 surfaceTexture.getTransformMatrix(event.matrix)

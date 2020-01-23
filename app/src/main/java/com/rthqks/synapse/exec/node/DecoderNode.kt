@@ -80,7 +80,7 @@ class DecoderNode(
                 if (it.config.acceptsSurface) {
                     repeat(3) { n -> it.prime(VideoEvent()) }
                 } else {
-                    glesManager.withGlContext {
+                    glesManager.glContext {
                         outputTexture.initialize()
                     }
 
@@ -252,7 +252,7 @@ class DecoderNode(
     ) {
 
         val event = connection.receive()
-        glesManager.withGlContext {
+        glesManager.glContext {
             surfaceTexture.updateTexImage()
             if (copyMatrix) {
                 surfaceTexture.getTransformMatrix(event.matrix)

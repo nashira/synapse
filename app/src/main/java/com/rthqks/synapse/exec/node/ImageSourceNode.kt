@@ -76,7 +76,7 @@ class ImageSourceNode(
         this.texture = texture
 
         BitmapFactory.decodeStream(inputStream)?.let { bitmap ->
-            glesManager.withGlContext {
+            glesManager.glContext {
                 texture.initialize()
                 texture.initData(0, bitmap)
             }
@@ -110,7 +110,7 @@ class ImageSourceNode(
     }
 
     override suspend fun release() {
-        glesManager.withGlContext {
+        glesManager.glContext {
             texture?.release()
         }
     }

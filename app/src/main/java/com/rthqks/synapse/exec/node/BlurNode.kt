@@ -60,7 +60,7 @@ class BlurNode(
             texture3 = Texture()
             framebuffer3 = Framebuffer()
 
-            glesManager.withGlContext {
+            glesManager.glContext {
                 mesh.initialize()
 
                 texture3.initialize()
@@ -119,7 +119,7 @@ class BlurNode(
             }
         }
 
-        glesManager.withGlContext {
+        glesManager.glContext {
             texture.initialize()
             texture.initData(
                 0,
@@ -197,7 +197,7 @@ class BlurNode(
                     Pair(texture3, framebuffer3)
                 }
 
-                glesManager.withGlContext {
+                glesManager.glContext {
                     executeGl(
                         inEvent.texture,
                         framebuffer1, texture1,
@@ -268,7 +268,7 @@ class BlurNode(
     }
 
     override suspend fun release() {
-        glesManager.withGlContext {
+        glesManager.glContext {
             mesh.release()
 
             texture1.release()

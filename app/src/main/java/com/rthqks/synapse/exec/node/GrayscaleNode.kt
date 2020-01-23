@@ -52,7 +52,7 @@ class GrayscaleNode(
             }
         }
 
-        glesManager.withGlContext {
+        glesManager.glContext {
 
             texture1 = Texture().also { texture ->
                 texture.initialize()
@@ -141,7 +141,7 @@ class GrayscaleNode(
                     System.arraycopy(inEvent.matrix, 0, uniform.data!!, 0, 16)
                     uniform.dirty = true
                 }
-                glesManager.withGlContext {
+                glesManager.glContext {
                     if (outEvent.texture == texture1) {
                         framebuffer1?.bind()
                     } else {
@@ -191,7 +191,7 @@ class GrayscaleNode(
                         System.arraycopy(inEvent.matrix, 0, uniform.data!!, 0, 16)
                         uniform.dirty = true
                     }
-                    glesManager.withGlContext {
+                    glesManager.glContext {
                         glBindFramebuffer(GL_FRAMEBUFFER, 0)
                         executeGl(inEvent.texture)
                         outputSurfaceWindow?.swapBuffers()
@@ -211,7 +211,7 @@ class GrayscaleNode(
 
     private suspend fun updateOutputSurface(surface: Surface) {
         Log.d(TAG, "creating output surface")
-        glesManager.withGlContext {
+        glesManager.glContext {
             outputSurfaceWindow?.release()
             outputSurfaceWindow = it.createWindowSurface(surface)
             outputSurfaceWindow?.makeCurrent()
@@ -236,7 +236,7 @@ class GrayscaleNode(
     override suspend fun release() {
         outputSurfaceWindow?.release()
 
-        glesManager.withGlContext {
+        glesManager.glContext {
             mesh.release()
             program.release()
 

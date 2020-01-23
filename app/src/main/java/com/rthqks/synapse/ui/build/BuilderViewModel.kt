@@ -280,9 +280,9 @@ class BuilderViewModel @Inject constructor(
         executor.stop()
     }
 
-    fun setSurfaceView(nodeId: Int, surfaceView: SurfaceView) {
+    fun setSurfaceView(nodeId: Int, portId: String?, surfaceView: SurfaceView) {
         viewModelScope.launch {
-            executor.setPreviewSurfaceView(nodeId, surfaceView)
+            executor.setPreviewSurfaceView(nodeId, portId, surfaceView)
         }
     }
 

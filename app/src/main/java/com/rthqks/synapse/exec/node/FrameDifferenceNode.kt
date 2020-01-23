@@ -66,7 +66,7 @@ class FrameDifferenceNode(
         val format = config.format
         val type = config.type
 
-        glesManager.withGlContext {
+        glesManager.glContext {
             diffTexture.initialize()
             lastFrameTexture1.initialize()
             lastFrameTexture2.initialize()
@@ -108,7 +108,7 @@ class FrameDifferenceNode(
             }
         }
 
-        glesManager.withGlContext {
+        glesManager.glContext {
             mesh.initialize()
 
             program.apply {
@@ -163,7 +163,7 @@ class FrameDifferenceNode(
                     uniform.dirty = true
                 }
 
-                glesManager.withGlContext {
+                glesManager.glContext {
                     framebuffer.bind()
                     executeGl(inEvent.texture)
                 }
@@ -205,7 +205,7 @@ class FrameDifferenceNode(
 
     override suspend fun release() {
         connection(INPUT)?.let {
-            glesManager.withGlContext {
+            glesManager.glContext {
                 diffTexture.release()
                 lastFrameTexture1.release()
                 lastFrameTexture2.release()

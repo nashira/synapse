@@ -14,6 +14,7 @@ abstract class NodeExecutor {
     abstract suspend fun stop()
     abstract suspend fun release()
 
+    private val connectionPredicate = mutableSetOf<Connection.Key<*, *>>()
     private val connections = mutableMapOf<Connection.Key<*, *>, Connection<*, *>>()
     private val channels = mutableMapOf<Connection.Key<*, *>, Channel<*>>()
     private val configs = mutableMapOf<Connection.Key<*, *>, Config>()
@@ -92,6 +93,12 @@ abstract class NodeExecutor {
             return deferred
         }
     }
+
+    fun <C : Config, E : Event> setLinked(key: Connection.Key<C, E>) {
+        connectionPredicate += key
+    }
+
+    fun <C : Config, E : Event> linked(key: Connection.Key<C, E>): Boolean = key in connectionPredicate
 
     companion object {
         const val TAG = "NodeExecutor"

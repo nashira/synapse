@@ -123,7 +123,8 @@ sealed class NodeType(
     object SlimeMold : NodeType(
         "physarum",
         R.string.name_node_type_slime_mold,
-        R.drawable.ic_slime_mold
+        R.drawable.ic_slime_mold,
+        FLAG_PRODUCER
     )
 
     object Connection : NodeType("connection", 0, 0)

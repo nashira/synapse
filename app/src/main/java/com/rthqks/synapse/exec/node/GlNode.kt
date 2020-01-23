@@ -53,7 +53,7 @@ class GlNode(
             GL_LINEAR
         )
         framebuffer = Framebuffer()
-        glesManager.withGlContext {
+        glesManager.glContext {
             val texture = texture!!
             val framebuffer = framebuffer!!
 
@@ -131,7 +131,7 @@ class GlNode(
                     System.arraycopy(inEvent.matrix, 0, uniform.data!!, 0, 16)
                     uniform.dirty = true
                 }
-                glesManager.withGlContext {
+                glesManager.glContext {
                     framebuffer?.bind()
                     executeGl(inEvent.texture)
                 }
@@ -172,7 +172,7 @@ class GlNode(
                         System.arraycopy(inEvent.matrix, 0, uniform.data!!, 0, 16)
                         uniform.dirty = true
                     }
-                    glesManager.withGlContext {
+                    glesManager.glContext {
                         glBindFramebuffer(GL_FRAMEBUFFER, 0)
                         executeGl(inEvent.texture)
                         outputSurfaceWindow?.swapBuffers()
@@ -192,7 +192,7 @@ class GlNode(
 
     private suspend fun updateOutputSurface(surface: Surface) {
         Log.d(TAG, "creating output surface")
-        glesManager.withGlContext {
+        glesManager.glContext {
             outputSurfaceWindow?.release()
             outputSurfaceWindow = it.createWindowSurface(surface)
             outputSurfaceWindow?.makeCurrent()
@@ -217,7 +217,7 @@ class GlNode(
     override suspend fun release() {
         outputSurfaceWindow?.release()
 
-        glesManager.withGlContext {
+        glesManager.glContext {
             mesh.release()
             program.release()
 

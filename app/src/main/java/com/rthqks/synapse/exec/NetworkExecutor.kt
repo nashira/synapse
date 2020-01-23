@@ -55,6 +55,16 @@ class NetworkExecutor(
         Log.d(TAG, "create done")
 
         Log.d(TAG, "connect start")
+        network.getLinks().forEach { link ->
+            val fromKey = Connection.Key<Config, Event>(link.fromPortId)
+            val toKey = Connection.Key<Config, Event>(link.toPortId)
+
+            val fromNode = nodes[link.fromNodeId]!!
+            val toNode = nodes[link.toNodeId]!!
+            fromNode.setLinked(fromKey)
+            toNode.setLinked(toKey)
+        }
+
         parallelJoin(network.getLinks()) { link ->
             Log.d(TAG, "connect $link")
             addLink(link)
@@ -102,8 +112,7 @@ class NetworkExecutor(
         val fromKey = Connection.Key<Config, Event>(link.fromPortId)
         val toKey = Connection.Key<Config, Event>(link.toPortId)
 
-        val config = fromNode.getConfig(fromKey)
-        toNode.setConfig(toKey, config)
+        toNode.setConfig(toKey, fromNode.getConfig(fromKey))
         toNode.input(toKey, fromNode.output(fromKey))
     }
 

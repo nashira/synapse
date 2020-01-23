@@ -139,8 +139,8 @@ class Network(
     fun getCreationConnectors(): List<Connector> {
         val connectors = mutableListOf<Connector>()
         Nodes.filter { it.producer }.forEach { n ->
-            connectors += n.ports.filter { it.value.output }
-                .map { Connector(n.copy(id), it.value) }
+            val port = n.ports.values.first { it.output }
+            connectors += Connector(n.copy(id), port)
         }
         return connectors
     }

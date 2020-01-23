@@ -206,7 +206,7 @@ class ConnectionAdapter(
             val id = item.connector.node.id
             Log.d(TAG, "bind $id")
             if (id >= 0) {
-                viewModel.setSurfaceView(id, surfaceView)
+                viewModel.setSurfaceView(id, null, surfaceView)
             }
         }
     }

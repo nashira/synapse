@@ -40,7 +40,11 @@ class Executor @Inject constructor(
                     is Operation.Start -> doStart()
                     is Operation.Stop -> doStop()
                     is Operation.ConnectPreview -> doAddConnectionPreviews(msg.source, msg.targets)
-                    is Operation.SetSurfaceView -> doSetSurfaceView(msg.nodeId, msg.surfaceView)
+                    is Operation.SetSurfaceView -> doSetSurfaceView(
+                        msg.nodeId,
+                        msg.portId,
+                        msg.surfaceView
+                    )
                     is Operation.Wait -> msg.deferred.complete(Unit)
                 }
             } ?: run {
@@ -92,9 +96,9 @@ class Executor @Inject constructor(
         }
     }
 
-    fun setPreviewSurfaceView(nodeId: Int, surfaceView: SurfaceView) {
+    fun setPreviewSurfaceView(nodeId: Int, portId: String?, surfaceView: SurfaceView) {
         runBlocking {
-            commandChannel.send(Operation.SetSurfaceView(nodeId, surfaceView))
+            commandChannel.send(Operation.SetSurfaceView(nodeId, portId, surfaceView))
         }
     }
 
@@ -104,11 +108,11 @@ class Executor @Inject constructor(
         deferred.await()
     }
 
-    private suspend fun doSetSurfaceView(nodeId: Int, surfaceView: SurfaceView) {
+    private suspend fun doSetSurfaceView(nodeId: Int, portId: String?, surfaceView: SurfaceView) {
         val networkExecutor = networkExecutor ?: return
+        var firstPortId = portId
         val nodes = LinkedList<Pair<Int, NodeExecutor>>()
         nodes.add(nodeId to networkExecutor.getNode(nodeId))
-
         do {
             val (id, node) = nodes.remove()
             Log.d(TAG, "looking for surfaceview at $id")
@@ -119,10 +123,15 @@ class Executor @Inject constructor(
             }
 
             network?.getLinks(id)?.forEach {
-                if (it.fromNodeId == id && it.toNodeId > Network.COPY_ID_SKIP) {
+                it
+                if (it.fromNodeId == id
+                    && (firstPortId == null || it.fromPortId == firstPortId)
+                    && it.toNodeId > Network.COPY_ID_SKIP
+                ) {
                     nodes.add(it.toNodeId to networkExecutor.getNode(it.toNodeId))
                 }
             }
+            firstPortId = null
         } while (nodes.isNotEmpty())
     }
 
@@ -132,7 +141,7 @@ class Executor @Inject constructor(
 
     private suspend fun doInitialize(preview: Boolean) {
         this.preview = preview
-        glesManager.withGlContext {
+        glesManager.glContext {
             it.initialize()
         }
         cameraManager.initialize()
@@ -140,7 +149,7 @@ class Executor @Inject constructor(
 
     private suspend fun doRelease() {
         cameraManager.release()
-        glesManager.withGlContext {
+        glesManager.glContext {
             it.release()
         }
         commandChannel.close()
@@ -162,12 +171,12 @@ class Executor @Inject constructor(
         if (preview) {
             networkNew = network.copy()
             networkNew.getNodes().forEach { source ->
-                source.ports.values.firstOrNull {
+                source.ports.values.filter {
                     it.output && it.type == Port.Type.Video
-                }?.id?.let {
+                }.forEach {
                     val node = NewNode(NodeType.Screen, networkNew.id)
                     networkNew.addNode(node)
-                    networkNew.addLink(source.id, it, node.id, SurfaceViewNode.INPUT.id)
+                    networkNew.addLink(source.id, it.id, node.id, SurfaceViewNode.INPUT.id)
                 }
             }
         }
@@ -230,7 +239,12 @@ class Executor @Inject constructor(
         class ReleaseNetwork() : Operation()
         class Release : Operation()
         data class ConnectPreview(val source: Connector, val targets: List<Connector>) : Operation()
-        data class SetSurfaceView(val nodeId: Int, val surfaceView: SurfaceView) : Operation()
+        data class SetSurfaceView(
+            val nodeId: Int,
+            val portId: String?,
+            val surfaceView: SurfaceView
+        ) : Operation()
+
         class Wait(val deferred: CompletableDeferred<Unit>) : Executor.Operation()
     }
 }

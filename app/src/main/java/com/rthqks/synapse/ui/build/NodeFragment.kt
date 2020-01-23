@@ -35,6 +35,7 @@ class NodeFragment : DaggerFragment() {
     private lateinit var propertyBinder: PropertyBinder
     private lateinit var uriProvider: UriProvider
     private var nodeId = -1
+    private var selectedPortId: String? = null
 
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -80,9 +81,10 @@ class NodeFragment : DaggerFragment() {
             Log.d(TAG, "network change $nodeId ${viewModel.network.getNode(nodeId)}")
             viewModel.network.getNode(nodeId)?.let {
                 reloadConnectors()
-                viewModel.setSurfaceView(nodeId, surface_view)
             }
         })
+
+        viewModel.setSurfaceView(nodeId, selectedPortId, surface_view)
     }
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
@@ -131,6 +133,8 @@ class NodeFragment : DaggerFragment() {
 
     fun onConnectorClick(connector: Connector) {
         Log.d(TAG, "click $connector")
+        selectedPortId = connector.port.id
+        viewModel.setSurfaceView(nodeId, selectedPortId, surface_view)
     }
 
     fun onConnectorLongClick(view: View, connector: Connector) {

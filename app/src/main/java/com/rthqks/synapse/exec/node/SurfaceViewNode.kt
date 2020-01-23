@@ -49,6 +49,7 @@ class SurfaceViewNode(
 
     suspend fun setSurfaceView(surfaceView: SurfaceView) {
         Log.d(TAG, "setSurfaceView ${surfaceView.holder}")
+//        surfaceView.setTag(R.id.surface_view, this)
         surfaceState = SurfaceState.Waiting
 //        surfaceDeferred = CompletableDeferred()
         this.surfaceView?.holder?.removeCallback(this)
@@ -96,7 +97,7 @@ class SurfaceViewNode(
             }.let {
                 if (grayscale) it.replace("#{RED}", "#define RED") else it
             }
-            glesManager.withGlContext {
+            glesManager.glContext {
                 mesh.initialize()
                 program.apply {
                     initialize(vertexSource, fragmentSource)
@@ -144,13 +145,17 @@ class SurfaceViewNode(
 
     private suspend fun updateWindowSurface() {
         Log.d(TAG, "updating input surface")
-        glesManager.withGlContext {
+        glesManager.glContext {
             windowSurface?.release()
             windowSurface = null
             surface?.also { surface ->
                 if (surface.isValid) {
                     Log.d(TAG, "surf creating new input surface")
+                    surfaceView?.tag?.let {
+                        (it as? SurfaceViewNode)?.setSurface(null)
+                    }
                     windowSurface = it.createWindowSurface(surface)
+                    surfaceView?.tag = this@SurfaceViewNode
                 }
             }
 
@@ -198,7 +203,7 @@ class SurfaceViewNode(
 
                 if (windowSurface != null) {
 //                    Log.d(TAG, "loop pre render")
-                    glesManager.withGlContext {
+                    glesManager.glContext {
 //                        Log.d(TAG, "loop render")
                         windowSurface?.makeCurrent()
                         GLES32.glBindFramebuffer(GLES32.GL_FRAMEBUFFER, 0)
@@ -234,7 +239,7 @@ class SurfaceViewNode(
     }
 
     override suspend fun release() {
-        glesManager.withGlContext {
+        glesManager.glContext {
             windowSurface?.release()
             surfaceView?.holder?.removeCallback(this@SurfaceViewNode)
             mesh.release()
@@ -296,7 +301,7 @@ class SurfaceViewNode(
         previousTexture?.let { texture ->
             Log.d(TAG, "surf render")
             windowSurface ?: return@let
-            glesManager.withGlContext {
+            glesManager.glContext {
                 windowSurface?.makeCurrent()
                 GLES32.glBindFramebuffer(GLES32.GL_FRAMEBUFFER, 0)
                 executeGl(texture)

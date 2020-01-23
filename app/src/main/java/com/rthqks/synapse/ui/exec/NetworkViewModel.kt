@@ -40,7 +40,7 @@ class NetworkViewModel @Inject constructor(
             Log.d(TAG, "loaded network: $network")
 
             cameraManager.initialize()
-            glesManager.withGlContext { it.initialize() }
+            glesManager.glContext { it.initialize() }
 
             networkExecutor = NetworkExecutor(
                 context, dispatcher, glesManager, cameraManager, assetManager, network

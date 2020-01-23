@@ -65,7 +65,7 @@ class MacNode(
         val format = config.format
         val type = config.type
 
-        glesManager.withGlContext {
+        glesManager.glContext {
             texture1.initialize()
             texture2.initialize()
             texture1.initData(
@@ -98,7 +98,7 @@ class MacNode(
             }
         }
 
-        glesManager.withGlContext {
+        glesManager.glContext {
             mesh.initialize()
 
             program.apply {
@@ -165,7 +165,7 @@ class MacNode(
                     data = accumulateFactor
                 }
 
-                glesManager.withGlContext {
+                glesManager.glContext {
                     framebuffer.bind()
                     executeGl(inEvent.texture)
                 }
@@ -217,7 +217,7 @@ class MacNode(
 
     override suspend fun release() {
         connection(INPUT)?.let {
-            glesManager.withGlContext {
+            glesManager.glContext {
                 texture1.release()
                 texture2.release()
                 framebuffer1.release()
