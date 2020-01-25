@@ -63,6 +63,10 @@ class NetworkExecutor(
             val toNode = nodes[link.toNodeId]!!
             fromNode.setLinked(fromKey)
             toNode.setLinked(toKey)
+            if (link.inCycle) {
+                fromNode.setCycle(fromKey)
+                toNode.setCycle(toKey)
+            }
         }
 
         parallelJoin(network.getLinks()) { link ->

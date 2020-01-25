@@ -176,7 +176,8 @@ class Executor @Inject constructor(
                 }.forEach {
                     val node = NewNode(NodeType.Screen, networkNew.id)
                     networkNew.addNode(node)
-                    networkNew.addLink(source.id, it.id, node.id, SurfaceViewNode.INPUT.id)
+                    val link = Link(source.id, it.id, node.id, SurfaceViewNode.INPUT.id)
+                    networkNew.addLink(link)
                 }
             }
         }
@@ -208,7 +209,8 @@ class Executor @Inject constructor(
             Log.d(TAG, "adding node ${target.type} ${target.id} ${it.port.id}")
             network.addNode(target)
             Log.d(TAG, "added node ${target.type} ${target.id} ${it.port.id}")
-            val link = network.addLink(source.node.id, source.port.id, target.id, it.port.id)
+            val link = Link(source.node.id, source.port.id, target.id, it.port.id)
+            network.addLink(link)
             data.add(target to link)
 
             target.ports.values.firstOrNull {
@@ -216,7 +218,8 @@ class Executor @Inject constructor(
             }?.id?.let {
                 val screen = NewNode(NodeType.Screen, network.id)
                 network.addNode(screen)
-                val se = network.addLink(target.id, it, screen.id, SurfaceViewNode.INPUT.id)
+                val se = Link(target.id, it, screen.id, SurfaceViewNode.INPUT.id)
+                network.addLink(se)
                 data.add(screen to se)
             }
         }

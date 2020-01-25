@@ -192,8 +192,15 @@ class ConnectionAdapter(
         init {
             surfaceView.setOnClickListener {
                 item?.let {
+                    val node = it.connector.node.let {
+                        if (it.id >= Network.COPY_ID_SKIP)
+                            it.copy(id = -1)
+                        else
+                            it
+                    }
+
                     viewModel.completeConnection(
-                        Connector(it.connector.node.copy(id = -1), it.connector.port)
+                        Connector(node, it.connector.port)
                     )
                 }
             }

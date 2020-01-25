@@ -39,8 +39,8 @@ class GlNode(
     override suspend fun initialize() {
         val connection = connection(INPUT) ?: error("missing input connection")
         val config = connection.config
-        val vertexSource = assetManager.readTextAsset("vertex_texture.vert")
-        val fragmentSource = assetManager.readTextAsset("lut.frag").let {
+        val vertexSource = assetManager.readTextAsset("shader/vertex_texture.vert")
+        val fragmentSource = assetManager.readTextAsset("shader/lut.frag").let {
             if (config.isOes) {
                 it.replace("#{EXT}", "#define EXT")
             } else {

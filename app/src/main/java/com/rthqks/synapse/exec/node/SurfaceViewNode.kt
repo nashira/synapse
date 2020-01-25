@@ -91,8 +91,8 @@ class SurfaceViewNode(
             Log.d(TAG, "NEED TO READ FROM A TEXTURE!!")
             val grayscale = config.format == GLES32.GL_RED
 
-            val vertexSource = assetManager.readTextAsset("vertex_texture.vert")
-            val fragmentSource = assetManager.readTextAsset("copy.frag").let {
+            val vertexSource = assetManager.readTextAsset("shader/vertex_texture.vert")
+            val fragmentSource = assetManager.readTextAsset("shader/copy.frag").let {
                 if (config.isOes) it.replace("#{EXT}", "#define EXT") else it
             }.let {
                 if (grayscale) it.replace("#{RED}", "#define RED") else it

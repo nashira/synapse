@@ -1,6 +1,7 @@
 package com.rthqks.synapse.data
 
 import androidx.room.*
+import com.rthqks.synapse.logic.Link
 import com.rthqks.synapse.logic.Network
 import com.rthqks.synapse.logic.NewNode
 
@@ -99,9 +100,7 @@ abstract class SynapseDao {
             network.addNode(NewNode(it.type, it.networkId, it.id))
         }
 
-        links.forEach {
-            network.addLink(it.fromNodeId, it.fromKey, it.toNodeId, it.toKey)
-        }
+        links.map { Link(it.fromNodeId, it.fromKey, it.toNodeId, it.toKey) }.let(network::addLinks)
 
         properties.forEach {
             network.getNode(it.nodeId)?.let { node ->

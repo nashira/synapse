@@ -105,12 +105,12 @@ class BlurNode(
         val config = connection.config
 
         val fragName = when (blurSize) {
-            13 -> "blur_13.frag"
-            5 -> "blur_5.frag"
-            else -> "blur_9.frag"
+            13 -> "shader/blur_13.frag"
+            5 -> "shader/blur_5.frag"
+            else -> "shader/blur_9.frag"
         }
 
-        val vertexSource = assetManager.readTextAsset("blur.vert")
+        val vertexSource = assetManager.readTextAsset("shader/blur.vert")
         val fragmentSource = assetManager.readTextAsset(fragName).let {
             if (oes) {
                 it.replace("#{EXT}", "#define EXT")

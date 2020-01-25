@@ -5,4 +5,6 @@ data class Link(
     val fromPortId: String,
     val toNodeId: Int,
     val toPortId: String
-)
+) {
+    var inCycle: Boolean = false
+}

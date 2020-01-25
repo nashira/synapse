@@ -165,7 +165,8 @@ class BuilderViewModel @Inject constructor(
                     "connecting ${from.node.type}:${from.port.id} to ${to.node.type}:${to.port.id}"
                 )
 
-                network.addLink(from.node.id, from.port.id, to.node.id, to.port.id)
+                val link = Link(from.node.id, from.port.id, to.node.id, to.port.id)
+                network.addLink(link)
                 viewModelScope.launch(Dispatchers.IO) {
                     dao.insertLink(
                         LinkData(
@@ -179,10 +180,10 @@ class BuilderViewModel @Inject constructor(
                 }
             }
 
-            if (addNode) {
+//            if (addNode) {
                 restartNetwork()
                 nodesChannel.value = AdapterState(0, listOf(connector.node))
-            }
+//            }
         }
     }
 

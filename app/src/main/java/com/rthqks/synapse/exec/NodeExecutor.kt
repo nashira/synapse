@@ -14,7 +14,8 @@ abstract class NodeExecutor {
     abstract suspend fun stop()
     abstract suspend fun release()
 
-    private val connectionPredicate = mutableSetOf<Connection.Key<*, *>>()
+    private val connectionSet = mutableSetOf<Connection.Key<*, *>>()
+    private val cycleSet = mutableSetOf<Connection.Key<*, *>>()
     private val connections = mutableMapOf<Connection.Key<*, *>, Connection<*, *>>()
     private val channels = mutableMapOf<Connection.Key<*, *>, Channel<*>>()
     private val configs = mutableMapOf<Connection.Key<*, *>, Config>()
@@ -95,10 +96,16 @@ abstract class NodeExecutor {
     }
 
     fun <C : Config, E : Event> setLinked(key: Connection.Key<C, E>) {
-        connectionPredicate += key
+        connectionSet += key
     }
 
-    fun <C : Config, E : Event> linked(key: Connection.Key<C, E>): Boolean = key in connectionPredicate
+    fun <C : Config, E : Event> linked(key: Connection.Key<C, E>): Boolean = key in connectionSet
+
+    fun <C : Config, E : Event> setCycle(key: Connection.Key<C, E>) {
+        cycleSet += key
+    }
+
+    fun <C : Config, E : Event> cycle(key: Connection.Key<C, E>): Boolean = key in cycleSet
 
     companion object {
         const val TAG = "NodeExecutor"

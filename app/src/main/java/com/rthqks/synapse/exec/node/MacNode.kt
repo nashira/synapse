@@ -89,8 +89,8 @@ class MacNode(
     }
 
     private suspend fun createProgram(oesTexture: Boolean) {
-        val vertexSource = assetManager.readTextAsset("vertex_texture.vert")
-        val fragmentSource = assetManager.readTextAsset("multiply_accumulate.frag").let {
+        val vertexSource = assetManager.readTextAsset("shader/vertex_texture.vert")
+        val fragmentSource = assetManager.readTextAsset("shader/multiply_accumulate.frag").let {
             if (oesTexture) {
                 it.replace("#{EXT}", "#define EXT")
             } else {

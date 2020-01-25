@@ -133,8 +133,9 @@ class NodeFragment : DaggerFragment() {
 
     fun onConnectorClick(connector: Connector) {
         Log.d(TAG, "click $connector")
-        selectedPortId = connector.port.id
-        viewModel.setSurfaceView(nodeId, selectedPortId, surface_view)
+        // TODO: find a way to enable previewing different outputs
+//        selectedPortId = connector.port.id
+//        viewModel.setSurfaceView(nodeId, selectedPortId, surface_view)
     }
 
     fun onConnectorLongClick(view: View, connector: Connector) {
@@ -245,6 +246,7 @@ class NodeFragment : DaggerFragment() {
                 if (event.actionMasked == MotionEvent.ACTION_DOWN) {
                     connector?.let { it1 -> onConnectorTouch(it1) }
                 }
+
                 touchMediator.onTouch(v, event, connector)
             }
             button.setOnClickListener {

@@ -1,6 +1,8 @@
 package com.rthqks.synapse.logic
 
+import android.util.Log
 import com.rthqks.synapse.R
+import java.util.*
 
 class Network(
     val id: Int
@@ -10,6 +12,7 @@ class Network(
     private val linkIndex = mutableMapOf<Int, MutableSet<Link>>()
     val properties = Properties()
     private var maxNodeId = 0
+//    private var components
 
     val name: String get() = properties[NetworkName]
 
@@ -64,17 +67,15 @@ class Network(
 
     fun getLinks(nodeId: Int): Set<Link> = linkIndex[nodeId] ?: emptySet()
 
-    fun addLink(
-        fromNodeId: Int,
-        fromKey: String,
-        toNodeId: Int,
-        toKey: String
-    ): Link {
-        val link = Link(fromNodeId, fromKey, toNodeId, toKey)
+    fun addLink(link: Link) {
+        addLinkNoCompute(link)
+        computeComponents()
+    }
+
+    private fun addLinkNoCompute(link: Link) {
         links.add(link)
-        linkIndex.getOrPut(fromNodeId) { mutableSetOf() } += link
-        linkIndex.getOrPut(toNodeId) { mutableSetOf() } += link
-        return link
+        linkIndex.getOrPut(link.fromNodeId) { mutableSetOf() } += link
+        linkIndex.getOrPut(link.toNodeId) { mutableSetOf() } += link
     }
 
     fun removeLink(link: Link) {
@@ -87,6 +88,11 @@ class Network(
         val removed = linkIndex.remove(nodeId) ?: emptySet<Link>()
         removed.forEach(this::removeLink)
         return removed
+    }
+
+    fun addLinks(links: List<Link>) {
+        links.forEach(this::addLinkNoCompute)
+        computeComponents()
     }
 
     fun getConnectors(nodeId: Int): List<Connector> {
@@ -160,7 +166,83 @@ class Network(
             val ei = mutableMapOf<Int, MutableSet<Link>>()
             linkIndex.forEach { ei[it.key] = it.value.toMutableSet() }
             it.linkIndex += ei
-            it.maxNodeId = maxNodeId + COPY_ID_SKIP
+            it.maxNodeId = COPY_ID_SKIP
+        }
+    }
+
+    // find connected components to detect cycles
+    // Kosaraju-Sharir algorithm
+    // https://algs4.cs.princeton.edu/42digraph/
+    // for now just make that a link is in a cycle
+    fun computeComponents() {
+        val mark = mutableSetOf<Pair<Int, String>>()
+        // reverse post order traversal of reversed graph
+        val result = LinkedList<Pair<Int, String>>()
+        nodes.keys.forEach { node ->
+            dfsReverse(node, mark, result)
+        }
+        Log.d(TAG, "result " + result.joinToString())
+
+        mark.clear()
+        val components = mutableListOf<MutableList<Pair<Int, String>>>()
+        result.forEach {
+            val component = mutableListOf<Pair<Int, String>>()
+            components.add(component)
+            val output = nodes[it.first]!!.getPort(it.second).output
+            if (!output) {
+                mark.add(it)
+                component.add(it)
+            }
+            dfs(it.first, mark, component, if (output) it.second else null)
+            Log.d(TAG, component.joinToString())
+        }
+    }
+
+    private fun dfs(
+        nodeId: Int,
+        marks: MutableSet<Pair<Int, String>>,
+        result: MutableList<Pair<Int, String>>,
+        portId: String? = null
+    ) {
+        val links = linkIndex[nodeId]?.filter {
+            it.fromNodeId == nodeId
+                    && (portId == null || it.fromPortId == portId)
+        } ?: emptyList()
+        links.forEach { link ->
+            val key1 = Pair(link.fromNodeId, link.fromPortId)
+            if (key1 !in marks) {
+                marks.add(key1)
+                result.add(key1)
+                val key2 = Pair(link.toNodeId, link.toPortId)
+                if (key2 !in marks) {
+                    marks.add(key2)
+                    result.add(key2)
+                    dfs(link.toNodeId, marks, result)
+                }
+
+                link.inCycle = result.size > 1
+            }
+        }
+    }
+
+    private fun dfsReverse(
+        nodeId: Int,
+        marks: MutableSet<Pair<Int, String>>,
+        result: LinkedList<Pair<Int, String>>
+    ) {
+        val links = linkIndex[nodeId]?.filter { it.toNodeId == nodeId } ?: emptyList()
+        links.forEach { link ->
+            val key1 = Pair(link.toNodeId, link.toPortId)
+            if (key1 !in marks) {
+                marks.add(key1)
+                val key2 = Pair(link.fromNodeId, link.fromPortId)
+                if (key2 !in marks) {
+                    marks.add(key2)
+                    dfsReverse(link.fromNodeId, marks, result)
+                    result.push(key2)
+                }
+                result.push(key1)
+            }
         }
     }
 
