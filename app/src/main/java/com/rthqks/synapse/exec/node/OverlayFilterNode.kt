@@ -42,7 +42,7 @@ class OverlayFilterNode(
         val vertexSource = assetManager.readTextAsset("shader/overlay_filter.vert")
         val fragmentSource = assetManager.readTextAsset("shader/overlay_filter.frag").let {
             if (config.isOes) {
-                it.replace("#{EXT}", "#define EXT")
+                it.replace("//{EXT}", "#define EXT")
             } else {
                 it
             }

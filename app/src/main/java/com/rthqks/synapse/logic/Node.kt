@@ -33,6 +33,10 @@ class Node(
 
     fun getPortIds(): Set<String> = ports.keys
 
+    override fun toString(): String {
+        return "Node(type=${type.key}, id=$id, networkId=$networkId, position=$position)"
+    }
+
     companion object {
     }
 }

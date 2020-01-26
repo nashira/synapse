@@ -1,26 +1,29 @@
 #version 300 es
 
-#{EXT}
-
-#ifdef EXT
-#extension GL_OES_EGL_image_external_essl3 : require
-#endif
-
 precision mediump float;
 
-#ifdef EXT
+//{ENV_EXT}
+#ifdef ENV_EXT
+#extension GL_OES_EGL_image_external_essl3 : require
 uniform samplerExternalOES env_texture;
 #else
 uniform sampler2D env_texture;
 #endif
 
+//{AGENT_EXT}
+#ifdef AGENT_EXT
+#extension GL_OES_EGL_image_external_essl3 : require
+uniform samplerExternalOES agent_texture;
+#else
+uniform sampler2D agent_texture;
+#endif
+
+in vec2 uv;
+
 layout(location = 0) out vec4 agent_out;
 
-in vec3 agent_data;
-in vec2 uv_left;
-in vec2 uv_center;
-in vec2 uv_right;
 
 void main() {
-    agent_out = vec4(gl_FragCoord.xy, 0.0, 1.0);
+    vec3 agent_data = texture(agent_texture, uv).xyz;
+    agent_out = vec4(uv, 0.0, 1.0);
 }

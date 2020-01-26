@@ -4,7 +4,7 @@ precision highp float;
 precision mediump int;
 
 
-#{INT_TEXTURE}
+//{INT_TEXTURE}
 
 in vec2 texture_coords0;
 

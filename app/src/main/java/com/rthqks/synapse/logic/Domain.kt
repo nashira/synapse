@@ -203,9 +203,9 @@ val Nodes = listOf(
     },
     Node(NodeType.SlimeMold).apply {
         add(Port(Port.Type.Video, PhysarumNode.INPUT_ENV.id, "Environment", false))
-        add(Port(Port.Type.Video, PhysarumNode.OUTPUT_ENV.id, "Environment", true))
         add(Port(Port.Type.Video, PhysarumNode.INPUT_AGENT.id, "Agent", false))
         add(Port(Port.Type.Video, PhysarumNode.OUTPUT_AGENT.id, "Agent", true))
+        add(Port(Port.Type.Video, PhysarumNode.OUTPUT_ENV.id, "Environment", true))
         add(
             Property(
                 NumAgents,

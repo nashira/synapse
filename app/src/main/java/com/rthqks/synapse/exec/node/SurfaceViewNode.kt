@@ -93,9 +93,9 @@ class SurfaceViewNode(
 
             val vertexSource = assetManager.readTextAsset("shader/vertex_texture.vert")
             val fragmentSource = assetManager.readTextAsset("shader/copy.frag").let {
-                if (config.isOes) it.replace("#{EXT}", "#define EXT") else it
+                if (config.isOes) it.replace("//{EXT}", "#define EXT") else it
             }.let {
-                if (grayscale) it.replace("#{RED}", "#define RED") else it
+                if (grayscale) it.replace("//{RED}", "#define RED") else it
             }
             glesManager.glContext {
                 mesh.initialize()

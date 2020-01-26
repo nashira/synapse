@@ -113,7 +113,7 @@ class BlurNode(
         val vertexSource = assetManager.readTextAsset("shader/blur.vert")
         val fragmentSource = assetManager.readTextAsset(fragName).let {
             if (oes) {
-                it.replace("#{EXT}", "#define EXT")
+                it.replace("//{EXT}", "#define EXT")
             } else {
                 it
             }

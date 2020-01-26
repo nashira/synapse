@@ -340,12 +340,12 @@ class BuilderViewModel @Inject constructor(
         data class P(val node: Node, var average: Float)
         var nodes = network.getNodes().map { P(it, 0f) }
 
-        repeat(30) {
+        repeat(10) {
             nodes.forEachIndexed { index, node -> node.node.position = index }
 
             nodes.forEach {
                 val nodeId = it.node.id
-                var sum = 0
+                var sum = it.node.position
                 val links = network.getLinks(nodeId)
                 links.forEach { link ->
                     sum += if (link.fromNodeId == nodeId) {
@@ -354,7 +354,7 @@ class BuilderViewModel @Inject constructor(
                         network.getNode(link.fromNodeId)?.position
                     } ?: error("missing node $nodeId")
                 }
-                it.average = sum / links.size.toFloat()
+                it.average = sum / (links.size.toFloat() + 1f)
             }
 
             nodes = nodes.sortedBy { it.average }

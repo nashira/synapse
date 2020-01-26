@@ -19,10 +19,10 @@ class Agent2D(numAgents: Int) : Mesh(
             .order(ByteOrder.nativeOrder())
 
         byteBuffer.put(ZEROS)
-
         byteBuffer.position(0)
+
         val buffer = addBuffer("main", byteBuffer, GLES32.GL_ARRAY_BUFFER, GLES32.GL_STATIC_DRAW)
-        addAttribute("vertex", buffer.id, 2, GLES32.GL_UNSIGNED_SHORT, 0, 0, 0)
+        addAttribute("agent", buffer.id, 2, GLES32.GL_UNSIGNED_SHORT, 0, 0, 0)
         super.initialize()
     }
 

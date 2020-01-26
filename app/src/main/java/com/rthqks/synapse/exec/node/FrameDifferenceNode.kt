@@ -102,7 +102,7 @@ class FrameDifferenceNode(
         val vertexSource = assetManager.readTextAsset("shader/frame_difference.vert")
         val fragmentSource = assetManager.readTextAsset("shader/frame_difference.frag").let {
             if (oesTexture) {
-                it.replace("#{EXT}", "#define EXT")
+                it.replace("//{EXT}", "#define EXT")
             } else {
                 it
             }

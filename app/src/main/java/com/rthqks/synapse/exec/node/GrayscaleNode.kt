@@ -46,7 +46,7 @@ class GrayscaleNode(
         val vertexSource = assetManager.readTextAsset("shader/vertex_texture.vert")
         val fragmentSource = assetManager.readTextAsset("shader/grayscale.frag").let {
             if (config.isOes) {
-                it.replace("#{EXT}", "#define EXT")
+                it.replace("//{EXT}", "#define EXT")
             } else {
                 it
             }

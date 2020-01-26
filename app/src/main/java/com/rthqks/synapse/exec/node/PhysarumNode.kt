@@ -41,6 +41,7 @@ class PhysarumNode(
 
     private val agentProgram = Program()
     private val agentMesh = Agent2D(numAgents)
+    private val quadMesh = Quad()
 
     private var agentTexture = agentTexture1
     private var envTexture = envTexture1
@@ -115,15 +116,16 @@ class PhysarumNode(
 
             val agentVertex = assetManager.readTextAsset("shader/physarum_agent.vert")
             val agentFrag = assetManager.readTextAsset("shader/physarum_agent.frag").let {
-                it
-//                if (oesTexture) {
-//                    it.replace("#{EXT}", "#define EXT")
-//                } else {
-//                    it
-//                }
+                if (envIn?.config?.isOes == true) {
+                    it.replace("//{ENV_EXT}", "#define ENV_EXT")
+                        .replace("//{AGENT_EXT}", "#define AGENT_EXT")
+                } else {
+                    it
+                }
             }
 
             agentMesh.initialize()
+            quadMesh.initialize()
             agentProgram.apply {
                 initialize(agentVertex, agentFrag)
                 addUniform(
@@ -254,6 +256,9 @@ class PhysarumNode(
         agentFramebuffer2.release()
         envFramebuffer1.release()
         envFramebuffer2.release()
+        agentMesh.release()
+        quadMesh.release()
+        agentProgram.release()
     }
 
     val r = Random(123)
@@ -295,7 +300,8 @@ class PhysarumNode(
             GLES32.glViewport(0, 0, agentSize.width, agentSize.height)
             agentInTexture.bind(GLES32.GL_TEXTURE0)
             envInTexture.bind(GLES32.GL_TEXTURE1)
-            agentMesh.execute()
+            agentProgram.bindUniforms()
+            quadMesh.execute()
 
 //            GLES32.glClearColor(r.nextFloat(), r.nextFloat(), r.nextFloat(), 1f)
 //            GLES32.glClear(GLES32.GL_COLOR_BUFFER_BIT)
@@ -327,7 +333,10 @@ class PhysarumNode(
         if (debounce.compareAndSet(0, 1)) {
             scope.launch {
                 do {
-                    val delay = max(0, frameDuration - (SystemClock.elapsedRealtimeNanos() - lastExecutionTime) / 1_000_000)
+                    val delay = max(
+                        0,
+                        frameDuration - (SystemClock.elapsedRealtimeNanos() - lastExecutionTime) / 1_000_000
+                    )
                     delay(delay)
                     execute()
                 } while (debounce.compareAndSet(2, 1))

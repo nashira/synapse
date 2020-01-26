@@ -1,7 +1,7 @@
 #version 300 es
 
-#{EXT}
-#{RED}
+//{EXT}
+//{RED}
 
 #ifdef EXT
 #extension GL_OES_EGL_image_external_essl3 : require
