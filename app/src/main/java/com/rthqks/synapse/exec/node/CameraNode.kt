@@ -116,11 +116,11 @@ class CameraNode(
         val surface = outputSurface ?: return
         val cameraChannel = Channel<CameraManager.Event>(3)
 
-        var copyMatrix = true
+        var copyMatrix = 0
         setOnFrameAvailableListener {
             runBlocking {
-                onFrame(channel, it, copyMatrix)
-                copyMatrix = false
+                onFrame(channel, it, copyMatrix < 2)
+                copyMatrix++
             }
         }
 

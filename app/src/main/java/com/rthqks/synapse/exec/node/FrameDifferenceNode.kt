@@ -44,7 +44,8 @@ class FrameDifferenceNode(
         }
 
         connection(OUTPUT)?.prime(
-            VideoEvent(diffTexture1)
+            VideoEvent(diffTexture1),
+            VideoEvent(diffTexture2)
         )
     }
 
@@ -141,9 +142,8 @@ class FrameDifferenceNode(
         val output = channel(OUTPUT) ?: return@coroutineScope
         val input = channel(INPUT) ?: return@coroutineScope
 
-        var copyMatrix = true
-
         startJob = launch {
+            var copyMatrix = 0
             while (isActive) {
                 val outEvent = output.receive()
                 val inEvent = input.receive()
@@ -154,8 +154,8 @@ class FrameDifferenceNode(
                     timestamp = inEvent.timestamp
                 }
 
-                if (copyMatrix) {
-                    copyMatrix = false
+                if (copyMatrix < 2) {
+                    copyMatrix++
                     val uniform = program.getUniform(Uniform.Type.Mat4, "texture_matrix0")
                     System.arraycopy(inEvent.matrix, 0, uniform.data!!, 0, 16)
                     uniform.dirty = true
@@ -205,6 +205,7 @@ class FrameDifferenceNode(
         connection(INPUT)?.let {
             glesManager.glContext {
                 diffTexture1.release()
+                diffTexture2.release()
                 lastFrameTexture1.release()
                 lastFrameTexture2.release()
                 framebuffer1.release()
