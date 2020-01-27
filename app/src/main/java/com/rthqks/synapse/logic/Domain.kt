@@ -204,15 +204,15 @@ val Nodes = listOf(
     Node(NodeType.SlimeMold).apply {
         add(Port(Port.Type.Video, PhysarumNode.INPUT_ENV.id, "Environment", false))
         add(Port(Port.Type.Video, PhysarumNode.INPUT_AGENT.id, "Agent", false))
-        add(Port(Port.Type.Video, PhysarumNode.OUTPUT_AGENT.id, "Agent", true))
         add(Port(Port.Type.Video, PhysarumNode.OUTPUT_ENV.id, "Environment", true))
+        add(Port(Port.Type.Video, PhysarumNode.OUTPUT_AGENT.id, "Agent", true))
         add(
             Property(
                 NumAgents,
                 RangeType(
                     R.string.property_name_num_agents,
                     R.drawable.ic_scatter_plot,
-                    1000..1_000_000
+                    1000..100_000
                 ), 10_000, true
             ), IntConverter
         )

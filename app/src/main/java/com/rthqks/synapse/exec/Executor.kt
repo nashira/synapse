@@ -171,14 +171,16 @@ class Executor @Inject constructor(
         if (preview) {
             networkNew = network.copy()
             networkNew.getNodes().forEach { source ->
-                source.ports.values.filter {
+                val links = source.ports.values.filter {
                     it.output && it.type == Port.Type.Video
-                }.forEach {
+                }.map {
                     val node = NewNode(NodeType.Screen, networkNew.id)
                     networkNew.addNode(node)
                     val link = Link(source.id, it.id, node.id, SurfaceViewNode.INPUT.id)
-                    networkNew.addLink(link)
+                    link
                 }
+
+                networkNew.addLinks(links)
             }
         }
 
@@ -210,7 +212,7 @@ class Executor @Inject constructor(
             network.addNode(target)
             Log.d(TAG, "added node ${target.type} ${target.id} ${it.port.id}")
             val link = Link(source.node.id, source.port.id, target.id, it.port.id)
-            network.addLink(link)
+            network.addLinkNoCompute(link)
             data.add(target to link)
 
             target.ports.values.firstOrNull {
@@ -219,10 +221,11 @@ class Executor @Inject constructor(
                 val screen = NewNode(NodeType.Screen, network.id)
                 network.addNode(screen)
                 val se = Link(target.id, it, screen.id, SurfaceViewNode.INPUT.id)
-                network.addLink(se)
+                network.addLinkNoCompute(se)
                 data.add(screen to se)
             }
         }
+        network.computeComponents()
 
         val (nodes, links) = data.unzip()
         networkExecutor?.add(nodes, links)

@@ -340,7 +340,7 @@ class BuilderViewModel @Inject constructor(
         data class P(val node: Node, var average: Float)
         var nodes = network.getNodes().map { P(it, 0f) }
 
-        repeat(10) {
+        repeat(20) {
             nodes.forEachIndexed { index, node -> node.node.position = index }
 
             nodes.forEach {

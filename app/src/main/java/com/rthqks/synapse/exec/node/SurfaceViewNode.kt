@@ -299,8 +299,8 @@ class SurfaceViewNode(
         }
 
         previousTexture?.let { texture ->
-            Log.d(TAG, "surf render")
             windowSurface ?: return@let
+            Log.d(TAG, "surf render")
             glesManager.glContext {
                 windowSurface?.makeCurrent()
                 GLES32.glBindFramebuffer(GLES32.GL_FRAMEBUFFER, 0)

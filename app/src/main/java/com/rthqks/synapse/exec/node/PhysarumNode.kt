@@ -40,6 +40,7 @@ class PhysarumNode(
     private val envFramebuffer2 = Framebuffer()
 
     private val agentProgram = Program()
+    private val envProgram = Program()
     private val agentMesh = Agent2D(numAgents)
     private val quadMesh = Quad()
 
@@ -116,9 +117,22 @@ class PhysarumNode(
 
             val agentVertex = assetManager.readTextAsset("shader/physarum_agent.vert")
             val agentFrag = assetManager.readTextAsset("shader/physarum_agent.frag").let {
-                if (envIn?.config?.isOes == true) {
+                val s = if (envIn?.config?.isOes == true) {
                     it.replace("//{ENV_EXT}", "#define ENV_EXT")
-                        .replace("//{AGENT_EXT}", "#define AGENT_EXT")
+                } else {
+                    it
+                }
+                if (agentIn?.config?.isOes == true) {
+                    s.replace("//{AGENT_EXT}", "#define AGENT_EXT")
+                } else {
+                    s
+                }
+            }
+
+            val envVertex = assetManager.readTextAsset("shader/physarum_env.vert")
+            val envFrag = assetManager.readTextAsset("shader/physarum_env.frag").let {
+                if (agentIn?.config?.isOes == true) {
+                    it.replace("//{AGENT_EXT}", "#define AGENT_EXT")
                 } else {
                     it
                 }
@@ -126,12 +140,23 @@ class PhysarumNode(
 
             agentMesh.initialize()
             quadMesh.initialize()
+
+            // seed agent texture with random data
+            Program().apply {
+                val frag = assetManager.readTextAsset("shader/physarum_random.frag")
+                initialize(agentVertex, frag)
+                GLES32.glUseProgram(programId)
+                GLES32.glBindFramebuffer(GLES32.GL_FRAMEBUFFER, agentFramebuffer1.id)
+                GLES32.glViewport(0, 0, agentSize.width, agentSize.height)
+                quadMesh.execute()
+            }.release()
+
             agentProgram.apply {
                 initialize(agentVertex, agentFrag)
                 addUniform(
                     Uniform.Type.Vec2,
                     "resolution",
-                    floatArrayOf(agentSize.width.toFloat(), agentSize.height.toFloat())
+                    floatArrayOf(envSize.width.toFloat(), envSize.height.toFloat())
                 )
                 addUniform(
                     Uniform.Type.Int,
@@ -144,7 +169,21 @@ class PhysarumNode(
                     "env_texture",
                     ENV_TEXTURE_LOCATION
                 )
+            }
 
+            envProgram.apply {
+                initialize(envVertex, envFrag)
+                addUniform(
+                    Uniform.Type.Vec2,
+                    "resolution",
+                    floatArrayOf(agentSize.width.toFloat(), agentSize.height.toFloat())
+                )
+
+                addUniform(
+                    Uniform.Type.Int,
+                    "agent_texture",
+                    AGENT_TEXTURE_LOCATION
+                )
             }
         }
     }
@@ -187,10 +226,11 @@ class PhysarumNode(
             if (linked(INPUT_AGENT) && !cycle(INPUT_AGENT)) running.incrementAndGet()
             if (linked(INPUT_ENV) && !cycle(INPUT_ENV)) running.incrementAndGet()
 
+            execute()
 //            if (linked(INPUT_AGENT) || linked(INPUT_ENV))
             whileSelect {
                 agentIn?.onReceive {
-                    //                    Log.d(TAG, "agent receive")
+//                    Log.d(TAG, "agent receive")
                     agentEvent?.let { agentIn.send(it) }
                     agentEvent = it
                     debounceExecute(this@launch)
@@ -198,7 +238,7 @@ class PhysarumNode(
                     running.get() > 0
                 }
                 envIn?.onReceive {
-                    //                    Log.d(TAG, "env receive")
+//                    Log.d(TAG, "env receive")
                     envEvent?.let { envIn.send(it) }
                     envEvent = it
                     debounceExecute(this@launch)
@@ -259,6 +299,7 @@ class PhysarumNode(
         agentMesh.release()
         quadMesh.release()
         agentProgram.release()
+        envProgram.release()
     }
 
     val r = Random(123)
@@ -303,13 +344,13 @@ class PhysarumNode(
             agentProgram.bindUniforms()
             quadMesh.execute()
 
-//            GLES32.glClearColor(r.nextFloat(), r.nextFloat(), r.nextFloat(), 1f)
-//            GLES32.glClear(GLES32.GL_COLOR_BUFFER_BIT)
-
+            GLES32.glUseProgram(envProgram.programId)
             GLES32.glBindFramebuffer(GLES32.GL_FRAMEBUFFER, envFramebuffer.id)
             GLES32.glViewport(0, 0, envSize.width, envSize.height)
-            GLES32.glClearColor(r.nextFloat(), r.nextFloat(), r.nextFloat(), 1f)
+            agentOutTexture.bind(GLES32.GL_TEXTURE0)
+            envProgram.bindUniforms()
             GLES32.glClear(GLES32.GL_COLOR_BUFFER_BIT)
+            agentMesh.execute()
         }
 
         frameCount++

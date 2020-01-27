@@ -55,7 +55,7 @@ class MacNode(
             createProgram(it.isOes)
             createTextures()
         }
-        connection(OUTPUT)?.prime(VideoEvent(texture1))
+        connection(OUTPUT)?.prime(VideoEvent(texture1), VideoEvent(texture2))
     }
 
     private suspend fun createTextures() {

@@ -72,7 +72,7 @@ class Network(
         computeComponents()
     }
 
-    private fun addLinkNoCompute(link: Link) {
+    fun addLinkNoCompute(link: Link) {
         links.add(link)
         linkIndex.getOrPut(link.fromNodeId) { mutableSetOf() } += link
         linkIndex.getOrPut(link.toNodeId) { mutableSetOf() } += link
