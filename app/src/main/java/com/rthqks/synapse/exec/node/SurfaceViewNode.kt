@@ -151,11 +151,11 @@ class SurfaceViewNode(
             surface?.also { surface ->
                 if (surface.isValid) {
                     Log.d(TAG, "surf creating new input surface")
-                    surfaceView?.tag?.let {
-                        (it as? SurfaceViewNode)?.setSurface(null)
-                    }
+//                    surfaceView?.tag?.let {
+//                        (it as? SurfaceViewNode)?.setSurface(null)
+//                    }
                     windowSurface = it.createWindowSurface(surface)
-                    surfaceView?.tag = this@SurfaceViewNode
+//                    surfaceView?.tag = this@SurfaceViewNode
                 }
             }
 

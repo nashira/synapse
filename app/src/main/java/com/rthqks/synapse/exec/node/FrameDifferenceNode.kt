@@ -25,21 +25,10 @@ class FrameDifferenceNode(
 
     private val mesh = Quad()
     private val program = Program()
-    private val diffTexture = Texture(
-        GL_TEXTURE_2D,
-        GL_CLAMP_TO_EDGE,
-        GL_LINEAR
-    )
-    private val lastFrameTexture1 = Texture(
-        GL_TEXTURE_2D,
-        GL_CLAMP_TO_EDGE,
-        GL_LINEAR
-    )
-    private val lastFrameTexture2 = Texture(
-        GL_TEXTURE_2D,
-        GL_CLAMP_TO_EDGE,
-        GL_LINEAR
-    )
+    private val diffTexture1 = Texture()
+    private val diffTexture2 = Texture()
+    private val lastFrameTexture1 = Texture()
+    private val lastFrameTexture2 = Texture()
     private val framebuffer1 = Framebuffer()
     private val framebuffer2 = Framebuffer()
 
@@ -55,7 +44,7 @@ class FrameDifferenceNode(
         }
 
         connection(OUTPUT)?.prime(
-            VideoEvent(diffTexture)
+            VideoEvent(diffTexture1)
         )
     }
 
@@ -67,10 +56,19 @@ class FrameDifferenceNode(
         val type = config.type
 
         glesManager.glContext {
-            diffTexture.initialize()
+            diffTexture1.initialize()
+            diffTexture2.initialize()
             lastFrameTexture1.initialize()
             lastFrameTexture2.initialize()
-            diffTexture.initData(
+            diffTexture1.initData(
+                0,
+                config.internalFormat,
+                size.width, size.height,
+                config.format,
+                config.type
+            )
+            Log.d(TAG, "1 glGetError() ${glGetError()}")
+            diffTexture2.initData(
                 0,
                 config.internalFormat,
                 size.width, size.height,
@@ -93,8 +91,8 @@ class FrameDifferenceNode(
             )
             Log.d(TAG, "3 glGetError() ${glGetError()}")
 
-            framebuffer1.initialize(lastFrameTexture1.id, diffTexture.id)
-            framebuffer2.initialize(lastFrameTexture2.id, diffTexture.id)
+            framebuffer1.initialize(lastFrameTexture1.id, diffTexture1.id)
+            framebuffer2.initialize(lastFrameTexture2.id, diffTexture2.id)
         }
     }
 
@@ -206,7 +204,7 @@ class FrameDifferenceNode(
     override suspend fun release() {
         connection(INPUT)?.let {
             glesManager.glContext {
-                diffTexture.release()
+                diffTexture1.release()
                 lastFrameTexture1.release()
                 lastFrameTexture2.release()
                 framebuffer1.release()

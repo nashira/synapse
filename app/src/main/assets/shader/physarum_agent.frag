@@ -1,18 +1,24 @@
 #version 300 es
 
-precision mediump float;
-
 //{ENV_EXT}
 #ifdef ENV_EXT
 #extension GL_OES_EGL_image_external_essl3 : require
-uniform samplerExternalOES env_texture;
-#else
-uniform sampler2D env_texture;
 #endif
 
 //{AGENT_EXT}
 #ifdef AGENT_EXT
 #extension GL_OES_EGL_image_external_essl3 : require
+#endif
+
+precision mediump float;
+
+#ifdef ENV_EXT
+uniform samplerExternalOES env_texture;
+#else
+uniform sampler2D env_texture;
+#endif
+
+#ifdef AGENT_EXT
 uniform samplerExternalOES agent_texture;
 #else
 uniform sampler2D agent_texture;

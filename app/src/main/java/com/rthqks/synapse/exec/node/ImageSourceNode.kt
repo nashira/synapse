@@ -84,20 +84,25 @@ class ImageSourceNode(
         }
         inputStream.close()
 
-        val item = VideoEvent(texture)
-        Matrix.translateM(item.matrix, 0, 0.5f, 0.5f, 0f)
-        Matrix.scaleM(item.matrix, 0, 1f, -1f, 1f)
-        Matrix.rotateM(item.matrix, 0, rotation, 0f, 0f, 1f)
-        Matrix.translateM(item.matrix, 0, -0.5f, -0.5f, 0f)
-        connection.prime(item)
+        val item1 = VideoEvent(texture)
+        val item2 = VideoEvent(texture)
+        Matrix.translateM(item1.matrix, 0, 0.5f, 0.5f, 0f)
+        Matrix.scaleM(item1.matrix, 0, 1f, -1f, 1f)
+        Matrix.rotateM(item1.matrix, 0, rotation, 0f, 0f, 1f)
+        Matrix.translateM(item1.matrix, 0, -0.5f, -0.5f, 0f)
+        System.arraycopy(item1.matrix, 0, item2.matrix, 0, 16)
+        connection.prime(item1, item2)
     }
 
     override suspend fun start() = coroutineScope {
         val channel = channel(OUTPUT) ?: return@coroutineScope
-        channel.receive().also {
-            it.eos = false
-            it.count++
-            channel.send(it)
+        repeat(2) {
+            channel.receive().also {
+                it.eos = false
+                it.count++
+                channel.send(it)
+            }
+
         }
     }
 

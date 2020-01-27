@@ -55,19 +55,7 @@ class NetworkExecutor(
         Log.d(TAG, "create done")
 
         Log.d(TAG, "connect start")
-        network.getLinks().forEach { link ->
-            val fromKey = Connection.Key<Config, Event>(link.fromPortId)
-            val toKey = Connection.Key<Config, Event>(link.toPortId)
-
-            val fromNode = nodes[link.fromNodeId]!!
-            val toNode = nodes[link.toNodeId]!!
-            fromNode.setLinked(fromKey)
-            toNode.setLinked(toKey)
-            if (link.inCycle) {
-                fromNode.setCycle(fromKey)
-                toNode.setCycle(toKey)
-            }
-        }
+        prepareLinks()
 
         parallelJoin(network.getLinks()) { link ->
             Log.d(TAG, "connect $link")
@@ -84,6 +72,22 @@ class NetworkExecutor(
         }
         Log.d(TAG, "initialize done")
         logCoroutineInfo(scope.coroutineContext[Job])
+    }
+
+    private fun prepareLinks() {
+        network.getLinks().forEach { link ->
+            val fromKey = Connection.Key<Config, Event>(link.fromPortId)
+            val toKey = Connection.Key<Config, Event>(link.toPortId)
+
+            val fromNode = nodes[link.fromNodeId]!!
+            val toNode = nodes[link.toNodeId]!!
+            fromNode.setLinked(fromKey)
+            toNode.setLinked(toKey)
+            if (link.inCycle) {
+                fromNode.setCycle(fromKey)
+                toNode.setCycle(toKey)
+            }
+        }
     }
 
     private fun nodeExecutor(node: Node): NodeExecutor {
@@ -222,6 +226,7 @@ class NetworkExecutor(
             Log.d(TAG, "create complete $it")
         }
 
+        prepareLinks()
         parallelJoin(newLinks) { link ->
             Log.d(TAG, "connect $link")
             addLink(link)

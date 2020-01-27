@@ -1,10 +1,13 @@
 #version 300 es
 
-precision mediump float;
-
 //{AGENT_EXT}
 #ifdef AGENT_EXT
 #extension GL_OES_EGL_image_external_essl3 : require
+#endif
+
+precision mediump float;
+
+#ifdef AGENT_EXT
 uniform samplerExternalOES agent_texture;
 #else
 uniform sampler2D agent_texture;

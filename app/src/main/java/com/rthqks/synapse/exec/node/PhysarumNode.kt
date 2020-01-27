@@ -305,7 +305,6 @@ class PhysarumNode(
     val r = Random(123)
 
     private suspend fun execute() {
-        lastExecutionTime = SystemClock.elapsedRealtimeNanos()
         val agentOut = channel(OUTPUT_AGENT)
         val envOut = channel(OUTPUT_ENV)
         val agentOutEvent = agentOut?.receive()
@@ -376,11 +375,13 @@ class PhysarumNode(
                 do {
                     val delay = max(
                         0,
-                        frameDuration - (SystemClock.elapsedRealtimeNanos() - lastExecutionTime) / 1_000_000
+                        frameDuration - (SystemClock.elapsedRealtime() - lastExecutionTime)
                     )
                     delay(delay)
+                    lastExecutionTime = SystemClock.elapsedRealtime()
                     execute()
                 } while (debounce.compareAndSet(2, 1))
+                // TODO: use compareAndSet(1, 0)
                 debounce.set(0)
             }
         } else {
