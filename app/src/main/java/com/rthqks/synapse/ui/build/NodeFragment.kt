@@ -10,6 +10,7 @@ import android.view.View
 import android.view.ViewGroup
 import androidx.appcompat.view.menu.MenuPopupHelper
 import androidx.appcompat.widget.PopupMenu
+import androidx.core.view.doOnLayout
 import androidx.core.view.isEmpty
 import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModelProvider
@@ -77,14 +78,27 @@ class NodeFragment : DaggerFragment() {
             }
         }
 
+//        surface_view.let {
+//            it.addOnLayoutChangeListener { v, left, top, right, bottom, oldLeft, oldTop, oldRight, oldBottom ->
+//                Log.d(TAG, "surface_view size ${it.width} ${it.height} ${bottom - top}")
+//            }
+//
+//        }
+
+//        surface_view_size.doOnLayout {
+//            Log.d(TAG, "surface_view_size ${it.measuredWidth} ${it.measuredHeight}")
+//        }
+
         viewModel.networkChannel.observe(viewLifecycleOwner, Observer {
             Log.d(TAG, "network change $nodeId ${viewModel.network.getNode(nodeId)}")
             viewModel.network.getNode(nodeId)?.let {
                 reloadConnectors()
+                surface_view.doOnLayout {
+//                    Log.d(TAG, "surface_view_size ${it.width} ${it.height}")
+                    viewModel.setSurfaceView(nodeId, selectedPortId, surface_view)
+                }
             }
         })
-
-        viewModel.setSurfaceView(nodeId, selectedPortId, surface_view)
     }
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
@@ -218,11 +232,17 @@ class NodeFragment : DaggerFragment() {
 
         override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): PortViewHolder {
             val view = LayoutInflater.from(parent.context).inflate(
-                R.layout.layout_port_fragment_node,
+                viewType,
                 parent,
                 false
             )
             return PortViewHolder(view)
+        }
+
+        override fun getItemViewType(position: Int): Int = if (isStartAligned) {
+            R.layout.layout_port_fragment_node_start
+        } else {
+            R.layout.layout_port_fragment_node
         }
 
         override fun getItemCount() = ports.size
@@ -237,8 +257,6 @@ class NodeFragment : DaggerFragment() {
     ) : RecyclerView.ViewHolder(itemView) {
         private val button = itemView.button
         private val label = itemView.label
-        private val arrowForward = itemView.arrow_forward
-        private val arrowBackward = itemView.title
         private var connector: Connector? = null
 
         init {
@@ -261,10 +279,11 @@ class NodeFragment : DaggerFragment() {
         fun bind(connector: Connector, startAligned: Boolean) {
             this.connector = connector
             connector.link?.let {
-                val otherPort =
-                    if (startAligned) viewModel.getConnector(it.fromNodeId, it.fromPortId).port
-                    else viewModel.getConnector(it.toNodeId, it.toPortId).port
-                label.text = "${connector.port.name} (${otherPort.name})"
+                //                val otherPort =
+//                    if (startAligned) viewModel.getConnector(it.fromNodeId, it.fromPortId).port
+//                    else viewModel.getConnector(it.toNodeId, it.toPortId).port
+
+                label.text = connector.port.name
                 button.setBackgroundResource(R.drawable.selectable_accent)
             } ?: run {
                 button.setBackgroundResource(R.drawable.selectable_grey)
@@ -274,14 +293,6 @@ class NodeFragment : DaggerFragment() {
             when (connector.port.type) {
                 Port.Type.Audio -> button.setImageResource(R.drawable.ic_speaker)
                 Port.Type.Video -> button.setImageResource(R.drawable.ic_display)
-            }
-
-            if (!startAligned) {
-                arrowBackward.visibility = View.GONE
-                arrowForward.visibility = View.VISIBLE
-            } else {
-                arrowBackward.visibility = View.VISIBLE
-                arrowForward.visibility = View.GONE
             }
         }
     }

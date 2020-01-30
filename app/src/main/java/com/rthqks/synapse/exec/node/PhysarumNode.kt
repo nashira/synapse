@@ -8,8 +8,10 @@ import com.rthqks.synapse.assets.AssetManager
 import com.rthqks.synapse.exec.NodeExecutor
 import com.rthqks.synapse.exec.link.*
 import com.rthqks.synapse.gl.*
+import com.rthqks.synapse.logic.FrameRate
 import com.rthqks.synapse.logic.NumAgents
 import com.rthqks.synapse.logic.Properties
+import com.rthqks.synapse.logic.VideoSize
 import kotlinx.coroutines.*
 import kotlinx.coroutines.selects.whileSelect
 import java.util.concurrent.atomic.AtomicInteger
@@ -25,8 +27,8 @@ class PhysarumNode(
 ) : NodeExecutor() {
     private var startJob: Job? = null
     private val numAgents = properties[NumAgents]
-    private val frameDuration = 33L
-    private var envSize = Size(1024, 1024)
+    private val frameDuration = 1000L / properties[FrameRate]
+    private var envSize = properties[VideoSize]
     private val agentSize = ceil(sqrt(numAgents.toDouble())).toInt().let { Size(it, it) }
 
 
@@ -271,7 +273,8 @@ class PhysarumNode(
     }
 
     override suspend fun stop() {
-        running.decrementAndGet()
+        val count = running.decrementAndGet()
+        Log.d(TAG, "stop running $count")
         startJob?.join()
         val agentOut = channel(OUTPUT_AGENT)
         val envOut = channel(OUTPUT_ENV)
@@ -385,6 +388,7 @@ class PhysarumNode(
                 debounce.set(0)
             }
         } else {
+            // TODO: use compareAndSet
             debounce.set(2)
         }
     }

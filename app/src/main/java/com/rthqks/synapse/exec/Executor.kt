@@ -123,7 +123,7 @@ class Executor @Inject constructor(
             }
 
             network?.getLinks(id)?.forEach {
-                it
+//                it
                 if (it.fromNodeId == id
                     && (firstPortId == null || it.fromPortId == firstPortId)
                     && it.toNodeId > Network.COPY_ID_SKIP
@@ -170,18 +170,17 @@ class Executor @Inject constructor(
         var networkNew = network
         if (preview) {
             networkNew = network.copy()
-            networkNew.getNodes().forEach { source ->
-                val links = source.ports.values.filter {
+            val links = networkNew.getNodes().map { source ->
+                source.ports.values.filter {
                     it.output && it.type == Port.Type.Video
                 }.map {
                     val node = NewNode(NodeType.Screen, networkNew.id)
                     networkNew.addNode(node)
-                    val link = Link(source.id, it.id, node.id, SurfaceViewNode.INPUT.id)
-                    link
+                    Link(source.id, it.id, node.id, SurfaceViewNode.INPUT.id)
                 }
+            }.flatten()
 
-                networkNew.addLinks(links)
-            }
+            networkNew.addLinks(links)
         }
 
         this.network = networkNew

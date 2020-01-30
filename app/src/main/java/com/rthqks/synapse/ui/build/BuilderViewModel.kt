@@ -181,18 +181,21 @@ class BuilderViewModel @Inject constructor(
             }
 
 //            if (addNode) {
-                restartNetwork()
-                nodesChannel.value = AdapterState(0, listOf(connector.node))
+            restartNetwork()
+            nodesChannel.value = AdapterState(0, listOf(connector.node))
 //            }
         }
     }
 
     private fun restartNetwork() {
-        executor.stop()
-        executor.releaseNetwork()
-        executor.initializeNetwork(network)
-        updateStartState()
-        networkChannel.postValue(network)
+        viewModelScope.launch {
+            executor.stop()
+            executor.releaseNetwork()
+            executor.initializeNetwork(network)
+            updateStartState()
+            executor.await()
+            networkChannel.postValue(network)
+        }
     }
 
     fun setTitle(@StringRes resId: Int) {
@@ -338,6 +341,7 @@ class BuilderViewModel @Inject constructor(
 
     fun getSortedNodeList(): List<Node> {
         data class P(val node: Node, var average: Float)
+
         var nodes = network.getNodes().map { P(it, 0f) }
 
         repeat(20) {

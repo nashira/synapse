@@ -12,8 +12,8 @@ val AudioEncoding = Property.Key<Int>("audio_encoding")
 val AudioChannel = Property.Key<Int>("audio_channel")
 val AudioSource = Property.Key<Int>("audio_source")
 val CameraFacing = Property.Key<Int>("camera_facing")
-val CameraCaptureSize = Property.Key<Size>("camera_capture_size")
-val CameraFrameRate = Property.Key<Int>("camera_frame_rate")
+val VideoSize = Property.Key<Size>("video_size")
+val FrameRate = Property.Key<Int>("frame_rate")
 val BlurSize = Property.Key<Int>("blur_size")
 val NumPasses = Property.Key<Int>("num_passes")
 val ScaleFactor = Property.Key<Int>("scale_factor")
@@ -23,6 +23,7 @@ val MediaUri = Property.Key<Uri>("media_uri")
 val CropToFit = Property.Key<Boolean>("crop_to_fit")
 val NetworkName = Property.Key<String>("network_name")
 val NumAgents = Property.Key<Int>("num_agents")
+val FixedWidth = Property.Key<Boolean>("fixed_width")
 
 val Nodes = listOf(
     Node(NodeType.Camera).apply {
@@ -46,9 +47,9 @@ val Nodes = listOf(
         )
         add(
             Property(
-                CameraFrameRate,
+                FrameRate,
                 ChoiceType(
-                    R.string.property_name_camera_frame_rate,
+                    R.string.property_name_frame_rate,
                     R.drawable.ic_speed,
                     Choice(10, R.string.property_label_camera_fps_10),
                     Choice(15, R.string.property_label_camera_fps_15),
@@ -60,7 +61,7 @@ val Nodes = listOf(
         )
         add(
             Property(
-                CameraCaptureSize,
+                VideoSize,
                 ChoiceType(
                     R.string.property_name_camera_capture_size,
                     R.drawable.ic_photo_size_select,
@@ -215,6 +216,34 @@ val Nodes = listOf(
                     1000..100_000
                 ), 10_000, true
             ), IntConverter
+        )
+        add(
+            Property(
+                FrameRate,
+                ChoiceType(
+                    R.string.property_name_frame_rate,
+                    R.drawable.ic_speed,
+                    Choice(10, R.string.property_label_camera_fps_10),
+                    Choice(15, R.string.property_label_camera_fps_15),
+                    Choice(20, R.string.property_label_camera_fps_20),
+                    Choice(30, R.string.property_label_camera_fps_30),
+                    Choice(60, R.string.property_label_camera_fps_60)
+                ), 30, false
+            ), IntConverter
+        )
+        add(
+            Property(
+                VideoSize,
+                ChoiceType(
+                    R.string.property_name_environment_video_size,
+                    R.drawable.ic_photo_size_select,
+                    Choice(Size(2160, 3840), R.string.property_label_camera_capture_size_2160),
+                    Choice(Size(1080, 1920), R.string.property_label_camera_capture_size_1080),
+                    Choice(Size(720, 1280), R.string.property_label_camera_capture_size_720),
+                    Choice(Size(1024, 1024), R.string.property_label_camera_capture_size_1024sq),
+                    Choice(Size(480, 640), R.string.property_label_camera_capture_size_480)
+                ), Size(1080, 1920), true
+            ), SizeConverter
         )
     },
     Node(NodeType.Properties).also { it.id = -2 },

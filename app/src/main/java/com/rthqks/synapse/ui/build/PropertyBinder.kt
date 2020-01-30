@@ -65,6 +65,7 @@ class PropertyBinder(
             .setDuration(100)
             .setInterpolator(AccelerateInterpolator())
             .alpha(0f).withEndAction {
+//                detailView.visibility = View.INVISIBLE
                 detailAdapter.setProperty(null)
                 detailView.alpha = 1f
             }.start()
@@ -79,6 +80,7 @@ class PropertyBinder(
     }
 
     fun show(property: Property<out Any?>) {
+//        detailView.visibility = View.VISIBLE
         detailAdapter.setProperty(property)
 
     }
@@ -212,12 +214,15 @@ private class RangePropertyViewHolder(
             when (type) {
                 is FloatRangeType -> {
                     val scale = (type.range.endInclusive - type.range.start)
-                    (it as Property<Any?>).value = type.range.start + (normalized * scale)
+                    val value = type.range.start + (normalized * scale)
+                    (it as Property<Any?>).value = value
+                    itemView.value.text = value.toString()
                 }
                 is IntRangeType -> {
                     val scale = (type.range.last - type.range.first).toFloat()
-                    (it as Property<Any?>).value =
-                        type.range.first + (normalized * scale).roundToInt()
+                    val value = type.range.first + (normalized * scale).roundToInt()
+                    (it as Property<Any?>).value = value
+                    itemView.value.text = value.toString()
                 }
                 else -> error("unknown range type $type")
             }
@@ -252,6 +257,8 @@ private class RangePropertyViewHolder(
                 itemView.seekbar.progress = (progress * MAX).roundToInt()
             }
         }
+
+        itemView.value.text = property.value.toString()
         itemView.title.setText(type.title)
         // set once seek position is set
         this.property = property

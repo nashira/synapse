@@ -55,7 +55,7 @@
     <string name="property_label_camera_fps_20">20 fps</string>
     <string name="property_label_camera_fps_30">30 fps</string>
     <string name="property_label_camera_fps_60">60 fps</string>
-    <string name="property_name_camera_frame_rate">Frame Rate (fps)</string>
+    <string name="property_name_frame_rate">Frame Rate (fps)</string>
     <string name="property_label_camera_capture_size_480">640x480</string>
     <string name="name_node_type_audio_waveform">Audio Waveform</string>
     <string name="name_node_type_frame_difference">Frame Difference</string>
@@ -124,4 +124,6 @@
     <string name="property_name_network_name">Network Name</string>
     <string name="name_node_type_slime_mold">Slime Mold</string>
     <string name="property_name_num_agents">Number of Agents</string>
+    <string name="property_name_environment_video_size">Environment Video Size</string>
+    <string name="property_label_camera_capture_size_1024sq">1024x1024</string>
 </resources>

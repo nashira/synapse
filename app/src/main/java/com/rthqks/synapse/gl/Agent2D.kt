@@ -8,7 +8,7 @@ class Agent2D(numAgents: Int) : Mesh(
     DRAW_ARRAYS_INSTANCED,
     GLES32.GL_POINTS,
     0,
-    2,
+    1,
     instances = numAgents
 ) {
 

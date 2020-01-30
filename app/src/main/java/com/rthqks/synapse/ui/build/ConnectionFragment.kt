@@ -8,6 +8,7 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.TextView
+import androidx.core.view.doOnLayout
 import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
@@ -213,7 +214,9 @@ class ConnectionAdapter(
             val id = item.connector.node.id
             Log.d(TAG, "bind $id")
             if (id >= 0) {
-                viewModel.setSurfaceView(id, null, surfaceView)
+                surfaceView.doOnLayout {
+                    viewModel.setSurfaceView(id, null, surfaceView)
+                }
             }
         }
     }

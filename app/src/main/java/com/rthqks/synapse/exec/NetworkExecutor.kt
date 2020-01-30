@@ -26,7 +26,7 @@ class NetworkExecutor(
 ) {
     private val exceptionHandler = CoroutineExceptionHandler { _, throwable ->
         Log.e(TAG, "error", throwable)
-//        throw throwable
+        throw throwable
     }
 
     private val scope = CoroutineScope(SupervisorJob() + dispatcher + exceptionHandler)
@@ -105,7 +105,7 @@ class NetworkExecutor(
             NodeType.LutFilter -> GlNode(glesManager, assetManager)
             NodeType.ShaderFilter -> TODO()
             NodeType.Speakers -> AudioPlayerNode()
-            NodeType.Screen -> SurfaceViewNode(assetManager, glesManager, node.properties + network.properties)
+            NodeType.Screen -> SurfaceViewNode(scope, assetManager, glesManager, node.properties + network.properties)
             NodeType.SlimeMold -> PhysarumNode(assetManager, glesManager, node.properties)
 
             NodeType.Properties,

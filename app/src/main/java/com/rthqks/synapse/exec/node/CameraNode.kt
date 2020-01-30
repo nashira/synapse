@@ -14,10 +14,10 @@ import com.rthqks.synapse.exec.NodeExecutor
 import com.rthqks.synapse.exec.link.*
 import com.rthqks.synapse.gl.GlesManager
 import com.rthqks.synapse.gl.Texture
-import com.rthqks.synapse.logic.CameraCaptureSize
 import com.rthqks.synapse.logic.CameraFacing
-import com.rthqks.synapse.logic.CameraFrameRate
+import com.rthqks.synapse.logic.FrameRate
 import com.rthqks.synapse.logic.Properties
+import com.rthqks.synapse.logic.VideoSize
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.coroutineScope
@@ -42,8 +42,8 @@ class CameraNode(
     )
 
     private val facing: Int get() =  properties[CameraFacing]
-    private val requestedSize: Size get() = properties[CameraCaptureSize]
-    private val frameRate: Int get() = properties[CameraFrameRate]
+    private val requestedSize: Size get() = properties[VideoSize]
+    private val frameRate: Int get() = properties[FrameRate]
 
     override suspend fun create() {
         val conf = cameraManager.resolve(facing, requestedSize, frameRate)
