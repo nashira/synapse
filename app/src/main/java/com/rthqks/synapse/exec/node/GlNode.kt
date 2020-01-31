@@ -40,7 +40,7 @@ class GlNode(
         val connection = connection(INPUT) ?: error("missing input connection")
         val config = connection.config
         val vertexSource = assetManager.readTextAsset("shader/vertex_texture.vert")
-        val fragmentSource = assetManager.readTextAsset("shader/lut.frag").let {
+        val fragmentSource = assetManager.readTextAsset("#version 300 es\n\n//{EXT}\n\n#ifdef EXT\n#extension GL_OES_EGL_image_external_essl3 : require\n#endif\n\nprecision mediump float;\n\nin vec2 texture_coords0;\n\nout vec4 color;\n\n#ifdef EXT\nuniform samplerExternalOES input_texture0;\n#else\nuniform sampler2D input_texture0;\n#endif\n\n\nvoid main() {\n    color = texture(input_texture0, texture_coords0);\n}").let {
             if (config.isOes) {
                 it.replace("//{EXT}", "#define EXT")
             } else {

@@ -85,8 +85,8 @@ sealed class NodeType(
     )
 
     object LutFilter : NodeType(
-        "lut",
-        R.string.name_node_type_color_filter,
+        "lut_2d",
+        R.string.name_node_type_lut2d_filter,
         R.drawable.ic_tune
     )
 

@@ -102,7 +102,7 @@ class NetworkExecutor(
             NodeType.Image -> ImageSourceNode(context, glesManager, node.properties)
             NodeType.AudioFile -> TODO()
             NodeType.MediaFile -> DecoderNode(glesManager, context, node.properties)
-            NodeType.LutFilter -> GlNode(glesManager, assetManager)
+            NodeType.LutFilter -> Lut2dNode(assetManager, glesManager, node.properties)
             NodeType.ShaderFilter -> TODO()
             NodeType.Speakers -> AudioPlayerNode()
             NodeType.Screen -> SurfaceViewNode(scope, assetManager, glesManager, node.properties + network.properties)

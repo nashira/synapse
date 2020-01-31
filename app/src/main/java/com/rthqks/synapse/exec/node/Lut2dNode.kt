@@ -7,7 +7,6 @@ import com.rthqks.synapse.assets.AssetManager
 import com.rthqks.synapse.exec.NodeExecutor
 import com.rthqks.synapse.exec.link.*
 import com.rthqks.synapse.gl.*
-import com.rthqks.synapse.logic.BlendMode
 import com.rthqks.synapse.logic.FrameRate
 import com.rthqks.synapse.logic.Properties
 import com.rthqks.synapse.logic.VideoSize
@@ -16,15 +15,15 @@ import kotlinx.coroutines.selects.whileSelect
 import java.util.concurrent.atomic.AtomicInteger
 import kotlin.math.max
 
-class ImageBlendNode(
+class Lut2dNode(
     private val assetManager: AssetManager,
     private val glesManager: GlesManager,
     private val properties: Properties
 ) : NodeExecutor() {
     private var startJob: Job? = null
-    private val blendMode: Int get() = properties[BlendMode]
     private val frameDuration: Long get() = 1000L / properties[FrameRate]
     private var outputSize = properties[VideoSize]
+    private var outputConfig = DEFAULT_CONFIG
 
     private val texture1 = Texture(filter = GLES30.GL_NEAREST)
     private val texture2 = Texture(filter = GLES30.GL_NEAREST)
@@ -34,8 +33,8 @@ class ImageBlendNode(
     private val program = Program()
     private val quadMesh = Quad()
 
-    private var baseEvent: VideoEvent? = null
-    private var blendEvent: VideoEvent? = null
+    private var inputEvent: VideoEvent? = null
+    private var lutEvent: VideoEvent? = null
 
     private val debounce = AtomicInteger()
     private var frameCount = 0
@@ -46,9 +45,9 @@ class ImageBlendNode(
             GLES30.GL_TEXTURE_2D,
             outputSize.width,
             outputSize.height,
-            GLES30.GL_RGB8,
-            GLES30.GL_RGB,
-            GLES30.GL_UNSIGNED_BYTE
+            outputConfig.internalFormat,
+            outputConfig.format,
+            outputConfig.type
         )
     }
 
@@ -57,12 +56,16 @@ class ImageBlendNode(
         return when (key) {
             OUTPUT -> {
                 Log.d(TAG, "before output $outputSize")
-                if (linked(INPUT_BASE)) {
-                    val config = configAsync(INPUT_BASE).await()
+                if (linked(INPUT)) {
+                    val config = configAsync(INPUT).await()
                     outputSize = config.size
-                } else if (linked(INPUT_BLEND)) {
-                    val config = configAsync(INPUT_BLEND).await()
-                    outputSize = config.size
+                    if (config.format != GLES30.GL_RG && config.format != GLES30.GL_RED) {
+                        Log.w(TAG, "can't lookup a 3D value from a 2D texture")
+                    }
+                }
+
+                if (linked(INPUT_LUT)) {
+                    outputConfig = configAsync(INPUT_LUT).await()
                 }
                 Log.d(TAG, "after output $outputSize")
                 config as C
@@ -75,8 +78,8 @@ class ImageBlendNode(
     }
 
     override suspend fun initialize() {
-        val baseIn = connection(INPUT_BASE)
-        val blendIn = connection(INPUT_BLEND)
+        val input = connection(INPUT)
+        val inputLut = connection(INPUT_LUT)
         val output = connection(OUTPUT)
 
         output?.prime(VideoEvent(texture1), VideoEvent(texture2))
@@ -85,15 +88,15 @@ class ImageBlendNode(
             initRenderTarget(framebuffer1, texture1, config)
             initRenderTarget(framebuffer2, texture2, config)
 
-            val vertex = assetManager.readTextAsset("shader/image_blend.vert")
-            val frag = assetManager.readTextAsset("shader/image_blend.frag").let {
-                val s = if (baseIn?.config?.isOes == true) {
-                    it.replace("//{EXT_BASE}", "#define EXT_BASE")
+            val vertex = assetManager.readTextAsset("shader/lut_2d.vert")
+            val frag = assetManager.readTextAsset("shader/lut_2d.frag").let {
+                val s = if (input?.config?.isOes == true) {
+                    it.replace("//{EXT_INPUT}", "#define EXT_INPUT")
                 } else {
                     it
                 }
-                if (blendIn?.config?.isOes == true) {
-                    s.replace("//{EXT_BLEND}", "#define EXT_BLEND")
+                if (inputLut?.config?.isOes == true) {
+                    s.replace("//{EXT_LUT}", "#define EXT_LUT")
                 } else {
                     s
                 }
@@ -105,27 +108,19 @@ class ImageBlendNode(
                 initialize(vertex, frag)
                 addUniform(
                     Uniform.Type.Mat4,
-                    "base_matrix",
-                    GlesManager.identityMat()
-                )
-                addUniform(
-                    Uniform.Type.Mat4,
-                    "blend_matrix",
+                    "input_matrix",
                     GlesManager.identityMat()
                 )
                 addUniform(
                     Uniform.Type.Int,
-                    "base_texture",
-                    BASE_TEXTURE_LOCATION
+                    "input_texture",
+                    INPUT_TEXTURE_LOCATION
                 )
                 addUniform(
                     Uniform.Type.Int,
-                    "blend_texture",
-                    BLEND_TEXTURE_LOCATION
+                    "lut_texture",
+                    LUT_TEXTURE_LOCATION
                 )
-                addUniform(Uniform.Type.Int,
-                    "blend_mode",
-                    blendMode)
             }
         }
     }
@@ -149,28 +144,27 @@ class ImageBlendNode(
 
 
         startJob = launch {
-            val baseLinked = linked(INPUT_BASE)
-            val blendLinked = linked(INPUT_BLEND)
-            if (!baseLinked && !blendLinked) {
+            val inputLinked = linked(INPUT)
+            val lutLinked = linked(INPUT_LUT)
+            if (!inputLinked && !lutLinked) {
                 Log.d(TAG, "no connection")
                 return@launch
             }
             var running = 0
-            var copyMatrixBase = true
-            var copyMatrixBlend = true
-            val baseIn = channel(INPUT_BASE)
-            val blendIn = channel(INPUT_BLEND)
-            if (baseLinked) running++
-            if (blendLinked) running++
+            var copyMatrix = true
+            val inputIn = channel(INPUT)
+            val lutIn = channel(INPUT_LUT)
+            if (inputLinked) running++
+            if (lutLinked) running++
 
             whileSelect {
-                baseIn?.onReceive {
+                inputIn?.onReceive {
                     //                    Log.d(TAG, "agent receive")
-                    baseEvent?.let { baseIn.send(it) }
-                    baseEvent = it
-                    if (copyMatrixBase) {
-                        copyMatrixBase = false
-                        val uniform = program.getUniform(Uniform.Type.Mat4, "base_matrix")
+                    inputEvent?.let { inputIn.send(it) }
+                    inputEvent = it
+                    if (copyMatrix) {
+                        copyMatrix = false
+                        val uniform = program.getUniform(Uniform.Type.Mat4, "input_matrix")
                         System.arraycopy(it.matrix, 0, uniform.data!!, 0, 16)
                         uniform.dirty = true
                     }
@@ -178,28 +172,23 @@ class ImageBlendNode(
                     if (it.eos) running--
                     running > 0
                 }
-                blendIn?.onReceive {
+                lutIn?.onReceive {
                     //                    Log.d(TAG, "env receive")
-                    blendEvent?.let { blendIn.send(it) }
-                    blendEvent = it
-                    if (copyMatrixBlend) {
-                        copyMatrixBlend = false
-                        val uniform = program.getUniform(Uniform.Type.Mat4, "blend_matrix")
-                        System.arraycopy(it.matrix, 0, uniform.data!!, 0, 16)
-                        uniform.dirty = true
-                    }
+                    lutEvent?.let { lutIn.send(it) }
+                    lutEvent = it
                     debounceExecute(this@launch)
                     if (it.eos) running--
                     running > 0
                 }
             }
-            baseEvent?.let { Log.d(TAG, "got ${it.count} base events") }
-            blendEvent?.let { Log.d(TAG, "got ${it.count} blend events") }
 
-            baseEvent?.let { baseIn?.send(it) }
-            blendEvent?.let { blendIn?.send(it) }
-            baseEvent = null
-            blendEvent = null
+            inputEvent?.let { Log.d(TAG, "got ${it.count} input events") }
+            lutEvent?.let { Log.d(TAG, "got ${it.count} lut events") }
+
+            inputEvent?.let { inputIn?.send(it) }
+            lutEvent?.let { lutIn?.send(it) }
+            inputEvent = null
+            lutEvent = null
         }
     }
 
@@ -226,8 +215,8 @@ class ImageBlendNode(
         val output = channel(OUTPUT) ?: return
         val outEvent = output.receive()
 
-        val baseInTexture = baseEvent?.texture
-        val blendInTexture = blendEvent?.texture
+        val baseInTexture = inputEvent?.texture
+        val blendInTexture = lutEvent?.texture
 
         val framebuffer = if (outEvent.texture == texture1) {
             framebuffer1
@@ -235,10 +224,10 @@ class ImageBlendNode(
             framebuffer2
         }
 
-        program.getUniform(Uniform.Type.Int, "blend_mode").apply {
-            data = blendMode
-            dirty = true
-        }
+//        program.getUniform(Uniform.Type.Int, "blend_mode").apply {
+//            data = blendMode
+//            dirty = true
+//        }
 
         glesManager.glContext {
             GLES30.glUseProgram(program.programId)
@@ -282,10 +271,13 @@ class ImageBlendNode(
 
     companion object {
         const val TAG = "ImageBlendNode"
-        const val BASE_TEXTURE_LOCATION = 0
-        const val BLEND_TEXTURE_LOCATION = 1
-        val INPUT_BASE = Connection.Key<VideoConfig, VideoEvent>("input_base")
-        val INPUT_BLEND = Connection.Key<VideoConfig, VideoEvent>("input_blend")
+        const val INPUT_TEXTURE_LOCATION = 0
+        const val LUT_TEXTURE_LOCATION = 1
+        val INPUT = Connection.Key<VideoConfig, VideoEvent>("input")
+        val INPUT_LUT = Connection.Key<VideoConfig, VideoEvent>("input_lut")
         val OUTPUT = Connection.Key<VideoConfig, VideoEvent>("output")
+        val DEFAULT_CONFIG = VideoConfig(
+            0, 0, 0, GLES30.GL_RGB8, GLES30.GL_RGB, GLES30.GL_UNSIGNED_BYTE
+        )
     }
 }

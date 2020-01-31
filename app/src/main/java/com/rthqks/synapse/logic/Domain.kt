@@ -5,6 +5,7 @@ import android.net.Uri
 import android.util.Size
 import com.rthqks.synapse.R
 import com.rthqks.synapse.exec.node.ImageBlendNode
+import com.rthqks.synapse.exec.node.Lut2dNode
 import com.rthqks.synapse.exec.node.PhysarumNode
 import com.rthqks.synapse.logic.PropertyType.Companion.RangeType
 
@@ -184,8 +185,37 @@ val Nodes = listOf(
         )
     },
     Node(NodeType.LutFilter).apply {
-        add(Port(Port.Type.Video, "video_1", "Source", false))
-        add(Port(Port.Type.Video, "video_2", "Colored", true))
+        add(Port(Port.Type.Video, Lut2dNode.INPUT.id, "Input", false))
+        add(Port(Port.Type.Video, Lut2dNode.INPUT_LUT.id, "LUT", false))
+        add(Port(Port.Type.Video, Lut2dNode.OUTPUT.id, "Output", true))
+        add(
+            Property(
+                FrameRate,
+                ChoiceType(
+                    R.string.property_name_frame_rate,
+                    R.drawable.ic_speed,
+                    Choice(10, R.string.property_label_camera_fps_10),
+                    Choice(15, R.string.property_label_camera_fps_15),
+                    Choice(20, R.string.property_label_camera_fps_20),
+                    Choice(30, R.string.property_label_camera_fps_30),
+                    Choice(60, R.string.property_label_camera_fps_60)
+                ), 30, false
+            ), IntConverter
+        )
+        add(
+            Property(
+                VideoSize,
+                ChoiceType(
+                    R.string.property_name_environment_video_size,
+                    R.drawable.ic_photo_size_select,
+                    Choice(Size(2160, 3840), R.string.property_label_camera_capture_size_2160),
+                    Choice(Size(1080, 1920), R.string.property_label_camera_capture_size_1080),
+                    Choice(Size(720, 1280), R.string.property_label_camera_capture_size_720),
+                    Choice(Size(1024, 1024), R.string.property_label_camera_capture_size_1024sq),
+                    Choice(Size(480, 640), R.string.property_label_camera_capture_size_480)
+                ), Size(720, 1280), true
+            ), SizeConverter
+        )
     },
     Node(NodeType.Screen).apply {
         add(Port(Port.Type.Video, "video_1", "Source", false))

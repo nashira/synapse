@@ -156,4 +156,5 @@
     <string name="property_label_blend_mode_soft_light">Soft Light</string>
     <string name="property_label_blend_mode_subtract">Subtract</string>
     <string name="property_label_blend_mode_vivid_light">Vivid Light</string>
+    <string name="name_node_type_lut2d_filter">LUT Filter</string>
 </resources>

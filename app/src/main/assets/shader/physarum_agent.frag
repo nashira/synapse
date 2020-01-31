@@ -57,8 +57,7 @@ void main() {
 
     //uv = input_texture.xy
     //where to sample in the data trail texture to get the agent's world position
-    vec4 src = agent_data;
-    vec4 val = src;
+    vec4 val = agent_data;
 
     //agent's heading
     float angle = val.z * PI2;
