@@ -127,5 +127,11 @@ sealed class NodeType(
         FLAG_PRODUCER
     )
 
+    object ImageBlend : NodeType(
+        "image_blend",
+        R.string.name_node_type_image_blend,
+        R.drawable.ic_filter_b_and_w
+    )
+
     object Connection : NodeType("connection", 0, 0)
 }

@@ -29,7 +29,7 @@ class DecoderNode(
     private val context: Context,
     private val properties: Properties
 ) : NodeExecutor() {
-    private lateinit var size: Size
+    private var size: Size = Size(0, 0)
     private var surfaceRotation = 0
     private var audioInput: Channel<Decoder.Event>? = null
     private var videoInput: Channel<Decoder.Event>? = null

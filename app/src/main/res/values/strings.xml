@@ -126,4 +126,34 @@
     <string name="property_name_num_agents">Number of Agents</string>
     <string name="property_name_environment_video_size">Environment Video Size</string>
     <string name="property_label_camera_capture_size_1024sq">1024x1024</string>
+    <string name="name_node_type_image_blend">Image Blend</string>
+    <string name="property_name_blend_mode">Blend Mode</string>
+
+
+
+    <string name="property_label_blend_mode_add">Add</string>
+    <string name="property_label_blend_mode_average">Average</string>
+    <string name="property_label_blend_mode_color_burn">Color Burn</string>
+    <string name="property_label_blend_mode_color_dodge">Color Dodge</string>
+    <string name="property_label_blend_mode_darken">Darken</string>
+    <string name="property_label_blend_mode_difference">Difference</string>
+    <string name="property_label_blend_mode_exclusion">Exclusion</string>
+    <string name="property_label_blend_mode_glow">Glow</string>
+    <string name="property_label_blend_mode_hard_light">Hard Light</string>
+    <string name="property_label_blend_mode_hard_mix">Hard Mix</string>
+    <string name="property_label_blend_mode_lighten">Lighten</string>
+    <string name="property_label_blend_mode_linear_burn">Linear Burn</string>
+    <string name="property_label_blend_mode_linear_dodge">Linear Dodge</string>
+    <string name="property_label_blend_mode_linear_light">Linear Light</string>
+    <string name="property_label_blend_mode_multiply">Multiply</string>
+    <string name="property_label_blend_mode_negation">Negation</string>
+    <string name="property_label_blend_mode_normal">Normal</string>
+    <string name="property_label_blend_mode_overlay">Overlay</string>
+    <string name="property_label_blend_mode_phoenix">Phoenix</string>
+    <string name="property_label_blend_mode_pin_light">Pin Light</string>
+    <string name="property_label_blend_mode_reflect">Reflect</string>
+    <string name="property_label_blend_mode_screen">Screen</string>
+    <string name="property_label_blend_mode_soft_light">Soft Light</string>
+    <string name="property_label_blend_mode_subtract">Subtract</string>
+    <string name="property_label_blend_mode_vivid_light">Vivid Light</string>
 </resources>

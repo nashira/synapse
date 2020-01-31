@@ -59,16 +59,21 @@ class NetworkFragment : DaggerFragment() {
         val touchMediator = TouchMediator(context!!, viewModel::swipeEvent)
 
         val connectorAdapter = NodeAdapter({ view: View, event: MotionEvent, node: Node ->
-            if (event.actionMasked == MotionEvent.ACTION_DOWN) {
-                if (node.type == NodeType.Creation) {
-                    viewModel.showFirstNode()
-                } else {
-                    viewModel.swipeToNode(node)
-                }
-            }
-            touchMediator.onTouch(view, event)
+//            if (event.actionMasked == MotionEvent.ACTION_DOWN) {
+//                if (node.type == NodeType.Creation) {
+//                    viewModel.showFirstNode()
+//                } else {
+//                    viewModel.swipeToNode(node)
+//                }
+//            }
+//            touchMediator.onTouch(view, event)
+            false
         },{ longClick: Boolean, node: Node ->
-
+            if (node.type == NodeType.Creation) {
+                viewModel.showFirstNode()
+            } else {
+                viewModel.swipeToNode(node)
+            }
             true
         })
 

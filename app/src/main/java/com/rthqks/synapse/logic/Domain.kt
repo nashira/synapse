@@ -4,6 +4,7 @@ import android.hardware.camera2.CameraCharacteristics
 import android.net.Uri
 import android.util.Size
 import com.rthqks.synapse.R
+import com.rthqks.synapse.exec.node.ImageBlendNode
 import com.rthqks.synapse.exec.node.PhysarumNode
 import com.rthqks.synapse.logic.PropertyType.Companion.RangeType
 
@@ -24,6 +25,7 @@ val CropToFit = Property.Key<Boolean>("crop_to_fit")
 val NetworkName = Property.Key<String>("network_name")
 val NumAgents = Property.Key<Int>("num_agents")
 val FixedWidth = Property.Key<Boolean>("fixed_width")
+val BlendMode = Property.Key<Int>("blend_mode")
 
 val Nodes = listOf(
     Node(NodeType.Camera).apply {
@@ -246,6 +248,73 @@ val Nodes = listOf(
             ), SizeConverter
         )
     },
+    Node(NodeType.ImageBlend).apply {
+        add(Port(Port.Type.Video, ImageBlendNode.INPUT_BASE.id, "Base", false))
+        add(Port(Port.Type.Video, ImageBlendNode.INPUT_BLEND.id, "Blend", false))
+        add(Port(Port.Type.Video, ImageBlendNode.OUTPUT.id, "Output", true))
+        add(
+            Property(
+                BlendMode,
+                ChoiceType(
+                    R.string.property_name_blend_mode,
+                    R.drawable.ic_filter_b_and_w,
+                    Choice(1, R.string.property_label_blend_mode_add),
+                    Choice(2, R.string.property_label_blend_mode_average),
+                    Choice(3, R.string.property_label_blend_mode_color_burn),
+                    Choice(4, R.string.property_label_blend_mode_color_dodge),
+                    Choice(5, R.string.property_label_blend_mode_darken),
+                    Choice(6, R.string.property_label_blend_mode_difference),
+                    Choice(7, R.string.property_label_blend_mode_exclusion),
+                    Choice(8, R.string.property_label_blend_mode_glow),
+                    Choice(9, R.string.property_label_blend_mode_hard_light),
+                    Choice(10, R.string.property_label_blend_mode_hard_mix),
+                    Choice(11, R.string.property_label_blend_mode_lighten),
+                    Choice(12, R.string.property_label_blend_mode_linear_burn),
+                    Choice(13, R.string.property_label_blend_mode_linear_dodge),
+                    Choice(14, R.string.property_label_blend_mode_linear_light),
+                    Choice(15, R.string.property_label_blend_mode_multiply),
+                    Choice(16, R.string.property_label_blend_mode_negation),
+                    Choice(17, R.string.property_label_blend_mode_normal),
+                    Choice(18, R.string.property_label_blend_mode_overlay),
+                    Choice(19, R.string.property_label_blend_mode_phoenix),
+                    Choice(20, R.string.property_label_blend_mode_pin_light),
+                    Choice(21, R.string.property_label_blend_mode_reflect),
+                    Choice(22, R.string.property_label_blend_mode_screen),
+                    Choice(23, R.string.property_label_blend_mode_soft_light),
+                    Choice(24, R.string.property_label_blend_mode_subtract),
+                    Choice(25, R.string.property_label_blend_mode_vivid_light)
+                ), 1
+            ), IntConverter
+        )
+        add(
+            Property(
+                FrameRate,
+                ChoiceType(
+                    R.string.property_name_frame_rate,
+                    R.drawable.ic_speed,
+                    Choice(10, R.string.property_label_camera_fps_10),
+                    Choice(15, R.string.property_label_camera_fps_15),
+                    Choice(20, R.string.property_label_camera_fps_20),
+                    Choice(30, R.string.property_label_camera_fps_30),
+                    Choice(60, R.string.property_label_camera_fps_60)
+                ), 30, false
+            ), IntConverter
+        )
+        add(
+            Property(
+                VideoSize,
+                ChoiceType(
+                    R.string.property_name_environment_video_size,
+                    R.drawable.ic_photo_size_select,
+                    Choice(Size(2160, 3840), R.string.property_label_camera_capture_size_2160),
+                    Choice(Size(1080, 1920), R.string.property_label_camera_capture_size_1080),
+                    Choice(Size(720, 1280), R.string.property_label_camera_capture_size_720),
+                    Choice(Size(1024, 1024), R.string.property_label_camera_capture_size_1024sq),
+                    Choice(Size(480, 640), R.string.property_label_camera_capture_size_480)
+                ), Size(720, 1280), true
+            ), SizeConverter
+        )
+    },
     Node(NodeType.Properties).also { it.id = -2 },
     Node(NodeType.Connection).also { it.id = -3 },
     Node(NodeType.Creation).also { it.id = -4 }
@@ -269,6 +338,7 @@ val NodeTypes = mapOf(
     NodeType.Speakers.key to NodeType.Speakers,
     NodeType.Screen.key to NodeType.Screen,
     NodeType.SlimeMold.key to NodeType.SlimeMold,
+    NodeType.ImageBlend.key to NodeType.ImageBlend,
     NodeType.Properties.key to NodeType.Properties,
     NodeType.Creation.key to NodeType.Creation,
     NodeType.Connection.key to NodeType.Connection

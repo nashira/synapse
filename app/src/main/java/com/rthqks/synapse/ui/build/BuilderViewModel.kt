@@ -58,12 +58,12 @@ class BuilderViewModel @Inject constructor(
             connectionChannel.postValue(Connector(CREATION_NODE, FAKE_PORT))
             CREATION_NODE
         }
-        nodesChannel.value = AdapterState(0, listOf(PROPERTIES_NODE, nextNode))
+        nodesChannel.value = AdapterState(1, listOf(PROPERTIES_NODE, nextNode), animate = true)
         updateStartState()
     }
 
     fun swipeToNode(node: Node) {
-        nodesChannel.value = AdapterState(0, listOf(PROPERTIES_NODE, node))
+        nodesChannel.value = AdapterState(1, listOf(PROPERTIES_NODE, node), animate = true)
         updateStartState()
     }
 
