@@ -25,6 +25,7 @@ uniform sampler2D agent_texture;
 #endif
 
 uniform vec2 resolution;
+uniform mat4 texture_matrix;
 
 in vec2 uv;
 
@@ -66,6 +67,10 @@ void main() {
     vec2 uvFL=val.xy+vec2(cos(angle-SA), sin(angle-SA)) * SO;
     vec2 uvF =val.xy+vec2(cos(angle), sin(angle)) * SO;
     vec2 uvFR=val.xy+vec2(cos(angle+SA), sin(angle+SA))*SO;
+
+    uvFL = (texture_matrix * vec4(uvFL, 0.0, 1.0)).xy;
+    uvF = (texture_matrix * vec4(uvF, 0.0, 1.0)).xy;
+    uvFR = (texture_matrix * vec4(uvFR, 0.0, 1.0)).xy;
 
     //get the values unders the sensors
     float FL = texture(env_texture, uvFL).r;

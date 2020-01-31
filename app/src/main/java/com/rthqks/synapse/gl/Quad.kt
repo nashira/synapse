@@ -1,13 +1,13 @@
 package com.rthqks.synapse.gl
 
-import android.opengl.GLES32
+import android.opengl.GLES30
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
 import java.nio.FloatBuffer
 
 class Quad : Mesh(
     DRAW_ARRAYS,
-    GLES32.GL_TRIANGLE_STRIP,
+    GLES30.GL_TRIANGLE_STRIP,
     0,
     4
 ) {
@@ -25,9 +25,9 @@ class Quad : Mesh(
             .put(FULL_RECTANGLE_COORDS)
 
         byteBuffer.position(0)
-        buffer = addBuffer("main", byteBuffer, GLES32.GL_ARRAY_BUFFER, GLES32.GL_STATIC_DRAW)
-        addAttribute("vertex", buffer.id, 2, GLES32.GL_FLOAT, 16, 0, 0)
-        addAttribute("texture", buffer.id, 2, GLES32.GL_FLOAT, 16, 8, 1)
+        buffer = addBuffer("main", byteBuffer, GLES30.GL_ARRAY_BUFFER, GLES30.GL_STATIC_DRAW)
+        addAttribute("vertex", buffer.id, 2, GLES30.GL_FLOAT, 16, 0, 0)
+        addAttribute("texture", buffer.id, 2, GLES30.GL_FLOAT, 16, 8, 1)
         super.initialize()
     }
 

@@ -7,9 +7,9 @@ import android.media.MediaCodec
 import android.media.MediaFormat
 import android.net.Uri
 import android.opengl.GLES11Ext
-import android.opengl.GLES32
-import android.opengl.GLES32.GL_CLAMP_TO_EDGE
-import android.opengl.GLES32.GL_LINEAR
+import android.opengl.GLES30
+import android.opengl.GLES30.GL_CLAMP_TO_EDGE
+import android.opengl.GLES30.GL_LINEAR
 import android.os.SystemClock
 import android.util.Log
 import android.util.Size
@@ -49,6 +49,10 @@ class DecoderNode(
     private val uri: Uri get() = properties[MediaUri]
 
     override suspend fun create() {
+        if (uri.scheme == "none") {
+            Log.d(TAG, "no uri")
+            return
+        }
         decoder.setDataSource(uri)
         surfaceRotation = decoder.surfaceRotation
         size = decoder.size
@@ -288,9 +292,9 @@ class DecoderNode(
                     GLES11Ext.GL_TEXTURE_EXTERNAL_OES,
                     rotatedSize.width,
                     rotatedSize.height,
-                    GLES32.GL_RGB8,
-                    GLES32.GL_RGB,
-                    GLES32.GL_UNSIGNED_BYTE,
+                    GLES30.GL_RGB8,
+                    GLES30.GL_RGB,
+                    GLES30.GL_UNSIGNED_BYTE,
                     surfaceRotation,
                     offersSurface = true
                 ) as C

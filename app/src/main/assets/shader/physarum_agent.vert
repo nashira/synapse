@@ -2,6 +2,7 @@
 
 precision mediump float;
 
+
 layout(location = 0) in vec2 vertex_coords;
 layout(location = 1) in vec2 texture_coords;
 

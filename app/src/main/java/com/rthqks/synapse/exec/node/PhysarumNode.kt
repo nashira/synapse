@@ -1,6 +1,6 @@
 package com.rthqks.synapse.exec.node
 
-import android.opengl.GLES32
+import android.opengl.GLES30
 import android.os.SystemClock
 import android.util.Log
 import android.util.Size
@@ -18,7 +18,6 @@ import java.util.concurrent.atomic.AtomicInteger
 import kotlin.math.ceil
 import kotlin.math.max
 import kotlin.math.sqrt
-import kotlin.random.Random
 
 class PhysarumNode(
     private val assetManager: AssetManager,
@@ -27,15 +26,15 @@ class PhysarumNode(
 ) : NodeExecutor() {
     private var startJob: Job? = null
     private val numAgents = properties[NumAgents]
-    private val frameDuration = 1000L / properties[FrameRate]
+    private val frameDuration: Long get() = 1000L / properties[FrameRate]
     private var envSize = properties[VideoSize]
     private val agentSize = ceil(sqrt(numAgents.toDouble())).toInt().let { Size(it, it) }
 
 
-    private val agentTexture1 = Texture(filter = GLES32.GL_NEAREST)
-    private val agentTexture2 = Texture(filter = GLES32.GL_NEAREST)
-    private val envTexture1 = Texture(repeat = GLES32.GL_REPEAT)
-    private val envTexture2 = Texture(repeat = GLES32.GL_REPEAT)
+    private val agentTexture1 = Texture(filter = GLES30.GL_NEAREST)
+    private val agentTexture2 = Texture(filter = GLES30.GL_NEAREST)
+    private val envTexture1 = Texture(repeat = GLES30.GL_REPEAT)
+    private val envTexture2 = Texture(repeat = GLES30.GL_REPEAT)
     private val agentFramebuffer1 = Framebuffer()
     private val agentFramebuffer2 = Framebuffer()
     private val envFramebuffer1 = Framebuffer()
@@ -59,23 +58,23 @@ class PhysarumNode(
 
     private val agentConfig: VideoConfig by lazy {
         VideoConfig(
-            GLES32.GL_TEXTURE_2D,
+            GLES30.GL_TEXTURE_2D,
             agentSize.width,
             agentSize.height,
-            GLES32.GL_RGBA16F,
-            GLES32.GL_RGBA,
-            GLES32.GL_FLOAT
+            GLES30.GL_RGBA16F,
+            GLES30.GL_RGBA,
+            GLES30.GL_FLOAT
         )
     }
 
     private val envConfig: VideoConfig by lazy {
         VideoConfig(
-            GLES32.GL_TEXTURE_2D,
+            GLES30.GL_TEXTURE_2D,
             envSize.width,
             envSize.height,
-            GLES32.GL_R8,
-            GLES32.GL_RED,
-            GLES32.GL_UNSIGNED_BYTE
+            GLES30.GL_R8,
+            GLES30.GL_RED,
+            GLES30.GL_UNSIGNED_BYTE
         )
     }
 
@@ -147,11 +146,12 @@ class PhysarumNode(
             Program().apply {
                 val frag = assetManager.readTextAsset("shader/physarum_random.frag")
                 initialize(agentVertex, frag)
-                GLES32.glUseProgram(programId)
-                GLES32.glBindFramebuffer(GLES32.GL_FRAMEBUFFER, agentFramebuffer1.id)
-                GLES32.glViewport(0, 0, agentSize.width, agentSize.height)
+                GLES30.glUseProgram(programId)
+                GLES30.glBindFramebuffer(GLES30.GL_FRAMEBUFFER, agentFramebuffer1.id)
+                GLES30.glViewport(0, 0, agentSize.width, agentSize.height)
                 quadMesh.execute()
-            }.release()
+                release()
+            }
 
             agentProgram.apply {
                 initialize(agentVertex, agentFrag)
@@ -160,6 +160,13 @@ class PhysarumNode(
                     "resolution",
                     floatArrayOf(envSize.width.toFloat(), envSize.height.toFloat())
                 )
+
+                addUniform(
+                    Uniform.Type.Mat4,
+                    "texture_matrix",
+                    GlesManager.identityMat()
+                )
+
                 addUniform(
                     Uniform.Type.Int,
                     "agent_texture",
@@ -200,7 +207,7 @@ class PhysarumNode(
             config.format,
             config.type
         )
-        Log.d(TAG, "glGetError() ${GLES32.glGetError()}")
+        Log.d(TAG, "glGetError() ${GLES30.glGetError()}")
         framebuffer.initialize(texture.id)
     }
 
@@ -208,20 +215,12 @@ class PhysarumNode(
         frameCount = 0
         running.set(1)
 
-
         startJob = launch {
-            // timer based
-//            launch {
-//                while (running.get() > 0) {
-//                    execute()
-//                    delay(frameDuration)
-//                }
-//            }
-
             if (!hasConnection()) {
                 Log.d(TAG, "no connection")
                 return@launch
             }
+            var copyMatrix = true
             val agentIn = channel(INPUT_AGENT)
             val envIn = channel(INPUT_ENV)
 
@@ -229,10 +228,9 @@ class PhysarumNode(
             if (linked(INPUT_ENV) && !cycle(INPUT_ENV)) running.incrementAndGet()
 
             execute()
-//            if (linked(INPUT_AGENT) || linked(INPUT_ENV))
             whileSelect {
                 agentIn?.onReceive {
-//                    Log.d(TAG, "agent receive")
+                    //                    Log.d(TAG, "agent receive")
                     agentEvent?.let { agentIn.send(it) }
                     agentEvent = it
                     debounceExecute(this@launch)
@@ -240,9 +238,15 @@ class PhysarumNode(
                     running.get() > 0
                 }
                 envIn?.onReceive {
-//                    Log.d(TAG, "env receive")
+                    //                    Log.d(TAG, "env receive")
                     envEvent?.let { envIn.send(it) }
                     envEvent = it
+                    if (copyMatrix) {
+                        copyMatrix = false
+                        val uniform = agentProgram.getUniform(Uniform.Type.Mat4, "texture_matrix")
+                        System.arraycopy(it.matrix, 0, uniform.data!!, 0, 16)
+                        uniform.dirty = true
+                    }
                     debounceExecute(this@launch)
                     if (it.eos) running.decrementAndGet()
                     running.get() > 0
@@ -288,6 +292,34 @@ class PhysarumNode(
             it.eos = true
             envOut.send(it)
         }
+
+        // if there is a cycle, i expect to receive an EOS from the cycle
+        val agentIn = channel(INPUT_AGENT)
+        val envIn = channel(INPUT_ENV)
+
+        val cycleAgent = cycle(INPUT_AGENT)
+        val cycleEnv = cycle(INPUT_ENV)
+        if (cycleAgent) running.incrementAndGet()
+        if (cycleEnv) running.incrementAndGet()
+
+        if (cycleAgent || cycleEnv)
+            whileSelect {
+                if (cycleAgent)
+                    agentIn?.onReceive {
+                        agentIn.send(it)
+                        if (it.eos) running.decrementAndGet()
+                        running.get() > 0
+                    }
+                if (cycleEnv)
+                    envIn?.onReceive {
+                        //                    Log.d(TAG, "env receive")
+                        envIn.send(it)
+                        if (it.eos) running.decrementAndGet()
+                        running.get() > 0
+                    }
+            }
+
+        Log.d(TAG, "done stop running $count")
     }
 
     override suspend fun release() {
@@ -304,8 +336,6 @@ class PhysarumNode(
         agentProgram.release()
         envProgram.release()
     }
-
-    val r = Random(123)
 
     private suspend fun execute() {
         val agentOut = channel(OUTPUT_AGENT)
@@ -338,20 +368,20 @@ class PhysarumNode(
         val envOutTexture = envTexture
 
         glesManager.glContext {
-            GLES32.glUseProgram(agentProgram.programId)
-            GLES32.glBindFramebuffer(GLES32.GL_FRAMEBUFFER, agentFramebuffer.id)
-            GLES32.glViewport(0, 0, agentSize.width, agentSize.height)
-            agentInTexture.bind(GLES32.GL_TEXTURE0)
-            envInTexture.bind(GLES32.GL_TEXTURE1)
+            GLES30.glUseProgram(agentProgram.programId)
+            GLES30.glBindFramebuffer(GLES30.GL_FRAMEBUFFER, agentFramebuffer.id)
+            GLES30.glViewport(0, 0, agentSize.width, agentSize.height)
+            agentInTexture.bind(GLES30.GL_TEXTURE0)
+            envInTexture.bind(GLES30.GL_TEXTURE1)
             agentProgram.bindUniforms()
             quadMesh.execute()
 
-            GLES32.glUseProgram(envProgram.programId)
-            GLES32.glBindFramebuffer(GLES32.GL_FRAMEBUFFER, envFramebuffer.id)
-            GLES32.glViewport(0, 0, envSize.width, envSize.height)
-            agentOutTexture.bind(GLES32.GL_TEXTURE0)
+            GLES30.glUseProgram(envProgram.programId)
+            GLES30.glBindFramebuffer(GLES30.GL_FRAMEBUFFER, envFramebuffer.id)
+            GLES30.glViewport(0, 0, envSize.width, envSize.height)
+            agentOutTexture.bind(GLES30.GL_TEXTURE0)
             envProgram.bindUniforms()
-            GLES32.glClear(GLES32.GL_COLOR_BUFFER_BIT)
+            GLES30.glClear(GLES30.GL_COLOR_BUFFER_BIT)
             agentMesh.execute()
         }
 

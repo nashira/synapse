@@ -1,6 +1,6 @@
 package com.rthqks.synapse.exec.node
 
-import android.opengl.GLES32
+import android.opengl.GLES30
 import android.opengl.Matrix
 import android.util.Log
 import android.util.Size
@@ -25,6 +25,8 @@ class SurfaceViewNode(
     private val glesManager: GlesManager,
     private val properties: Properties
 ) : NodeExecutor(), SurfaceHolder.Callback {
+    private var outScaleY: Float = 1f
+    private var outScaleX: Float = 1f
     private var surface: Surface? = null
     private var running: Boolean = false
     private var playJob: Job? = null
@@ -55,7 +57,9 @@ class SurfaceViewNode(
 
     suspend fun setSurfaceView(surfaceView: SurfaceView) = commandChannel.send {
         val valid = surfaceView.holder.surface?.isValid ?: false
-        surfaceViewSize = Size(surfaceView.width, surfaceView.height)
+        if (surfaceViewSize.width == 0 || surfaceView != this.surfaceView) {
+            surfaceViewSize = Size(surfaceView.width, surfaceView.height)
+        }
         Log.d(TAG, "setSurfaceView $valid $surfaceViewSize")
 
 //        surfaceView.setTag(R.id.surface_view, this)
@@ -68,7 +72,7 @@ class SurfaceViewNode(
         config(INPUT)?.let {
             inputSize = it.size
             val rotation = it.rotation
-            updateSurfaceViewConfig(inputSize, rotation)
+            updateSurfaceViewConfig()
         }
     }
 
@@ -88,11 +92,13 @@ class SurfaceViewNode(
     }
 
     override fun surfaceDestroyed(holder: SurfaceHolder?) {
-        Log.d(TAG, "surfaceDestroyed: $holder")
         runBlocking {
+            Log.d(TAG, "surfaceDestroyed: $holder")
+            setSurface(null)
             commandChannel.send {
-                setSurface(null)
+                Log.d(TAG, "surface destroyed processed")
             }
+
         }
     }
 
@@ -107,7 +113,7 @@ class SurfaceViewNode(
     override suspend fun initialize() {
         val config = config(INPUT) ?: return
         if (true || !config.offersSurface) {
-            val grayscale = config.format == GLES32.GL_RED
+            val grayscale = config.format == GLES30.GL_RED
 
             val vertexSource = assetManager.readTextAsset("shader/vertex_texture.vert")
             val fragmentSource = assetManager.readTextAsset("shader/copy.frag").let {
@@ -198,34 +204,28 @@ class SurfaceViewNode(
 
 //                Log.d(TAG, "loop surfaceState $surfaceState")
 
-                if (copyMatrix) {
-                    Log.d(TAG, "copy matrix $outputSize $windowSurface")
-                    copyMatrix = false
-                    val uniform = program.getUniform(Uniform.Type.Mat4, "texture_matrix0")
-                    val matrix = uniform.data!!
-                    System.arraycopy(inEvent.matrix, 0, matrix, 0, 16)
-                    // center crop
-                    if (cropCenter) {
-                        val inAspect = inputSize.width / inputSize.height.toFloat()
-                        val outAspect = outputSize.width / outputSize.height.toFloat()
-
-                        val scaleX = if (inAspect >= outAspect) outAspect / inAspect else 1f
-                        val scaleY = if (inAspect <= outAspect) inAspect / outAspect else 1f
-
-                        Matrix.translateM(matrix, 0, 0.5f, 0.5f, 0f)
-                        Matrix.scaleM(matrix, 0, scaleX, scaleY, 1f)
-                        Matrix.translateM(matrix, 0, -0.5f, -0.5f, 0f)
-                    }
-
-                    uniform.dirty = true
-                }
-
                 if (windowSurface != null) {
+                    if (copyMatrix) {
+                        Log.d(TAG, "copy matrix $outputSize $windowSurface")
+                        copyMatrix = false
+                        val uniform = program.getUniform(Uniform.Type.Mat4, "texture_matrix0")
+                        val matrix = uniform.data!!
+
+                        System.arraycopy(inEvent.matrix, 0, matrix, 0, 16)
+                        // center crop
+                        if (cropCenter) {
+                            Matrix.translateM(matrix, 0, 0.5f, 0.5f, 0f)
+                            Matrix.scaleM(matrix, 0, outScaleX, outScaleY, 1f)
+                            Matrix.translateM(matrix, 0, -0.5f, -0.5f, 0f)
+                        }
+
+                        uniform.dirty = true
+                    }
 //                    Log.d(TAG, "loop pre render")
                     glesManager.glContext {
                         //                        Log.d(TAG, "loop render")
                         windowSurface?.makeCurrent()
-                        GLES32.glBindFramebuffer(GLES32.GL_FRAMEBUFFER, 0)
+                        GLES30.glBindFramebuffer(GLES30.GL_FRAMEBUFFER, 0)
                         executeGl(inEvent.texture)
                         windowSurface?.swapBuffers()
                     }
@@ -236,17 +236,17 @@ class SurfaceViewNode(
                 if (inEvent.eos) {
                     Log.d(TAG, "got EOS ${inEvent.count}")
                     playJob?.cancel()
+                    previousTexture = null
                 }
-
             }
         }
     }
 
     private fun executeGl(texture: Texture) {
-        GLES32.glUseProgram(program.programId)
-        GLES32.glViewport(0, 0, outputSize.width, outputSize.height)
+        GLES30.glUseProgram(program.programId)
+        GLES30.glViewport(0, 0, outputSize.width, outputSize.height)
 
-        texture.bind(GLES32.GL_TEXTURE0)
+        texture.bind(GLES30.GL_TEXTURE0)
 
         program.bindUniforms()
 
@@ -275,15 +275,12 @@ class SurfaceViewNode(
             inputSize = it.size
             val rotation = it.rotation
             commandChannel.send {
-                updateSurfaceViewConfig(inputSize, rotation)
+                updateSurfaceViewConfig()
             }
         }
     }
 
-    private suspend fun updateSurfaceViewConfig(
-        size: Size,
-        rotation: Int
-    ) {
+    private suspend fun updateSurfaceViewConfig() {
         Log.d(TAG, "updateSurfaceViewConfig")
         val surfaceView = surfaceView ?: return
         withContext(Dispatchers.Main) {
@@ -300,6 +297,12 @@ class SurfaceViewNode(
                 val scaleY = if (inAspect > outAspect) outAspect / inAspect else 1f
                 Size((outSize.width * scaleX).toInt(), (outSize.height * scaleY).toInt())
             }
+
+            val inAspect = inputSize.width / inputSize.height.toFloat()
+            val outAspect = outputSize.width / outputSize.height.toFloat()
+
+            outScaleX = if (inAspect > outAspect) outAspect / inAspect else 1f
+            outScaleY = if (inAspect < outAspect) inAspect / outAspect else 1f
 
             Log.d(TAG, "updateSurfaceViewConfig $inSize $outSize $outputSize")
 //            outputSize = Size(surfaceView.measuredWidth, surfaceView.measuredHeight)
@@ -341,7 +344,7 @@ class SurfaceViewNode(
 //            Log.d(TAG, "surf render")
 //            glesManager.glContext {
 //                windowSurface?.makeCurrent()
-//                GLES32.glBindFramebuffer(GLES32.GL_FRAMEBUFFER, 0)
+//                GLES30.glBindFramebuffer(GLES30.GL_FRAMEBUFFER, 0)
 //                executeGl(texture)
 //                windowSurface?.swapBuffers()
 //            }

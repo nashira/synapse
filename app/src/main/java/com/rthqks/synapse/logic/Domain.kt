@@ -69,7 +69,7 @@ val Nodes = listOf(
                     Choice(Size(1920, 1080), R.string.property_label_camera_capture_size_1080),
                     Choice(Size(1280, 720), R.string.property_label_camera_capture_size_720),
                     Choice(Size(640, 480), R.string.property_label_camera_capture_size_480)
-                ), Size(1920, 1080), true
+                ), Size(1280, 720), true
             ), SizeConverter
         )
     },
@@ -83,7 +83,7 @@ val Nodes = listOf(
             Property(
                 MediaUri,
                 UriType(R.string.property_name_uri, R.drawable.ic_movie, "video/*"),
-                Uri.parse("https://www.sample-videos.com/video123/mp4/720/big_buck_bunny_720p_2mb.mp4"),
+                Uri.parse("none://"),
                 true
             ), UriConverter
         )
@@ -242,7 +242,7 @@ val Nodes = listOf(
                     Choice(Size(720, 1280), R.string.property_label_camera_capture_size_720),
                     Choice(Size(1024, 1024), R.string.property_label_camera_capture_size_1024sq),
                     Choice(Size(480, 640), R.string.property_label_camera_capture_size_480)
-                ), Size(1080, 1920), true
+                ), Size(720, 1280), true
             ), SizeConverter
         )
     },

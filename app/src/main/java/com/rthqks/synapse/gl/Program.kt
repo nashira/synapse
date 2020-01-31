@@ -1,6 +1,6 @@
 package com.rthqks.synapse.gl
 
-import android.opengl.GLES32
+import android.opengl.GLES30
 import android.util.Log
 
 class Program {
@@ -10,28 +10,29 @@ class Program {
         private set
 
     fun initialize(vertex: String, fragment: String) {
-        val vertexShader: Int = createShader(GLES32.GL_VERTEX_SHADER, vertex)
-        val fragmentShader: Int = createShader(GLES32.GL_FRAGMENT_SHADER, fragment)
+        val vertexShader: Int = createShader(GLES30.GL_VERTEX_SHADER, vertex)
+        val fragmentShader: Int = createShader(GLES30.GL_FRAGMENT_SHADER, fragment)
 
-        programId = GLES32.glCreateProgram().also {
-            GLES32.glAttachShader(it, vertexShader)
-            GLES32.glAttachShader(it, fragmentShader)
-            GLES32.glLinkProgram(it)
+        programId = GLES30.glCreateProgram().also {
+            GLES30.glAttachShader(it, vertexShader)
+            GLES30.glAttachShader(it, fragmentShader)
+            GLES30.glLinkProgram(it)
             val linkStatus = IntArray(1)
-            GLES32.glGetProgramiv(it, GLES32.GL_LINK_STATUS, linkStatus, 0)
-            if (linkStatus[0] != GLES32.GL_TRUE) {
+            GLES30.glGetProgramiv(it, GLES30.GL_LINK_STATUS, linkStatus, 0)
+            GLES30.glDeleteShader(vertexShader)
+            GLES30.glDeleteShader(fragmentShader)
+            if (linkStatus[0] != GLES30.GL_TRUE) {
                 Log.e(TAG, "Could not link program: ")
-                Log.e(TAG, GLES32.glGetProgramInfoLog(it))
+                Log.e(TAG, GLES30.glGetProgramInfoLog(it))
+                throw RuntimeException("Error creating program")
             }
-            GLES32.glDeleteShader(vertexShader)
-            GLES32.glDeleteShader(fragmentShader)
         }
 
         Log.d(TAG, "created program: $programId")
     }
 
     fun <T> addUniform(type: Uniform.Type<T>, name: String, data: T) {
-        val location = GLES32.glGetUniformLocation(programId, name)
+        val location = GLES30.glGetUniformLocation(programId, name)
         Log.d(TAG, "add uniform $name $location")
         val uniform = Uniform(type, name, location, data)
         uniforms[name] = uniform
@@ -49,22 +50,22 @@ class Program {
 //                Log.d(TAG, "binding uniform $programId ${uniform.name} ${uniform.data}")
                 uniform.dirty = false
                 when (uniform.type) {
-                    Uniform.Type.Int -> GLES32.glUniform1i(
+                    Uniform.Type.Int -> GLES30.glUniform1i(
                         uniform.location,
                         uniform.data as Int
                     )
-                    Uniform.Type.Float -> GLES32.glUniform1f(
+                    Uniform.Type.Float -> GLES30.glUniform1f(
                         uniform.location,
                         uniform.data as Float
                     )
-                    Uniform.Type.Mat4 -> GLES32.glUniformMatrix4fv(
+                    Uniform.Type.Mat4 -> GLES30.glUniformMatrix4fv(
                         uniform.location,
                         1,
                         false,
                         uniform.data as FloatArray,
                         0
                     )
-                    Uniform.Type.Vec2 -> GLES32.glUniform2fv(
+                    Uniform.Type.Vec2 -> GLES30.glUniform2fv(
                         uniform.location,
                         1,
                         uniform.data as FloatArray,
@@ -77,16 +78,16 @@ class Program {
     }
 
     fun release() {
-        GLES32.glDeleteProgram(programId)
+        GLES30.glDeleteProgram(programId)
 
     }
 
     private fun createShader(type: Int, source: String): Int =
-        GLES32.glCreateShader(type).also { shader ->
+        GLES30.glCreateShader(type).also { shader ->
             Log.d(TAG, "created shader $shader")
-            GLES32.glShaderSource(shader, source)
-            GLES32.glCompileShader(shader)
-            Log.d(TAG, GLES32.glGetShaderInfoLog(shader))
+            GLES30.glShaderSource(shader, source)
+            GLES30.glCompileShader(shader)
+            Log.d(TAG, GLES30.glGetShaderInfoLog(shader))
         }
 
     companion object {

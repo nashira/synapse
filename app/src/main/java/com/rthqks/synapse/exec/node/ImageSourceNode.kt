@@ -3,7 +3,7 @@ package com.rthqks.synapse.exec.node
 import android.content.Context
 import android.graphics.BitmapFactory
 import android.net.Uri
-import android.opengl.GLES32
+import android.opengl.GLES30
 import android.opengl.Matrix
 import android.util.Log
 import android.util.Size
@@ -14,7 +14,10 @@ import com.rthqks.synapse.gl.GlesManager
 import com.rthqks.synapse.gl.Texture
 import com.rthqks.synapse.logic.MediaUri
 import com.rthqks.synapse.logic.Properties
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import java.io.InputStream
 
 class ImageSourceNode(
@@ -23,9 +26,11 @@ class ImageSourceNode(
     private val properties: Properties
 ) : NodeExecutor() {
 
+    private var startJob: Job? = null
     private val imageUri: Uri get() = properties[MediaUri]
     private var size = Size(0, 0)
     private var rotation = 0f
+    private var frameCount = 0
 
     private var texture: Texture? = null
 
@@ -72,7 +77,7 @@ class ImageSourceNode(
         val connection = connection(OUTPUT) ?: return
         val inputStream = getInputStream() ?: return
 
-        val texture = Texture(GLES32.GL_TEXTURE_2D, GLES32.GL_CLAMP_TO_EDGE, GLES32.GL_LINEAR)
+        val texture = Texture(GLES30.GL_TEXTURE_2D, GLES30.GL_CLAMP_TO_EDGE, GLES30.GL_LINEAR)
         this.texture = texture
 
         BitmapFactory.decodeStream(inputStream)?.let { bitmap ->
@@ -96,18 +101,24 @@ class ImageSourceNode(
 
     override suspend fun start() = coroutineScope {
         val channel = channel(OUTPUT) ?: return@coroutineScope
-        repeat(2) {
-            channel.receive().also {
-                it.eos = false
-                it.count++
-                channel.send(it)
+        startJob = launch {
+            // TODO: this delay is because the frames get sent before a surface is available for preview
+            // non-surfaceviewnodes are not affected
+            delay(250)
+            repeat(1) {
+                channel.receive().also {
+                    Log.d(TAG, "sending event $it")
+                    it.eos = false
+                    it.count == ++frameCount
+                    channel.send(it)
+                }
             }
-
         }
     }
 
     override suspend fun stop() {
         val channel = channel(OUTPUT) ?: return
+        startJob?.join()
         channel.receive().also {
             it.eos = true
             channel.send(it)
@@ -125,12 +136,12 @@ class ImageSourceNode(
         return when (key) {
             OUTPUT -> {
                 VideoConfig(
-                    GLES32.GL_TEXTURE_2D,
+                    GLES30.GL_TEXTURE_2D,
                     size.width,
                     size.height,
-                    GLES32.GL_RGBA8,
-                    GLES32.GL_RGBA,
-                    GLES32.GL_UNSIGNED_BYTE,
+                    GLES30.GL_RGBA8,
+                    GLES30.GL_RGBA,
+                    GLES30.GL_UNSIGNED_BYTE,
                     offersSurface = true
                 ) as C
             }

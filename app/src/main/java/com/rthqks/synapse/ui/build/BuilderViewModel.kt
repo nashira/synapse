@@ -216,6 +216,7 @@ class BuilderViewModel @Inject constructor(
 
     fun deleteLink(link: Link) {
         network.removeLink(link)
+        restartNetwork()
         viewModelScope.launch(Dispatchers.IO) {
             dao.deleteLink(
                 network.id,
@@ -269,7 +270,7 @@ class BuilderViewModel @Inject constructor(
         super.onCleared()
     }
 
-    private fun updateStartState() {
+    fun updateStartState() {
         nodesChannel.value?.also {
             val current = it.items.any { it.id != NodeMap[NodeType.Properties]?.id }
             if (current) {

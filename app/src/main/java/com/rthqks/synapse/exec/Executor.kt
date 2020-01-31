@@ -204,6 +204,10 @@ class Executor @Inject constructor(
     private suspend fun doAddConnectionPreviews(source: Connector, targets: List<Connector>) {
         val network = network ?: return
         Log.d(TAG, "source node ${source.node.type} ${source.node.id} ${source.port.id}")
+        if (!source.port.output) {
+            return
+        }
+
         val data = mutableListOf<Pair<Node, Link>>()
         targets.forEach {
             val target = it.node

@@ -122,8 +122,7 @@ class Network(
                     it.value.type == port.type
                             && it.value.output != port.output
                             && (it.value.output || !isConnected(n, it.value))
-                }
-                    .map { Connector(n, it.value) }
+                }.map { Connector(n, it.value) }
             }
         }
         return connectors

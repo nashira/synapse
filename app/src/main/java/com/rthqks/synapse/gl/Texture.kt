@@ -1,7 +1,7 @@
 package com.rthqks.synapse.gl
 
 import android.graphics.Bitmap
-import android.opengl.GLES32.*
+import android.opengl.GLES30.*
 import android.opengl.GLUtils
 
 class Texture(

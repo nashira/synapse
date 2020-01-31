@@ -1,12 +1,12 @@
 package com.rthqks.synapse.gl
 
-import android.opengl.GLES32
+import android.opengl.GLES30
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
 
 class Agent2D(numAgents: Int) : Mesh(
     DRAW_ARRAYS_INSTANCED,
-    GLES32.GL_POINTS,
+    GLES30.GL_POINTS,
     0,
     1,
     instances = numAgents
@@ -21,8 +21,8 @@ class Agent2D(numAgents: Int) : Mesh(
         byteBuffer.put(ZEROS)
         byteBuffer.position(0)
 
-        val buffer = addBuffer("main", byteBuffer, GLES32.GL_ARRAY_BUFFER, GLES32.GL_STATIC_DRAW)
-        addAttribute("agent", buffer.id, 2, GLES32.GL_UNSIGNED_SHORT, 0, 0, 0)
+        val buffer = addBuffer("main", byteBuffer, GLES30.GL_ARRAY_BUFFER, GLES30.GL_STATIC_DRAW)
+        addAttribute("agent", buffer.id, 2, GLES30.GL_UNSIGNED_SHORT, 0, 0, 0)
         super.initialize()
     }
 

@@ -115,6 +115,11 @@ class BuilderActivity : DaggerAppCompatActivity() {
         viewModel.stopExecution()
     }
 
+    override fun onStart() {
+        super.onStart()
+        viewModel.updateStartState()
+    }
+
     private fun onJumpToNode() {
         val dialog = NodeListDialog()
         dialog.listener = {

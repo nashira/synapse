@@ -1,6 +1,6 @@
 package com.rthqks.synapse.exec.node
 
-import android.opengl.GLES32.*
+import android.opengl.GLES30.*
 import android.util.Log
 import android.util.Size
 import android.view.Surface
