@@ -27,6 +27,11 @@ val NetworkName = Property.Key<String>("network_name")
 val NumAgents = Property.Key<Int>("num_agents")
 val FixedWidth = Property.Key<Boolean>("fixed_width")
 val BlendMode = Property.Key<Int>("blend_mode")
+val Opacity = Property.Key<Float>("opacity")
+val SensorAngle = Property.Key<Float>("sensor_angle")
+val SensorDistance = Property.Key<Float>("sensor_distance")
+val TravelAngle = Property.Key<Float>("travel_angle")
+val TravelDistance = Property.Key<Float>("travel_distance")
 
 val Nodes = listOf(
     Node(NodeType.Camera).apply {
@@ -277,6 +282,34 @@ val Nodes = listOf(
                 ), Size(720, 1280), true
             ), SizeConverter
         )
+        add(
+            Property(
+                SensorAngle,
+                RangeType(R.string.property_name_sensor_angle, R.drawable.ic_rotate_left, 0f..90f),
+                2f
+            ), FloatConverter
+        )
+        add(
+            Property(
+                SensorDistance,
+                RangeType(R.string.property_name_sensor_distance, R.drawable.ic_height, 1f..50f),
+                11f
+            ), FloatConverter
+        )
+        add(
+            Property(
+                TravelAngle,
+                RangeType(R.string.property_name_travel_angle, R.drawable.ic_rotate_left, -90f..90f),
+                4f
+            ), FloatConverter
+        )
+        add(
+            Property(
+                TravelDistance,
+                RangeType(R.string.property_name_travel_distance, R.drawable.ic_height, 1f..10f),
+                1.1f
+            ), FloatConverter
+        )
     },
     Node(NodeType.ImageBlend).apply {
         add(Port(Port.Type.Video, ImageBlendNode.INPUT_BASE.id, "Base", false))
@@ -343,6 +376,13 @@ val Nodes = listOf(
                     Choice(Size(480, 640), R.string.property_label_camera_capture_size_480)
                 ), Size(720, 1280), true
             ), SizeConverter
+        )
+        add(
+            Property(
+                Opacity,
+                RangeType(R.string.property_name_opacity, R.drawable.ic_gradient, 0f..1f),
+                1f
+            ), FloatConverter
         )
     },
     Node(NodeType.Properties).also { it.id = -2 },

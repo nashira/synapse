@@ -83,6 +83,8 @@ class NetworkExecutor(
             val toNode = nodes[link.toNodeId]!!
             fromNode.setLinked(fromKey)
             toNode.setLinked(toKey)
+
+            Log.d(TAG, "link ${link.fromNodeId} ${link.fromPortId} ${link.toNodeId} ${link.toPortId} ${link.inCycle}")
             if (link.inCycle) {
                 fromNode.setCycle(fromKey)
                 toNode.setCycle(toKey)

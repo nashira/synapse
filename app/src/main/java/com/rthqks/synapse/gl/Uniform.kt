@@ -8,6 +8,11 @@ class Uniform<T>(
     var dirty: Boolean = true
 ) {
 
+    fun set(value: T) {
+        data = value
+        dirty = true
+    }
+
     sealed class Type<T> {
         object Int: Type<kotlin.Int>()
         object Float: Type<kotlin.Float>()

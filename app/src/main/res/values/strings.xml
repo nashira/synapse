@@ -157,4 +157,9 @@
     <string name="property_label_blend_mode_subtract">Subtract</string>
     <string name="property_label_blend_mode_vivid_light">Vivid Light</string>
     <string name="name_node_type_lut2d_filter">LUT Filter</string>
+    <string name="property_name_opacity">Opacity</string>
+    <string name="property_name_sensor_angle">Sensor Angle</string>
+    <string name="property_name_sensor_distance">Sensor Distance</string>
+    <string name="property_name_travel_angle">Travel Angle</string>
+    <string name="property_name_travel_distance">Travel Distance</string>
 </resources>

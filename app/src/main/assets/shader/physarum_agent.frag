@@ -12,6 +12,12 @@
 
 precision mediump float;
 
+const float PI  = 3.14159265358979323846264;
+const float PI2 = PI * 2.0;
+const float RAD = 1.0/PI;
+const float PHI = 1.61803398874989484820459;// Golden Ratio
+const float SQ2 = 1.41421356237309504880169;// Square Root of Two
+
 #ifdef ENV_EXT
 uniform samplerExternalOES env_texture;
 #else
@@ -26,34 +32,29 @@ uniform sampler2D agent_texture;
 
 uniform vec2 resolution;
 uniform mat4 texture_matrix;
+uniform float sensor_angle;
+uniform float travel_angle;
+uniform float sensor_distance;
+uniform float travel_distance;
 
 in vec2 uv;
-
 layout(location = 0) out vec4 agent_out;
 
-
-const float PI  = 3.14159265358979323846264;
-const float PI2 = PI * 2.0;
-const float RAD = 1.0/PI;
-const float PHI = 1.61803398874989484820459 * .1;// Golden Ratio
-const float SQ2 = 1.41421356237309504880169 * 1000.;// Square Root of Two
-
 float rand(in vec2 coordinate){
-    return fract(tan(distance(coordinate*(PHI),vec2(PHI,PI*.1)))*SQ2);
+    return fract(tan(distance(coordinate*(PHI),vec2(PHI,PI*.01)))*SQ2*1000.0);
 }
-
 
 void main() {
     vec4 agent_data = texture(agent_texture, uv);
 
     //converts degree to radians (should be done on the CPU)
-    float SA = 2.0 * RAD;
-    float RA = 4.0 * RAD;
+    float SA = sensor_angle * RAD;
+    float RA = travel_angle * RAD;
 
     //downscales the parameters (should be done on the CPU)
     vec2 res = 1. / resolution;//data trail scale
-    vec2 SO = 11.0 * res;
-    vec2 SS = 1.1 * res;
+    vec2 SO = sensor_distance * res;
+    vec2 SS = travel_distance * res;
 
     //uv = input_texture.xy
     //where to sample in the data trail texture to get the agent's world position
@@ -80,11 +81,11 @@ void main() {
     // TODO remove the conditions
     if (F > FL && F > FR){
     } else if (F<FL && F<FR){
-        if (rand(val.xy * uv) > .5){
+//        if (rand(val.xy * uv) > .5){
             angle +=RA;
-        } else {
-            angle -=RA;
-        }
+//        } else {
+//            angle -=RA;
+//        }
     } else if (FL<FR){
         angle+=RA;
     } else if (FL>FR){

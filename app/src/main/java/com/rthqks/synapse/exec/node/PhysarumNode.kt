@@ -8,10 +8,7 @@ import com.rthqks.synapse.assets.AssetManager
 import com.rthqks.synapse.exec.NodeExecutor
 import com.rthqks.synapse.exec.link.*
 import com.rthqks.synapse.gl.*
-import com.rthqks.synapse.logic.FrameRate
-import com.rthqks.synapse.logic.NumAgents
-import com.rthqks.synapse.logic.Properties
-import com.rthqks.synapse.logic.VideoSize
+import com.rthqks.synapse.logic.*
 import kotlinx.coroutines.*
 import kotlinx.coroutines.selects.whileSelect
 import java.util.concurrent.atomic.AtomicInteger
@@ -29,7 +26,10 @@ class PhysarumNode(
     private val frameDuration: Long get() = 1000L / properties[FrameRate]
     private var envSize = properties[VideoSize]
     private val agentSize = ceil(sqrt(numAgents.toDouble())).toInt().let { Size(it, it) }
-
+    private val sensorAngle: Float get() = properties[SensorAngle]
+    private val sensorDistance: Float get() = properties[SensorDistance]
+    private val travelAngle: Float get() = properties[TravelAngle]
+    private val travelDistance: Float get() = properties[TravelDistance]
 
     private val agentTexture1 = Texture(filter = GLES30.GL_NEAREST)
     private val agentTexture2 = Texture(filter = GLES30.GL_NEAREST)
@@ -161,23 +161,13 @@ class PhysarumNode(
                     floatArrayOf(envSize.width.toFloat(), envSize.height.toFloat())
                 )
 
-                addUniform(
-                    Uniform.Type.Mat4,
-                    "texture_matrix",
-                    GlesManager.identityMat()
-                )
-
-                addUniform(
-                    Uniform.Type.Int,
-                    "agent_texture",
-                    AGENT_TEXTURE_LOCATION
-                )
-
-                addUniform(
-                    Uniform.Type.Int,
-                    "env_texture",
-                    ENV_TEXTURE_LOCATION
-                )
+                addUniform(Uniform.Type.Mat4, "texture_matrix", GlesManager.identityMat())
+                addUniform(Uniform.Type.Int, "agent_texture", AGENT_TEXTURE_LOCATION)
+                addUniform(Uniform.Type.Int,"env_texture", ENV_TEXTURE_LOCATION)
+                addUniform(Uniform.Type.Float, SENSOR_ANGLE, sensorAngle)
+                addUniform(Uniform.Type.Float, SENSOR_DIST, sensorDistance)
+                addUniform(Uniform.Type.Float, TRAVEL_ANGLE, travelAngle)
+                addUniform(Uniform.Type.Float, TRAVEL_DIST, travelDistance)
             }
 
             envProgram.apply {
@@ -367,6 +357,11 @@ class PhysarumNode(
         val agentOutTexture = agentTexture
         val envOutTexture = envTexture
 
+        agentProgram.getUniform(Uniform.Type.Float, SENSOR_ANGLE).set(sensorAngle)
+        agentProgram.getUniform(Uniform.Type.Float, SENSOR_DIST).set(sensorDistance)
+        agentProgram.getUniform(Uniform.Type.Float, TRAVEL_ANGLE).set(travelAngle)
+        agentProgram.getUniform(Uniform.Type.Float, TRAVEL_DIST).set(travelDistance)
+
         glesManager.glContext {
             GLES30.glUseProgram(agentProgram.programId)
             GLES30.glBindFramebuffer(GLES30.GL_FRAMEBUFFER, agentFramebuffer.id)
@@ -427,6 +422,10 @@ class PhysarumNode(
         const val TAG = "PhysarumNode"
         const val AGENT_TEXTURE_LOCATION = 0
         const val ENV_TEXTURE_LOCATION = 1
+        const val SENSOR_ANGLE = "sensor_angle"
+        const val SENSOR_DIST = "sensor_distance"
+        const val TRAVEL_ANGLE = "travel_angle"
+        const val TRAVEL_DIST = "travel_distance"
         val INPUT_AGENT = Connection.Key<VideoConfig, VideoEvent>("input_agent")
         val INPUT_ENV = Connection.Key<VideoConfig, VideoEvent>("input_env")
         val OUTPUT_AGENT = Connection.Key<VideoConfig, VideoEvent>("output_agent")

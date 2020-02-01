@@ -21,6 +21,7 @@ uniform sampler2D blend_texture;
 #endif
 
 uniform int blend_mode;
+uniform float opacity;
 
 in vec2 uvBase;
 in vec2 uvBlend;
@@ -276,8 +277,6 @@ vec3 blendMode( int mode, vec3 base, vec3 blend ){
 void main() {
 	vec4 base = texture(base_texture, uvBase);
 	vec4 blend = texture(blend_texture, uvBlend);
-	float opacity = 1.0;
-//	vec3 result = blendMode(blend_mode, base.rgb, blend.rgb) * opacity + base.rgb * (1.0 - opacity);
-	vec3 result = blendMode(blend_mode, base.rgb, blend.rgb);
+	vec3 result = blendMode(blend_mode, base.rgb, blend.rgb) * opacity + base.rgb * (1.0 - opacity);
 	color = vec4(result, 1.0);
 }

@@ -13,6 +13,7 @@ import androidx.recyclerview.widget.RecyclerView
 import com.rthqks.synapse.R
 import com.rthqks.synapse.logic.Network
 import com.rthqks.synapse.ui.build.BuilderActivity
+import com.rthqks.synapse.ui.exec.NetworkActivity
 import dagger.android.support.DaggerAppCompatActivity
 import kotlinx.android.synthetic.main.activity_network_list.*
 import kotlinx.android.synthetic.main.network_list_item.view.*
@@ -51,6 +52,9 @@ class NetworkListActivity : DaggerAppCompatActivity() {
 
         networkAdapter.onItemClick { item, longClick ->
             if (longClick) {
+                startActivity(
+                    NetworkActivity.getIntent(this, item.id)
+                )
             } else {
                 startActivity(
                     BuilderActivity.getIntent(this, item.id)

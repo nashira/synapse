@@ -188,13 +188,25 @@ class Network(
             val component = mutableListOf<Pair<Int, String>>()
             components.add(component)
             val output = nodes[it.first]!!.getPort(it.second).output
-            if (!output) {
+            if (!output && it !in mark) {
                 mark.add(it)
                 component.add(it)
             }
             dfs(it.first, mark, component, if (output) it.second else null)
             Log.d(TAG, component.joinToString())
+            if (component.size > 1) {
+                component.add(component.removeAt(0))
+                component.windowed(2, 2) {
+                    val from = it[0]
+                    val to = it[1]
+                    val link = Link(from.first, from.second, to.first, to.second)
+                    Log.d(TAG, "cycle $link")
+                    linkIndex[from.first]!!.first { it == link }.inCycle = true
+                }
+            }
         }
+
+        Log.d(TAG, "links ${links.joinToString()}")
     }
 
     private fun dfs(
@@ -212,14 +224,12 @@ class Network(
             if (key1 !in marks) {
                 marks.add(key1)
                 result.add(key1)
-                val key2 = Pair(link.toNodeId, link.toPortId)
-                if (key2 !in marks) {
-                    marks.add(key2)
-                    result.add(key2)
-                    dfs(link.toNodeId, marks, result)
-                }
-
-                link.inCycle = result.size > 1
+            }
+            val key2 = Pair(link.toNodeId, link.toPortId)
+            if (key2 !in marks) {
+                marks.add(key2)
+                result.add(key2)
+                dfs(link.toNodeId, marks, result)
             }
         }
     }

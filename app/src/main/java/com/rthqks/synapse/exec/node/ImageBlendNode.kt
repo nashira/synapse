@@ -7,10 +7,7 @@ import com.rthqks.synapse.assets.AssetManager
 import com.rthqks.synapse.exec.NodeExecutor
 import com.rthqks.synapse.exec.link.*
 import com.rthqks.synapse.gl.*
-import com.rthqks.synapse.logic.BlendMode
-import com.rthqks.synapse.logic.FrameRate
-import com.rthqks.synapse.logic.Properties
-import com.rthqks.synapse.logic.VideoSize
+import com.rthqks.synapse.logic.*
 import kotlinx.coroutines.*
 import kotlinx.coroutines.selects.whileSelect
 import java.util.concurrent.atomic.AtomicInteger
@@ -23,6 +20,7 @@ class ImageBlendNode(
 ) : NodeExecutor() {
     private var startJob: Job? = null
     private val blendMode: Int get() = properties[BlendMode]
+    private val opacity: Float get() = properties[Opacity]
     private val frameDuration: Long get() = 1000L / properties[FrameRate]
     private var outputSize = properties[VideoSize]
 
@@ -126,6 +124,9 @@ class ImageBlendNode(
                 addUniform(Uniform.Type.Int,
                     "blend_mode",
                     blendMode)
+                addUniform(Uniform.Type.Float,
+                    UNI_OPACITY,
+                    opacity)
             }
         }
     }
@@ -240,6 +241,11 @@ class ImageBlendNode(
             dirty = true
         }
 
+        program.getUniform(Uniform.Type.Float, UNI_OPACITY).apply {
+            data = opacity
+            dirty = true
+        }
+
         glesManager.glContext {
             GLES30.glUseProgram(program.programId)
             GLES30.glBindFramebuffer(GLES30.GL_FRAMEBUFFER, framebuffer.id)
@@ -284,6 +290,7 @@ class ImageBlendNode(
         const val TAG = "ImageBlendNode"
         const val BASE_TEXTURE_LOCATION = 0
         const val BLEND_TEXTURE_LOCATION = 1
+        const val UNI_OPACITY = "opacity"
         val INPUT_BASE = Connection.Key<VideoConfig, VideoEvent>("input_base")
         val INPUT_BLEND = Connection.Key<VideoConfig, VideoEvent>("input_blend")
         val OUTPUT = Connection.Key<VideoConfig, VideoEvent>("output")
