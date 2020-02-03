@@ -11,7 +11,7 @@ import androidx.exifinterface.media.ExifInterface
 import com.rthqks.synapse.exec.NodeExecutor
 import com.rthqks.synapse.exec.link.*
 import com.rthqks.synapse.gl.GlesManager
-import com.rthqks.synapse.gl.Texture
+import com.rthqks.synapse.gl.Texture2d
 import com.rthqks.synapse.logic.MediaUri
 import com.rthqks.synapse.logic.Properties
 import kotlinx.coroutines.Job
@@ -32,7 +32,7 @@ class ImageSourceNode(
     private var rotation = 0f
     private var frameCount = 0
 
-    private var texture: Texture? = null
+    private var texture: Texture2d? = null
 
     private fun getInputStream(): InputStream? {
         return when (imageUri.scheme) {
@@ -77,7 +77,7 @@ class ImageSourceNode(
         val connection = connection(OUTPUT) ?: return
         val inputStream = getInputStream() ?: return
 
-        val texture = Texture(GLES30.GL_TEXTURE_2D, GLES30.GL_CLAMP_TO_EDGE, GLES30.GL_LINEAR)
+        val texture = Texture2d(GLES30.GL_TEXTURE_2D, GLES30.GL_CLAMP_TO_EDGE, GLES30.GL_LINEAR)
         this.texture = texture
 
         BitmapFactory.decodeStream(inputStream)?.let { bitmap ->

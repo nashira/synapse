@@ -24,7 +24,7 @@ class GlNode(
     private val connectMutex = Mutex(true)
     private var size = Size(0, 0)
 
-    private var texture: Texture? = null
+    private var texture: Texture2d? = null
     private var framebuffer: Framebuffer? = null
 
     private var outputSurfaceWindow: WindowSurface? = null
@@ -47,7 +47,7 @@ class GlNode(
                 it
             }
         }
-        texture = Texture(
+        texture = Texture2d(
             GL_TEXTURE_2D,
             GL_CLAMP_TO_EDGE,
             GL_LINEAR
@@ -199,7 +199,7 @@ class GlNode(
         }
     }
 
-    private fun executeGl(texture: Texture) {
+    private fun executeGl(texture: Texture2d) {
         glUseProgram(program.programId)
         glViewport(0, 0, size.width, size.height)
 

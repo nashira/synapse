@@ -29,12 +29,12 @@ class MacNode(
 
     private val mesh = Quad()
     private val program = Program()
-    private val texture1 = Texture(
+    private val texture1 = Texture2d(
         GL_TEXTURE_2D,
         GL_CLAMP_TO_EDGE,
         GL_LINEAR
     )
-    private val texture2 = Texture(
+    private val texture2 = Texture2d(
         GL_TEXTURE_2D,
         GL_CLAMP_TO_EDGE,
         GL_LINEAR
@@ -172,7 +172,7 @@ class MacNode(
 
                 input.send(inEvent)
 
-                val outTexture: Texture
+                val outTexture: Texture2d
                 if (framebuffer == framebuffer1) {
                     framebuffer = framebuffer2
                     outTexture = texture1
@@ -194,7 +194,7 @@ class MacNode(
         }
     }
 
-    private fun executeGl(texture: Texture) {
+    private fun executeGl(texture: Texture2d) {
         glUseProgram(program.programId)
         glViewport(0, 0, size.width, size.height)
 

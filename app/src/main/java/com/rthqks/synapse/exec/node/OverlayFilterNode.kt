@@ -25,7 +25,7 @@ class OverlayFilterNode(
     private var contentSize = Size(0, 0)
     private val connectMutex = Mutex(true)
 
-    private var texture: Texture? = null
+    private var texture: Texture2d? = null
     private var framebuffer: Framebuffer? = null
 
     private var outputSurfaceWindow: WindowSurface? = null
@@ -47,7 +47,7 @@ class OverlayFilterNode(
                 it
             }
         }
-        texture = Texture(
+        texture = Texture2d(
             GL_TEXTURE_2D,
             GL_CLAMP_TO_EDGE,
             GL_LINEAR
@@ -258,7 +258,7 @@ class OverlayFilterNode(
         }
     }
 
-    private fun executeGl(content: Texture, mask: Texture) {
+    private fun executeGl(content: Texture2d, mask: Texture2d) {
         glUseProgram(program.programId)
         glViewport(0, 0, contentSize.width, contentSize.height)
 

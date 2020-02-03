@@ -31,10 +31,10 @@ class PhysarumNode(
     private val travelAngle: Float get() = properties[TravelAngle]
     private val travelDistance: Float get() = properties[TravelDistance]
 
-    private val agentTexture1 = Texture(filter = GLES30.GL_NEAREST)
-    private val agentTexture2 = Texture(filter = GLES30.GL_NEAREST)
-    private val envTexture1 = Texture(repeat = GLES30.GL_REPEAT)
-    private val envTexture2 = Texture(repeat = GLES30.GL_REPEAT)
+    private val agentTexture1 = Texture2d(filter = GLES30.GL_NEAREST)
+    private val agentTexture2 = Texture2d(filter = GLES30.GL_NEAREST)
+    private val envTexture1 = Texture2d(repeat = GLES30.GL_REPEAT)
+    private val envTexture2 = Texture2d(repeat = GLES30.GL_REPEAT)
     private val agentFramebuffer1 = Framebuffer()
     private val agentFramebuffer2 = Framebuffer()
     private val envFramebuffer1 = Framebuffer()
@@ -187,7 +187,7 @@ class PhysarumNode(
         }
     }
 
-    private fun initRenderTarget(framebuffer: Framebuffer, texture: Texture, config: VideoConfig) {
+    private fun initRenderTarget(framebuffer: Framebuffer, texture: Texture2d, config: VideoConfig) {
         texture.initialize()
         texture.initData(
             0,

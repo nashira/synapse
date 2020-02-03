@@ -23,10 +23,10 @@ class GrayscaleNode(
     private var startJob: Job? = null
     private var size = Size(0, 0)
 
-    private var texture1: Texture? = null
+    private var texture1: Texture2d? = null
     private var framebuffer1: Framebuffer? = null
 
-    private var texture2: Texture? = null
+    private var texture2: Texture2d? = null
     private var framebuffer2: Framebuffer? = null
 
     private var outputSurfaceWindow: WindowSurface? = null
@@ -54,7 +54,7 @@ class GrayscaleNode(
 
         glesManager.glContext {
 
-            texture1 = Texture().also { texture ->
+            texture1 = Texture2d().also { texture ->
                 texture.initialize()
                 texture.initData(0, GL_R8, size.width, size.height, GL_RED, GL_UNSIGNED_BYTE)
                 Log.d(TAG, "glGetError() ${glGetError()}")
@@ -63,7 +63,7 @@ class GrayscaleNode(
                 }
             }
 
-            texture2 = Texture().also { texture ->
+            texture2 = Texture2d().also { texture ->
                 texture.initialize()
                 texture.initData(0, GL_R8, size.width, size.height, GL_RED, GL_UNSIGNED_BYTE)
                 Log.d(TAG, "glGetError() ${glGetError()}")
@@ -218,7 +218,7 @@ class GrayscaleNode(
         }
     }
 
-    private fun executeGl(texture: Texture) {
+    private fun executeGl(texture: Texture2d) {
         glUseProgram(program.programId)
         glViewport(0, 0, size.width, size.height)
 

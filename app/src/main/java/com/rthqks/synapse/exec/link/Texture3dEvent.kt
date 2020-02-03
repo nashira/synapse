@@ -1,13 +1,15 @@
 package com.rthqks.synapse.exec.link
 
+import android.opengl.Matrix
 import com.rthqks.synapse.gl.GlesManager
 import com.rthqks.synapse.gl.Texture2d
+import com.rthqks.synapse.gl.Texture3d
 
-class VideoEvent(
-    var texture: Texture2d = EMPTY_TEXTURE,
+class Texture3dEvent(
+    var texture: Texture3d = EMPTY_TEXTURE,
     var matrix: FloatArray = GlesManager.identityMat()
 ) : Event() {
     companion object {
-        private val EMPTY_TEXTURE = Texture2d()
+        private val EMPTY_TEXTURE = Texture3d()
     }
 }

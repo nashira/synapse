@@ -13,7 +13,7 @@ import com.rthqks.synapse.exec.CameraManager
 import com.rthqks.synapse.exec.NodeExecutor
 import com.rthqks.synapse.exec.link.*
 import com.rthqks.synapse.gl.GlesManager
-import com.rthqks.synapse.gl.Texture
+import com.rthqks.synapse.gl.Texture2d
 import com.rthqks.synapse.logic.CameraFacing
 import com.rthqks.synapse.logic.FrameRate
 import com.rthqks.synapse.logic.Properties
@@ -35,7 +35,7 @@ class CameraNode(
     private var startJob: Job? = null
     private var outputSurface: Surface? = null
     private var outputSurfaceTexture: SurfaceTexture? = null
-    private val outputTexture = Texture(
+    private val outputTexture = Texture2d(
         GLES11Ext.GL_TEXTURE_EXTERNAL_OES,
         GL_CLAMP_TO_EDGE,
         GL_LINEAR

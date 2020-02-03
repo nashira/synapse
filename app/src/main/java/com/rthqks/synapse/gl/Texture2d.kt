@@ -4,7 +4,7 @@ import android.graphics.Bitmap
 import android.opengl.GLES30.*
 import android.opengl.GLUtils
 
-class Texture(
+class Texture2d(
     val target: Int = GL_TEXTURE_2D,
     val repeat: Int = GL_CLAMP_TO_EDGE,
     val filter: Int = GL_LINEAR

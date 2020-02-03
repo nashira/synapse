@@ -25,10 +25,10 @@ class FrameDifferenceNode(
 
     private val mesh = Quad()
     private val program = Program()
-    private val diffTexture1 = Texture()
-    private val diffTexture2 = Texture()
-    private val lastFrameTexture1 = Texture()
-    private val lastFrameTexture2 = Texture()
+    private val diffTexture1 = Texture2d()
+    private val diffTexture2 = Texture2d()
+    private val lastFrameTexture1 = Texture2d()
+    private val lastFrameTexture2 = Texture2d()
     private val framebuffer1 = Framebuffer()
     private val framebuffer2 = Framebuffer()
 
@@ -180,7 +180,7 @@ class FrameDifferenceNode(
         }
     }
 
-    private fun executeGl(texture: Texture) {
+    private fun executeGl(texture: Texture2d) {
         glUseProgram(program.programId)
         glViewport(0, 0, size.width, size.height)
 

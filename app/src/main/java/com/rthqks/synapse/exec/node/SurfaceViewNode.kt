@@ -48,7 +48,7 @@ class SurfaceViewNode(
     private val fixedWidth: Boolean = properties.find(FixedWidth)?.value ?: false
 
     private var surfaceState = SurfaceState.Unavailable
-    private var previousTexture: Texture? = null
+    private var previousTexture: Texture2d? = null
     //    private var surfaceDeferred: CompletableDeferred<Unit>? = null
     val string = toString()
     private val TAG = "SVN ${string.substring(string.length - 8, string.length)}"
@@ -242,7 +242,7 @@ class SurfaceViewNode(
         }
     }
 
-    private fun executeGl(texture: Texture) {
+    private fun executeGl(texture: Texture2d) {
         GLES30.glUseProgram(program.programId)
         GLES30.glViewport(0, 0, outputSize.width, outputSize.height)
 

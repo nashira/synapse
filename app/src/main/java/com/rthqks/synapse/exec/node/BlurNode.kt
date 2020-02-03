@@ -28,13 +28,13 @@ class BlurNode(
     private var inputSize = Size(0, 0)
     private var size = Size(0, 0)
 
-    private lateinit var texture1: Texture
+    private lateinit var texture1: Texture2d
     private lateinit var framebuffer1: Framebuffer
 
-    private lateinit var texture2: Texture
+    private lateinit var texture2: Texture2d
     private lateinit var framebuffer2: Framebuffer
 
-    private lateinit var texture3: Texture
+    private lateinit var texture3: Texture2d
     private lateinit var framebuffer3: Framebuffer
 
     private val mesh = Quad()
@@ -51,13 +51,13 @@ class BlurNode(
     override suspend fun initialize() {
         connection(INPUT)?.let {
             val config = it.config
-            texture1 = Texture()
+            texture1 = Texture2d()
             framebuffer1 = Framebuffer()
 
-            texture2 = Texture()
+            texture2 = Texture2d()
             framebuffer2 = Framebuffer()
 
-            texture3 = Texture()
+            texture3 = Texture2d()
             framebuffer3 = Framebuffer()
 
             glesManager.glContext {
@@ -97,7 +97,7 @@ class BlurNode(
 
     private suspend fun initializeProgram(
         program: Program,
-        texture: Texture,
+        texture: Texture2d,
         framebuffer: Framebuffer,
         oes: Boolean
     ) {
@@ -217,9 +217,9 @@ class BlurNode(
     }
 
     private fun executeGl(
-        inputTexture: Texture,
-        framebuffer1: Framebuffer, texture1: Texture,
-        framebuffer2: Framebuffer, texture2: Texture
+        inputTexture: Texture2d,
+        framebuffer1: Framebuffer, texture1: Texture2d,
+        framebuffer2: Framebuffer, texture2: Texture2d
     ) {
         val passes = passes
 

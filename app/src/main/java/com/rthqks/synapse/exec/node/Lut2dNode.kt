@@ -25,8 +25,8 @@ class Lut2dNode(
     private var outputSize = properties[VideoSize]
     private var outputConfig = DEFAULT_CONFIG
 
-    private val texture1 = Texture(filter = GLES30.GL_NEAREST)
-    private val texture2 = Texture(filter = GLES30.GL_NEAREST)
+    private val texture1 = Texture2d()
+    private val texture2 = Texture2d()
     private val framebuffer1 = Framebuffer()
     private val framebuffer2 = Framebuffer()
 
@@ -125,7 +125,7 @@ class Lut2dNode(
         }
     }
 
-    private fun initRenderTarget(framebuffer: Framebuffer, texture: Texture, config: VideoConfig) {
+    private fun initRenderTarget(framebuffer: Framebuffer, texture: Texture2d, config: VideoConfig) {
         texture.initialize()
         texture.initData(
             0,
@@ -215,8 +215,8 @@ class Lut2dNode(
         val output = channel(OUTPUT) ?: return
         val outEvent = output.receive()
 
-        val baseInTexture = inputEvent?.texture
-        val blendInTexture = lutEvent?.texture
+        val inputTexture = inputEvent?.texture
+        val lutTexture = lutEvent?.texture
 
         val framebuffer = if (outEvent.texture == texture1) {
             framebuffer1
@@ -224,17 +224,12 @@ class Lut2dNode(
             framebuffer2
         }
 
-//        program.getUniform(Uniform.Type.Int, "blend_mode").apply {
-//            data = blendMode
-//            dirty = true
-//        }
-
         glesManager.glContext {
             GLES30.glUseProgram(program.programId)
             GLES30.glBindFramebuffer(GLES30.GL_FRAMEBUFFER, framebuffer.id)
             GLES30.glViewport(0, 0, outputSize.width, outputSize.height)
-            baseInTexture?.bind(GLES30.GL_TEXTURE0)
-            blendInTexture?.bind(GLES30.GL_TEXTURE1)
+            inputTexture?.bind(GLES30.GL_TEXTURE0)
+            lutTexture?.bind(GLES30.GL_TEXTURE1)
             program.bindUniforms()
             quadMesh.execute()
         }
@@ -270,7 +265,7 @@ class Lut2dNode(
     }
 
     companion object {
-        const val TAG = "ImageBlendNode"
+        const val TAG = "Lut2dNode"
         const val INPUT_TEXTURE_LOCATION = 0
         const val LUT_TEXTURE_LOCATION = 1
         val INPUT = Connection.Key<VideoConfig, VideoEvent>("input")
