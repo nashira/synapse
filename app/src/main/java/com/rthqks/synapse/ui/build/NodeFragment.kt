@@ -293,6 +293,7 @@ class NodeFragment : DaggerFragment() {
             when (connector.port.type) {
                 Port.Type.Audio -> button.setImageResource(R.drawable.ic_speaker)
                 Port.Type.Video -> button.setImageResource(R.drawable.ic_display)
+                Port.Type.Texture3D -> button.setImageResource(R.drawable.ic_3d_rotation)
             }
         }
     }

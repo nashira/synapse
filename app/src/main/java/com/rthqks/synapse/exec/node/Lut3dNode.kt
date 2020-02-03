@@ -79,7 +79,6 @@ class Lut3dNode(
 
     override suspend fun initialize() {
         val input = connection(INPUT)
-        val inputLut = connection(INPUT_LUT)
         val output = connection(OUTPUT)
 
         output?.prime(VideoEvent(texture1), VideoEvent(texture2))
@@ -136,7 +135,6 @@ class Lut3dNode(
 
     override suspend fun start() = coroutineScope {
         frameCount = 0
-
 
         startJob = launch {
             val inputLinked = linked(INPUT)

@@ -95,10 +95,6 @@ class SurfaceViewNode(
         runBlocking {
             Log.d(TAG, "surfaceDestroyed: $holder")
             setSurface(null)
-            commandChannel.send {
-                Log.d(TAG, "surface destroyed processed")
-            }
-
         }
     }
 
@@ -128,11 +124,11 @@ class SurfaceViewNode(
                     addUniform(
                         Uniform.Type.Mat4,
                         "vertex_matrix0",
-                        FloatArray(16).also { Matrix.setIdentityM(it, 0) })
+                        GlesManager.identityMat())
                     addUniform(
                         Uniform.Type.Mat4,
                         "texture_matrix0",
-                        FloatArray(16).also { Matrix.setIdentityM(it, 0) })
+                        GlesManager.identityMat())
                     addUniform(
                         Uniform.Type.Int,
                         "input_texture0",

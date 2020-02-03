@@ -84,9 +84,15 @@ sealed class NodeType(
         FLAG_PRODUCER
     )
 
-    object LutFilter : NodeType(
+    object Lut2d : NodeType(
         "lut_2d",
         R.string.name_node_type_lut2d_filter,
+        R.drawable.ic_tune
+    )
+
+    object Lut3d : NodeType(
+        "lut_3d",
+        R.string.name_node_type_lut3d_filter,
         R.drawable.ic_tune
     )
 

@@ -162,4 +162,5 @@
     <string name="property_name_sensor_distance">Sensor Distance</string>
     <string name="property_name_travel_angle">Travel Angle</string>
     <string name="property_name_travel_distance">Travel Distance</string>
+    <string name="name_node_type_lut3d_filter">3D LUT</string>
 </resources>

@@ -7,6 +7,7 @@
 #endif
 
 precision mediump float;
+precision mediump sampler3D;
 
 #ifdef EXT_INPUT
 uniform samplerExternalOES input_texture;
