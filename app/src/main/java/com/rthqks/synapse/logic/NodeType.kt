@@ -140,4 +140,11 @@ sealed class NodeType(
     )
 
     object Connection : NodeType("connection", 0, 0)
+
+    object CubeImport :
+        NodeType(
+            "cube_import",
+            R.string.name_node_type_cube_importer,
+            R.drawable.ic_3d_rotation
+        )
 }

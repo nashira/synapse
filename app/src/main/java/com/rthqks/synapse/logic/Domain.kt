@@ -4,10 +4,7 @@ import android.hardware.camera2.CameraCharacteristics
 import android.net.Uri
 import android.util.Size
 import com.rthqks.synapse.R
-import com.rthqks.synapse.exec.node.ImageBlendNode
-import com.rthqks.synapse.exec.node.Lut2dNode
-import com.rthqks.synapse.exec.node.Lut3dNode
-import com.rthqks.synapse.exec.node.PhysarumNode
+import com.rthqks.synapse.exec.node.*
 import com.rthqks.synapse.logic.PropertyType.Companion.RangeType
 
 val AudioSampleRate = Property.Key<Int>("audio_sample_rate")
@@ -104,6 +101,16 @@ val Nodes = listOf(
                 MediaUri,
                 UriType(R.string.property_name_uri, R.drawable.ic_image, "image/*"),
                 Uri.parse("assets:///img/ic_launcher_web.png"), true
+            ), UriConverter
+        )
+    },
+    Node(NodeType.CubeImport).apply {
+        add(Port(Port.Type.Texture3D, CubeImportNode.OUTPUT.id, "LUT", true))
+        add(
+            Property(
+                MediaUri,
+                UriType(R.string.property_name_uri, R.drawable.ic_image, "text/*"),
+                Uri.parse("assets:///cube/invert.cube"), true
             ), UriConverter
         )
     },
@@ -436,6 +443,7 @@ val NodeTypes = mapOf(
     NodeType.OverlayFilter.key to NodeType.OverlayFilter,
     NodeType.BlurFilter.key to NodeType.BlurFilter,
     NodeType.Image.key to NodeType.Image,
+    NodeType.CubeImport.key to NodeType.CubeImport,
     NodeType.AudioFile.key to NodeType.AudioFile,
     NodeType.Lut2d.key to NodeType.Lut2d,
     NodeType.Lut3d.key to NodeType.Lut3d,

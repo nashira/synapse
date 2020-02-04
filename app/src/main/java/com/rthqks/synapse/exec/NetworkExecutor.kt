@@ -102,6 +102,7 @@ class NetworkExecutor(
             NodeType.OverlayFilter -> OverlayFilterNode(glesManager, assetManager)
             NodeType.Microphone -> AudioSourceNode(node.properties)
             NodeType.Image -> ImageSourceNode(context, glesManager, node.properties)
+            NodeType.CubeImport -> CubeImportNode(context, glesManager, node.properties)
             NodeType.AudioFile -> TODO()
             NodeType.MediaFile -> DecoderNode(glesManager, context, node.properties)
             NodeType.Lut2d -> Lut2dNode(assetManager, glesManager, node.properties)

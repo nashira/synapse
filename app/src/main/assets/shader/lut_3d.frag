@@ -6,8 +6,8 @@
 #extension GL_OES_EGL_image_external_essl3 : require
 #endif
 
-precision mediump float;
-precision mediump sampler3D;
+precision highp float;
+precision highp sampler3D;
 
 #ifdef EXT_INPUT
 uniform samplerExternalOES input_texture;

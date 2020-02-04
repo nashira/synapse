@@ -41,7 +41,7 @@ class Decoder(
     private var extractState = STOPPED
     private var releaseState = EOS
     private var eventIndex = 0
-    private val events = Array(30) {
+    private val events = Array(50) {
         Event(0, MediaCodec.BufferInfo(), null)
     }
 

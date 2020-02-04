@@ -12,6 +12,7 @@ import com.rthqks.synapse.logic.Properties
 import com.rthqks.synapse.logic.VideoSize
 import kotlinx.coroutines.*
 import kotlinx.coroutines.selects.whileSelect
+import java.nio.ByteBuffer
 import java.util.concurrent.atomic.AtomicInteger
 import kotlin.math.max
 
@@ -119,7 +120,11 @@ class Lut3dNode(
         }
     }
 
-    private fun initRenderTarget(framebuffer: Framebuffer, texture: Texture2d, config: VideoConfig) {
+    private fun initRenderTarget(
+        framebuffer: Framebuffer,
+        texture: Texture2d,
+        config: VideoConfig
+    ) {
         texture.initialize()
         texture.initData(
             0,
@@ -152,7 +157,7 @@ class Lut3dNode(
 
             whileSelect {
                 inputIn?.onReceive {
-                    //                    Log.d(TAG, "agent receive")
+//                    Log.d(TAG, "input receive")
                     inputEvent?.let { inputIn.send(it) }
                     inputEvent = it
                     if (copyMatrix) {
@@ -166,7 +171,7 @@ class Lut3dNode(
                     running > 0
                 }
                 lutIn?.onReceive {
-                    //                    Log.d(TAG, "env receive")
+//                    Log.d(TAG, "lut receive")
                     lutEvent?.let { lutIn.send(it) }
                     lutEvent = it
                     debounceExecute(this@launch)
@@ -262,9 +267,9 @@ class Lut3dNode(
         const val INPUT_TEXTURE_LOCATION = 0
         const val LUT_TEXTURE_LOCATION = 1
         val INPUT = Connection.Key<VideoConfig, VideoEvent>("input")
-        val INPUT_LUT = Connection.Key<Texture3DConfig, Texture3dEvent>("input_lut")
+        val INPUT_LUT = Connection.Key<Texture3dConfig, Texture3dEvent>("input_lut")
         val OUTPUT = Connection.Key<VideoConfig, VideoEvent>("output")
-        val DEFAULT_CONFIG = Texture3DConfig(
+        val DEFAULT_CONFIG = Texture3dConfig(
             0, 0, 0, GLES30.GL_RGB8, GLES30.GL_RGB, GLES30.GL_UNSIGNED_BYTE
         )
     }

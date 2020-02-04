@@ -1,7 +1,7 @@
 package com.rthqks.synapse.exec.link
 
 
-class Texture3DConfig(
+class Texture3dConfig(
     val width: Int,
     val height: Int,
     val depth: Int,
