@@ -45,11 +45,8 @@ class CubeImportNode(
         var buffer: ByteBuffer? = null
 
         reader.forEachLine { line ->
-            Log.d(TAG, "reading $line")
-
             when {
                 line matches TABLE_DATA -> TABLE_DATA.find(line)?.let {
-                    Log.d(TAG, "table data $line")
                     if (buffer == null) {
                         buffer = ByteBuffer.allocateDirect(cube.n * cube.n * cube.n * 3)
                     }
@@ -57,7 +54,6 @@ class CubeImportNode(
                     val g = it.groupValues[2].toFloat()
                     val b = it.groupValues[3].toFloat()
 
-                    Log.d(TAG, "red ${(cube.scale(r, 0) * 255)}")
                     buffer?.put((cube.scale(r, 0) * 255).toByte())
                     buffer?.put((cube.scale(g, 1) * 255).toByte())
                     buffer?.put((cube.scale(b, 2) * 255).toByte())
@@ -166,7 +162,8 @@ class CubeImportNode(
         const val TAG = "CubeImportNode"
         val LUT_1D_PATTERN = Regex("^LUT_1D_SIZE\\s+(\\d+)")
         val LUT_3D_PATTERN = Regex("^LUT_3D_SIZE\\s+(\\d+)")
-        val TABLE_DATA = Regex("^(\\S+)\\s+(\\S+)\\s+(\\S+)")
+        val NUMBER = "[-+]?[0-9]*\\.?[0-9]+(?:[eE][-+]?[0-9]+)?"
+        val TABLE_DATA = Regex("^($NUMBER)\\s+($NUMBER)\\s+($NUMBER)")
         val DOMAIN_MIN = Regex("^DOMAIN_MIN\\s+([^\\s]+)\\s+([^\\s]+)\\s+([^\\s]+)")
         val DOMAIN_MAX = Regex("^DOMAIN_MAX\\s+([^\\s]+)\\s+([^\\s]+)\\s+([^\\s]+)")
         val OUTPUT = Connection.Key<Texture3dConfig, Texture3dEvent>("output_lut")

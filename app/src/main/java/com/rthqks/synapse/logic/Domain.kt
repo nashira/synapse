@@ -109,7 +109,7 @@ val Nodes = listOf(
         add(
             Property(
                 MediaUri,
-                UriType(R.string.property_name_uri, R.drawable.ic_image, "text/*"),
+                UriType(R.string.property_name_uri, R.drawable.ic_image, "*/*"),
                 Uri.parse("assets:///cube/invert.cube"), true
             ), UriConverter
         )

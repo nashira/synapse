@@ -215,8 +215,8 @@ class Lut2dNode(
         val output = channel(OUTPUT) ?: return
         val outEvent = output.receive()
 
-        val inputTexture = inputEvent?.texture
-        val lutTexture = lutEvent?.texture
+        val inputTexture = inputEvent?.texture ?: glesManager.emptyTexture2d
+        val lutTexture = lutEvent?.texture ?: glesManager.emptyTexture2d
 
         val framebuffer = if (outEvent.texture == texture1) {
             framebuffer1
@@ -228,8 +228,8 @@ class Lut2dNode(
             GLES30.glUseProgram(program.programId)
             GLES30.glBindFramebuffer(GLES30.GL_FRAMEBUFFER, framebuffer.id)
             GLES30.glViewport(0, 0, outputSize.width, outputSize.height)
-            inputTexture?.bind(GLES30.GL_TEXTURE0)
-            lutTexture?.bind(GLES30.GL_TEXTURE1)
+            inputTexture.bind(GLES30.GL_TEXTURE0)
+            lutTexture.bind(GLES30.GL_TEXTURE1)
             program.bindUniforms()
             quadMesh.execute()
         }

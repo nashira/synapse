@@ -41,8 +41,8 @@ class Decoder(
     private var extractState = STOPPED
     private var releaseState = EOS
     private var eventIndex = 0
-    private val events = Array(50) {
-        Event(0, MediaCodec.BufferInfo(), null)
+    private val events = Array(100) {
+        Event(0, BUFFER_INFO, null)
     }
 
     private var videoChannel: SendChannel<Event>? = null
@@ -433,6 +433,7 @@ class Decoder(
 
     companion object {
         const val TAG = "Decoder"
+        val BUFFER_INFO = MediaCodec.BufferInfo()
         const val DECODING_FORMAT = 0
         const val PAUSE = 1
         const val EOS = 2

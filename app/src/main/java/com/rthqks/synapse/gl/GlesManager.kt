@@ -16,6 +16,8 @@ class GlesManager {
     private lateinit var handler: Handler
     private lateinit var eglCore: EglCore
     private lateinit var eglSurface: OffscreenSurface
+    lateinit var emptyTexture2d: Texture2d
+    lateinit var emptyTexture3d: Texture3d
 
     val backgroundHandler: Handler get() = handler
 
@@ -30,12 +32,28 @@ class GlesManager {
         eglSurface = OffscreenSurface(eglCore, 1, 1)
         eglSurface.makeCurrent()
 
+        emptyTexture2d = Texture2d()
+        emptyTexture2d.initialize()
+        emptyTexture2d.initData(
+            0,
+            GLES30.GL_R8, 1, 1, GLES30.GL_RED, GLES30.GL_UNSIGNED_BYTE
+        )
+
+        emptyTexture3d = Texture3d()
+        emptyTexture3d.initialize()
+        emptyTexture3d.initData(
+            0,
+            GLES30.GL_R8, 1, 1, 1, GLES30.GL_RED, GLES30.GL_UNSIGNED_BYTE
+        )
+
         GLES30.glDisable(GLES30.GL_DEPTH_TEST)
         GLES30.glDisable(GLES30.GL_CULL_FACE)
     }
 
     fun release() {
         thread.quitSafely()
+        emptyTexture2d.release()
+        emptyTexture3d.release()
         eglSurface.release()
         eglCore.release()
         dispatcher.close()
@@ -45,7 +63,7 @@ class GlesManager {
         WindowSurface(eglCore, surface, false)
 
     companion object {
-        private val TAG = GlesManager::class.java.simpleName
+        val TAG = "GlesManager"
         fun identityMat() = FloatArray(16).also { Matrix.setIdentityM(it, 0) }
     }
 }

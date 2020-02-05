@@ -227,8 +227,8 @@ class ImageBlendNode(
         val output = channel(OUTPUT) ?: return
         val outEvent = output.receive()
 
-        val baseInTexture = baseEvent?.texture
-        val blendInTexture = blendEvent?.texture
+        val baseInTexture = baseEvent?.texture ?: glesManager.emptyTexture2d
+        val blendInTexture = blendEvent?.texture ?: glesManager.emptyTexture2d
 
         val framebuffer = if (outEvent.texture == texture1) {
             framebuffer1
@@ -250,8 +250,8 @@ class ImageBlendNode(
             GLES30.glUseProgram(program.programId)
             GLES30.glBindFramebuffer(GLES30.GL_FRAMEBUFFER, framebuffer.id)
             GLES30.glViewport(0, 0, outputSize.width, outputSize.height)
-            baseInTexture?.bind(GLES30.GL_TEXTURE0)
-            blendInTexture?.bind(GLES30.GL_TEXTURE1)
+            baseInTexture.bind(GLES30.GL_TEXTURE0)
+            blendInTexture.bind(GLES30.GL_TEXTURE1)
             program.bindUniforms()
             quadMesh.execute()
         }
