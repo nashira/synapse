@@ -164,4 +164,6 @@
     <string name="property_name_travel_distance">Travel Distance</string>
     <string name="name_node_type_lut3d_filter">3D LUT</string>
     <string name="name_node_type_cube_importer">CUBE File</string>
+    <string name="name_node_type_crop_resize">Crop/Resize</string>
+    <string name="property_label_camera_capture_size_320">320x320</string>
 </resources>

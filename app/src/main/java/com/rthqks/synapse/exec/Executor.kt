@@ -4,6 +4,7 @@ import android.content.Context
 import android.util.Log
 import android.view.SurfaceView
 import com.rthqks.synapse.assets.AssetManager
+import com.rthqks.synapse.exec.node.CropResizeNode
 import com.rthqks.synapse.exec.node.SurfaceViewNode
 import com.rthqks.synapse.gl.GlesManager
 import com.rthqks.synapse.logic.*
@@ -208,13 +209,18 @@ class Executor @Inject constructor(
             return
         }
 
-        val data = mutableListOf<Pair<Node, Link>>()
+        val cropNode = NewNode(NodeType.CropResize, network.id)
+        network.addNode(cropNode)
+        val se = Link(source.node.id, source.port.id, cropNode.id, CropResizeNode.INPUT.id)
+        network.addLinkNoCompute(se)
+
+        val data = mutableListOf(Pair(cropNode, se))
         targets.forEach {
             val target = it.node
             Log.d(TAG, "adding node ${target.type} ${target.id} ${it.port.id}")
             network.addNode(target)
             Log.d(TAG, "added node ${target.type} ${target.id} ${it.port.id}")
-            val link = Link(source.node.id, source.port.id, target.id, it.port.id)
+            val link = Link(cropNode.id, CropResizeNode.OUTPUT.id, target.id, it.port.id)
             network.addLinkNoCompute(link)
             data.add(target to link)
 

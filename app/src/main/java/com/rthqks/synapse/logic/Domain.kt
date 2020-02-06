@@ -263,6 +263,25 @@ val Nodes = listOf(
             ), SizeConverter
         )
     },
+    Node(NodeType.CropResize).apply {
+        add(Port(Port.Type.Video, CropResizeNode.INPUT.id, "Input", false))
+        add(Port(Port.Type.Video, CropResizeNode.OUTPUT.id, "Output", true))
+        add(
+            Property(
+                VideoSize,
+                ChoiceType(
+                    R.string.property_name_environment_video_size,
+                    R.drawable.ic_photo_size_select,
+                    Choice(Size(2160, 3840), R.string.property_label_camera_capture_size_2160),
+                    Choice(Size(1080, 1920), R.string.property_label_camera_capture_size_1080),
+                    Choice(Size(720, 1280), R.string.property_label_camera_capture_size_720),
+                    Choice(Size(1024, 1024), R.string.property_label_camera_capture_size_1024sq),
+                    Choice(Size(480, 640), R.string.property_label_camera_capture_size_480),
+                    Choice(Size(320, 320), R.string.property_label_camera_capture_size_320)
+                ), Size(320, 320), true
+            ), SizeConverter
+        )
+    },
     Node(NodeType.Screen).apply {
         add(Port(Port.Type.Video, "video_1", "Source", false))
         add(
@@ -452,6 +471,7 @@ val NodeTypes = mapOf(
     NodeType.Screen.key to NodeType.Screen,
     NodeType.SlimeMold.key to NodeType.SlimeMold,
     NodeType.ImageBlend.key to NodeType.ImageBlend,
+    NodeType.CropResize.key to NodeType.CropResize,
     NodeType.Properties.key to NodeType.Properties,
     NodeType.Creation.key to NodeType.Creation,
     NodeType.Connection.key to NodeType.Connection

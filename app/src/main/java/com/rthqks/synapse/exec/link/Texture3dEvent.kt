@@ -1,8 +1,6 @@
 package com.rthqks.synapse.exec.link
 
-import android.opengl.Matrix
 import com.rthqks.synapse.gl.GlesManager
-import com.rthqks.synapse.gl.Texture2d
 import com.rthqks.synapse.gl.Texture3d
 
 class Texture3dEvent(

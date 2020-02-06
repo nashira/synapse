@@ -147,4 +147,10 @@ sealed class NodeType(
             R.string.name_node_type_cube_importer,
             R.drawable.ic_3d_rotation
         )
+
+    object CropResize : NodeType(
+        "crop_resize",
+        R.string.name_node_type_crop_resize,
+        R.drawable.ic_crop
+    )
 }
