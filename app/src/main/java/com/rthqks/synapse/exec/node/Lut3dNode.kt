@@ -254,7 +254,9 @@ class Lut3dNode(
                     execute()
                 } while (debounce.compareAndSet(2, 1))
                 // TODO: use compareAndSet(1, 0)
-                debounce.set(0)
+                if (!debounce.compareAndSet(1, 0)) {
+                    Log.d(TAG, "expected 1, got ${debounce.get()}")
+                }
             }
         } else {
             // TODO: use compareAndSet

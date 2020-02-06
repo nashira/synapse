@@ -81,7 +81,7 @@ class CubeImportNode(
         }
         stream.close()
         size = Triple(cube.n, cube.n, cube.n)
-        Log.d(TAG, "options $size")
+        Log.d(TAG, "options $size ${buffer?.position()}")
 
         buffer?.position(0)
 
