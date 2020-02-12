@@ -166,4 +166,6 @@
     <string name="name_node_type_cube_importer">CUBE File</string>
     <string name="name_node_type_crop_resize">Crop/Resize</string>
     <string name="property_label_camera_capture_size_320">320x320</string>
+    <string name="name_node_type_shape">Shape</string>
+    <string name="property_name_output_video_size">Output Video Size</string>
 </resources>

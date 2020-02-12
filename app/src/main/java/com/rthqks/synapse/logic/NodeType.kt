@@ -141,16 +141,22 @@ sealed class NodeType(
 
     object Connection : NodeType("connection", 0, 0)
 
-    object CubeImport :
-        NodeType(
-            "cube_import",
-            R.string.name_node_type_cube_importer,
-            R.drawable.ic_3d_rotation
-        )
+    object CubeImport : NodeType(
+        "cube_import",
+        R.string.name_node_type_cube_importer,
+        R.drawable.ic_3d_rotation
+    )
 
     object CropResize : NodeType(
         "crop_resize",
         R.string.name_node_type_crop_resize,
         R.drawable.ic_crop
+    )
+
+    object Shape : NodeType(
+        "shape",
+        R.string.name_node_type_shape,
+        R.drawable.ic_change_history,
+        FLAG_PRODUCER
     )
 }

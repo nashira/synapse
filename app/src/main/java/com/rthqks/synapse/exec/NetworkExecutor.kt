@@ -112,7 +112,8 @@ class NetworkExecutor(
             NodeType.Screen -> SurfaceViewNode(scope, assetManager, glesManager, node.properties + network.properties)
             NodeType.SlimeMold -> PhysarumNode(assetManager, glesManager, node.properties)
             NodeType.ImageBlend -> ImageBlendNode(assetManager, glesManager, node.properties)
-            NodeType.CropResize-> CropResizeNode(assetManager, glesManager, node.properties)
+            NodeType.CropResize -> CropResizeNode(assetManager, glesManager, node.properties)
+            NodeType.Shape -> ShapeNode(assetManager, glesManager, node.properties)
             NodeType.Properties,
             NodeType.Creation,
             NodeType.Connection -> error("not an executable node type: ${node.type}")

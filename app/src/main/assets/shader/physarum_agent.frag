@@ -105,7 +105,7 @@ void main() {
     val.xy = fract(val.xy);
 
     //converts the angle back to [0-1]
-    val.z = (angle / PI2);
+    val.z = fract(angle / PI2);
 
     agent_out = vec4(val.rgb, 1.0);
 }

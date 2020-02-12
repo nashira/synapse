@@ -401,12 +401,13 @@ class PhysarumNode(
         if (debounce.compareAndSet(0, 1)) {
             scope.launch {
                 do {
+                    val elapsedRealtime = SystemClock.elapsedRealtime()
                     val delay = max(
                         0,
-                        frameDuration - (SystemClock.elapsedRealtime() - lastExecutionTime)
+                        frameDuration - (elapsedRealtime - lastExecutionTime)
                     )
                     delay(delay)
-                    lastExecutionTime = SystemClock.elapsedRealtime()
+                    lastExecutionTime = elapsedRealtime
                     execute()
                 } while (debounce.compareAndSet(2, 1))
                 // TODO: use compareAndSet(1, 0)

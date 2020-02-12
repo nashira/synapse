@@ -3,7 +3,7 @@ package com.rthqks.synapse.gl
 import android.opengl.GLES30.*
 import android.util.Log
 
-abstract class Mesh(
+open class Mesh(
     val operation: Int,
     val mode: Int,
     val start: Int,
@@ -99,9 +99,11 @@ abstract class Mesh(
         type: Int,
         stride: Int,
         offset: Int,
-        index: Int
+        index: Int,
+        normalized: Boolean = false,
+        divisor: Int = -1
     ): Attribute {
-        val attribute = Attribute(bufferId, size, type, stride, offset, index)
+        val attribute = Attribute(bufferId, size, type, stride, offset, index, normalized, divisor)
         attributes[name] = attribute
         Log.d(TAG, "addAttribute $attribute")
         return attribute

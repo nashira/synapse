@@ -445,6 +445,38 @@ val Nodes = listOf(
             ), FloatConverter
         )
     },
+    Node(NodeType.Shape).apply {
+        add(Port(Port.Type.Video, ShapeNode.INPUT_POS.id, "Positions", false))
+        add(Port(Port.Type.Video, ShapeNode.OUTPUT.id, "Output", true))
+        add(
+            Property(
+                FrameRate,
+                ChoiceType(
+                    R.string.property_name_frame_rate,
+                    R.drawable.ic_speed,
+                    Choice(10, R.string.property_label_camera_fps_10),
+                    Choice(15, R.string.property_label_camera_fps_15),
+                    Choice(20, R.string.property_label_camera_fps_20),
+                    Choice(30, R.string.property_label_camera_fps_30),
+                    Choice(60, R.string.property_label_camera_fps_60)
+                ), 30, false
+            ), IntConverter
+        )
+        add(
+            Property(
+                VideoSize,
+                ChoiceType(
+                    R.string.property_name_output_video_size,
+                    R.drawable.ic_photo_size_select,
+                    Choice(Size(2160, 3840), R.string.property_label_camera_capture_size_2160),
+                    Choice(Size(1080, 1920), R.string.property_label_camera_capture_size_1080),
+                    Choice(Size(720, 1280), R.string.property_label_camera_capture_size_720),
+                    Choice(Size(1024, 1024), R.string.property_label_camera_capture_size_1024sq),
+                    Choice(Size(480, 640), R.string.property_label_camera_capture_size_480)
+                ), Size(720, 1280), true
+            ), SizeConverter
+        )
+    },
     Node(NodeType.Properties).also { it.id = -2 },
     Node(NodeType.Connection).also { it.id = -3 },
     Node(NodeType.Creation).also { it.id = -4 }
@@ -452,30 +484,31 @@ val Nodes = listOf(
 
 val NodeMap = Nodes.map { it.type to it }.toMap()
 
-val NodeTypes = mapOf(
-    NodeType.Camera.key to NodeType.Camera,
-    NodeType.Microphone.key to NodeType.Microphone,
-    NodeType.MediaFile.key to NodeType.MediaFile,
-    NodeType.FrameDifference.key to NodeType.FrameDifference,
-    NodeType.GrayscaleFilter.key to NodeType.GrayscaleFilter,
-    NodeType.MultiplyAccumulate.key to NodeType.MultiplyAccumulate,
-    NodeType.OverlayFilter.key to NodeType.OverlayFilter,
-    NodeType.BlurFilter.key to NodeType.BlurFilter,
-    NodeType.Image.key to NodeType.Image,
-    NodeType.CubeImport.key to NodeType.CubeImport,
-    NodeType.AudioFile.key to NodeType.AudioFile,
-    NodeType.Lut2d.key to NodeType.Lut2d,
-    NodeType.Lut3d.key to NodeType.Lut3d,
-    NodeType.ShaderFilter.key to NodeType.ShaderFilter,
-    NodeType.Speakers.key to NodeType.Speakers,
-    NodeType.Screen.key to NodeType.Screen,
-    NodeType.SlimeMold.key to NodeType.SlimeMold,
-    NodeType.ImageBlend.key to NodeType.ImageBlend,
-    NodeType.CropResize.key to NodeType.CropResize,
-    NodeType.Properties.key to NodeType.Properties,
-    NodeType.Creation.key to NodeType.Creation,
-    NodeType.Connection.key to NodeType.Connection
-)
+val NodeTypes = listOf(
+    NodeType.Camera,
+    NodeType.Microphone,
+    NodeType.MediaFile,
+    NodeType.FrameDifference,
+    NodeType.GrayscaleFilter,
+    NodeType.MultiplyAccumulate,
+    NodeType.OverlayFilter,
+    NodeType.BlurFilter,
+    NodeType.Image,
+    NodeType.CubeImport,
+    NodeType.AudioFile,
+    NodeType.Lut2d,
+    NodeType.Lut3d,
+    NodeType.ShaderFilter,
+    NodeType.Speakers,
+    NodeType.Screen,
+    NodeType.SlimeMold,
+    NodeType.ImageBlend,
+    NodeType.CropResize,
+    NodeType.Shape,
+    NodeType.Properties,
+    NodeType.Creation,
+    NodeType.Connection
+).map { it.key to it }.toMap()
 
 fun GetNode(type: NodeType) = NodeMap[type] ?: error("missing node $type")
 
