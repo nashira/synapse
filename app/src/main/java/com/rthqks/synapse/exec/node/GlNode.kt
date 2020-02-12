@@ -68,7 +68,7 @@ class GlNode(
             )
             Log.d(TAG, "glGetError() ${glGetError()}")
 
-            framebuffer.initialize(texture.id)
+            framebuffer.initialize(texture)
 
             mesh.initialize()
 

@@ -142,7 +142,7 @@ class ImageBlendNode(
             config.type
         )
         Log.d(TAG, "glGetError() ${GLES30.glGetError()}")
-        framebuffer.initialize(texture.id)
+        framebuffer.initialize(texture)
     }
 
     override suspend fun start() = coroutineScope {
@@ -269,13 +269,12 @@ class ImageBlendNode(
         if (debounce.compareAndSet(0, 1)) {
             scope.launch {
                 do {
-                    val elapsedRealtime = SystemClock.elapsedRealtime()
                     val delay = max(
                         0,
-                        frameDuration - (elapsedRealtime - lastExecutionTime)
+                        frameDuration - (SystemClock.elapsedRealtime() - lastExecutionTime)
                     )
                     delay(delay)
-                    lastExecutionTime = elapsedRealtime
+                    lastExecutionTime = SystemClock.elapsedRealtime()
                     execute()
                 } while (debounce.compareAndSet(2, 1))
                 // TODO: use compareAndSet(1, 0)

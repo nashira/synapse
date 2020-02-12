@@ -208,19 +208,24 @@ class Executor @Inject constructor(
         if (!source.port.output) {
             return
         }
+        val data = mutableListOf<Pair<Node, Link>>()
+        var sourceNode = source.node
 
-        val cropNode = NewNode(NodeType.CropResize, network.id)
-        network.addNode(cropNode)
-        val se = Link(source.node.id, source.port.id, cropNode.id, CropResizeNode.INPUT.id)
-        network.addLinkNoCompute(se)
+        if (source.port.type == Port.Type.Video) {
+            val cropNode = NewNode(NodeType.CropResize, network.id)
+            sourceNode = cropNode
+            network.addNode(cropNode)
+            val se = Link(source.node.id, source.port.id, cropNode.id, CropResizeNode.INPUT.id)
+            network.addLinkNoCompute(se)
+            data += Pair(cropNode, se)
+        }
 
-        val data = mutableListOf(Pair(cropNode, se))
         targets.forEach {
             val target = it.node
             Log.d(TAG, "adding node ${target.type} ${target.id} ${it.port.id}")
             network.addNode(target)
             Log.d(TAG, "added node ${target.type} ${target.id} ${it.port.id}")
-            val link = Link(cropNode.id, CropResizeNode.OUTPUT.id, target.id, it.port.id)
+            val link = Link(sourceNode.id, CropResizeNode.OUTPUT.id, target.id, it.port.id)
             network.addLinkNoCompute(link)
             data.add(target to link)
 

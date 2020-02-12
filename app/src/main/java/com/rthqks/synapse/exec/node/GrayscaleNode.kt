@@ -59,7 +59,7 @@ class GrayscaleNode(
                 texture.initData(0, GL_R8, size.width, size.height, GL_RED, GL_UNSIGNED_BYTE)
                 Log.d(TAG, "glGetError() ${glGetError()}")
                 framebuffer1 = Framebuffer().also {
-                    it.initialize(texture.id)
+                    it.initialize(texture)
                 }
             }
 
@@ -68,7 +68,7 @@ class GrayscaleNode(
                 texture.initData(0, GL_R8, size.width, size.height, GL_RED, GL_UNSIGNED_BYTE)
                 Log.d(TAG, "glGetError() ${glGetError()}")
                 framebuffer2 = Framebuffer().also {
-                    it.initialize(texture.id)
+                    it.initialize(texture)
                 }
             }
 

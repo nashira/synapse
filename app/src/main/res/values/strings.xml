@@ -168,4 +168,6 @@
     <string name="property_label_camera_capture_size_320">320x320</string>
     <string name="name_node_type_shape">Shape</string>
     <string name="property_name_output_video_size">Output Video Size</string>
+    <string name="name_node_type_ring_buffer">Ring Buffer</string>
+    <string name="property_name_history_size">Number of Layers</string>
 </resources>

@@ -13,6 +13,7 @@ val AudioChannel = Property.Key<Int>("audio_channel")
 val AudioSource = Property.Key<Int>("audio_source")
 val CameraFacing = Property.Key<Int>("camera_facing")
 val VideoSize = Property.Key<Size>("video_size")
+val HistorySize = Property.Key<Int>("history_size")
 val FrameRate = Property.Key<Int>("frame_rate")
 val BlurSize = Property.Key<Int>("blur_size")
 val NumPasses = Property.Key<Int>("num_passes")
@@ -155,11 +156,6 @@ val Nodes = listOf(
                 ), 0.9f
             ), FloatConverter
         )
-    },
-    Node(NodeType.OverlayFilter).apply {
-        add(Port(Port.Type.Video, "video_1", "Content", false))
-        add(Port(Port.Type.Video, "video_2", "Mask", false))
-        add(Port(Port.Type.Video, "video_3", "Combined", true))
     },
     Node(NodeType.BlurFilter).apply {
         add(Port(Port.Type.Video, "video_1", "Source", false))
@@ -446,7 +442,7 @@ val Nodes = listOf(
         )
     },
     Node(NodeType.Shape).apply {
-        add(Port(Port.Type.Video, ShapeNode.INPUT_POS.id, "Positions", false))
+//        add(Port(Port.Type.Video, ShapeNode.INPUT_POS.id, "Positions", false))
         add(Port(Port.Type.Video, ShapeNode.OUTPUT.id, "Output", true))
         add(
             Property(
@@ -460,6 +456,34 @@ val Nodes = listOf(
                     Choice(30, R.string.property_label_camera_fps_30),
                     Choice(60, R.string.property_label_camera_fps_60)
                 ), 30, false
+            ), IntConverter
+        )
+        add(
+            Property(
+                VideoSize,
+                ChoiceType(
+                    R.string.property_name_output_video_size,
+                    R.drawable.ic_photo_size_select,
+                    Choice(Size(2160, 3840), R.string.property_label_camera_capture_size_2160),
+                    Choice(Size(1080, 1920), R.string.property_label_camera_capture_size_1080),
+                    Choice(Size(720, 1280), R.string.property_label_camera_capture_size_720),
+                    Choice(Size(1024, 1024), R.string.property_label_camera_capture_size_1024sq),
+                    Choice(Size(480, 640), R.string.property_label_camera_capture_size_480)
+                ), Size(720, 1280), true
+            ), SizeConverter
+        )
+    },
+    Node(NodeType.RingBuffer).apply {
+        add(Port(Port.Type.Video, RingBufferNode.INPUT.id, "Input", false))
+        add(Port(Port.Type.Texture3D, RingBufferNode.OUTPUT.id, "Output", true))
+        add(
+            Property(
+                HistorySize,
+                RangeType(
+                    R.string.property_name_history_size,
+                    R.drawable.ic_layers,
+                    1..30
+                ), 10, true
             ), IntConverter
         )
         add(
@@ -491,7 +515,6 @@ val NodeTypes = listOf(
     NodeType.FrameDifference,
     NodeType.GrayscaleFilter,
     NodeType.MultiplyAccumulate,
-    NodeType.OverlayFilter,
     NodeType.BlurFilter,
     NodeType.Image,
     NodeType.CubeImport,
@@ -505,6 +528,7 @@ val NodeTypes = listOf(
     NodeType.ImageBlend,
     NodeType.CropResize,
     NodeType.Shape,
+    NodeType.RingBuffer,
     NodeType.Properties,
     NodeType.Creation,
     NodeType.Connection

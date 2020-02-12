@@ -83,8 +83,8 @@ class MacNode(
             )
             Log.d(TAG, "3 glGetError() ${glGetError()}")
 
-            framebuffer1.initialize(texture1.id)
-            framebuffer2.initialize(texture2.id)
+            framebuffer1.initialize(texture1)
+            framebuffer2.initialize(texture2)
         }
     }
 

@@ -8,6 +8,7 @@ import com.rthqks.synapse.assets.AssetManager
 import com.rthqks.synapse.exec.NodeExecutor
 import com.rthqks.synapse.exec.link.*
 import com.rthqks.synapse.gl.*
+import com.rthqks.synapse.logic.HistorySize
 import com.rthqks.synapse.logic.Properties
 import com.rthqks.synapse.logic.VideoSize
 import kotlinx.coroutines.Job
@@ -15,7 +16,7 @@ import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 
-class CropResizeNode(
+class RingBufferNode(
     private val assetManager: AssetManager,
     private val glesManager: GlesManager,
     private val properties: Properties
@@ -23,25 +24,25 @@ class CropResizeNode(
     private var outScaleX: Float = 1f
     private var outScaleY: Float = 1f
     private var startJob: Job? = null
-    private val outputSize = properties[VideoSize]
+    private var outputSize = properties[VideoSize]
+    private val depth: Int get() = properties[HistorySize]
     private var inputSize = Size(0, 0)
     private var outputConfig = DEFAULT_CONFIG
 
-    private val texture1 = Texture2d()
-    private val texture2 = Texture2d()
-    private val framebuffer1 = Framebuffer()
-    private val framebuffer2 = Framebuffer()
+    private val texture = Texture3d()
+    private var currentLevel = 0
+    private val framebuffers = List(depth) { Framebuffer() }
 
     private val program = Program()
     private val quadMesh = Quad()
 
     private var frameCount = 0
 
-    private val config: VideoConfig by lazy {
-        VideoConfig(
-            GLES30.GL_TEXTURE_2D,
+    private val config: Texture3dConfig by lazy {
+        Texture3dConfig(
             outputSize.width,
             outputSize.height,
+            depth,
             outputConfig.internalFormat,
             outputConfig.format,
             outputConfig.type
@@ -53,8 +54,15 @@ class CropResizeNode(
         return when (key) {
             OUTPUT -> {
                 if (linked(INPUT)) {
-                    outputConfig = configAsync(INPUT).await()
-                    inputSize = outputConfig.size
+                    val inputConfig = configAsync(INPUT).await()
+                    outputSize = inputConfig.size
+                    outputConfig = Texture3dConfig(
+                        0, 0, 0,
+                        inputConfig.internalFormat,
+                        inputConfig.format,
+                        inputConfig.type
+                    )
+                    inputSize = inputConfig.size
                 }
                 Log.d(TAG, "after output $outputSize")
                 config as C
@@ -70,7 +78,7 @@ class CropResizeNode(
         val input = connection(INPUT)
         val output = connection(OUTPUT)
 
-        output?.prime(VideoEvent(texture1), VideoEvent(texture2))
+        output?.prime(Texture3dEvent(texture), Texture3dEvent(texture))
 
         val inAspect = inputSize.width / inputSize.height.toFloat()
         val outAspect = outputSize.width / outputSize.height.toFloat()
@@ -79,8 +87,20 @@ class CropResizeNode(
         outScaleY = if (inAspect < outAspect) inAspect / outAspect else 1f
 
         glesManager.glContext {
-            initRenderTarget(framebuffer1, texture1, config)
-            initRenderTarget(framebuffer2, texture2, config)
+            texture.initialize()
+            texture.initData(
+                0,
+                config.internalFormat,
+                outputSize.width,
+                outputSize.height,
+                depth,
+                config.format,
+                config.type
+            )
+            framebuffers.forEachIndexed { index, framebuffer ->
+                framebuffer.initialize(texture, index)
+                Log.d(TAG, "glGetError() ${GLES30.glGetError()}")
+            }
 
             val vertex = assetManager.readTextAsset("shader/crop_resize.vert")
             val frag = assetManager.readTextAsset("shader/crop_resize.frag").let {
@@ -107,24 +127,6 @@ class CropResizeNode(
                 )
             }
         }
-    }
-
-    private fun initRenderTarget(
-        framebuffer: Framebuffer,
-        texture: Texture2d,
-        config: VideoConfig
-    ) {
-        texture.initialize()
-        texture.initData(
-            0,
-            config.internalFormat,
-            config.width,
-            config.height,
-            config.format,
-            config.type
-        )
-        Log.d(TAG, "glGetError() ${GLES30.glGetError()}")
-        framebuffer.initialize(texture)
     }
 
     override suspend fun start() = coroutineScope {
@@ -171,10 +173,8 @@ class CropResizeNode(
     }
 
     override suspend fun release() {
-        texture1.release()
-        texture2.release()
-        framebuffer1.release()
-        framebuffer2.release()
+        texture.release()
+        framebuffers.forEach { it.release() }
         quadMesh.release()
         program.release()
     }
@@ -183,11 +183,8 @@ class CropResizeNode(
         val output = channel(OUTPUT) ?: return
         val outEvent = output.receive()
 
-        val framebuffer = if (outEvent.texture == texture1) {
-            framebuffer1
-        } else {
-            framebuffer2
-        }
+        val framebuffer = framebuffers[currentLevel]
+        currentLevel = (currentLevel + 1) % framebuffers.size
 
         glesManager.glContext {
             GLES30.glUseProgram(program.programId)
@@ -203,16 +200,17 @@ class CropResizeNode(
         outEvent.let {
             it.count = frameCount
             it.eos = false
+            it.index = currentLevel
             output.send(it)
         }
     }
 
     companion object {
-        const val TAG = "CropResizeNode"
+        const val TAG = "RingBufferNode"
         const val INPUT_TEXTURE_LOCATION = 0
         val INPUT = Connection.Key<VideoConfig, VideoEvent>("input")
-        val OUTPUT = Connection.Key<VideoConfig, VideoEvent>("output")
-        val DEFAULT_CONFIG = VideoConfig(
+        val OUTPUT = Connection.Key<Texture3dConfig, Texture3dEvent>("output")
+        val DEFAULT_CONFIG = Texture3dConfig(
             0, 0, 0, GLES30.GL_RGB8, GLES30.GL_RGB, GLES30.GL_UNSIGNED_BYTE
         )
     }

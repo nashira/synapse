@@ -92,8 +92,8 @@ class FrameDifferenceNode(
             )
             Log.d(TAG, "3 glGetError() ${glGetError()}")
 
-            framebuffer1.initialize(lastFrameTexture1.id, diffTexture1.id)
-            framebuffer2.initialize(lastFrameTexture2.id, diffTexture2.id)
+            framebuffer1.initialize(lastFrameTexture1, diffTexture1)
+            framebuffer2.initialize(lastFrameTexture2, diffTexture2)
         }
     }
 

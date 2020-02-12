@@ -58,12 +58,6 @@ sealed class NodeType(
         R.drawable.ic_add
     )
 
-    object OverlayFilter : NodeType(
-        "overlay",
-        R.string.name_node_type_overlay_filter,
-        R.drawable.ic_layers
-    )
-
     object BlurFilter : NodeType(
         "blur",
         R.string.name_node_type_blur_filter,
@@ -158,5 +152,11 @@ sealed class NodeType(
         R.string.name_node_type_shape,
         R.drawable.ic_change_history,
         FLAG_PRODUCER
+    )
+
+    object RingBuffer : NodeType(
+        "ring_buffer",
+        R.string.name_node_type_ring_buffer,
+        R.drawable.ic_layers
     )
 }

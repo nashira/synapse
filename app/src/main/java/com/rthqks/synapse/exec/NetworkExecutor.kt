@@ -99,7 +99,6 @@ class NetworkExecutor(
             NodeType.GrayscaleFilter -> GrayscaleNode(glesManager, assetManager, node.properties)
             NodeType.BlurFilter -> BlurNode(glesManager, assetManager, node.properties)
             NodeType.MultiplyAccumulate -> MacNode(glesManager, assetManager, node.properties)
-            NodeType.OverlayFilter -> OverlayFilterNode(glesManager, assetManager)
             NodeType.Microphone -> AudioSourceNode(node.properties)
             NodeType.Image -> ImageSourceNode(context, glesManager, node.properties)
             NodeType.CubeImport -> CubeImportNode(context, glesManager, node.properties)
@@ -114,6 +113,7 @@ class NetworkExecutor(
             NodeType.ImageBlend -> ImageBlendNode(assetManager, glesManager, node.properties)
             NodeType.CropResize -> CropResizeNode(assetManager, glesManager, node.properties)
             NodeType.Shape -> ShapeNode(assetManager, glesManager, node.properties)
+            NodeType.RingBuffer -> RingBufferNode(assetManager, glesManager, node.properties)
             NodeType.Properties,
             NodeType.Creation,
             NodeType.Connection -> error("not an executable node type: ${node.type}")

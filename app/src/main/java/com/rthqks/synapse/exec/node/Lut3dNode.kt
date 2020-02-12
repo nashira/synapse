@@ -134,7 +134,7 @@ class Lut3dNode(
             config.type
         )
         Log.d(TAG, "glGetError() ${GLES30.glGetError()}")
-        framebuffer.initialize(texture.id)
+        framebuffer.initialize(texture)
     }
 
     override suspend fun start() = coroutineScope {
@@ -197,6 +197,7 @@ class Lut3dNode(
             it.eos = true
             output.send(it)
         }
+        Log.d(TAG, "sent $frameCount")
     }
 
     override suspend fun release() {
@@ -244,23 +245,21 @@ class Lut3dNode(
         if (debounce.compareAndSet(0, 1)) {
             scope.launch {
                 do {
-                    val elapsedRealtime = SystemClock.elapsedRealtime()
                     val delay = max(
                         0,
-                        frameDuration - (elapsedRealtime - lastExecutionTime)
+                        frameDuration - (SystemClock.elapsedRealtime() - lastExecutionTime)
                     )
                     delay(delay)
-                    lastExecutionTime = elapsedRealtime
+                    lastExecutionTime = SystemClock.elapsedRealtime()
                     execute()
                 } while (debounce.compareAndSet(2, 1))
                 // TODO: use compareAndSet(1, 0)
                 if (!debounce.compareAndSet(1, 0)) {
-                    Log.w(TAG, "expected 1, got ${debounce.get()}")
+                    Log.w(TAG, "expected 1, 0 got ${debounce.get()}")
                 }
             }
-        } else {
-            // TODO: use compareAndSet
-            debounce.set(2)
+        } else if (!debounce.compareAndSet(1, 2)) {
+//            Log.w(TAG, "expected 1, 2 got ${debounce.get()}")
         }
     }
 

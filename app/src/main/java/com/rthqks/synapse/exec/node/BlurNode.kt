@@ -74,7 +74,7 @@ class BlurNode(
                 )
                 Log.d(TAG, "glGetError() ${glGetError()}")
 
-                framebuffer3.initialize(texture3.id)
+                framebuffer3.initialize(texture3)
             }
 
             initializeProgram(program1, texture1, framebuffer1, config.isOes)
@@ -131,7 +131,7 @@ class BlurNode(
             )
             Log.d(TAG, "glGetError() ${glGetError()}")
 
-            framebuffer.initialize(texture.id)
+            framebuffer.initialize(texture)
 
             program.apply {
                 initialize(vertexSource, fragmentSource)
