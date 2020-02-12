@@ -170,4 +170,6 @@
     <string name="property_name_output_video_size">Output Video Size</string>
     <string name="name_node_type_ring_buffer">Ring Buffer</string>
     <string name="property_name_history_size">Number of Layers</string>
+    <string name="property_name_slice_depth">Slice Depth</string>
+    <string name="name_node_type_slice_3d">2D Slice of 3D Texture</string>
 </resources>

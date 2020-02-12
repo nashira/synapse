@@ -114,6 +114,7 @@ class NetworkExecutor(
             NodeType.CropResize -> CropResizeNode(assetManager, glesManager, node.properties)
             NodeType.Shape -> ShapeNode(assetManager, glesManager, node.properties)
             NodeType.RingBuffer -> RingBufferNode(assetManager, glesManager, node.properties)
+            NodeType.Slice3d -> Slice3dNode(assetManager, glesManager, node.properties)
             NodeType.Properties,
             NodeType.Creation,
             NodeType.Connection -> error("not an executable node type: ${node.type}")

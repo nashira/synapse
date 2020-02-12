@@ -138,7 +138,8 @@ sealed class NodeType(
     object CubeImport : NodeType(
         "cube_import",
         R.string.name_node_type_cube_importer,
-        R.drawable.ic_3d_rotation
+        R.drawable.ic_3d_rotation,
+        FLAG_PRODUCER
     )
 
     object CropResize : NodeType(
@@ -157,6 +158,12 @@ sealed class NodeType(
     object RingBuffer : NodeType(
         "ring_buffer",
         R.string.name_node_type_ring_buffer,
+        R.drawable.ic_layers
+    )
+
+    object Slice3d : NodeType(
+        "slice_3d",
+        R.string.name_node_type_slice_3d,
         R.drawable.ic_layers
     )
 }

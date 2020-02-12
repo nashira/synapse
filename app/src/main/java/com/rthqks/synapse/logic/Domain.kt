@@ -31,6 +31,7 @@ val SensorAngle = Property.Key<Float>("sensor_angle")
 val SensorDistance = Property.Key<Float>("sensor_distance")
 val TravelAngle = Property.Key<Float>("travel_angle")
 val TravelDistance = Property.Key<Float>("travel_distance")
+val SliceDepth = Property.Key<Float>("slice_depth")
 
 val Nodes = listOf(
     Node(NodeType.Camera).apply {
@@ -482,7 +483,7 @@ val Nodes = listOf(
                 RangeType(
                     R.string.property_name_history_size,
                     R.drawable.ic_layers,
-                    1..30
+                    1..60
                 ), 10, true
             ), IntConverter
         )
@@ -499,6 +500,30 @@ val Nodes = listOf(
                     Choice(Size(480, 640), R.string.property_label_camera_capture_size_480)
                 ), Size(720, 1280), true
             ), SizeConverter
+        )
+    },
+    Node(NodeType.Slice3d).apply {
+        add(Port(Port.Type.Texture3D, Slice3dNode.INPUT_3D.id, "Input", false))
+        add(Port(Port.Type.Video, Slice3dNode.OUTPUT.id, "Output", true))
+        add(
+            Property(
+                SliceDepth,
+                RangeType(
+                    R.string.property_name_slice_depth,
+                    R.drawable.ic_layers,
+                    0f..1f
+                ), 0f, false
+            ), FloatConverter
+        )
+        add(
+            Property(
+                FrameRate,
+                RangeType(
+                    R.string.property_name_frame_rate,
+                    R.drawable.ic_speed,
+                    10..60
+                ), 30, false
+            ), IntConverter
         )
     },
     Node(NodeType.Properties).also { it.id = -2 },
@@ -529,6 +554,7 @@ val NodeTypes = listOf(
     NodeType.CropResize,
     NodeType.Shape,
     NodeType.RingBuffer,
+    NodeType.Slice3d,
     NodeType.Properties,
     NodeType.Creation,
     NodeType.Connection

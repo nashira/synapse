@@ -187,6 +187,7 @@ class Network(
         result.forEach {
             val component = mutableListOf<Pair<Int, String>>()
             components.add(component)
+            Log.d(TAG, "node ${it.first} ${nodes[it.first]} ${it.second}")
             val output = nodes[it.first]!!.getPort(it.second).output
             if (!output && it !in mark) {
                 mark.add(it)

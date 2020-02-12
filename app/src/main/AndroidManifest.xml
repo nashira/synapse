@@ -24,7 +24,10 @@
 
         <activity android:name="com.rthqks.synapse.ui.browse.NetworkListActivity" />
 
-        <activity android:name="com.rthqks.synapse.ui.exec.NetworkActivity" />
+        <activity
+            android:name="com.rthqks.synapse.ui.exec.NetworkActivity"
+            android:screenOrientation="portrait" />
+
         <activity
             android:name="com.rthqks.synapse.ui.build.BuilderActivity"
             android:screenOrientation="portrait" />
