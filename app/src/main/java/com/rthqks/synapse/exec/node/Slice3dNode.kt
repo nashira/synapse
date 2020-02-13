@@ -251,7 +251,7 @@ class Slice3dNode(
     }
 
     private suspend fun debounceExecute(scope: CoroutineScope) {
-        if (debounce.getAndSet(true)) {
+        if (!debounce.getAndSet(true)) {
             scope.launch {
                 while (debounce.getAndSet(false)) {
                     val delay = max(
