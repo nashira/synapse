@@ -10,6 +10,7 @@ import com.rthqks.synapse.gl.*
 import com.rthqks.synapse.logic.*
 import kotlinx.coroutines.*
 import kotlinx.coroutines.selects.whileSelect
+import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicInteger
 import kotlin.math.max
 
@@ -35,7 +36,7 @@ class ImageBlendNode(
     private var baseEvent: VideoEvent? = null
     private var blendEvent: VideoEvent? = null
 
-    private val debounce = AtomicInteger()
+    private val debounce = AtomicBoolean()
     private var frameCount = 0
     private var lastExecutionTime = 0L
 
@@ -266,9 +267,9 @@ class ImageBlendNode(
     }
 
     private suspend fun debounceExecute(scope: CoroutineScope) {
-        if (debounce.compareAndSet(0, 1)) {
+        if (debounce.getAndSet(true)) {
             scope.launch {
-                do {
+                while (debounce.getAndSet(false)) {
                     val delay = max(
                         0,
                         frameDuration - (SystemClock.elapsedRealtime() - lastExecutionTime)
@@ -276,13 +277,8 @@ class ImageBlendNode(
                     delay(delay)
                     lastExecutionTime = SystemClock.elapsedRealtime()
                     execute()
-                } while (debounce.compareAndSet(2, 1))
-                // TODO: use compareAndSet(1, 0)
-                debounce.set(0)
+                }
             }
-        } else {
-            // TODO: use compareAndSet
-            debounce.set(2)
         }
     }
 

@@ -14,6 +14,7 @@ import com.rthqks.synapse.logic.Properties
 import com.rthqks.synapse.logic.VideoSize
 import kotlinx.coroutines.*
 import kotlinx.coroutines.selects.whileSelect
+import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicInteger
 import kotlin.math.max
 
@@ -40,7 +41,7 @@ class ShapeNode(
 
     private var inputEvent: VideoEvent? = null
 
-    private val debounce = AtomicInteger()
+    private val debounce = AtomicBoolean()
     private var running = AtomicInteger()
     private var frameCount = 0
     private var lastExecutionTime = 0L
@@ -244,9 +245,9 @@ class ShapeNode(
     }
 
     private suspend fun debounceExecute(scope: CoroutineScope) {
-        if (debounce.compareAndSet(0, 1)) {
+        if (debounce.getAndSet(true)) {
             scope.launch {
-                do {
+                while (debounce.getAndSet(false)) {
                     val delay = max(
                         0,
                         frameDuration - (SystemClock.elapsedRealtime() - lastExecutionTime)
@@ -254,13 +255,8 @@ class ShapeNode(
                     delay(delay)
                     lastExecutionTime = SystemClock.elapsedRealtime()
                     execute()
-                } while (debounce.compareAndSet(2, 1))
-                // TODO: use compareAndSet(1, 0)
-                debounce.set(0)
+                }
             }
-        } else {
-            // TODO: use compareAndSet
-            debounce.set(2)
         }
     }
 

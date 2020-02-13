@@ -487,7 +487,7 @@ val Nodes = listOf(
                 ), 10, true
             ), IntConverter
         )
-        add(
+            add(
             Property(
                 VideoSize,
                 ChoiceType(
