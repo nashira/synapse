@@ -2,20 +2,23 @@ package com.rthqks.synapse.polish
 
 import android.Manifest
 import android.content.Context
-import android.content.Intent
 import android.content.SharedPreferences
 import android.content.pm.PackageManager
 import android.os.Bundle
 import android.util.Log
+import android.view.View
+import android.widget.Toast
 import androidx.core.content.edit
+import com.google.android.material.bottomsheet.BottomSheetBehavior
 import com.rthqks.synapse.R
 import dagger.android.support.DaggerAppCompatActivity
+import kotlinx.android.synthetic.polish.activity_polish.*
 
 class PolishActivity : DaggerAppCompatActivity() {
     private lateinit var preferences: SharedPreferences
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_splash)
+        setContentView(R.layout.activity_polish)
 
         preferences = getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE)
 
@@ -33,7 +36,7 @@ class PolishActivity : DaggerAppCompatActivity() {
         }
 
         if (finishedIntro) {
-            quit()
+            onReady()
             return
         } else {
             showIntro()
@@ -44,12 +47,17 @@ class PolishActivity : DaggerAppCompatActivity() {
         preferences.edit {
             putBoolean(FINISHED_INTRO, true)
         }
-        quit()
+        onReady()
     }
 
-    private fun quit() {
-//        startActivity(Intent(this, NetworkListActivity::class.java))
-        finish()
+    private fun onReady() {
+        val behavior = BottomSheetBehavior.from(layout_colors)
+        behavior.state = BottomSheetBehavior.STATE_HIDDEN
+
+        layout_colors
+        button_color.setOnClickListener {
+            behavior.state = BottomSheetBehavior.STATE_HALF_EXPANDED
+        }
     }
 
     private fun checkPermissions(): List<Permission> {
@@ -68,12 +76,26 @@ class PolishActivity : DaggerAppCompatActivity() {
         grantResults: IntArray
     ) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
-        quit()
-//        val perms = checkPermissions()
-//        val neededPermissions = perms.filter { it.second }.map { it.first }
-//        if (neededPermissions.isNotEmpty()) {
-//            finish()
-//        }
+        val perms = checkPermissions()
+        val neededPermissions = perms.filter { !it.granted }
+        if (neededPermissions.isEmpty()) {
+            onReady()
+        } else {
+            Toast.makeText(this, "NEED PERMS", Toast.LENGTH_LONG).show()
+        }
+    }
+
+    override fun onWindowFocusChanged(hasFocus: Boolean) {
+        super.onWindowFocusChanged(hasFocus)
+        if (hasFocus) hideSystemUI()
+    }
+
+    private fun hideSystemUI() {
+        window.decorView.systemUiVisibility =
+            (View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY
+                    or View.SYSTEM_UI_FLAG_LAYOUT_STABLE
+                    or View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
+                    or View.SYSTEM_UI_FLAG_FULLSCREEN)
     }
 
     companion object {
