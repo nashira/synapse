@@ -42,10 +42,23 @@ android {
             versionNameSuffix "-debug"
         }
     }
+    flavorDimensions "product"
+    productFlavors {
+        synapse {
+            applicationIdSuffix ".next"
+            dimension "product"
+            versionNameSuffix "-synapse"
+        }
+        polish {
+            dimension "product"
+            versionNameSuffix "-polish"
+        }
+    }
     compileOptions {
         sourceCompatibility = '1.8'
         targetCompatibility = '1.8'
     }
+    kotlinOptions { jvmTarget = "1.8" }
     testOptions {
         unitTests.returnDefaultValues = true
     }
@@ -58,10 +71,10 @@ dependencies {
     implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-android:1.3.0'
 
     // support lib
-    implementation 'com.google.android.material:material:1.0.0'
+    implementation 'com.google.android.material:material:1.1.0'
     implementation 'androidx.appcompat:appcompat:1.1.0'
-    implementation 'androidx.core:core-ktx:1.1.0'
-    implementation 'androidx.fragment:fragment-ktx:1.2.0'
+    implementation 'androidx.core:core-ktx:1.2.0'
+    implementation 'androidx.fragment:fragment-ktx:1.2.1'
     implementation 'androidx.constraintlayout:constraintlayout:1.1.3'
     implementation "androidx.viewpager2:viewpager2:1.0.0"
     implementation "androidx.exifinterface:exifinterface:1.1.0"
@@ -76,10 +89,10 @@ dependencies {
     implementation "androidx.lifecycle:lifecycle-viewmodel-ktx:$lifecycle_version"
 
     // dagger
-    implementation 'com.google.dagger:dagger:2.21'
-    implementation 'com.google.dagger:dagger-android-support:2.15'
-    kapt 'com.google.dagger:dagger-compiler:2.15'
-    kapt 'com.google.dagger:dagger-android-processor:2.16'
+    implementation 'com.google.dagger:dagger:2.26'
+    implementation 'com.google.dagger:dagger-android-support:2.26'
+    kapt 'com.google.dagger:dagger-compiler:2.26'
+    kapt 'com.google.dagger:dagger-android-processor:2.26'
 
     // room
     def room_version = "2.2.3"
@@ -93,7 +106,7 @@ dependencies {
     // stetho
     debugImplementation 'com.facebook.stetho:stetho:1.5.1'
 
-    testImplementation 'junit:junit:4.12'
+    testImplementation 'junit:junit:4.13'
     androidTestImplementation 'androidx.test:runner:1.2.0'
     androidTestImplementation 'androidx.test.espresso:espresso-core:3.2.0'
 }

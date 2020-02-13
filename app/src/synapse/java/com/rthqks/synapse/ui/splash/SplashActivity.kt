@@ -78,7 +78,7 @@ class SplashActivity : DaggerAppCompatActivity() {
     }
 
     companion object {
-        const val TAG = "SplashActivity"
+        const val TAG = "com.rthqks.synapse.polish.SplashActivity"
         const val PREF_NAME = "intro"
         const val FINISHED_INTRO = "finished_intro"
         val PERMISSIONS = listOf(
