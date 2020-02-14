@@ -15,8 +15,8 @@ import com.rthqks.synapse.logic.GetNode
 import com.rthqks.synapse.logic.Node
 import com.rthqks.synapse.logic.NodeType
 import dagger.android.support.DaggerFragment
-import kotlinx.android.synthetic.main.fragment_network.*
-import kotlinx.android.synthetic.main.layout_node_item.view.*
+import kotlinx.android.synthetic.synapse.fragment_network.*
+import kotlinx.android.synthetic.synapse.layout_node_item.view.*
 import javax.inject.Inject
 import kotlin.math.max
 

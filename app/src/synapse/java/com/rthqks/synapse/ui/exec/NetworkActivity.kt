@@ -12,7 +12,7 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.ViewModelProviders
 import com.rthqks.synapse.R
 import dagger.android.support.DaggerAppCompatActivity
-import kotlinx.android.synthetic.main.activity_exec_network.*
+import kotlinx.android.synthetic.synapse.activity_exec_network.*
 import javax.inject.Inject
 
 class NetworkActivity : DaggerAppCompatActivity() {

@@ -19,8 +19,8 @@ import com.rthqks.synapse.logic.Connector
 import com.rthqks.synapse.logic.Network
 import com.rthqks.synapse.logic.NodeType
 import dagger.android.support.DaggerFragment
-import kotlinx.android.synthetic.main.fragment_connection.*
-import kotlinx.android.synthetic.main.layout_connection.view.*
+import kotlinx.android.synthetic.synapse.fragment_connection.*
+import kotlinx.android.synthetic.synapse.layout_connection.view.*
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 

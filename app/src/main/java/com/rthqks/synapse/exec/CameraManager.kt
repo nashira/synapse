@@ -54,6 +54,7 @@ class CameraManager(
         cameraId: String,
         surface: Surface,
         fps: Int,
+        stabilize: Boolean,
         channel: Channel<Event>
     ) {
         isEos = false
@@ -62,6 +63,12 @@ class CameraManager(
         val request = c.createCaptureRequest(CameraDevice.TEMPLATE_RECORD).also {
             it.addTarget(surface)
             it.set(CaptureRequest.CONTROL_AE_TARGET_FPS_RANGE, Range(fps, fps))
+            if (stabilize) {
+                it.set(
+                    CaptureRequest.CONTROL_VIDEO_STABILIZATION_MODE,
+                    CaptureRequest.CONTROL_VIDEO_STABILIZATION_MODE_ON
+                )
+            }
         }.build()
 
         startRequest(c, s, request, channel)
@@ -171,18 +178,19 @@ class CameraManager(
             }
         }, handler)
     }
+
     private fun nextEvent(): Event {
         eventIndex = (eventIndex + 1) % events.size
         return events[eventIndex]
     }
 
-    fun resolve(facing: Int, size: Size, frameRate: Int): Conf {
+    fun resolve(facing: Int, size: Size, frameRate: Int, stabilize: Boolean): Conf {
         val id = findCameraId(facing, frameRate)
         val characteristics = cameraMap[id]!!
         val orientation = characteristics[CameraCharacteristics.SENSOR_ORIENTATION] ?: 0
         val surfaceRotation = ORIENTATIONS[displayRotation] ?: 0
         val rotation = (surfaceRotation + orientation + 270) % 360
-        return Conf(id, size, frameRate, rotation)
+        return Conf(id, size, frameRate, rotation, stabilize)
     }
 
     companion object {
@@ -195,7 +203,13 @@ class CameraManager(
         )
     }
 
-    data class Conf(val id: String, val size: Size, val fps: Int, val rotation: Int)
+    data class Conf(
+        val id: String,
+        val size: Size,
+        val fps: Int,
+        val rotation: Int,
+        val stabilize: Boolean
+    )
 
     data class Event(
         var count: Int,

@@ -49,7 +49,7 @@
     <string name="property_label_camera_lens_facing_back">Back</string>
     <string name="property_label_camera_capture_size_1080">1080p</string>
     <string name="property_label_camera_capture_size_720">720p</string>
-    <string name="property_name_camera_capture_size">Camera capture size</string>
+    <string name="property_name_camera_capture_size">Capture Size</string>
     <string name="property_label_camera_fps_10">10 fps</string>
     <string name="property_label_camera_fps_15">15 fps</string>
     <string name="property_label_camera_fps_20">20 fps</string>
@@ -172,4 +172,9 @@
     <string name="property_name_history_size">Number of Layers</string>
     <string name="property_name_slice_depth">Slice Depth</string>
     <string name="name_node_type_slice_3d">2D Slice of 3D Texture</string>
+    <string name="title_camera_settings">Camera Settings</string>
+    <string name="property_label_on">On</string>
+    <string name="property_label_off">Off</string>
+    <string name="property_name_camera_stabilize">Stabilization</string>
+    <string name="done">Done</string>
 </resources>

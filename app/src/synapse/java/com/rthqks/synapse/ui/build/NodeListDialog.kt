@@ -15,7 +15,7 @@ import androidx.recyclerview.widget.RecyclerView
 import com.rthqks.synapse.R
 import com.rthqks.synapse.logic.Node
 import dagger.android.support.AndroidSupportInjection
-import kotlinx.android.synthetic.main.layout_node_list_item.view.*
+import kotlinx.android.synthetic.synapse.layout_node_list_item.view.*
 import javax.inject.Inject
 
 class NodeListDialog : DialogFragment() {

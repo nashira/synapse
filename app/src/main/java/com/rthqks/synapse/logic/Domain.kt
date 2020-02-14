@@ -15,6 +15,7 @@ val CameraFacing = Property.Key<Int>("camera_facing")
 val VideoSize = Property.Key<Size>("video_size")
 val HistorySize = Property.Key<Int>("history_size")
 val FrameRate = Property.Key<Int>("frame_rate")
+val Stabilize = Property.Key<Boolean>("stabilize")
 val BlurSize = Property.Key<Int>("blur_size")
 val NumPasses = Property.Key<Int>("num_passes")
 val ScaleFactor = Property.Key<Int>("scale_factor")
@@ -79,6 +80,16 @@ val Nodes = listOf(
                     Choice(Size(640, 480), R.string.property_label_camera_capture_size_480)
                 ), Size(1280, 720), true
             ), SizeConverter
+        )
+        add(
+            Property(
+                Stabilize,
+                ToggleType(
+                    R.string.property_name_camera_stabilize, R.drawable.ic_texture,
+                    R.string.property_label_on,
+                    R.string.property_label_off
+                ), value = true, requiresRestart = true
+            ), BooleanConverter
         )
     },
     Node(NodeType.Microphone).apply {

@@ -17,14 +17,14 @@ import androidx.recyclerview.widget.RecyclerView
 import com.rthqks.synapse.R
 import com.rthqks.synapse.logic.*
 import com.rthqks.synapse.ui.build.PropertyBinder.Companion.TAG
-import kotlinx.android.synthetic.main.layout_property.view.icon
-import kotlinx.android.synthetic.main.property_type_choice.view.*
-import kotlinx.android.synthetic.main.property_type_choice.view.title
-import kotlinx.android.synthetic.main.property_type_range.view.*
-import kotlinx.android.synthetic.main.property_type_text.view.*
-import kotlinx.android.synthetic.main.property_type_toggle.view.*
-import kotlinx.android.synthetic.main.property_type_uri.view.*
-import kotlinx.android.synthetic.main.property_type_uri.view.button
+import kotlinx.android.synthetic.synapse.layout_property.view.icon
+import kotlinx.android.synthetic.synapse.property_type_choice.view.*
+import kotlinx.android.synthetic.synapse.property_type_choice.view.title
+import kotlinx.android.synthetic.synapse.property_type_range.view.*
+import kotlinx.android.synthetic.synapse.property_type_text.view.*
+import kotlinx.android.synthetic.synapse.property_type_toggle.view.*
+import kotlinx.android.synthetic.synapse.property_type_uri.view.*
+import kotlinx.android.synthetic.synapse.property_type_uri.view.button
 import kotlin.math.roundToInt
 
 class PropertyBinder(

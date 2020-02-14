@@ -21,8 +21,8 @@ import com.rthqks.synapse.logic.Connector
 import com.rthqks.synapse.logic.Port
 import com.rthqks.synapse.ui.build.NetworkFragment.Companion.OPEN_DOC_REQUEST
 import dagger.android.support.DaggerFragment
-import kotlinx.android.synthetic.main.fragment_node.*
-import kotlinx.android.synthetic.main.layout_port_fragment_node.view.*
+import kotlinx.android.synthetic.synapse.fragment_node.*
+import kotlinx.android.synthetic.synapse.layout_port_fragment_node.view.*
 import javax.inject.Inject
 
 class NodeFragment : DaggerFragment() {

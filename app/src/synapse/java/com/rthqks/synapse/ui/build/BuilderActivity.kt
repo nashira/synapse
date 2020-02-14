@@ -17,7 +17,7 @@ import com.rthqks.synapse.logic.Node
 import com.rthqks.synapse.logic.NodeType
 import com.rthqks.synapse.ui.exec.NetworkActivity
 import dagger.android.support.DaggerAppCompatActivity
-import kotlinx.android.synthetic.main.activity_builder.*
+import kotlinx.android.synthetic.synapse.activity_builder.*
 import javax.inject.Inject
 
 class BuilderActivity : DaggerAppCompatActivity() {

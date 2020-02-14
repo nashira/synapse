@@ -43,6 +43,5 @@ class ConfirmDialog() : DialogFragment() {
                 listener?.invoke(true)
             }
         }.create()
-
     }
 }

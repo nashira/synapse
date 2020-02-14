@@ -15,8 +15,8 @@ import com.rthqks.synapse.logic.Network
 import com.rthqks.synapse.ui.build.BuilderActivity
 import com.rthqks.synapse.ui.exec.NetworkActivity
 import dagger.android.support.DaggerAppCompatActivity
-import kotlinx.android.synthetic.main.activity_network_list.*
-import kotlinx.android.synthetic.main.network_list_item.view.*
+import kotlinx.android.synthetic.synapse.activity_network_list.*
+import kotlinx.android.synthetic.synapse.network_list_item.view.*
 import javax.inject.Inject
 
 class NetworkListActivity : DaggerAppCompatActivity() {

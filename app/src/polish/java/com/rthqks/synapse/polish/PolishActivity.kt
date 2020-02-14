@@ -14,6 +14,7 @@ import android.widget.TextView
 import android.widget.Toast
 import androidx.core.content.edit
 import androidx.core.view.doOnLayout
+import androidx.lifecycle.ViewModelProvider
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.LinearSnapHelper
 import androidx.recyclerview.widget.RecyclerView
@@ -21,13 +22,19 @@ import com.google.android.material.bottomsheet.BottomSheetBehavior
 import com.rthqks.synapse.R
 import dagger.android.support.DaggerAppCompatActivity
 import kotlinx.android.synthetic.polish.activity_polish.*
+import javax.inject.Inject
 
 
 class PolishActivity : DaggerAppCompatActivity() {
+    @Inject
+    lateinit var viewModelFactory: ViewModelProvider.Factory
+    lateinit var viewModel: PolishViewModel
+
     private lateinit var preferences: SharedPreferences
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_polish)
+        viewModel = ViewModelProvider(this, viewModelFactory)[PolishViewModel::class.java]
 
         preferences = getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE)
 
@@ -64,24 +71,7 @@ class PolishActivity : DaggerAppCompatActivity() {
         behavior.state = BottomSheetBehavior.STATE_HIDDEN
         var recording = false
 
-        surface_view.holder.addCallback(object : SurfaceHolder.Callback {
-            override fun surfaceChanged(
-                holder: SurfaceHolder?,
-                format: Int,
-                width: Int,
-                height: Int
-            ) {
-                Log.d(TAG, "surfaceChanged $width $height")
-            }
-
-            override fun surfaceDestroyed(holder: SurfaceHolder?) {
-                Log.d(TAG, "surfaceDestroyed")
-            }
-
-            override fun surfaceCreated(holder: SurfaceHolder?) {
-                Log.d(TAG, "surfaceCreated")
-            }
-        })
+        viewModel.setSurfaceView(surface_view)
 
         button_color.setOnClickListener {
             Log.d(TAG, "show luts")
@@ -90,36 +80,41 @@ class PolishActivity : DaggerAppCompatActivity() {
 
         button_camera.setOnClickListener {
             Log.d(TAG, "flip camera")
+            viewModel.flipCamera()
         }
 
         button_record.setOnClickListener {
             recording = !recording
             if (recording) {
                 focusMode()
+                viewModel.startRecording()
             } else {
                 exploreMode()
+                viewModel.stopRecording()
             }
             Log.d(TAG, "recording $recording")
         }
 
         button_settings.setOnClickListener {
             Log.d(TAG, "show settings")
-
+            SettingsDialog().show(supportFragmentManager, "settings")
         }
 
         val snapHelper = LinearSnapHelper()
-
         val layoutManager = effect_list.layoutManager as LinearLayoutManager
         effect_list.adapter = EffectAdapter()
 
         effect_list.addOnScrollListener(object : RecyclerView.OnScrollListener() {
+            private var oldPos = -1
             override fun onScrollStateChanged(recyclerView: RecyclerView, newState: Int) {
-                when (newState) {
-                    RecyclerView.SCROLL_STATE_IDLE -> {
-                        val view = snapHelper.findSnapView(layoutManager)
-                        val pos = view?.let { effect_list.getChildAdapterPosition(it) }
-                        Log.d(TAG, "pos $pos")
-
+                if (newState == RecyclerView.SCROLL_STATE_IDLE) {
+                    val view = snapHelper.findSnapView(layoutManager)
+                    val pos = view?.let { effect_list.getChildAdapterPosition(it) } ?: 0
+                    if (oldPos != pos) {
+                        oldPos = pos
+                        val effect = Effect.values()[pos]
+                        viewModel.setEffect(effect)
+                        Log.d(TAG, "pos $pos $effect")
                     }
                 }
             }
@@ -136,7 +131,8 @@ class PolishActivity : DaggerAppCompatActivity() {
         listOf(
             button_camera,
             button_settings,
-            button_color
+            button_color,
+            effect_list
         ).forEach {
             it.animate()
                 .alpha(0f)
@@ -150,7 +146,8 @@ class PolishActivity : DaggerAppCompatActivity() {
         listOf(
             button_camera,
             button_settings,
-            button_color
+            button_color,
+            effect_list
         ).forEach {
             it.visibility = View.VISIBLE
             it.animate()
@@ -212,14 +209,19 @@ class PolishActivity : DaggerAppCompatActivity() {
 
 private data class Permission(val name: String, val granted: Boolean, val showRationale: Boolean)
 
+enum class Effect(
+    val title: String
+) {
+    None("none"),
+    TimeWarp("time warp"),
+    Sparkle("sparkle"),
+    Trip("trip"),
+    Topography("topography")
+}
+
 private class EffectAdapter : RecyclerView.Adapter<EffectViewHolder>() {
-    private val effects = listOf(
-        "none",
-        "time warp",
-        "sparkle",
-        "trip",
-        "topography"
-    )
+    private val effects = Effect.values()
+
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): EffectViewHolder {
         val view = LayoutInflater.from(parent.context)
             .inflate(R.layout.layout_effect, parent, false)
@@ -231,12 +233,7 @@ private class EffectAdapter : RecyclerView.Adapter<EffectViewHolder>() {
     }
 
     override fun onBindViewHolder(holder: EffectViewHolder, position: Int) {
-        when (position) {
-//            0 -> (holder.itemView as TextView).width = parentWidth / 2
-//            effects.size + 1 -> (holder.itemView as TextView).width = parentWidth / 2
-            else -> (holder.itemView as TextView).text = effects[position]
-        }
-
+        (holder.itemView as TextView).text = effects[position].title
     }
 }
 

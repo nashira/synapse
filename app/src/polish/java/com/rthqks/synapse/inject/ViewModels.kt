@@ -2,9 +2,11 @@ package com.rthqks.synapse.inject
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
+import com.rthqks.synapse.polish.PolishViewModel
 import dagger.Binds
 import dagger.MapKey
 import dagger.Module
+import dagger.multibindings.IntoMap
 import javax.inject.Inject
 import javax.inject.Provider
 import kotlin.reflect.KClass
@@ -35,18 +37,8 @@ abstract class ViewModels {
     @Binds
     internal abstract fun bindViewModelFactory(factory: ViewModelFactory): ViewModelProvider.Factory
 
-//    @Binds
-//    @IntoMap
-//    @ViewModelKey(NetworkListViewModel::class)
-//    internal abstract fun provideNetworkListViewModel(networkListViewModel: NetworkListViewModel): ViewModel
-//
-//    @Binds
-//    @IntoMap
-//    @ViewModelKey(NetworkViewModel::class)
-//    internal abstract fun provideExecNetworkViewModel(networkViewModel: NetworkViewModel): ViewModel
-//
-//    @Binds
-//    @IntoMap
-//    @ViewModelKey(BuilderViewModel::class)
-//    internal abstract fun provideBuilderViewModel(viewModel: BuilderViewModel): ViewModel
+    @Binds
+    @IntoMap
+    @ViewModelKey(PolishViewModel::class)
+    internal abstract fun providePolishViewModel(polishViewModel: PolishViewModel): ViewModel
 }
