@@ -20,7 +20,7 @@
     </com.google.android.material.appbar.AppBarLayout>
 
     <androidx.viewpager2.widget.ViewPager2
-        android:id="@+id/view_pager"
+        android:id="@+id/effect_list"
         android:layout_width="match_parent"
         android:layout_height="0dp"
         android:layout_weight="1" />
