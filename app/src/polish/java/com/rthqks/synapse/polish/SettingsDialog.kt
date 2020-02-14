@@ -36,13 +36,13 @@ class SettingsDialog() : DialogFragment() {
 
         view.size_720p.setOnCheckedChangeListener { buttonView, isChecked ->
             if (isChecked) {
-                viewModel.editProperty(VideoSize, Size(720, 1280))
+                viewModel.editProperty(VideoSize, Size(1280, 720))
             }
         }
 
         view.size_1080p.setOnCheckedChangeListener { buttonView, isChecked ->
             if (isChecked) {
-                viewModel.editProperty(VideoSize, Size(1080, 1920))
+                viewModel.editProperty(VideoSize, Size(1920, 1080))
             }
         }
 

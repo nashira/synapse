@@ -7,7 +7,6 @@ import android.content.pm.PackageManager
 import android.os.Bundle
 import android.util.Log
 import android.view.LayoutInflater
-import android.view.SurfaceHolder
 import android.view.View
 import android.view.ViewGroup
 import android.widget.TextView
@@ -185,6 +184,16 @@ class PolishActivity : DaggerAppCompatActivity() {
     override fun onWindowFocusChanged(hasFocus: Boolean) {
         super.onWindowFocusChanged(hasFocus)
         if (hasFocus) hideSystemUI()
+    }
+
+    override fun onResume() {
+        super.onResume()
+        viewModel.startExecution()
+    }
+
+    override fun onPause() {
+        super.onPause()
+        viewModel.stopExecution()
     }
 
     private fun hideSystemUI() {

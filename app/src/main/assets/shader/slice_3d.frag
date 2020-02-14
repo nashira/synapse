@@ -17,12 +17,13 @@ precision mediump sampler3D;
 
 uniform sampler3D t3d_texture;
 uniform float t3d_layer;
+uniform float t3d_depth;
 
 in vec2 uv;
 
 out vec4 color;
 
 void main() {
-    color = texture(t3d_texture, vec3(uv, fract(t3d_layer + uv.x)));
+    color = texture(t3d_texture, vec3(uv, fract(t3d_layer + uv.x * t3d_depth)));
 //    color = texture(t3d_texture, uv.xyx);
 }

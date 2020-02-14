@@ -1,15 +1,30 @@
 package com.rthqks.synapse.polish
 
+import android.content.Context
 import android.hardware.camera2.CameraCharacteristics
 import android.util.Log
 import android.util.Size
 import android.view.SurfaceView
+import android.widget.Toast
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
 import com.rthqks.synapse.R
+import com.rthqks.synapse.exec.Executor
 import com.rthqks.synapse.logic.*
+import kotlinx.coroutines.launch
 import javax.inject.Inject
 
-class PolishViewModel @Inject constructor() : ViewModel() {
+class PolishViewModel @Inject constructor(
+    private val executor: Executor,
+    private val context: Context
+) : ViewModel() {
+
+    init {
+        executor.initialize(false)
+    }
+
+
+    private var surfaceView: SurfaceView? = null
 
     private val properties = Properties().apply {
         put(
@@ -59,7 +74,7 @@ class PolishViewModel @Inject constructor() : ViewModel() {
     }
 
     fun setSurfaceView(surfaceView: SurfaceView?) {
-
+        this.surfaceView = surfaceView
     }
 
     fun flipCamera() {
@@ -69,6 +84,14 @@ class PolishViewModel @Inject constructor() : ViewModel() {
             CameraCharacteristics.LENS_FACING_FRONT -> properties[CameraFacing] =
                 CameraCharacteristics.LENS_FACING_BACK
         }
+    }
+
+    fun startExecution() {
+        executor.start()
+    }
+
+    fun stopExecution() {
+        executor.stop()
     }
 
     fun startRecording() {
@@ -85,11 +108,44 @@ class PolishViewModel @Inject constructor() : ViewModel() {
     }
 
     fun setEffect(effect: Effect) {
+        when (effect) {
+            Effect.None -> {
+                EffectNetworks.none.getNode(1)?.properties?.plusAssign(properties)
+                restartNetwork(EffectNetworks.none)
+            }
+            Effect.TimeWarp -> {
+                EffectNetworks.timeWarp.getNode(1)?.properties?.plusAssign(properties)
+                restartNetwork(EffectNetworks.timeWarp)
+            }
+            Effect.Sparkle,
+            Effect.Trip,
+            Effect.Topography -> {
+                Toast.makeText(context, "Coming Soon", Toast.LENGTH_LONG).show()
+            }
+        }
+    }
 
+    private fun restartNetwork(network: Network) {
+        viewModelScope.launch {
+            executor.stop()
+            executor.releaseNetwork()
+            executor.initializeNetwork(network)
+            surfaceView?.let { executor.setSurfaceView(it) }
+            executor.start()
+            executor.await()
+        }
+    }
+
+    override fun onCleared() {
+        Log.d(TAG, "onCleared")
+        Log.d(TAG, "release")
+        executor.releaseNetwork()
+        executor.release()
+        Log.d(TAG, "released")
+        super.onCleared()
     }
 
     companion object {
         const val TAG = "PolishViewModel"
     }
-
 }

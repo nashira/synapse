@@ -15,7 +15,6 @@ import com.rthqks.synapse.logic.VideoSize
 import kotlinx.coroutines.*
 import kotlinx.coroutines.selects.whileSelect
 import java.util.concurrent.atomic.AtomicBoolean
-import java.util.concurrent.atomic.AtomicInteger
 import kotlin.math.max
 
 class Slice3dNode(
@@ -118,6 +117,11 @@ class Slice3dNode(
                     Uniform.Type.Float,
                     T3D_LAYER,
                     0f
+                )
+                addUniform(
+                    Uniform.Type.Float,
+                    T3D_DEPTH,
+                    (outputConfig.depth - 1f) / outputConfig.depth
                 )
             }
         }
@@ -272,6 +276,7 @@ class Slice3dNode(
         const val LUT_TEXTURE_LOCATION = 0
         const val T3D_TEXTURE = "t3d_texture"
         const val T3D_LAYER = "t3d_layer"
+        const val T3D_DEPTH = "t3d_depth"
 //        val INPUT = Connection.Key<VideoConfig, VideoEvent>("input")
         val INPUT_3D = Connection.Key<Texture3dConfig, Texture3dEvent>("input_3d")
         val OUTPUT = Connection.Key<VideoConfig, VideoEvent>("output")

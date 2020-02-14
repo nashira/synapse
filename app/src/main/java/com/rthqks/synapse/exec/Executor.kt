@@ -46,6 +46,7 @@ class Executor @Inject constructor(
                         msg.portId,
                         msg.surfaceView
                     )
+                    is Operation.SetSurfaceViewNetwork -> doSetSurfaceViewNetwork(msg.surfaceView)
                     is Operation.Wait -> msg.deferred.complete(Unit)
                 }
             } ?: run {
@@ -103,10 +104,20 @@ class Executor @Inject constructor(
         }
     }
 
+    fun setSurfaceView(surfaceView: SurfaceView) {
+        runBlocking {
+            commandChannel.send(Operation.SetSurfaceViewNetwork(surfaceView))
+        }
+    }
+
     suspend fun await() {
         val deferred = CompletableDeferred<Unit>()
         commandChannel.send(Operation.Wait(deferred))
         deferred.await()
+    }
+
+    private suspend fun doSetSurfaceViewNetwork(surfaceView: SurfaceView) {
+        networkExecutor?.tmpSetSurfaceView(surfaceView)
     }
 
     private suspend fun doSetSurfaceView(nodeId: Int, portId: String?, surfaceView: SurfaceView) {
@@ -134,10 +145,6 @@ class Executor @Inject constructor(
             }
             firstPortId = null
         } while (nodes.isNotEmpty())
-    }
-
-    fun setSurfaceView(surfaceView: SurfaceView) {
-
     }
 
     private suspend fun doInitialize(preview: Boolean) {
@@ -264,7 +271,7 @@ class Executor @Inject constructor(
             val portId: String?,
             val surfaceView: SurfaceView
         ) : Operation()
-
+        class SetSurfaceViewNetwork(val surfaceView: SurfaceView): Operation()
         class Wait(val deferred: CompletableDeferred<Unit>) : Executor.Operation()
     }
 }

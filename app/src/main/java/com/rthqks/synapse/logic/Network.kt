@@ -38,12 +38,13 @@ class Network(
         )
     }
 
-    fun addNode(node: Node) {
+    fun addNode(node: Node): Node {
         if (node.id == -1) {
             node.id = ++maxNodeId
         }
         nodes[node.id] = node
         maxNodeId = max(maxNodeId, node.id)
+        return  node
     }
 
     fun nodeCount() = nodes.size
