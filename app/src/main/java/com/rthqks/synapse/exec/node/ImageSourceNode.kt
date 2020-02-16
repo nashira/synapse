@@ -142,7 +142,7 @@ class ImageSourceNode(
                     GLES30.GL_RGBA8,
                     GLES30.GL_RGBA,
                     GLES30.GL_UNSIGNED_BYTE,
-                    offersSurface = true
+                    0
                 ) as C
             }
             else -> error("unknown key $key")

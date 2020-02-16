@@ -31,6 +31,7 @@ class DecoderNode(
 ) : NodeExecutor() {
     private var size: Size = Size(0, 0)
     private var surfaceRotation = 0
+    private var frameRate = 0
     private var audioInput: Channel<Decoder.Event>? = null
     private var videoInput: Channel<Decoder.Event>? = null
     private var audioSession = 0
@@ -76,6 +77,8 @@ class DecoderNode(
                 .setChannelMask(channelMask)
                 .build()
         }
+
+        frameRate = decoder.outputVideoFormat?.getInteger(MediaFormat.KEY_FRAME_RATE) ?: 0
     }
 
     override suspend fun initialize() {
@@ -295,6 +298,7 @@ class DecoderNode(
                     GLES30.GL_RGB8,
                     GLES30.GL_RGB,
                     GLES30.GL_UNSIGNED_BYTE,
+                    frameRate,
                     surfaceRotation,
                     offersSurface = true
                 ) as C

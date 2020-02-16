@@ -1,6 +1,7 @@
 package com.rthqks.synapse.exec
 
 import android.content.Context
+import android.os.SystemClock
 import android.util.Log
 import android.view.SurfaceView
 import com.rthqks.synapse.assets.AssetManager
@@ -31,6 +32,7 @@ class Executor @Inject constructor(
 
     private val commandChannel = scope.actor<Operation>(capacity = Channel.UNLIMITED) {
         for (msg in channel) {
+            val start = SystemClock.elapsedRealtime()
             Log.d(TAG, "handling $msg")
             withTimeoutOrNull(msg.timeout) {
                 when (msg) {
@@ -52,7 +54,7 @@ class Executor @Inject constructor(
             } ?: run {
                 Log.w(TAG, "TIMEOUT handling $msg")
             }
-            Log.d(TAG, "done handling $msg")
+            Log.d(TAG, "done handling $msg ${SystemClock.elapsedRealtime() - start}ms")
         }
     }
 

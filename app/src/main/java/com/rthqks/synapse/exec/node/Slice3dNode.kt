@@ -50,7 +50,8 @@ class Slice3dNode(
             outputSize.height,
             outputConfig.internalFormat,
             outputConfig.format,
-            outputConfig.type
+            outputConfig.type,
+            properties[FrameRate]
         )
     }
 

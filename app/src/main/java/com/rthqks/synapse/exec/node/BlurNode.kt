@@ -298,7 +298,8 @@ class BlurNode(
                     size.height,
                     config.internalFormat,
                     config.format,
-                    config.type
+                    config.type,
+                    config.fps
                 ) as C
             }
             else -> error("unknown key $key")

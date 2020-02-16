@@ -203,6 +203,7 @@ class CameraNode(
                     GLES30.GL_RGB8,
                     GLES30.GL_RGB,
                     GLES30.GL_UNSIGNED_BYTE,
+                    frameRate,
                     surfaceRotation,
                     offersSurface = true
                 ) as C

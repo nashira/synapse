@@ -1,6 +1,8 @@
 package com.rthqks.synapse.logic
 
 import android.hardware.camera2.CameraCharacteristics
+import android.media.AudioFormat
+import android.media.MediaRecorder
 import android.net.Uri
 import android.util.Size
 import com.rthqks.synapse.R
@@ -94,6 +96,81 @@ val Nodes = listOf(
     },
     Node(NodeType.Microphone).apply {
         add(Port(Port.Type.Audio, "audio_1", "Audio", true))
+        add(
+            Property(
+                AudioSampleRate, ChoiceType(
+                    R.string.property_name_sample_rate,
+                    R.drawable.ic_audio,
+                    Choice(16000, R.string.property_label_sample_rate_16000),
+                    Choice(22050, R.string.property_label_sample_rate_22050),
+                    Choice(32000, R.string.property_label_sample_rate_32000),
+                    Choice(44100, R.string.property_label_sample_rate_44100),
+                    Choice(48000, R.string.property_label_sample_rate_48000)
+                ), 44100
+            ),
+            IntConverter
+        )
+        add(
+            Property(
+                AudioEncoding, ChoiceType(
+                    R.string.property_name_audio_encoding,
+                    R.drawable.ic_audio,
+                    Choice(
+                        AudioFormat.ENCODING_PCM_8BIT,
+                        R.string.property_label_encoding_PCM_8BIT
+                    ),
+                    Choice(
+                        AudioFormat.ENCODING_PCM_16BIT,
+                        R.string.property_label_encoding_PCM_16BIT
+                    ),
+                    Choice(
+                        AudioFormat.ENCODING_PCM_FLOAT,
+                        R.string.property_label_encoding_PCM_FLOAT
+                    )
+                ),
+                AudioFormat.ENCODING_PCM_16BIT
+            ),
+            IntConverter
+        )
+        add(
+            Property(
+                AudioChannel, ChoiceType(
+                    R.string.property_name_audio_channels,
+                    R.drawable.ic_audio,
+                    Choice(AudioFormat.CHANNEL_IN_DEFAULT, R.string.property_label_channel_default),
+                    Choice(AudioFormat.CHANNEL_IN_MONO, R.string.property_label_channel_mono),
+                    Choice(AudioFormat.CHANNEL_IN_STEREO, R.string.property_label_channel_stereo)
+                ),
+                AudioFormat.CHANNEL_IN_DEFAULT
+            ),
+            IntConverter
+        )
+        add(
+            Property(
+                AudioSource, ChoiceType(
+                    R.string.property_name_audio_source,
+                    R.drawable.ic_audio,
+                    Choice(MediaRecorder.AudioSource.MIC, R.string.property_label_audio_source_mic),
+                    Choice(
+                        MediaRecorder.AudioSource.CAMCORDER,
+                        R.string.property_label_audio_source_camcorder
+                    ),
+                    Choice(
+                        MediaRecorder.AudioSource.DEFAULT,
+                        R.string.property_label_audio_source_default
+                    ),
+                    Choice(
+                        MediaRecorder.AudioSource.VOICE_COMMUNICATION,
+                        R.string.property_label_audio_source_voice_communication
+                    ),
+                    Choice(
+                        MediaRecorder.AudioSource.VOICE_RECOGNITION,
+                        R.string.property_label_audio_source_voice_recognition
+                    )
+                ), MediaRecorder.AudioSource.DEFAULT
+            ),
+            IntConverter
+        )
     },
     Node(NodeType.MediaFile).apply {
         add(Port(Port.Type.Video, "video_1", "Video", true))
@@ -367,7 +444,11 @@ val Nodes = listOf(
         add(
             Property(
                 TravelAngle,
-                RangeType(R.string.property_name_travel_angle, R.drawable.ic_rotate_left, -90f..90f),
+                RangeType(
+                    R.string.property_name_travel_angle,
+                    R.drawable.ic_rotate_left,
+                    -90f..90f
+                ),
                 4f
             ), FloatConverter
         )
@@ -454,7 +535,7 @@ val Nodes = listOf(
         )
     },
     Node(NodeType.Shape).apply {
-//        add(Port(Port.Type.Video, ShapeNode.INPUT_POS.id, "Positions", false))
+        //        add(Port(Port.Type.Video, ShapeNode.INPUT_POS.id, "Positions", false))
         add(Port(Port.Type.Video, ShapeNode.OUTPUT.id, "Output", true))
         add(
             Property(
@@ -498,7 +579,7 @@ val Nodes = listOf(
                 ), 10, true
             ), IntConverter
         )
-            add(
+        add(
             Property(
                 VideoSize,
                 ChoiceType(
@@ -537,6 +618,10 @@ val Nodes = listOf(
             ), IntConverter
         )
     },
+    Node(NodeType.MediaEncoder).apply {
+        add(Port(Port.Type.Video, EncoderNode.INPUT_VIDEO.id, "Video", false))
+        add(Port(Port.Type.Audio, EncoderNode.INPUT_AUDIO.id, "Audio", false))
+    },
     Node(NodeType.Properties).also { it.id = -2 },
     Node(NodeType.Connection).also { it.id = -3 },
     Node(NodeType.Creation).also { it.id = -4 }
@@ -566,6 +651,7 @@ val NodeTypes = listOf(
     NodeType.Shape,
     NodeType.RingBuffer,
     NodeType.Slice3d,
+    NodeType.MediaEncoder,
     NodeType.Properties,
     NodeType.Creation,
     NodeType.Connection

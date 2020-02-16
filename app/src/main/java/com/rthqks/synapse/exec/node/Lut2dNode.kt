@@ -13,7 +13,6 @@ import com.rthqks.synapse.logic.VideoSize
 import kotlinx.coroutines.*
 import kotlinx.coroutines.selects.whileSelect
 import java.util.concurrent.atomic.AtomicBoolean
-import java.util.concurrent.atomic.AtomicInteger
 import kotlin.math.max
 
 class Lut2dNode(
@@ -48,7 +47,8 @@ class Lut2dNode(
             outputSize.height,
             outputConfig.internalFormat,
             outputConfig.format,
-            outputConfig.type
+            outputConfig.type,
+            properties[FrameRate]
         )
     }
 
@@ -268,7 +268,7 @@ class Lut2dNode(
         val INPUT_LUT = Connection.Key<VideoConfig, VideoEvent>("input_lut")
         val OUTPUT = Connection.Key<VideoConfig, VideoEvent>("output")
         val DEFAULT_CONFIG = VideoConfig(
-            0, 0, 0, GLES30.GL_RGB8, GLES30.GL_RGB, GLES30.GL_UNSIGNED_BYTE
+            0, 0, 0, GLES30.GL_RGB8, GLES30.GL_RGB, GLES30.GL_UNSIGNED_BYTE, 0
         )
     }
 }

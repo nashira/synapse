@@ -241,6 +241,7 @@ class GlNode(
                     config.internalFormat,
                     config.format,
                     config.type,
+                    config.fps,
                     offersSurface = true
                 ) as C
             }

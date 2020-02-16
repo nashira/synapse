@@ -13,6 +13,7 @@ class VideoConfig(
     val internalFormat: Int,
     val format: Int,
     val type: Int,
+    val fps: Int,
     val rotation: Int = 0,
     val offersSurface: Boolean = false
 ) : Config {

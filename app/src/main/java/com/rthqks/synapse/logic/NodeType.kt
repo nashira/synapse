@@ -166,4 +166,10 @@ sealed class NodeType(
         R.string.name_node_type_slice_3d,
         R.drawable.ic_layers
     )
+
+    object MediaEncoder : NodeType(
+        "media_encoder",
+        R.string.name_node_type_media_encoder,
+        R.drawable.ic_movie
+    )
 }

@@ -47,6 +47,10 @@ class CameraManager(
         ids.forEach { id ->
             val characteristics = manager.getCameraCharacteristics(id)
             cameraMap[id] = characteristics
+            characteristics.keys.forEach {
+
+                Log.d(TAG, "${it.name}, ${characteristics[it]}")
+            }
         }
     }
 

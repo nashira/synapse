@@ -13,7 +13,6 @@ import com.rthqks.synapse.logic.VideoSize
 import kotlinx.coroutines.*
 import kotlinx.coroutines.selects.whileSelect
 import java.util.concurrent.atomic.AtomicBoolean
-import java.util.concurrent.atomic.AtomicInteger
 import kotlin.math.max
 
 class Lut3dNode(
@@ -48,7 +47,8 @@ class Lut3dNode(
             outputSize.height,
             outputConfig.internalFormat,
             outputConfig.format,
-            outputConfig.type
+            outputConfig.type,
+            properties[FrameRate]
         )
     }
 

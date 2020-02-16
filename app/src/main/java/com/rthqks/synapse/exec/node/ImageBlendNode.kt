@@ -11,7 +11,6 @@ import com.rthqks.synapse.logic.*
 import kotlinx.coroutines.*
 import kotlinx.coroutines.selects.whileSelect
 import java.util.concurrent.atomic.AtomicBoolean
-import java.util.concurrent.atomic.AtomicInteger
 import kotlin.math.max
 
 class ImageBlendNode(
@@ -47,7 +46,8 @@ class ImageBlendNode(
             outputSize.height,
             GLES30.GL_RGB8,
             GLES30.GL_RGB,
-            GLES30.GL_UNSIGNED_BYTE
+            GLES30.GL_UNSIGNED_BYTE,
+            properties[FrameRate]
         )
     }
 

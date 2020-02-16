@@ -64,7 +64,8 @@ class PhysarumNode(
             agentSize.height,
             GLES30.GL_RGBA16F,
             GLES30.GL_RGBA,
-            GLES30.GL_FLOAT
+            GLES30.GL_FLOAT,
+            properties[FrameRate]
         )
     }
 
@@ -75,7 +76,8 @@ class PhysarumNode(
             envSize.height,
             GLES30.GL_R8,
             GLES30.GL_RED,
-            GLES30.GL_UNSIGNED_BYTE
+            GLES30.GL_UNSIGNED_BYTE,
+            properties[FrameRate]
         )
     }
 

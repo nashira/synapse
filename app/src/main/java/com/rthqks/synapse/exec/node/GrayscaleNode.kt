@@ -263,6 +263,7 @@ class GrayscaleNode(
                     GL_R8,
                     GL_RED,
                     GL_UNSIGNED_BYTE,
+                    config.fps,
                     offersSurface = true
                 ) as C
             }

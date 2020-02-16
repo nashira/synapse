@@ -44,7 +44,8 @@ class CropResizeNode(
             outputSize.height,
             outputConfig.internalFormat,
             outputConfig.format,
-            outputConfig.type
+            outputConfig.type,
+            outputConfig.fps
         )
     }
 
@@ -213,7 +214,7 @@ class CropResizeNode(
         val INPUT = Connection.Key<VideoConfig, VideoEvent>("input")
         val OUTPUT = Connection.Key<VideoConfig, VideoEvent>("output")
         val DEFAULT_CONFIG = VideoConfig(
-            0, 0, 0, GLES30.GL_RGB8, GLES30.GL_RGB, GLES30.GL_UNSIGNED_BYTE
+            0, 0, 0, GLES30.GL_RGB8, GLES30.GL_RGB, GLES30.GL_UNSIGNED_BYTE, 0
         )
     }
 }
