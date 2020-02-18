@@ -208,7 +208,11 @@ class PolishActivity : DaggerAppCompatActivity() {
         const val TAG = "PolishActivity"
         const val PREF_NAME = "intro"
         const val FINISHED_INTRO = "finished_intro"
-        val PERMISSIONS = listOf(
+        val PERMISSIONS = if (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q) listOf(
+            Manifest.permission.CAMERA,
+            Manifest.permission.RECORD_AUDIO,
+            Manifest.permission.WRITE_EXTERNAL_STORAGE
+        ) else  listOf(
             Manifest.permission.CAMERA,
             Manifest.permission.RECORD_AUDIO
         )

@@ -118,21 +118,25 @@ class Encoder(
             contentValues.put(MediaStore.MediaColumns.MIME_TYPE, "video/mp4")
             contentValues.put(
                 MediaStore.MediaColumns.RELATIVE_PATH,
-                Environment.DIRECTORY_MOVIES
+                "${Environment.DIRECTORY_MOVIES}/Synapse"
             )
             val imageUri: Uri? =
                 resolver.insert(MediaStore.Video.Media.EXTERNAL_CONTENT_URI, contentValues)
             val fd = resolver.openAssetFileDescriptor(imageUri!!, "w")!!.fileDescriptor
             mediaMuxer = MediaMuxer(fd!!, MediaMuxer.OutputFormat.MUXER_OUTPUT_MPEG_4)
         } else {
-            val resolver = context.contentResolver
+            val baseDir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_MOVIES).let { "$it/Synapse" }
+            val file = "$baseDir/$fileName"
 
-            val imagesDir =
-                Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_MOVIES)
-                    .toUri()
+            File(baseDir).also {
+                if (!it.exists()) {
+                    it.mkdirs()
+                }
+            }
 
-            val uri = imagesDir.buildUpon().appendPath("Synapse").appendPath(fileName).build()
-            resolver.openAssetFileDescriptor(uri, "w")!!.fileDescriptor
+            File(file).createNewFile()
+
+            mediaMuxer = MediaMuxer(file, MediaMuxer.OutputFormat.MUXER_OUTPUT_MPEG_4)
         }
     }
 

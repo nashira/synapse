@@ -5,12 +5,17 @@ import android.content.Context
 import android.content.Intent
 import android.content.SharedPreferences
 import android.content.pm.PackageManager
+import android.net.Uri
+import android.os.Build
 import android.os.Bundle
+import android.os.Environment
+import android.provider.DocumentsContract
 import android.util.Log
 import androidx.core.content.edit
 import com.rthqks.synapse.R
 import com.rthqks.synapse.ui.browse.NetworkListActivity
 import dagger.android.support.DaggerAppCompatActivity
+
 
 class SplashActivity : DaggerAppCompatActivity() {
     private lateinit var preferences: SharedPreferences
@@ -45,7 +50,7 @@ class SplashActivity : DaggerAppCompatActivity() {
         preferences.edit {
             putBoolean(FINISHED_INTRO, true)
         }
-        quit()
+//        quit()
     }
 
     private fun quit() {
@@ -78,10 +83,14 @@ class SplashActivity : DaggerAppCompatActivity() {
     }
 
     companion object {
-        const val TAG = "com.rthqks.synapse.polish.SplashActivity"
+        const val TAG = "SplashActivity"
         const val PREF_NAME = "intro"
         const val FINISHED_INTRO = "finished_intro"
-        val PERMISSIONS = listOf(
+        val PERMISSIONS = if (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q) listOf(
+            Manifest.permission.CAMERA,
+            Manifest.permission.RECORD_AUDIO,
+            Manifest.permission.WRITE_EXTERNAL_STORAGE
+        ) else  listOf(
             Manifest.permission.CAMERA,
             Manifest.permission.RECORD_AUDIO
         )
