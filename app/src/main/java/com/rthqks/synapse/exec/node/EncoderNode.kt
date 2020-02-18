@@ -90,18 +90,14 @@ class EncoderNode(
                 }
             }
             inputSize = config.size
-            encoder.setVideo(inputSize, config.fps, 0)
+            surface = encoder.setVideo(inputSize, config.fps, 0)
+            updateWindowSurface()
+
         }
 
-        val configAudio = config(INPUT_AUDIO)
-
-
-
-
-
-        // encoder
-        // setVideo(size, fps)
-        // setAudio(audioFormat)
+        config(INPUT_AUDIO)?.let { config ->
+            encoder.setAudio(config.audioFormat)
+        }
     }
 
     private suspend fun updateWindowSurface() {
@@ -112,11 +108,7 @@ class EncoderNode(
             surface?.also { surface ->
                 if (surface.isValid) {
                     Log.d(TAG, "surf creating new input surface")
-//                    surfaceView?.tag?.let {
-//                        (it as? SurfaceViewNode)?.setSurface(null)
-//                    }
                     windowSurface = it.createWindowSurface(surface)
-//                    surfaceView?.tag = this@SurfaceViewNode
                 }
             }
         }
@@ -124,7 +116,6 @@ class EncoderNode(
 
     override suspend fun start() = coroutineScope {
         frameCount = 0
-
 
         startJob = launch {
             val inputLinked = linked(INPUT_VIDEO)
@@ -140,6 +131,8 @@ class EncoderNode(
             if (inputLinked) running++
             if (lutLinked) running++
 
+            encoder.startEncoding()
+
             whileSelect {
                 inputIn?.onReceive {
 //                    Log.d(TAG, "agent receive ${it.eos}")
@@ -149,6 +142,7 @@ class EncoderNode(
                         System.arraycopy(it.matrix, 0, uniform.data!!, 0, 16)
                         uniform.dirty = true
                     }
+                    executeGl(it.texture)
                     inputIn.send(it)
                     if (it.eos) running--
                     running > 0
@@ -160,18 +154,25 @@ class EncoderNode(
                     running > 0
                 }
             }
+
+            encoder.stop()
         }
     }
 
-    private fun executeGl(texture: Texture2d) {
-        GLES30.glUseProgram(program.programId)
-        GLES30.glViewport(0, 0, inputSize.width, inputSize.height)
+    private suspend fun executeGl(texture: Texture2d) {
+        glesManager.glContext {
+            windowSurface?.makeCurrent()
+            GLES30.glBindFramebuffer(GLES30.GL_FRAMEBUFFER, 0)
+            GLES30.glUseProgram(program.programId)
+            GLES30.glViewport(0, 0, inputSize.width, inputSize.height)
 
-        texture.bind(GLES30.GL_TEXTURE0)
+            texture.bind(GLES30.GL_TEXTURE0)
 
-        program.bindUniforms()
+            program.bindUniforms()
 
-        mesh.execute()
+            mesh.execute()
+            windowSurface?.swapBuffers()
+        }
     }
 
     override suspend fun stop() {
@@ -180,9 +181,11 @@ class EncoderNode(
 
     override suspend fun release() {
         glesManager.glContext {
-            //            windowSurface?.release()
+            windowSurface?.release()
+            surface?.release()
             mesh.release()
             program.release()
+            encoder.release()
         }
     }
 

@@ -210,8 +210,7 @@ class PolishActivity : DaggerAppCompatActivity() {
         const val FINISHED_INTRO = "finished_intro"
         val PERMISSIONS = listOf(
             Manifest.permission.CAMERA,
-            Manifest.permission.RECORD_AUDIO,
-            Manifest.permission.WRITE_EXTERNAL_STORAGE
+            Manifest.permission.RECORD_AUDIO
         )
     }
 }

@@ -67,18 +67,34 @@ class Texture3d(
         this.type = type
 
         glBindTexture(GL_TEXTURE_3D, id)
-        glTexImage3D(
-            GL_TEXTURE_3D,
-            level,
-            internalFormat,
-            width,
-            height,
-            depth,
-            0,
-            format,
-            type,
-            buffer
-        )
+        if (buffer == null) {
+            glTexImage3D(
+                GL_TEXTURE_3D,
+                level,
+                internalFormat,
+                width,
+                height,
+                depth,
+                0,
+                format,
+                type,
+                0
+            )
+        } else {
+
+            glTexImage3D(
+                GL_TEXTURE_3D,
+                level,
+                internalFormat,
+                width,
+                height,
+                depth,
+                0,
+                format,
+                type,
+                buffer
+            )
+        }
         glBindTexture(GL_TEXTURE_3D, 0)
     }
 
