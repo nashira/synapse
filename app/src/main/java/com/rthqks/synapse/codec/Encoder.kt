@@ -2,7 +2,6 @@ package com.rthqks.synapse.codec
 
 import android.content.ContentValues
 import android.content.Context
-import android.graphics.Bitmap
 import android.media.*
 import android.net.Uri
 import android.os.Build
@@ -12,21 +11,22 @@ import android.provider.MediaStore
 import android.util.Log
 import android.util.Size
 import android.view.Surface
-import androidx.core.net.toUri
-import kotlinx.coroutines.channels.SendChannel
-import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.*
+import kotlinx.coroutines.channels.Channel
 import java.io.File
-import java.io.FileDescriptor
-import java.lang.Exception
 import java.nio.ByteBuffer
 import java.text.SimpleDateFormat
 import java.util.*
+import java.util.concurrent.Executors
 
 
 class Encoder(
     private val context: Context,
     private val handler: Handler
 ) : MediaCodec.Callback() {
+    private val dispatcher = Executors.newSingleThreadExecutor().asCoroutineDispatcher()
+    private val scope = CoroutineScope(dispatcher + Job())
+    private var trackCompletable: CompletableDeferred<Unit>? = null
 
     private var size: Size = Size(0, 0)
     private var fps = 0
@@ -43,24 +43,25 @@ class Encoder(
     private var inputAudioFormat: AudioFormat? = null
     private var videoTrack = -1
     private var audioTrack = -1
-    private var videoConfigured = false
-    private val videoInputBuffers = LinkedList<Int>()
-    private val audioInputBuffers = LinkedList<Int>()
-    private var extractState = STOPPED
-    private var releaseState = EOS
-    private var eventIndex = 0
-    private val events = Array(100) {
-        Event(0, BUFFER_INFO, null)
-    }
-
-    private var videoChannel: SendChannel<Event>? = null
-    private var audioChannel: SendChannel<Event>? = null
+    private var running = 0
+    private var currentFileUri: Uri? = null
+    private val audioInputBuffers = Channel<Int>(20)
+    private var inputSurface: Surface? = null
 
     fun setVideo(size: Size, fps: Int, rotation: Int): Surface {
         hasVideo = true
         this.size = size
         this.fps = fps
         this.rotation = rotation
+        videoEncoder = MediaCodec.createEncoderByType(MediaFormat.MIMETYPE_VIDEO_AVC)
+        inputSurface = MediaCodec.createPersistentInputSurface()
+        configureVideo()
+        return inputSurface!!
+    }
+
+    private fun configureVideo() {
+        if (!hasVideo) return
+
         val format = MediaFormat.createVideoFormat(
             MediaFormat.MIMETYPE_VIDEO_AVC,
             size.width,
@@ -71,18 +72,25 @@ class Encoder(
             MediaFormat.KEY_COLOR_FORMAT,
             MediaCodecInfo.CodecCapabilities.COLOR_FormatSurface
         )
+        // TODO: calculate bit rate
         format.setInteger(MediaFormat.KEY_BIT_RATE, 10_000_000)
         format.setInteger(MediaFormat.KEY_FRAME_RATE, fps)
         format.setInteger(MediaFormat.KEY_I_FRAME_INTERVAL, 2)
-        videoEncoder = MediaCodec.createEncoderByType(MediaFormat.MIMETYPE_VIDEO_AVC)
-        videoEncoder?.configure(format, null, null, MediaCodec.CONFIGURE_FLAG_ENCODE)
+        videoEncoder?.reset()
         videoEncoder?.setCallback(this, handler)
-        return videoEncoder!!.createInputSurface()
+        videoEncoder?.configure(format, null, null, MediaCodec.CONFIGURE_FLAG_ENCODE)
+        videoEncoder!!.setInputSurface(inputSurface!!)
     }
 
     fun setAudio(audioFormat: AudioFormat) {
         hasAudio = true
         inputAudioFormat = audioFormat
+        audioEncoder = MediaCodec.createEncoderByType(MediaFormat.MIMETYPE_AUDIO_AAC)
+//        configureAudio()
+    }
+
+    private fun configureAudio() {
+        val audioFormat = inputAudioFormat ?: return
         val format = MediaFormat()
         format.setString(MediaFormat.KEY_MIME, MediaFormat.MIMETYPE_AUDIO_AAC)
         format.setInteger(
@@ -94,7 +102,7 @@ class Encoder(
         format.setInteger(MediaFormat.KEY_BIT_RATE, 128_000)
         format.setInteger(MediaFormat.KEY_MAX_INPUT_SIZE, 16384)
 
-        audioEncoder = MediaCodec.createEncoderByType(MediaFormat.MIMETYPE_AUDIO_AAC)
+        audioEncoder?.reset()
         audioEncoder?.setCallback(this, handler)
         audioEncoder?.configure(format, null, null, MediaCodec.CONFIGURE_FLAG_ENCODE)
     }
@@ -103,14 +111,36 @@ class Encoder(
         val fileName = FILENAME_FORMAT.format(Date()) + ".mp4"
         Log.d(TAG, "startEncoding $fileName")
 
+        videoTrack = -1
+        audioTrack = -1
+
+        configureVideo()
+        configureAudio()
+
         createMuxer(fileName)
 
+        running = 0
+        if (hasVideo) running++
+        if (hasAudio) running++
+
+        trackCompletable = CompletableDeferred()
+
         videoEncoder?.start()
+        audioEncoder?.start()
+    }
+
+    suspend fun stopEncoding() {
+        Log.d(TAG, "stopEncoding")
+        videoEncoder?.signalEndOfInputStream()
+        audioEncoder?.let {
+            val index = audioInputBuffers.receive()
+            it.getInputBuffer(index)
+            it.queueInputBuffer(index, 0, 0, 0, MediaCodec.BUFFER_FLAG_END_OF_STREAM)
+            while (audioInputBuffers.poll() != null);
+        }
     }
 
     private fun createMuxer(fileName: String) {
-
-
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             val resolver = context.contentResolver
             val contentValues = ContentValues()
@@ -118,14 +148,19 @@ class Encoder(
             contentValues.put(MediaStore.MediaColumns.MIME_TYPE, "video/mp4")
             contentValues.put(
                 MediaStore.MediaColumns.RELATIVE_PATH,
-                "${Environment.DIRECTORY_MOVIES}/Synapse"
+                "${Environment.DIRECTORY_MOVIES}/$SYNAPSE_VIDEO_DIR"
             )
-            val imageUri: Uri? =
+            contentValues.put(MediaStore.MediaColumns.IS_PENDING, 1)
+            currentFileUri =
                 resolver.insert(MediaStore.Video.Media.EXTERNAL_CONTENT_URI, contentValues)
-            val fd = resolver.openAssetFileDescriptor(imageUri!!, "w")!!.fileDescriptor
+            val assetFileDescriptor = resolver.openAssetFileDescriptor(currentFileUri!!, "w")!!
+            val fd = assetFileDescriptor.fileDescriptor
             mediaMuxer = MediaMuxer(fd!!, MediaMuxer.OutputFormat.MUXER_OUTPUT_MPEG_4)
+            assetFileDescriptor.close()
         } else {
-            val baseDir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_MOVIES).let { "$it/Synapse" }
+            val baseDir =
+                Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_MOVIES)
+                    .let { "$it/$SYNAPSE_VIDEO_DIR" }
             val file = "$baseDir/$fileName"
 
             File(baseDir).also {
@@ -140,104 +175,89 @@ class Encoder(
         }
     }
 
-
-    fun start(
-        surface: Surface?,
-        videoChannel: SendChannel<Event>?,
-        audioChannel: SendChannel<Event>?
-    ) {
-        this.videoChannel = videoChannel
-        this.audioChannel = audioChannel
-
-        if ((videoChannel == null || !hasVideo)
-            && (audioChannel == null || !hasAudio)
-        ) {
-            Log.w(TAG, "nothing to decode")
-            return
-        }
-
-        extractState = RUNNING
-//
-//        if (videoConfigured) {
-//            videoEncoder?.setOutputSurface(surface!!)
-//        } else {
-//            videoConfigured = true
-//            videoEncoder?.configure(inputVideoFormat, surface, null, 0)
-//        }
-//
-//        if (videoChannel == null) {
-//            videoEncoder?.let {
-//                extractor.unselectTrack(videoTrack)
-//            }
-//        } else {
-//            videoEncoder?.let {
-//                extractor.selectTrack(videoTrack)
-//            }
-//            videoEncoder?.start()
-//        }
-//        if (audioChannel == null) {
-//            audioEncoder?.let {
-//                extractor.unselectTrack(audioTrack)
-//            }
-//        } else {
-//            audioEncoder?.let {
-//                extractor.selectTrack(audioTrack)
-//            }
-//            audioEncoder?.start()
-//        }
-    }
-
-    private fun nextEvent(): Event {
-        eventIndex = (eventIndex + 1) % events.size
-        return events[eventIndex]
-    }
-
     override fun onOutputBufferAvailable(
+        codec: MediaCodec,
+        index: Int,
+        info: MediaCodec.BufferInfo
+    ) {
+        scope.launch {
+            trackCompletable?.await()
+            handleOutputBuffer(codec, index, info)
+            trackCompletable = null
+        }
+    }
+
+    private fun handleOutputBuffer(
         codec: MediaCodec,
         index: Int,
         info: MediaCodec.BufferInfo
     ) {
         when (codec) {
             audioEncoder -> {
-                val buffer = if (info.flags and MediaCodec.BUFFER_FLAG_END_OF_STREAM == 0) {
-                    codec.getOutputBuffer(index)
-                } else {
-                    null
-                }
-                val event = nextEvent()
-                Log.d(TAG, "audio $event")
-                event.set(index, info, buffer)
-                runBlocking {
-                    audioChannel?.send(event)
+//                Log.d(TAG, "audio")
+                mediaMuxer?.let {
+                    val buffer = codec.getOutputBuffer(index)!!
+                    it.writeSampleData(audioTrack, buffer, info)
+                    codec.releaseOutputBuffer(index, false)
+                    if (info.flags and MediaCodec.BUFFER_FLAG_END_OF_STREAM != 0) {
+                        running--
+                        codec.flush()
+                        codec.reset()
+                        checkStopMuxer()
+                    } else if (info.flags and MediaCodec.BUFFER_FLAG_CODEC_CONFIG != 0) {
+
+                    }
                 }
             }
             videoEncoder -> {
-                Log.d(TAG, "video")
+//                Log.d(TAG, "video")
                 mediaMuxer?.let {
                     val buffer = codec.getOutputBuffer(index)!!
                     it.writeSampleData(videoTrack, buffer, info)
                     codec.releaseOutputBuffer(index, true)
                     if (info.flags and MediaCodec.BUFFER_FLAG_END_OF_STREAM != 0) {
-                        it.stop()
+                        running--
+                        codec.flush()
+                        codec.reset()
+                        checkStopMuxer()
                     }
                 }
             }
         }
     }
 
+    private fun checkStopMuxer() {
+        Log.d(TAG, "stop muxer $running")
+        if (running <= 0) {
+            mediaMuxer?.stop()
+            mediaMuxer?.release()
+            mediaMuxer = null
+
+            currentFileUri?.let {
+                val contentValues = ContentValues()
+                contentValues.put(MediaStore.MediaColumns.IS_PENDING, 0)
+                context.contentResolver.update(
+                    it,
+                    contentValues,
+                    null,
+                    null
+                )
+            }
+            currentFileUri = null
+        }
+    }
+
     override fun onInputBufferAvailable(codec: MediaCodec, index: Int) {
         when (codec) {
             audioEncoder -> {
-                Log.d(TAG, "audio onInputBufferAvailable $index")
-                audioInputBuffers.add(index)
+                runBlocking {
+                    audioInputBuffers.send(index)
+                }
             }
             videoEncoder -> {
-                Log.d(TAG, "video onInputBufferAvailable $index")
-                videoInputBuffers.add(index)
+                // won't happen with input surface
             }
         }
-
-//        tryExtract()
     }
 
     override fun onOutputFormatChanged(codec: MediaCodec, format: MediaFormat) {
@@ -247,8 +267,10 @@ class Encoder(
                 Log.d(TAG, "audio format: $format")
                 mediaMuxer?.let {
                     audioTrack = it.addTrack(format)
-                    if (hasVideo && videoTrack > -1) {
+                    Log.d(TAG, "muxer starting? ${(hasVideo && videoTrack > -1 || !hasVideo)}")
+                    if (hasVideo && videoTrack > -1 || !hasVideo) {
                         it.start()
+                        trackCompletable?.complete(Unit)
                     }
                 }
             }
@@ -257,10 +279,11 @@ class Encoder(
                 Log.d(TAG, "video format: $format")
                 mediaMuxer?.let {
                     videoTrack = it.addTrack(format)
-                    it.start()
-//                    if (hasAudio && audioTrack> -1) {
-//                        it.start()
-//                    }
+                    Log.d(TAG, "muxer starting? ${(hasAudio && audioTrack > -1 || !hasAudio)}")
+                    if (hasAudio && audioTrack > -1 || !hasAudio) {
+                        it.start()
+                        trackCompletable?.complete(Unit)
+                    }
                 }
             }
         }
@@ -278,60 +301,24 @@ class Encoder(
         }
     }
 
-
-    fun releaseAudioBuffer(index: Int, eos: Boolean) {
-//        Log.d(TAG, "release audio buffer $index $eos")
-        when {
-            !eos -> {
-                audioEncoder?.releaseOutputBuffer(index, false)
-            }
-            releaseState == DECODING_FORMAT
-                    || releaseState == PAUSE
-                    || releaseState == EOS -> {
-                audioInputBuffers.clear()
-                audioEncoder?.flush()
-            }
-        }
-    }
-
-    fun releaseVideoBuffer(index: Int, eos: Boolean) {
-        when {
-            !eos -> {
-                videoEncoder?.releaseOutputBuffer(index, true)
-            }
-            releaseState == PAUSE
-                    || releaseState == EOS -> {
-                videoInputBuffers.clear()
-                videoEncoder?.flush()
-            }
-        }
-    }
-
-    fun stop() {
-        releaseState = PAUSE
-        extractState = STOPPING
-    }
-
     fun release() {
-        mediaMuxer?.release()
         audioEncoder?.release()
         videoEncoder?.release()
+        scope.cancel()
+        dispatcher.close()
     }
 
-
-    class Event(
-        var index: Int,
-        var info: MediaCodec.BufferInfo,
-        var buffer: ByteBuffer?
-    ) {
-        fun set(
-            index: Int,
-            info: MediaCodec.BufferInfo,
-            buffer: ByteBuffer?
-        ) {
-            this.index = index
-            this.info = info
-            this.buffer = buffer
+    suspend fun writeAudio(buffer: ByteBuffer, timestamp: Long) {
+        val index = audioInputBuffers.receive()
+        audioEncoder?.getInputBuffer(index)?.let {
+            it.put(buffer)
+            audioEncoder?.queueInputBuffer(
+                index,
+                0,
+                buffer.limit(),
+                timestamp,
+                0
+            )
         }
     }
 
@@ -339,13 +326,5 @@ class Encoder(
         const val TAG = "Encoder"
         const val SYNAPSE_VIDEO_DIR = "Synapse"
         var FILENAME_FORMAT = SimpleDateFormat("yyyyMMdd_HHmmss", Locale.US)
-        val BUFFER_INFO = MediaCodec.BufferInfo()
-        const val DECODING_FORMAT = 0
-        const val PAUSE = 1
-        const val EOS = 2
-
-        const val RUNNING = 0
-        const val STOPPING = 1
-        const val STOPPED = 2
     }
 }

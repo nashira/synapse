@@ -155,6 +155,7 @@ class CameraNode(
         val event = channel.receive()
         glesManager.glContext {
             surfaceTexture.updateTexImage()
+            event.timestamp = surfaceTexture.timestamp
             if (copyMatrix) {
                 surfaceTexture.getTransformMatrix(event.matrix)
                 Log.d(TAG, "matrix ${event.matrix.joinToString()}")

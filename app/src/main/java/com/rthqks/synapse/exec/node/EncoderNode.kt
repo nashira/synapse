@@ -12,6 +12,7 @@ import com.rthqks.synapse.exec.NodeExecutor
 import com.rthqks.synapse.exec.link.*
 import com.rthqks.synapse.gl.*
 import com.rthqks.synapse.logic.Properties
+import com.rthqks.synapse.logic.Recording
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.coroutineScope
@@ -33,11 +34,12 @@ class EncoderNode(
     private val program = Program()
     private val encoder = Encoder(context, glesManager.backgroundHandler)
     private var recording = false
+    private var startTimeVideo = -1L
+    private var startTimeAudio = -1L
     private var windowSurface: WindowSurface? = null
     private var frameCount = 0
 
     override suspend fun create() {
-
     }
 
     override fun surfaceCreated(holder: SurfaceHolder?) {
@@ -114,6 +116,18 @@ class EncoderNode(
         }
     }
 
+    private fun startRecording() {
+        encoder.startEncoding()
+        recording = true
+        startTimeVideo = -1L
+        startTimeAudio = -1L
+    }
+
+    private suspend fun stopRecording() {
+        recording = false
+        encoder.stopEncoding()
+    }
+
     override suspend fun start() = coroutineScope {
         frameCount = 0
 
@@ -131,35 +145,59 @@ class EncoderNode(
             if (inputLinked) running++
             if (lutLinked) running++
 
-            encoder.startEncoding()
-
             whileSelect {
                 inputIn?.onReceive {
-//                    Log.d(TAG, "agent receive ${it.eos}")
+                    //                    Log.d(TAG, "agent receive ${it.eos}")
                     if (copyMatrix) {
                         copyMatrix = false
                         val uniform = program.getUniform(Uniform.Type.Mat4, "texture_matrix0")
                         System.arraycopy(it.matrix, 0, uniform.data!!, 0, 16)
                         uniform.dirty = true
                     }
-                    executeGl(it.texture)
+                    updateRecording()
+
+                    if (recording) {
+                        if (startTimeVideo == -1L) {
+                            startTimeVideo = it.timestamp
+                        }
+                        executeGl(it.texture, it.timestamp - startTimeVideo)
+                    }
                     inputIn.send(it)
                     if (it.eos) running--
                     running > 0
                 }
                 lutIn?.onReceive {
-//                    Log.d(TAG, "env receive ${it.eos}")
+                    //                    Log.d(TAG, "env receive ${it.eos}")
+                    updateRecording()
+
+                    if (recording) {
+                        if (startTimeAudio == -1L) {
+                            startTimeAudio = it.timestamp
+                        }
+                        encoder.writeAudio(it.buffer, it.timestamp - startTimeAudio)
+                    }
+
                     lutIn.send(it)
                     if (it.eos) running--
                     running > 0
                 }
             }
-
-            encoder.stop()
+            if (recording) {
+                stopRecording()
+            }
         }
     }
 
-    private suspend fun executeGl(texture: Texture2d) {
+    private suspend fun updateRecording() {
+        val r = properties[Recording]
+        if (r && !recording) {
+            startRecording()
+        } else if (!r && recording) {
+            stopRecording()
+        }
+    }
+
+    private suspend fun executeGl(texture: Texture2d, timestamp: Long) {
         glesManager.glContext {
             windowSurface?.makeCurrent()
             GLES30.glBindFramebuffer(GLES30.GL_FRAMEBUFFER, 0)
@@ -171,6 +209,7 @@ class EncoderNode(
             program.bindUniforms()
 
             mesh.execute()
+            windowSurface?.setPresentationTime(timestamp)
             windowSurface?.swapBuffers()
         }
     }

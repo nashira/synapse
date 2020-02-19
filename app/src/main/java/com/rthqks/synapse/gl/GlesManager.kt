@@ -8,7 +8,6 @@ import android.view.Surface
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.asCoroutineDispatcher
 import kotlinx.coroutines.withContext
-import java.nio.ByteBuffer
 import java.util.concurrent.Executors
 
 class GlesManager {

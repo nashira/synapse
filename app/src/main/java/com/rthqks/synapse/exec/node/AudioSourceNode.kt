@@ -2,6 +2,7 @@ package com.rthqks.synapse.exec.node
 
 import android.media.AudioFormat
 import android.media.AudioRecord
+import android.os.SystemClock
 import android.util.Log
 import com.rthqks.synapse.exec.NodeExecutor
 import com.rthqks.synapse.exec.link.*
@@ -58,11 +59,14 @@ class AudioSourceNode(
         recordJob = launch {
             val output = channel(OUTPUT) ?: return@launch
             recorder.startRecording()
+            val start = SystemClock.elapsedRealtimeNanos()
             var numFrames = 0
             while (isActive) {
                 val audioEvent = output.receive()
                 audioEvent.eos = false
                 audioEvent.count = numFrames
+                audioEvent.timestamp = (SystemClock.elapsedRealtimeNanos() - start) / 1000
+//                audioEvent.timestamp = SystemClock.elapsedRealtimeNanos() / 1000
                 audioEvent.buffer.position(0)
                 val read = recorder.read(
                     audioEvent.buffer,

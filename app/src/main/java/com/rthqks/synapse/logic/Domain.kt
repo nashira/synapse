@@ -35,6 +35,7 @@ val SensorDistance = Property.Key<Float>("sensor_distance")
 val TravelAngle = Property.Key<Float>("travel_angle")
 val TravelDistance = Property.Key<Float>("travel_distance")
 val SliceDepth = Property.Key<Float>("slice_depth")
+val Recording = Property.Key<Boolean>("recording")
 
 val Nodes = listOf(
     Node(NodeType.Camera).apply {
@@ -621,6 +622,17 @@ val Nodes = listOf(
     Node(NodeType.MediaEncoder).apply {
         add(Port(Port.Type.Video, EncoderNode.INPUT_VIDEO.id, "Video", false))
         add(Port(Port.Type.Audio, EncoderNode.INPUT_AUDIO.id, "Audio", false))
+        add(
+            Property(
+                Recording,
+                ToggleType(
+                    R.string.property_name_recording,
+                    R.drawable.ic_movie,
+                    R.string.property_name_recording,
+                    R.string.property_name_recording
+                ), false
+            ), BooleanConverter
+        )
     },
     Node(NodeType.Properties).also { it.id = -2 },
     Node(NodeType.Connection).also { it.id = -3 },
