@@ -94,7 +94,6 @@ class EncoderNode(
             inputSize = config.size
             surface = encoder.setVideo(inputSize, config.fps, 0)
             updateWindowSurface()
-
         }
 
         config(INPUT_AUDIO)?.let { config ->

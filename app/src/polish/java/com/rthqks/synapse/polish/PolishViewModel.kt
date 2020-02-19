@@ -23,8 +23,8 @@ class PolishViewModel @Inject constructor(
         executor.initialize(false)
     }
 
-
     private var surfaceView: SurfaceView? = null
+    private var network: Network? = null
 
     private val properties = Properties().apply {
         put(
@@ -95,11 +95,15 @@ class PolishViewModel @Inject constructor(
     }
 
     fun startRecording() {
-
+        network?.apply {
+            getNode(4)?.properties?.set(Recording, true)
+        }
     }
 
     fun stopRecording() {
-
+        network?.apply {
+            getNode(4)?.properties?.set(Recording, false)
+        }
     }
 
     fun <T> editProperty(key: Property.Key<T>, value: T) {
@@ -126,6 +130,7 @@ class PolishViewModel @Inject constructor(
     }
 
     private fun restartNetwork(network: Network) {
+        this.network = network
         viewModelScope.launch {
             executor.stop()
             executor.releaseNetwork()

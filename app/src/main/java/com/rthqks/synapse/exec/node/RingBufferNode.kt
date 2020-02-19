@@ -153,7 +153,7 @@ class RingBufferNode(
                     Matrix.translateM(matrix, 0, -0.5f, -0.5f, 0f)
                     uniform.dirty = true
                 }
-                execute(inputEvent.texture)
+                execute(inputEvent.texture, inputEvent.timestamp)
                 inputIn.send(inputEvent)
                 if (inputEvent.eos) {
                     startJob?.cancel()
@@ -179,7 +179,10 @@ class RingBufferNode(
         program.release()
     }
 
-    private suspend fun execute(inputTexture: Texture2d) {
+    private suspend fun execute(
+        inputTexture: Texture2d,
+        timestamp: Long
+    ) {
         val output = channel(OUTPUT) ?: return
         val outEvent = output.receive()
 
@@ -200,6 +203,7 @@ class RingBufferNode(
         outEvent.let {
             it.count = frameCount
             it.eos = false
+            it.timestamp = timestamp
             it.index = currentLevel
             output.send(it)
         }

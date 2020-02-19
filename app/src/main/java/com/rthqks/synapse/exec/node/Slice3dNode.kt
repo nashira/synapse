@@ -251,6 +251,7 @@ class Slice3dNode(
         outEvent.let {
             it.count = frameCount
             it.eos = false
+            it.timestamp = t3dEvent?.timestamp ?: 0
             output.send(it)
         }
     }
