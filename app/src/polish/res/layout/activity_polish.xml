@@ -21,7 +21,7 @@
             style="@style/Widget.AppCompat.Button.Borderless"
             android:layout_width="48dp"
             android:layout_height="48dp"
-            android:layout_marginBottom="32dp"
+            android:layout_marginBottom="20dp"
             android:background="@drawable/ic_record"
             android:tint="@color/white"
             app:layout_constraintBottom_toBottomOf="parent"
@@ -36,7 +36,7 @@
             android:src="@drawable/ic_flip_camera"
             android:tint="@color/white"
             app:layout_constraintBottom_toBottomOf="@id/button_record"
-            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintEnd_toStartOf="@id/button_settings"
             app:layout_constraintStart_toEndOf="@id/button_record"
             app:layout_constraintTop_toTopOf="@id/button_record" />
 
@@ -58,20 +58,20 @@
             style="@style/Widget.AppCompat.Button.Borderless"
             android:layout_width="48dp"
             android:layout_height="48dp"
-            android:layout_marginTop="24dp"
-            android:layout_marginEnd="24dp"
             android:src="@drawable/ic_settings"
             android:tint="@color/white"
+            app:layout_constraintBottom_toBottomOf="@id/button_record"
             app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintTop_toTopOf="parent" />
+            app:layout_constraintStart_toEndOf="@id/button_camera"
+            app:layout_constraintTop_toTopOf="@id/button_record" />
 
         <androidx.recyclerview.widget.RecyclerView
             android:id="@+id/effect_list"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginBottom="20dp"
             android:orientation="horizontal"
             android:clipToPadding="false"
+            android:layout_marginBottom="8dp"
             app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager"
             app:layout_constraintBottom_toTopOf="@id/button_record"
             tools:listitem="@layout/layout_effect" />

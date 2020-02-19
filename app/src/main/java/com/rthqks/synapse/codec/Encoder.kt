@@ -141,7 +141,7 @@ class Encoder(
     }
 
     private fun createMuxer(fileName: String) {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
             val resolver = context.contentResolver
             val contentValues = ContentValues()
             contentValues.put(MediaStore.MediaColumns.DISPLAY_NAME, fileName)
@@ -192,34 +192,42 @@ class Encoder(
         index: Int,
         info: MediaCodec.BufferInfo
     ) {
+        val isConfig = info.flags and MediaCodec.BUFFER_FLAG_CODEC_CONFIG != 0
+        val isEos = info.flags and MediaCodec.BUFFER_FLAG_END_OF_STREAM != 0
         when (codec) {
             audioEncoder -> {
 //                Log.d(TAG, "audio")
-                mediaMuxer?.let {
-                    val buffer = codec.getOutputBuffer(index)!!
-                    it.writeSampleData(audioTrack, buffer, info)
-                    codec.releaseOutputBuffer(index, false)
-                    if (info.flags and MediaCodec.BUFFER_FLAG_END_OF_STREAM != 0) {
-                        running--
-                        codec.flush()
-                        codec.reset()
-                        checkStopMuxer()
-                    } else if (info.flags and MediaCodec.BUFFER_FLAG_CODEC_CONFIG != 0) {
-
+                mediaMuxer?.also {
+                    if (isConfig) {
+                        Log.d(TAG, "audio config")
+                    } else {
+                        val buffer = codec.getOutputBuffer(index)!!
+                        it.writeSampleData(audioTrack, buffer, info)
+                        codec.releaseOutputBuffer(index, false)
+                        if (isEos) {
+                            running--
+                            codec.flush()
+                            codec.reset()
+                            checkStopMuxer()
+                        }
                     }
                 }
             }
             videoEncoder -> {
 //                Log.d(TAG, "video")
-                mediaMuxer?.let {
-                    val buffer = codec.getOutputBuffer(index)!!
-                    it.writeSampleData(videoTrack, buffer, info)
-                    codec.releaseOutputBuffer(index, true)
-                    if (info.flags and MediaCodec.BUFFER_FLAG_END_OF_STREAM != 0) {
-                        running--
-                        codec.flush()
-                        codec.reset()
-                        checkStopMuxer()
+                mediaMuxer?.also {
+                    if (isConfig) {
+                        Log.d(TAG, "video config")
+                    } else {
+                        val buffer = codec.getOutputBuffer(index)!!
+                        it.writeSampleData(videoTrack, buffer, info)
+                        codec.releaseOutputBuffer(index, true)
+                        if (isEos) {
+                            running--
+                            codec.flush()
+                            codec.reset()
+                            checkStopMuxer()
+                        }
                     }
                 }
             }
@@ -242,8 +250,8 @@ class Encoder(
                     null,
                     null
                 )
+                currentFileUri = null
             }
-            currentFileUri = null
         }
     }
 
