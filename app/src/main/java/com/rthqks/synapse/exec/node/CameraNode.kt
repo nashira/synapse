@@ -158,7 +158,7 @@ class CameraNode(
             event.timestamp = surfaceTexture.timestamp
             if (copyMatrix) {
                 surfaceTexture.getTransformMatrix(event.matrix)
-                Log.d(TAG, "matrix ${event.matrix.joinToString()}")
+//                Log.d(TAG, "matrix ${event.matrix.joinToString()}")
                 when (cameraManager.displayRotation) {
                     Surface.ROTATION_90 -> {
                         Matrix.translateM(event.matrix, 0, 0.5f, 0.5f, 0f)

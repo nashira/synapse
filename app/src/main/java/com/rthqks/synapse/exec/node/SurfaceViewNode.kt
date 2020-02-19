@@ -255,8 +255,8 @@ class SurfaceViewNode(
 
     override suspend fun release() {
         glesManager.glContext {
-            windowSurface?.release()
             surfaceView?.holder?.removeCallback(this@SurfaceViewNode)
+            windowSurface?.release()
             mesh.release()
             program.release()
         }

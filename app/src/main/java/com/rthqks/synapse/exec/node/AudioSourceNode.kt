@@ -47,7 +47,7 @@ class AudioSourceNode(
 
     override suspend fun initialize() {
         connection(OUTPUT)?.let { con ->
-            repeat(3) {
+            repeat(6) {
                 val item = AudioEvent()
                 item.buffer = ByteBuffer.allocateDirect(bufferSize).order(ByteOrder.nativeOrder())
                 con.prime(item)

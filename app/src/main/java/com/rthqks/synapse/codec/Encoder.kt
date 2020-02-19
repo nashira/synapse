@@ -3,7 +3,6 @@ package com.rthqks.synapse.codec
 import android.content.ContentValues
 import android.content.Context
 import android.media.*
-import android.net.Uri
 import android.os.Build
 import android.os.Environment
 import android.os.Handler
@@ -11,6 +10,7 @@ import android.provider.MediaStore
 import android.util.Log
 import android.util.Size
 import android.view.Surface
+import androidx.core.net.toUri
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.Channel
 import java.io.File
@@ -44,9 +44,13 @@ class Encoder(
     private var videoTrack = -1
     private var audioTrack = -1
     private var running = 0
-    private var currentFileUri: Uri? = null
+    private var currentFile: String? = null
     private val audioInputBuffers = Channel<Int>(20)
     private var inputSurface: Surface? = null
+
+//    private val commands = scope.actor {
+//
+//    }
 
     fun setVideo(size: Size, fps: Int, rotation: Int): Surface {
         hasVideo = true
@@ -145,23 +149,24 @@ class Encoder(
             val resolver = context.contentResolver
             val contentValues = ContentValues()
             contentValues.put(MediaStore.MediaColumns.DISPLAY_NAME, fileName)
-            contentValues.put(MediaStore.MediaColumns.MIME_TYPE, "video/mp4")
+            contentValues.put(MediaStore.MediaColumns.MIME_TYPE, MIME_MP4)
             contentValues.put(
                 MediaStore.MediaColumns.RELATIVE_PATH,
                 "${Environment.DIRECTORY_MOVIES}/$SYNAPSE_VIDEO_DIR"
             )
             contentValues.put(MediaStore.MediaColumns.IS_PENDING, 1)
-            currentFileUri =
-                resolver.insert(MediaStore.Video.Media.EXTERNAL_CONTENT_URI, contentValues)
-            val assetFileDescriptor = resolver.openAssetFileDescriptor(currentFileUri!!, "w")!!
+            val uri = resolver.insert(MediaStore.Video.Media.EXTERNAL_CONTENT_URI, contentValues)
+            val assetFileDescriptor = resolver.openAssetFileDescriptor(uri!!, "w")!!
             val fd = assetFileDescriptor.fileDescriptor
             mediaMuxer = MediaMuxer(fd!!, MediaMuxer.OutputFormat.MUXER_OUTPUT_MPEG_4)
             assetFileDescriptor.close()
+            currentFile = uri.toString()
         } else {
             val baseDir =
                 Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_MOVIES)
                     .let { "$it/$SYNAPSE_VIDEO_DIR" }
             val file = "$baseDir/$fileName"
+            currentFile = file
 
             File(baseDir).also {
                 if (!it.exists()) {
@@ -180,6 +185,7 @@ class Encoder(
         index: Int,
         info: MediaCodec.BufferInfo
     ) {
+        Log.d(TAG, "${codec == audioEncoder} $index ${info.presentationTimeUs}")
         scope.launch {
             trackCompletable?.await()
             handleOutputBuffer(codec, index, info)
@@ -196,7 +202,7 @@ class Encoder(
         val isEos = info.flags and MediaCodec.BUFFER_FLAG_END_OF_STREAM != 0
         when (codec) {
             audioEncoder -> {
-//                Log.d(TAG, "audio")
+//                Log.d(TAG, "audio $index ${info.presentationTimeUs}")
                 mediaMuxer?.also {
                     if (isConfig) {
                         Log.d(TAG, "audio config")
@@ -214,7 +220,7 @@ class Encoder(
                 }
             }
             videoEncoder -> {
-//                Log.d(TAG, "video")
+//                Log.d(TAG, "video $index ${info.presentationTimeUs}")
                 mediaMuxer?.also {
                     if (isConfig) {
                         Log.d(TAG, "video config")
@@ -241,16 +247,28 @@ class Encoder(
             mediaMuxer?.release()
             mediaMuxer = null
 
-            currentFileUri?.let {
-                val contentValues = ContentValues()
-                contentValues.put(MediaStore.MediaColumns.IS_PENDING, 0)
-                context.contentResolver.update(
-                    it,
-                    contentValues,
-                    null,
-                    null
-                )
-                currentFileUri = null
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                currentFile?.let {
+                    val contentValues = ContentValues()
+                    contentValues.put(MediaStore.MediaColumns.IS_PENDING, 0)
+                    context.contentResolver.update(
+                        it.toUri(),
+                        contentValues,
+                        null,
+                        null
+                    )
+                    currentFile = null
+                }
+            } else {
+                currentFile?.let { file ->
+                        MediaScannerConnection.scanFile(
+                            context,
+                            Array(1) { file },
+                            Array(1) { MIME_MP4 }
+                        ) { a, b ->
+
+                        }
+                }
             }
         }
     }
@@ -309,15 +327,17 @@ class Encoder(
         }
     }
 
-    fun release() {
+    suspend fun release() {
         audioEncoder?.release()
         videoEncoder?.release()
         scope.cancel()
+        scope.coroutineContext[Job]?.join()
         dispatcher.close()
     }
 
     suspend fun writeAudio(buffer: ByteBuffer, timestamp: Long) {
         val index = audioInputBuffers.receive()
+//        Log.d(TAG, "write $timestamp")
         audioEncoder?.getInputBuffer(index)?.let {
             it.put(buffer)
             audioEncoder?.queueInputBuffer(
@@ -333,6 +353,7 @@ class Encoder(
     companion object {
         const val TAG = "Encoder"
         const val SYNAPSE_VIDEO_DIR = "Synapse"
+        const val MIME_MP4 = "video/mp4"
         var FILENAME_FORMAT = SimpleDateFormat("yyyyMMdd_HHmmss", Locale.US)
     }
 }
