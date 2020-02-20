@@ -99,11 +99,15 @@ class PolishViewModel @Inject constructor(
     }
 
     fun stopExecution() {
+        executor.stop()
+    }
+
+    fun delayStop() {
         viewModelScope.launch {
             // TODO: this delay is here to prevent stopping before fully started,
             // should make encoder handle it instead
             delay(500)
-            executor.stop()
+            stopExecution()
         }
     }
 

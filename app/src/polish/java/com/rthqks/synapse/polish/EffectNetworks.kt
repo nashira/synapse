@@ -1,6 +1,5 @@
 package com.rthqks.synapse.polish
 
-import android.media.AudioRecord
 import android.media.MediaRecorder
 import com.rthqks.synapse.exec.node.*
 import com.rthqks.synapse.logic.*

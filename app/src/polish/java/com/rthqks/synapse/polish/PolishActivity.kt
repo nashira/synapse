@@ -4,7 +4,6 @@ import android.Manifest
 import android.content.Context
 import android.content.SharedPreferences
 import android.content.pm.PackageManager
-import android.opengl.GLES30
 import android.os.Build
 import android.os.Bundle
 import android.util.Log
@@ -102,7 +101,7 @@ class PolishActivity : DaggerAppCompatActivity() {
                 viewModel.startRecording()
             } else {
                 exploreMode()
-                viewModel.stopRecording()
+                viewModel.delayStop()
             }
             Log.d(TAG, "recording $recording")
         }
@@ -114,7 +113,13 @@ class PolishActivity : DaggerAppCompatActivity() {
 
         val snapHelper = LinearSnapHelper()
         val layoutManager = effect_list.layoutManager as LinearLayoutManager
-        effect_list.adapter = EffectAdapter()
+        effect_list.adapter = EffectAdapter {
+            val view = layoutManager.findViewByPosition(it)!!
+            val snapDistance = snapHelper.calculateDistanceToFinalSnap(layoutManager, view)!!
+            if (snapDistance[0] != 0 || snapDistance[1] != 0) {
+                effect_list.smoothScrollBy(snapDistance[0], snapDistance[1])
+            }
+        }
 
         effect_list.doOnLayout {
             Log.d(TAG, "onLayout")
@@ -125,18 +130,10 @@ class PolishActivity : DaggerAppCompatActivity() {
             }
         }
 
-
         effect_list.addOnScrollListener(object : RecyclerView.OnScrollListener() {
             private var oldPos = -1
-            private var first = true
             override fun onScrollStateChanged(recyclerView: RecyclerView, newState: Int) {
                 if (newState == RecyclerView.SCROLL_STATE_IDLE) {
-                    Log.d(TAG, "onScrollStateChanged $first")
-                    if (first) {
-                        first = false
-//                        Log.d(TAG, "first time, returning")
-//                        return
-                    }
                     val view = snapHelper.findSnapView(layoutManager)
                     val pos = view?.let { effect_list.getChildAdapterPosition(it) } ?: 0
                     if (oldPos != pos) {
@@ -255,13 +252,15 @@ enum class Effect(
     Topography("topography")
 }
 
-private class EffectAdapter : RecyclerView.Adapter<EffectViewHolder>() {
+private class EffectAdapter(
+    private val onClick: (Int) -> Unit
+) : RecyclerView.Adapter<EffectViewHolder>() {
     private val effects = Effect.values()
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): EffectViewHolder {
         val view = LayoutInflater.from(parent.context)
             .inflate(R.layout.layout_effect, parent, false)
-        return EffectViewHolder(view)
+        return EffectViewHolder(view, onClick)
     }
 
     override fun getItemCount(): Int {
@@ -273,4 +272,13 @@ private class EffectAdapter : RecyclerView.Adapter<EffectViewHolder>() {
     }
 }
 
-private class EffectViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView)
+private class EffectViewHolder(
+    itemView: View,
+    onClick: (Int) -> Unit
+) : RecyclerView.ViewHolder(itemView) {
+    init {
+        itemView.setOnClickListener {
+            onClick(adapterPosition)
+        }
+    }
+}

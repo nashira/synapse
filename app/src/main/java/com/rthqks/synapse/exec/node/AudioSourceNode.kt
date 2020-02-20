@@ -2,7 +2,6 @@ package com.rthqks.synapse.exec.node
 
 import android.media.AudioFormat
 import android.media.AudioRecord
-import android.os.SystemClock
 import android.util.Log
 import com.rthqks.synapse.exec.NodeExecutor
 import com.rthqks.synapse.exec.link.*

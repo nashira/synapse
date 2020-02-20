@@ -8,6 +8,7 @@
     android:paddingEnd="48dp"
     android:paddingBottom="12dp"
     android:textAppearance="?android:attr/textAppearanceButton"
+    android:background="?android:attr/selectableItemBackground"
     android:textColor="@color/white"
     tools:text="time warp">
 

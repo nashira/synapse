@@ -13,7 +13,6 @@ import com.rthqks.synapse.exec.link.*
 import com.rthqks.synapse.gl.*
 import com.rthqks.synapse.logic.Properties
 import com.rthqks.synapse.logic.Recording
-import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
