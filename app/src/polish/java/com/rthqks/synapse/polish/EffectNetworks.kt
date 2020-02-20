@@ -1,5 +1,7 @@
 package com.rthqks.synapse.polish
 
+import android.media.AudioRecord
+import android.media.MediaRecorder
 import com.rthqks.synapse.exec.node.*
 import com.rthqks.synapse.logic.*
 
@@ -14,6 +16,7 @@ object EffectNetworks {
         addLinkNoCompute(Link(camera.id, CameraNode.OUTPUT.id, encoder.id, EncoderNode.INPUT_VIDEO.id))
         addLinkNoCompute(Link(microphone.id, AudioSourceNode.OUTPUT.id, encoder.id, EncoderNode.INPUT_AUDIO.id))
         computeComponents()
+        microphone.properties[AudioSource] = MediaRecorder.AudioSource.CAMCORDER
     }
     val timeWarp = Network(2).apply {
         val camera = addNode(NewNode(NodeType.Camera))

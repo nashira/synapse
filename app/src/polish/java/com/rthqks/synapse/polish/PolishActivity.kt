@@ -15,6 +15,7 @@ import android.widget.TextView
 import android.widget.Toast
 import androidx.core.content.edit
 import androidx.core.view.doOnLayout
+import androidx.core.view.doOnNextLayout
 import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModelProvider
 import androidx.recyclerview.widget.LinearLayoutManager
@@ -82,6 +83,8 @@ class PolishActivity : DaggerAppCompatActivity() {
 
         viewModel.setSurfaceView(surface_view)
 
+//        viewModel.setEffect(Effect.None)
+
         button_color.setOnClickListener {
             Log.d(TAG, "show luts")
             behavior.state = BottomSheetBehavior.STATE_HALF_EXPANDED
@@ -113,10 +116,27 @@ class PolishActivity : DaggerAppCompatActivity() {
         val layoutManager = effect_list.layoutManager as LinearLayoutManager
         effect_list.adapter = EffectAdapter()
 
+        effect_list.doOnLayout {
+            Log.d(TAG, "onLayout")
+            it.setPadding(it.width / 2, 0, it.width / 2, 0)
+            effect_list.scrollToPosition(0)
+            it.doOnNextLayout {
+                snapHelper.attachToRecyclerView(effect_list)
+            }
+        }
+
+
         effect_list.addOnScrollListener(object : RecyclerView.OnScrollListener() {
             private var oldPos = -1
+            private var first = true
             override fun onScrollStateChanged(recyclerView: RecyclerView, newState: Int) {
                 if (newState == RecyclerView.SCROLL_STATE_IDLE) {
+                    Log.d(TAG, "onScrollStateChanged $first")
+                    if (first) {
+                        first = false
+//                        Log.d(TAG, "first time, returning")
+//                        return
+                    }
                     val view = snapHelper.findSnapView(layoutManager)
                     val pos = view?.let { effect_list.getChildAdapterPosition(it) } ?: 0
                     if (oldPos != pos) {
@@ -128,12 +148,6 @@ class PolishActivity : DaggerAppCompatActivity() {
                 }
             }
         })
-
-        effect_list.doOnLayout {
-            it.setPadding(it.width / 2, 0, it.width / 2, 0)
-            effect_list.scrollToPosition(0)
-            snapHelper.attachToRecyclerView(effect_list)
-        }
     }
 
     private fun focusMode() {

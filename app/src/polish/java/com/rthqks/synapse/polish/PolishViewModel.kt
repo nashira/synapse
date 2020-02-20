@@ -12,6 +12,7 @@ import androidx.lifecycle.viewModelScope
 import com.rthqks.synapse.R
 import com.rthqks.synapse.exec.Executor
 import com.rthqks.synapse.logic.*
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
@@ -98,7 +99,12 @@ class PolishViewModel @Inject constructor(
     }
 
     fun stopExecution() {
-        executor.stop()
+        viewModelScope.launch {
+            // TODO: this delay is here to prevent stopping before fully started,
+            // should make encoder handle it instead
+            delay(500)
+            executor.stop()
+        }
     }
 
     fun startRecording() {

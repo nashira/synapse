@@ -21,7 +21,6 @@ import kotlinx.coroutines.selects.whileSelect
 
 class EncoderNode(
     private val context: Context,
-    private val scope: CoroutineScope,
     private val assetManager: AssetManager,
     private val glesManager: GlesManager,
     private val properties: Properties
@@ -32,7 +31,7 @@ class EncoderNode(
 
     private val mesh = Quad()
     private val program = Program()
-    private val encoder = Encoder(context, glesManager.backgroundHandler)
+    private val encoder = Encoder(context)
     private var recording = false
     private var startTimeVideo = -1L
     private var startTimeAudio = -1L
@@ -139,14 +138,14 @@ class EncoderNode(
             }
             var running = 0
             var copyMatrix = true
-            val inputIn = channel(INPUT_VIDEO)
-            val lutIn = channel(INPUT_AUDIO)
+            val videoIn = channel(INPUT_VIDEO)
+            val audioIn = channel(INPUT_AUDIO)
             if (inputLinked) running++
             if (lutLinked) running++
 
             whileSelect {
-                inputIn?.onReceive {
-                    //                    Log.d(TAG, "agent receive ${it.eos}")
+                videoIn?.onReceive {
+//                    Log.d(TAG, "agent receive ${it.eos}")
                     if (copyMatrix) {
                         copyMatrix = false
                         val uniform = program.getUniform(Uniform.Type.Mat4, "texture_matrix0")
@@ -161,12 +160,12 @@ class EncoderNode(
                         }
                         executeGl(it.texture, it.timestamp - startTimeVideo)
                     }
-                    inputIn.send(it)
+                    videoIn.send(it)
                     if (it.eos) running--
                     running > 0
                 }
-                lutIn?.onReceive {
-                    //                    Log.d(TAG, "env receive ${it.eos}")
+                audioIn?.onReceive {
+//                    Log.d(TAG, "env receive ${it.eos}")
                     updateRecording()
 
                     if (recording) {
@@ -176,7 +175,7 @@ class EncoderNode(
                         encoder.writeAudio(it.buffer, it.timestamp - startTimeAudio)
                     }
 
-                    lutIn.send(it)
+                    audioIn.send(it)
                     if (it.eos) running--
                     running > 0
                 }

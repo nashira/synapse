@@ -6,6 +6,7 @@ import android.media.*
 import android.os.Build
 import android.os.Environment
 import android.os.Handler
+import android.os.HandlerThread
 import android.provider.MediaStore
 import android.util.Log
 import android.util.Size
@@ -21,12 +22,19 @@ import java.util.concurrent.Executors
 
 
 class Encoder(
-    private val context: Context,
-    private val handler: Handler
+    private val context: Context
 ) : MediaCodec.Callback() {
     private val dispatcher = Executors.newSingleThreadExecutor().asCoroutineDispatcher()
     private val scope = CoroutineScope(dispatcher + Job())
     private var trackCompletable: CompletableDeferred<Unit>? = null
+
+    private val thread = HandlerThread("BackgroundHandler")
+    private val handler: Handler
+
+    init {
+        thread.start()
+        handler = Handler(thread.looper)
+    }
 
     private var size: Size = Size(0, 0)
     private var fps = 0
@@ -45,7 +53,7 @@ class Encoder(
     private var audioTrack = -1
     private var running = 0
     private var currentFile: String? = null
-    private val audioInputBuffers = Channel<Int>(20)
+    private var audioInputBuffers = Channel<Int>(20)
     private var inputSurface: Surface? = null
 
 //    private val commands = scope.actor {
@@ -117,6 +125,7 @@ class Encoder(
 
         videoTrack = -1
         audioTrack = -1
+        audioInputBuffers = Channel(20)
 
         configureVideo()
         configureAudio()
@@ -140,7 +149,7 @@ class Encoder(
             val index = audioInputBuffers.receive()
             it.getInputBuffer(index)
             it.queueInputBuffer(index, 0, 0, 0, MediaCodec.BUFFER_FLAG_END_OF_STREAM)
-            while (audioInputBuffers.poll() != null);
+//            while (audioInputBuffers.poll() != null);
         }
     }
 
@@ -185,7 +194,7 @@ class Encoder(
         index: Int,
         info: MediaCodec.BufferInfo
     ) {
-        Log.d(TAG, "${codec == audioEncoder} $index ${info.presentationTimeUs}")
+//        Log.d(TAG, "${codec == audioEncoder} $index ${info.presentationTimeUs}")
         scope.launch {
             trackCompletable?.await()
             handleOutputBuffer(codec, index, info)
@@ -204,17 +213,18 @@ class Encoder(
             audioEncoder -> {
 //                Log.d(TAG, "audio $index ${info.presentationTimeUs}")
                 mediaMuxer?.also {
-                    if (isConfig) {
-                        Log.d(TAG, "audio config")
-                    } else {
-                        val buffer = codec.getOutputBuffer(index)!!
-                        it.writeSampleData(audioTrack, buffer, info)
-                        codec.releaseOutputBuffer(index, false)
-                        if (isEos) {
+                    when {
+                        isConfig -> Log.d(TAG, "audio config")
+                        isEos -> {
                             running--
                             codec.flush()
                             codec.reset()
                             checkStopMuxer()
+                        }
+                        else -> {
+                            val buffer = codec.getOutputBuffer(index)!!
+                            it.writeSampleData(audioTrack, buffer, info)
+                            codec.releaseOutputBuffer(index, false)
                         }
                     }
                 }
@@ -222,17 +232,18 @@ class Encoder(
             videoEncoder -> {
 //                Log.d(TAG, "video $index ${info.presentationTimeUs}")
                 mediaMuxer?.also {
-                    if (isConfig) {
-                        Log.d(TAG, "video config")
-                    } else {
-                        val buffer = codec.getOutputBuffer(index)!!
-                        it.writeSampleData(videoTrack, buffer, info)
-                        codec.releaseOutputBuffer(index, true)
-                        if (isEos) {
+                    when {
+                        isConfig -> Log.d(TAG, "video config")
+                        isEos -> {
                             running--
                             codec.flush()
                             codec.reset()
                             checkStopMuxer()
+                        }
+                        else -> {
+                            val buffer = codec.getOutputBuffer(index)!!
+                            it.writeSampleData(videoTrack, buffer, info)
+                            codec.releaseOutputBuffer(index, true)
                         }
                     }
                 }
@@ -331,6 +342,7 @@ class Encoder(
         scope.cancel()
         scope.coroutineContext[Job]?.join()
         dispatcher.close()
+        thread.quitSafely()
     }
 
     suspend fun writeAudio(buffer: ByteBuffer, timestamp: Long) {

@@ -23,6 +23,8 @@ class AudioSourceNode(
     private val channelMask: Int get() = properties[AudioChannel]
     private val audioEncoding: Int get() = properties[AudioEncoding]
     private val source: Int get() = properties[AudioSource]
+    private val frameDurationNs = 1_000_000_000 / sampleRate
+    private var bytesPerFrame = 0
 
     override suspend fun create() {
         bufferSize = AudioRecord.getMinBufferSize(
@@ -43,11 +45,15 @@ class AudioSourceNode(
             )
             .setBufferSizeInBytes(bufferSize)
             .build()
+
+        val channelCount = audioFormat.channelCount
+        val bytesPerSample = getBytesPerSample(audioEncoding)
+        bytesPerFrame = channelCount * bytesPerSample
     }
 
     override suspend fun initialize() {
         connection(OUTPUT)?.let { con ->
-            repeat(6) {
+            repeat(8) {
                 val item = AudioEvent()
                 item.buffer = ByteBuffer.allocateDirect(bufferSize).order(ByteOrder.nativeOrder())
                 con.prime(item)
@@ -59,13 +65,13 @@ class AudioSourceNode(
         recordJob = launch {
             val output = channel(OUTPUT) ?: return@launch
             recorder.startRecording()
-            val start = SystemClock.elapsedRealtimeNanos()
+            var bytesWritten = 0L
             var numFrames = 0
             while (isActive) {
                 val audioEvent = output.receive()
                 audioEvent.eos = false
                 audioEvent.count = numFrames
-                audioEvent.timestamp = (SystemClock.elapsedRealtimeNanos() - start) / 1000
+//                audioEvent.timestamp = (SystemClock.elapsedRealtimeNanos() - start) / 1000
 //                audioEvent.timestamp = SystemClock.elapsedRealtimeNanos() / 1000
                 audioEvent.buffer.position(0)
                 val read = recorder.read(
@@ -74,6 +80,9 @@ class AudioSourceNode(
                     AudioRecord.READ_BLOCKING
                 )
                 audioEvent.buffer.limit(read)
+                bytesWritten += read
+                audioEvent.timestamp = ((bytesWritten / bytesPerFrame) * frameDurationNs) / 1000
+
                 output.send(audioEvent)
                 numFrames++
 //                Log.d(TAG, "read $read frames $numFrames")
@@ -102,6 +111,18 @@ class AudioSourceNode(
         return when (key) {
             OUTPUT -> AudioConfig(audioFormat, bufferSize) as C
             else -> error("")
+        }
+    }
+
+    fun getBytesPerSample(audioFormat: Int): Int {
+        return when (audioFormat) {
+            AudioFormat.ENCODING_PCM_8BIT -> 1
+            AudioFormat.ENCODING_PCM_16BIT,
+            AudioFormat.ENCODING_IEC61937,
+            AudioFormat.ENCODING_DEFAULT -> 2
+            AudioFormat.ENCODING_PCM_FLOAT -> 4
+            AudioFormat.ENCODING_INVALID -> throw IllegalArgumentException("Bad audio format $audioFormat")
+            else -> throw IllegalArgumentException("Bad audio format $audioFormat")
         }
     }
 
