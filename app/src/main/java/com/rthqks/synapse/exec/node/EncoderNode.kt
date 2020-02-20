@@ -15,6 +15,7 @@ import com.rthqks.synapse.logic.Properties
 import com.rthqks.synapse.logic.Recording
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.selects.whileSelect
 
@@ -153,7 +154,7 @@ class EncoderNode(
                     }
                     updateRecording()
 
-                    if (recording) {
+                    if (recording && !it.eos) {
                         if (startTimeVideo == -1L) {
                             startTimeVideo = it.timestamp
                         }
@@ -167,7 +168,7 @@ class EncoderNode(
 //                    Log.d(TAG, "env receive ${it.eos}")
                     updateRecording()
 
-                    if (recording) {
+                    if (recording && !it.eos) {
                         if (startTimeAudio == -1L) {
                             startTimeAudio = it.timestamp
                         }
@@ -181,6 +182,9 @@ class EncoderNode(
             }
             if (recording) {
                 stopRecording()
+                //TODO: need to have encoder serialize it's own commands
+                // this is here because a release is probably coming and we should wait
+                delay(500)
             }
         }
     }

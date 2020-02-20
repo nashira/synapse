@@ -6,6 +6,7 @@ import android.content.SharedPreferences
 import android.content.pm.PackageManager
 import android.os.Build
 import android.os.Bundle
+import android.os.SystemClock
 import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
@@ -94,15 +95,22 @@ class PolishActivity : DaggerAppCompatActivity() {
             viewModel.flipCamera()
         }
 
+        var clickTime = 0L
         button_record.setOnClickListener {
+            val time = SystemClock.elapsedRealtime()
+            if (time - clickTime < 1000) {
+                Log.d(TAG, "click debounce")
+                return@setOnClickListener
+            }
             recording = !recording
             if (recording) {
                 focusMode()
                 viewModel.startRecording()
             } else {
                 exploreMode()
-                viewModel.delayStop()
+                viewModel.stopRecording()
             }
+            clickTime = time
             Log.d(TAG, "recording $recording")
         }
 

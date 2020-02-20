@@ -102,15 +102,6 @@ class PolishViewModel @Inject constructor(
         executor.stop()
     }
 
-    fun delayStop() {
-        viewModelScope.launch {
-            // TODO: this delay is here to prevent stopping before fully started,
-            // should make encoder handle it instead
-            delay(500)
-            stopExecution()
-        }
-    }
-
     fun startRecording() {
         network?.apply {
             getNode(4)?.properties?.set(Recording, true)
