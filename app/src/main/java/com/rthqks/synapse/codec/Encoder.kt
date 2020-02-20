@@ -265,9 +265,7 @@ class Encoder(
                             context,
                             Array(1) { file },
                             Array(1) { MIME_MP4 }
-                        ) { a, b ->
-
-                        }
+                        ) { _, _ -> }
                 }
             }
         }

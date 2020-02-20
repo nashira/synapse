@@ -6,6 +6,7 @@ import android.util.Log
 import android.util.Size
 import android.view.SurfaceView
 import android.widget.Toast
+import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.rthqks.synapse.R
@@ -18,10 +19,16 @@ class PolishViewModel @Inject constructor(
     private val executor: Executor,
     private val context: Context
 ) : ViewModel() {
+    val deviceSupported = MutableLiveData<Boolean>()
 
     init {
-        executor.initialize(false)
+        viewModelScope.launch {
+            executor.initialize(false)
+            executor.await()
+            deviceSupported.value = executor.deviceSupported
+        }
     }
+
 
     private var surfaceView: SurfaceView? = null
     private var network: Network? = null

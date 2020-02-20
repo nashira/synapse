@@ -4,6 +4,7 @@ import android.Manifest
 import android.content.Context
 import android.content.SharedPreferences
 import android.content.pm.PackageManager
+import android.opengl.GLES30
 import android.os.Build
 import android.os.Bundle
 import android.util.Log
@@ -14,6 +15,7 @@ import android.widget.TextView
 import android.widget.Toast
 import androidx.core.content.edit
 import androidx.core.view.doOnLayout
+import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModelProvider
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.LinearSnapHelper
@@ -51,12 +53,19 @@ class PolishActivity : DaggerAppCompatActivity() {
             return
         }
 
-        if (finishedIntro) {
-            onReady()
-            return
-        } else {
-            showIntro()
-        }
+        viewModel.deviceSupported.observe(this, Observer {
+            if (!it) {
+                Toast.makeText(this, "device not supported", Toast.LENGTH_LONG).show()
+                finish()
+                return@Observer
+            }
+
+            if (finishedIntro) {
+                onReady()
+            } else {
+                showIntro()
+            }
+        })
     }
 
     private fun showIntro() {

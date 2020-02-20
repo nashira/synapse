@@ -26,6 +26,8 @@ class Executor @Inject constructor(
     private val cameraManager = CameraManager(context)
     private val assetManager = AssetManager(context)
 
+    val deviceSupported: Boolean get() = glesManager.supportedDevice
+
     private val scope = CoroutineScope(Job() + dispatcher)
 
     private var preview = false
@@ -177,6 +179,9 @@ class Executor @Inject constructor(
 
     private suspend fun doInitializeNetwork(network: Network) {
         Log.d(TAG, "initialize network ${network.id}")
+        if (!deviceSupported) {
+            return
+        }
         var networkNew = network
         if (preview) {
             networkNew = network.copy()

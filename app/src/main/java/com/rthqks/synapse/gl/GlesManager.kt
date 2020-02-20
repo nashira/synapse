@@ -4,6 +4,7 @@ import android.opengl.GLES30
 import android.opengl.Matrix
 import android.os.Handler
 import android.os.HandlerThread
+import android.util.Log
 import android.view.Surface
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.asCoroutineDispatcher
@@ -18,6 +19,7 @@ class GlesManager {
     private lateinit var eglSurface: OffscreenSurface
     lateinit var emptyTexture2d: Texture2d
     lateinit var emptyTexture3d: Texture3d
+    var supportedDevice = false
 
     val backgroundHandler: Handler get() = handler
 
@@ -45,6 +47,10 @@ class GlesManager {
             0,
             GLES30.GL_R8, 1, 1, 1, GLES30.GL_RED, GLES30.GL_UNSIGNED_BYTE
         )
+
+        val extensions = GLES30.glGetString(GLES30.GL_EXTENSIONS)
+        Log.d(TAG, "extensions $extensions")
+        supportedDevice = extensions.contains("GL_OES_EGL_image_external_essl3")
 
         GLES30.glDisable(GLES30.GL_DEPTH_TEST)
         GLES30.glDisable(GLES30.GL_CULL_FACE)
