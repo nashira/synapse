@@ -18,6 +18,7 @@ val VideoSize = Property.Key<Size>("video_size")
 val HistorySize = Property.Key<Int>("history_size")
 val FrameRate = Property.Key<Int>("frame_rate")
 val Stabilize = Property.Key<Boolean>("stabilize")
+val Rotation = Property.Key<Int>("rotation")
 val BlurSize = Property.Key<Int>("blur_size")
 val NumPasses = Property.Key<Int>("num_passes")
 val ScaleFactor = Property.Key<Int>("scale_factor")
@@ -632,6 +633,19 @@ val Nodes = listOf(
                     R.string.property_name_recording
                 ), false
             ), BooleanConverter
+        )
+        add(
+            Property(
+                Rotation,
+                ChoiceType(
+                    R.string.property_name_rotation,
+                    R.drawable.ic_rotate_left,
+                    Choice(0, R.string.property_label_rotation_0),
+                    Choice(90, R.string.property_label_rotation_90),
+                    Choice(270, R.string.property_label_rotation_270),
+                    Choice(180, R.string.property_label_rotation_180)
+                ), 0
+            ), IntConverter
         )
     },
     Node(NodeType.Properties).also { it.id = -2 },

@@ -4,13 +4,13 @@ import android.Manifest
 import android.content.Context
 import android.content.SharedPreferences
 import android.content.pm.PackageManager
+import android.content.res.Configuration
+import android.hardware.SensorManager
 import android.os.Build
 import android.os.Bundle
 import android.os.SystemClock
 import android.util.Log
-import android.view.LayoutInflater
-import android.view.View
-import android.view.ViewGroup
+import android.view.*
 import android.widget.TextView
 import android.widget.Toast
 import androidx.core.content.edit
@@ -32,8 +32,9 @@ class PolishActivity : DaggerAppCompatActivity() {
     @Inject
     lateinit var viewModelFactory: ViewModelProvider.Factory
     lateinit var viewModel: PolishViewModel
-
+    private lateinit var orientationEventListener:  OrientationEventListener
     private lateinit var preferences: SharedPreferences
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_polish)
@@ -67,6 +68,28 @@ class PolishActivity : DaggerAppCompatActivity() {
                 showIntro()
             }
         })
+
+
+        var orientation = 0
+        orientationEventListener = object : OrientationEventListener(this) {
+            override fun onOrientationChanged(angle: Int) {
+                val update = when (angle) {
+                    in 45..135 -> 90
+                    in 135..225 -> 180
+                    in 225..315 -> 270
+                    else -> 0
+                }
+
+                if (orientation != update) {
+                    orientation = update
+                    viewModel.setDeviceOrientation(orientation)
+                }
+            }
+        }
+    }
+
+    private fun setUiOrientation(orientation: Int) {
+
     }
 
     private fun showIntro() {
@@ -130,10 +153,7 @@ class PolishActivity : DaggerAppCompatActivity() {
         effect_list.doOnLayout {
             Log.d(TAG, "onLayout")
             it.setPadding(it.width / 2, 0, it.width / 2, 0)
-            effect_list.scrollToPosition(0)
-            it.doOnNextLayout {
-                snapHelper.attachToRecyclerView(effect_list)
-            }
+            snapHelper.attachToRecyclerView(effect_list)
         }
 
         effect_list.addOnScrollListener(object : RecyclerView.OnScrollListener() {
@@ -217,15 +237,18 @@ class PolishActivity : DaggerAppCompatActivity() {
 
     override fun onResume() {
         super.onResume()
+        orientationEventListener.enable()
         viewModel.startExecution()
     }
 
     override fun onPause() {
         super.onPause()
+        orientationEventListener.disable()
         viewModel.stopExecution()
     }
 
     private fun hideSystemUI() {
+        window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
         window.decorView.systemUiVisibility =
             (View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY
                     or View.SYSTEM_UI_FLAG_LAYOUT_STABLE

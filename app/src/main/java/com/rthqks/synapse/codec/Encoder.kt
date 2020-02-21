@@ -119,7 +119,7 @@ class Encoder(
         audioEncoder?.configure(format, null, null, MediaCodec.CONFIGURE_FLAG_ENCODE)
     }
 
-    fun startEncoding() {
+    fun startEncoding(rotation: Int) {
         val fileName = FILENAME_FORMAT.format(Date()) + ".mp4"
         Log.d(TAG, "startEncoding $fileName")
 
@@ -131,6 +131,8 @@ class Encoder(
         configureAudio()
 
         createMuxer(fileName)
+
+        mediaMuxer?.setOrientationHint(rotation)
 
         running = 0
         if (hasVideo) running++

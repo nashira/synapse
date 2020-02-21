@@ -183,6 +183,12 @@ class PolishViewModel @Inject constructor(
         super.onCleared()
     }
 
+    fun setDeviceOrientation(orientation: Int) {
+        network?.apply {
+            getNode(4)?.properties?.set(Rotation, orientation)
+        }
+    }
+
     companion object {
         const val TAG = "PolishViewModel"
     }

@@ -24,6 +24,7 @@ class AudioSourceNode(
     private val source: Int get() = properties[AudioSource]
     private val frameDurationNs = 1_000_000_000 / sampleRate
     private var bytesPerFrame = 0
+    private var running = false
 
     override suspend fun create() {
         bufferSize = AudioRecord.getMinBufferSize(
@@ -61,12 +62,13 @@ class AudioSourceNode(
     }
 
     override suspend fun start() = coroutineScope {
+        running = true
         recordJob = launch {
             val output = channel(OUTPUT) ?: return@launch
             recorder.startRecording()
             var bytesWritten = 0L
             var numFrames = 0
-            while (isActive) {
+            while (running) {
                 val audioEvent = output.receive()
                 audioEvent.eos = false
                 audioEvent.count = numFrames
@@ -91,7 +93,8 @@ class AudioSourceNode(
     }
 
     override suspend fun stop() {
-        recordJob?.cancelAndJoin()
+        running = false
+        recordJob?.join()
         recorder.stop()
         channel(OUTPUT)?.let {
             Log.d(TAG, "sending EOS")

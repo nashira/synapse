@@ -13,6 +13,7 @@ import com.rthqks.synapse.exec.link.*
 import com.rthqks.synapse.gl.*
 import com.rthqks.synapse.logic.Properties
 import com.rthqks.synapse.logic.Recording
+import com.rthqks.synapse.logic.Rotation
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
@@ -115,7 +116,7 @@ class EncoderNode(
     }
 
     private fun startRecording() {
-        encoder.startEncoding()
+        encoder.startEncoding(properties[Rotation])
         recording = true
         startTimeVideo = -1L
         startTimeAudio = -1L

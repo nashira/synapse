@@ -179,4 +179,9 @@
     <string name="done">Done</string>
     <string name="name_node_type_media_encoder">Media Encoder</string>
     <string name="property_name_recording">Recording</string>
+    <string name="property_name_rotation">Rotation</string>
+    <string name="property_label_rotation_0">Normal</string>
+    <string name="property_label_rotation_90">Clockwise</string>
+    <string name="property_label_rotation_270">Counter-Clockwise</string>
+    <string name="property_label_rotation_180">Upside Down</string>
 </resources>
