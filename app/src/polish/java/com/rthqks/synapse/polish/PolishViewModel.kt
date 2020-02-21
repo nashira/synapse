@@ -151,6 +151,7 @@ class PolishViewModel @Inject constructor(
         }
         Effect.TimeWarp -> {
             EffectNetworks.timeWarp.getNode(1)?.properties?.plusAssign(properties)
+            EffectNetworks.timeWarp.getNode(5)?.properties?.plusAssign(properties)
             recreateNetwork(EffectNetworks.timeWarp)
             true
         }
