@@ -19,11 +19,10 @@
         <ImageButton
             android:id="@+id/button_record"
             style="@style/Widget.AppCompat.Button.Borderless"
-            android:layout_width="48dp"
-            android:layout_height="48dp"
-            android:layout_marginBottom="20dp"
-            android:background="@drawable/ic_record"
-            android:tint="@color/white"
+            android:layout_width="56dp"
+            android:layout_height="56dp"
+            android:layout_marginBottom="8dp"
+            android:src="@drawable/ic_record"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent" />
@@ -36,8 +35,8 @@
             android:src="@drawable/ic_flip_camera"
             android:tint="@color/white"
             app:layout_constraintBottom_toBottomOf="@id/button_record"
-            app:layout_constraintEnd_toStartOf="@id/button_settings"
-            app:layout_constraintStart_toEndOf="@id/button_record"
+            app:layout_constraintEnd_toStartOf="@id/button_record"
+            app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="@id/button_record" />
 
         <ImageButton
@@ -45,6 +44,7 @@
             style="@style/Widget.AppCompat.Button.Borderless"
             android:layout_width="48dp"
             android:layout_height="48dp"
+            android:visibility="gone"
             android:src="@drawable/ic_color_lens"
             android:tint="@color/white"
             app:layout_constraintBottom_toBottomOf="@id/button_record"
@@ -62,7 +62,7 @@
             android:tint="@color/white"
             app:layout_constraintBottom_toBottomOf="@id/button_record"
             app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toEndOf="@id/button_camera"
+            app:layout_constraintStart_toEndOf="@id/button_record"
             app:layout_constraintTop_toTopOf="@id/button_record" />
 
         <androidx.recyclerview.widget.RecyclerView
@@ -70,6 +70,8 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="horizontal"
+            android:paddingStart="160dp"
+            android:paddingEnd="160dp"
             android:clipToPadding="false"
             android:layout_marginBottom="8dp"
             app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager"

@@ -83,8 +83,6 @@ class PolishActivity : DaggerAppCompatActivity() {
 
         viewModel.setSurfaceView(surface_view)
 
-//        viewModel.setEffect(Effect.None)
-
         button_color.setOnClickListener {
             Log.d(TAG, "show luts")
             behavior.state = BottomSheetBehavior.STATE_HALF_EXPANDED
@@ -145,9 +143,11 @@ class PolishActivity : DaggerAppCompatActivity() {
                     val view = snapHelper.findSnapView(layoutManager)
                     val pos = view?.let { effect_list.getChildAdapterPosition(it) } ?: 0
                     if (oldPos != pos) {
-                        oldPos = pos
                         val effect = Effect.values()[pos]
-                        viewModel.setEffect(effect)
+                        val changed = viewModel.setEffect(effect)
+                        if (changed) {
+                            oldPos = pos
+                        }
                         Log.d(TAG, "pos $pos $effect")
                     }
                 }
@@ -159,7 +159,7 @@ class PolishActivity : DaggerAppCompatActivity() {
         listOf(
             button_camera,
             button_settings,
-            button_color,
+//            button_color,
             effect_list
         ).forEach {
             it.animate()
@@ -174,7 +174,7 @@ class PolishActivity : DaggerAppCompatActivity() {
         listOf(
             button_camera,
             button_settings,
-            button_color,
+//            button_color,
             effect_list
         ).forEach {
             it.visibility = View.VISIBLE

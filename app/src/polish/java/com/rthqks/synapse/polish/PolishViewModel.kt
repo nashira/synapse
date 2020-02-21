@@ -12,7 +12,6 @@ import androidx.lifecycle.viewModelScope
 import com.rthqks.synapse.R
 import com.rthqks.synapse.exec.Executor
 import com.rthqks.synapse.logic.*
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
@@ -34,7 +33,7 @@ class PolishViewModel @Inject constructor(
     private var surfaceView: SurfaceView? = null
     private var network: Network? = null
 
-    private val properties = Properties().apply {
+    val properties = Properties().apply {
         put(
             Property(
                 CameraFacing,
@@ -79,6 +78,16 @@ class PolishViewModel @Inject constructor(
                 ), Size(1280, 720), true
             ), SizeConverter
         )
+        put(
+            Property(
+                Stabilize,
+                ToggleType(
+                    R.string.property_name_camera_stabilize, R.drawable.ic_texture,
+                    R.string.property_label_on,
+                    R.string.property_label_off
+                ), value = true, requiresRestart = true
+            ), BooleanConverter
+        )
     }
 
     fun setSurfaceView(surfaceView: SurfaceView?) {
@@ -92,6 +101,12 @@ class PolishViewModel @Inject constructor(
             CameraCharacteristics.LENS_FACING_FRONT -> properties[CameraFacing] =
                 CameraCharacteristics.LENS_FACING_BACK
         }
+        restartNetwork()
+    }
+
+    private fun restartNetwork() {
+        executor.stop()
+        executor.start()
     }
 
     fun startExecution() {
@@ -114,30 +129,40 @@ class PolishViewModel @Inject constructor(
         }
     }
 
-    fun <T> editProperty(key: Property.Key<T>, value: T) {
+    fun <T> editProperty(
+        key: Property.Key<T>,
+        value: T,
+        restart: Boolean = false,
+        recreate: Boolean = false
+    ) {
         properties[key] = value
         Log.d(TAG, "${key.name} = $value")
-    }
-
-    fun setEffect(effect: Effect) {
-        when (effect) {
-            Effect.None -> {
-                EffectNetworks.none.getNode(1)?.properties?.plusAssign(properties)
-                restartNetwork(EffectNetworks.none)
-            }
-            Effect.TimeWarp -> {
-                EffectNetworks.timeWarp.getNode(1)?.properties?.plusAssign(properties)
-                restartNetwork(EffectNetworks.timeWarp)
-            }
-            Effect.Sparkle,
-            Effect.Trip,
-            Effect.Topography -> {
-                Toast.makeText(context, "Coming Soon", Toast.LENGTH_LONG).show()
-            }
+        when {
+            recreate -> network?.let { recreateNetwork(it) }
+            restart -> restartNetwork()
         }
     }
 
-    private fun restartNetwork(network: Network) {
+    fun setEffect(effect: Effect) = when (effect) {
+        Effect.None -> {
+            EffectNetworks.none.getNode(1)?.properties?.plusAssign(properties)
+            recreateNetwork(EffectNetworks.none)
+            true
+        }
+        Effect.TimeWarp -> {
+            EffectNetworks.timeWarp.getNode(1)?.properties?.plusAssign(properties)
+            recreateNetwork(EffectNetworks.timeWarp)
+            true
+        }
+        Effect.Sparkle,
+        Effect.Trip,
+        Effect.Topography -> {
+            Toast.makeText(context, "Coming Soon", Toast.LENGTH_LONG).show()
+            false
+        }
+    }
+
+    private fun recreateNetwork(network: Network) {
         this.network = network
         viewModelScope.launch {
             executor.stop()

@@ -44,11 +44,7 @@ class CameraNode(
     private val stabilize: Boolean get() = properties[Stabilize]
 
     override suspend fun create() {
-        val conf = cameraManager.resolve(facing, requestedSize, frameRate, stabilize)
-        Log.d(TAG, conf.toString())
-        cameraId = conf.id
-        size = conf.size
-        surfaceRotation = conf.rotation
+        updateCameraConfig()
     }
 
     override suspend fun initialize() {
@@ -74,7 +70,16 @@ class CameraNode(
         }
     }
 
+    private fun updateCameraConfig() {
+        val conf = cameraManager.resolve(facing, requestedSize, frameRate, stabilize)
+        Log.d(TAG, conf.toString())
+        cameraId = conf.id
+        size = conf.size
+        surfaceRotation = conf.rotation
+    }
+
     override suspend fun start() = coroutineScope {
+        updateCameraConfig()
         when (config(OUTPUT)?.acceptsSurface) {
             true -> {
                 startJob = launch { startSurface() }
