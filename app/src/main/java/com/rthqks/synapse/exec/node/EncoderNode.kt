@@ -18,6 +18,7 @@ import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.selects.whileSelect
+import java.util.concurrent.atomic.AtomicInteger
 
 class EncoderNode(
     private val context: Context,
@@ -25,6 +26,8 @@ class EncoderNode(
     private val glesManager: GlesManager,
     private val properties: Properties
 ) : NodeExecutor() {
+    private var videoJob: Job? = null
+    private var audioJob: Job? = null
     private var startJob: Job? = null
     private var inputSize: Size = Size(0, 0)
     private val mesh = Quad()
@@ -121,12 +124,64 @@ class EncoderNode(
                 Log.d(TAG, "no connection")
                 return@launch
             }
+//            val running = AtomicInteger()
             var running = 0
             var copyMatrix = true
             val videoIn = channel(INPUT_VIDEO)
             val audioIn = channel(INPUT_AUDIO)
             if (inputLinked) running++
             if (lutLinked) running++
+
+            Log.d(TAG, "video linked $inputLinked audio $lutLinked running=${running}")
+
+//            if (videoIn != null)
+//                videoJob = launch {
+//                    do {
+//                        val it = videoIn.receive()
+//                        if (copyMatrix) {
+//                            copyMatrix = false
+//                            val uniform = program.getUniform(Uniform.Type.Mat4, "texture_matrix0")
+//                            System.arraycopy(it.matrix, 0, uniform.data!!, 0, 16)
+//                            uniform.dirty = true
+//                        }
+//                        updateRecording()
+//
+//                        if (recording && !it.eos) {
+//                            if (startTimeVideo == -1L) {
+//                                startTimeVideo = it.timestamp
+//                            }
+//                            executeGl(it.texture, it.timestamp - startTimeVideo)
+//                        }
+//                        videoIn.send(it)
+//                        if (it.eos) {
+//                            running.decrementAndGet()
+//                            Log.d(TAG, "video eos")
+//                        }
+//                    } while (!it.eos)
+//                }
+//
+//            if (audioIn != null)
+//                audioJob = launch {
+//                    do {
+//                        val it = audioIn.receive()
+//
+//                        updateRecording()
+//
+//                        if (recording && !it.eos) {
+//                            if (startTimeAudio == -1L) {
+//                                startTimeAudio = it.timestamp
+//                            }
+//                            encoder.writeAudio(it.buffer, it.timestamp - startTimeAudio)
+//                        }
+//
+//                        audioIn.send(it)
+//                        if (it.eos) {
+//                            running.decrementAndGet()
+//                            Log.d(TAG, "audio eos")
+//
+//                        }
+//                    } while (!it.eos)
+//                }
 
             whileSelect {
                 videoIn?.onReceive {
@@ -173,13 +228,8 @@ class EncoderNode(
                 }
             }
 
-            Log.d(TAG, "got eos, recording = $recording")
-            if (recording) {
-                stopRecording()
-                //TODO: need to have encoder serialize it's own commands
-                // this is here because a release is probably coming and we should wait
-                delay(500)
-            }
+//            videoJob?.join()
+//            audioJob?.join()
         }
     }
 
@@ -212,6 +262,14 @@ class EncoderNode(
     override suspend fun stop() {
         Log.d(TAG, "stopping")
         startJob?.join()
+
+        Log.d(TAG, "got eos, recording = $recording")
+        if (recording) {
+            stopRecording()
+            //TODO: need to have encoder serialize it's own commands
+            // this is here because a release is probably coming and we should wait
+            delay(500)
+        }
         Log.d(TAG, "stopped")
     }
 

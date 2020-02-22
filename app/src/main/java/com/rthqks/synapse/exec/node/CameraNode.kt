@@ -121,7 +121,7 @@ class CameraNode(
 
         var copyMatrix = 0
         setOnFrameAvailableListener {
-            runBlocking {
+            launch {
                 onFrame(channel, it, copyMatrix < 2)
                 copyMatrix++
             }
@@ -135,6 +135,7 @@ class CameraNode(
                 outputSurfaceTexture?.setOnFrameAvailableListener(null)
                 Log.d(TAG, "frame listener = null")
                 val event = channel.receive()
+                Log.d(TAG, "receive event")
                 event.count = count
                 event.timestamp = timestamp
                 event.eos = true

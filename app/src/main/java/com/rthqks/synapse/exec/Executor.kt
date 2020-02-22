@@ -21,7 +21,7 @@ class Executor @Inject constructor(
 ) {
     private var networkExecutor: NetworkExecutor? = null
     private var network: Network? = null
-    private val dispatcher = Executors.newFixedThreadPool(6).asCoroutineDispatcher()
+    private val dispatcher = Executors.newFixedThreadPool(2).asCoroutineDispatcher()
     private val glesManager = GlesManager()
     private val cameraManager = CameraManager(context)
     private val assetManager = AssetManager(context)

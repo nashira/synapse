@@ -163,7 +163,7 @@ class CameraManager(
                 request: CaptureRequest,
                 result: TotalCaptureResult
             ) {
-                runBlocking {
+
                     val eos = isEos
 
                     if (eos) {
@@ -176,6 +176,8 @@ class CameraManager(
                     val time = result[CaptureResult.SENSOR_TIMESTAMP]!!
                     val event = nextEvent()
                     event.set(result.frameNumber.toInt(), time, eos)
+
+                runBlocking {
                     channel.send(event)
                 }
             }
