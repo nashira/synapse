@@ -166,7 +166,7 @@ class PhysarumNode(
 
                 addUniform(Uniform.Type.Mat4, "texture_matrix", GlesManager.identityMat())
                 addUniform(Uniform.Type.Int, "agent_texture", AGENT_TEXTURE_LOCATION)
-                addUniform(Uniform.Type.Int,"env_texture", ENV_TEXTURE_LOCATION)
+                addUniform(Uniform.Type.Int, "env_texture", ENV_TEXTURE_LOCATION)
                 addUniform(Uniform.Type.Float, SENSOR_ANGLE, sensorAngle)
                 addUniform(Uniform.Type.Float, SENSOR_DIST, sensorDistance)
                 addUniform(Uniform.Type.Float, TRAVEL_ANGLE, travelAngle)
@@ -190,7 +190,11 @@ class PhysarumNode(
         }
     }
 
-    private fun initRenderTarget(framebuffer: Framebuffer, texture: Texture2d, config: VideoConfig) {
+    private fun initRenderTarget(
+        framebuffer: Framebuffer,
+        texture: Texture2d,
+        config: VideoConfig
+    ) {
         texture.initialize()
         texture.initData(
             0,
@@ -316,18 +320,20 @@ class PhysarumNode(
     }
 
     override suspend fun release() {
-        agentTexture1.release()
-        agentTexture2.release()
-        envTexture1.release()
-        envTexture2.release()
-        agentFramebuffer1.release()
-        agentFramebuffer2.release()
-        envFramebuffer1.release()
-        envFramebuffer2.release()
-        agentMesh.release()
-        quadMesh.release()
-        agentProgram.release()
-        envProgram.release()
+        glesManager.glContext {
+            agentTexture1.release()
+            agentTexture2.release()
+            envTexture1.release()
+            envTexture2.release()
+            agentFramebuffer1.release()
+            agentFramebuffer2.release()
+            envFramebuffer1.release()
+            envFramebuffer2.release()
+            agentMesh.release()
+            quadMesh.release()
+            agentProgram.release()
+            envProgram.release()
+        }
     }
 
     private suspend fun execute() {

@@ -122,17 +122,25 @@ class ImageBlendNode(
                     "blend_texture",
                     BLEND_TEXTURE_LOCATION
                 )
-                addUniform(Uniform.Type.Int,
+                addUniform(
+                    Uniform.Type.Int,
                     "blend_mode",
-                    blendMode)
-                addUniform(Uniform.Type.Float,
+                    blendMode
+                )
+                addUniform(
+                    Uniform.Type.Float,
                     UNI_OPACITY,
-                    opacity)
+                    opacity
+                )
             }
         }
     }
 
-    private fun initRenderTarget(framebuffer: Framebuffer, texture: Texture2d, config: VideoConfig) {
+    private fun initRenderTarget(
+        framebuffer: Framebuffer,
+        texture: Texture2d,
+        config: VideoConfig
+    ) {
         texture.initialize()
         texture.initData(
             0,
@@ -216,12 +224,14 @@ class ImageBlendNode(
     }
 
     override suspend fun release() {
-        texture1.release()
-        texture2.release()
-        framebuffer1.release()
-        framebuffer2.release()
-        quadMesh.release()
-        program.release()
+        glesManager.glContext {
+            texture1.release()
+            texture2.release()
+            framebuffer1.release()
+            framebuffer2.release()
+            quadMesh.release()
+            program.release()
+        }
     }
 
     private suspend fun execute() {

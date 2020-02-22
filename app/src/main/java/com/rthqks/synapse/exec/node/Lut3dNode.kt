@@ -157,7 +157,7 @@ class Lut3dNode(
 
             whileSelect {
                 inputIn?.onReceive {
-//                    Log.d(TAG, "input receive")
+                    //                    Log.d(TAG, "input receive")
                     inputEvent?.let { inputIn.send(it) }
                     inputEvent = it
                     if (copyMatrix) {
@@ -171,7 +171,7 @@ class Lut3dNode(
                     running > 0
                 }
                 lutIn?.onReceive {
-//                    Log.d(TAG, "lut receive")
+                    //                    Log.d(TAG, "lut receive")
                     lutEvent?.let { lutIn.send(it) }
                     lutEvent = it
                     debounceExecute(this@launch)
@@ -202,12 +202,14 @@ class Lut3dNode(
     }
 
     override suspend fun release() {
-        texture1.release()
-        texture2.release()
-        framebuffer1.release()
-        framebuffer2.release()
-        quadMesh.release()
-        program.release()
+        glesManager.glContext {
+            texture1.release()
+            texture2.release()
+            framebuffer1.release()
+            framebuffer2.release()
+            quadMesh.release()
+            program.release()
+        }
     }
 
     private suspend fun execute() {

@@ -150,7 +150,7 @@ class Slice3dNode(
         frameCount = 0
 
         startJob = launch {
-//            val inputLinked = linked(INPUT)
+            //            val inputLinked = linked(INPUT)
             val t3dLinked = linked(INPUT_3D)
             if (!t3dLinked) {
                 Log.d(TAG, "no connection")
@@ -164,7 +164,7 @@ class Slice3dNode(
             if (t3dLinked) running++
 
             whileSelect {
-//                inputIn?.onReceive {
+                //                inputIn?.onReceive {
 ////                    Log.d(TAG, "input receive")
 //                    inputEvent?.let { inputIn.send(it) }
 //                    inputEvent = it
@@ -179,7 +179,7 @@ class Slice3dNode(
 //                    running > 0
 //                }
                 t3dIn?.onReceive {
-//                    Log.d(TAG, "lut receive")
+                    //                    Log.d(TAG, "lut receive")
                     t3dEvent?.let { t3dIn.send(it) }
                     t3dEvent = it
                     debounceExecute(this@launch)
@@ -210,12 +210,14 @@ class Slice3dNode(
     }
 
     override suspend fun release() {
-        texture1.release()
-        texture2.release()
-        framebuffer1.release()
-        framebuffer2.release()
-        quadMesh.release()
-        program.release()
+        glesManager.glContext {
+            texture1.release()
+            texture2.release()
+            framebuffer1.release()
+            framebuffer2.release()
+            quadMesh.release()
+            program.release()
+        }
     }
 
     private suspend fun execute() {
@@ -224,7 +226,9 @@ class Slice3dNode(
 
         val inputTexture = inputEvent?.texture ?: glesManager.emptyTexture2d
         val t3dTexture = t3dEvent?.texture ?: glesManager.emptyTexture3d
-        val t3dLayer = t3dEvent?.let { it.index/outputConfig.depth.toFloat() + 0.5f/outputConfig.depth } ?: 0f
+        val t3dLayer =
+            t3dEvent?.let { it.index / outputConfig.depth.toFloat() + 0.5f / outputConfig.depth }
+                ?: 0f
 
         val framebuffer = if (outEvent.texture == texture1) {
             framebuffer1
@@ -279,7 +283,7 @@ class Slice3dNode(
         const val T3D_TEXTURE = "t3d_texture"
         const val T3D_LAYER = "t3d_layer"
         const val T3D_DEPTH = "t3d_depth"
-//        val INPUT = Connection.Key<VideoConfig, VideoEvent>("input")
+        //        val INPUT = Connection.Key<VideoConfig, VideoEvent>("input")
         val INPUT_3D = Connection.Key<Texture3dConfig, Texture3dEvent>("input_3d")
         val OUTPUT = Connection.Key<VideoConfig, VideoEvent>("output")
         val DEFAULT_CONFIG = Texture3dConfig(

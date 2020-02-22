@@ -6,7 +6,9 @@ import android.util.Log
 import com.rthqks.synapse.exec.NodeExecutor
 import com.rthqks.synapse.exec.link.*
 import com.rthqks.synapse.logic.*
-import kotlinx.coroutines.*
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.launch
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
 
@@ -93,14 +95,20 @@ class AudioSourceNode(
     }
 
     override suspend fun stop() {
+        Log.d(TAG, "stop")
         running = false
+        Log.d(TAG, "stop running = false")
         recordJob?.join()
+        Log.d(TAG, "stop join")
         recorder.stop()
+        Log.d(TAG, "stop recorder stop")
         channel(OUTPUT)?.let {
             Log.d(TAG, "sending EOS")
             val e = it.receive()
+            Log.d(TAG, "sending receive")
             e.eos = true
             it.send(e)
+            Log.d(TAG, "sending send")
         }
     }
 

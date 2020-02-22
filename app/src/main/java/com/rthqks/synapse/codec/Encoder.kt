@@ -28,7 +28,7 @@ class Encoder(
     private val scope = CoroutineScope(dispatcher + Job())
     private var trackCompletable: CompletableDeferred<Unit>? = null
 
-    private val thread = HandlerThread("BackgroundHandler")
+    private val thread = HandlerThread("Encoder")
     private val handler: Handler
 
     init {

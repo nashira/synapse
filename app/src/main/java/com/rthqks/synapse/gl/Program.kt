@@ -19,6 +19,8 @@ class Program {
             GLES30.glLinkProgram(it)
             val linkStatus = IntArray(1)
             GLES30.glGetProgramiv(it, GLES30.GL_LINK_STATUS, linkStatus, 0)
+            GLES30.glDetachShader(it, vertexShader)
+            GLES30.glDetachShader(it, fragmentShader)
             GLES30.glDeleteShader(vertexShader)
             GLES30.glDeleteShader(fragmentShader)
             if (linkStatus[0] != GLES30.GL_TRUE) {
@@ -79,7 +81,7 @@ class Program {
 
     fun release() {
         GLES30.glDeleteProgram(programId)
-
+        Log.d(TAG, "release program: $programId")
     }
 
     private fun createShader(type: Int, source: String): Int =

@@ -234,9 +234,9 @@ class GrayscaleNode(
     }
 
     override suspend fun release() {
-        outputSurfaceWindow?.release()
 
         glesManager.glContext {
+            outputSurfaceWindow?.release()
             mesh.release()
             program.release()
 

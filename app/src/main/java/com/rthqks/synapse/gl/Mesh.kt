@@ -57,6 +57,7 @@ open class Mesh(
         val ids = buffersById.keys.toIntArray()
         glDeleteBuffers(ids.size, ids, 0)
         glDeleteVertexArrays(1, intArrayOf(vaoId), 0)
+        Log.d(TAG, "release vao $vaoId")
     }
 
     fun addBuffer(name: String, data: java.nio.Buffer, target: Int, usage: Int): Buffer {

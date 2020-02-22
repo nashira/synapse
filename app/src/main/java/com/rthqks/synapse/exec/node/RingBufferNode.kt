@@ -173,10 +173,12 @@ class RingBufferNode(
     }
 
     override suspend fun release() {
-        texture.release()
-        framebuffers.forEach { it.release() }
-        quadMesh.release()
-        program.release()
+        glesManager.glContext {
+            framebuffers.forEach { it.release() }
+            texture.release()
+            quadMesh.release()
+            program.release()
+        }
     }
 
     private suspend fun execute(

@@ -1,6 +1,7 @@
 package com.rthqks.synapse.gl
 
 import android.opengl.GLES30.*
+import android.util.Log
 
 class Texture3d(
     val repeat: Int = GL_CLAMP_TO_EDGE,
@@ -38,6 +39,7 @@ class Texture3d(
         }
 
         id = textureHandle[0]
+        Log.d(TAG, "gen $id")
     }
 
     fun bind(unit: Int) {
@@ -47,6 +49,7 @@ class Texture3d(
 
     fun release() {
         glDeleteTextures(1, intArrayOf(id), 0)
+        Log.d(TAG, "rel $id")
     }
 
     fun initData(
@@ -81,7 +84,6 @@ class Texture3d(
                 0
             )
         } else {
-
             glTexImage3D(
                 GL_TEXTURE_3D,
                 level,
@@ -129,5 +131,9 @@ class Texture3d(
             buffer
         )
         glBindTexture(GL_TEXTURE_3D, 0)
+    }
+
+    companion object {
+        const val TAG = "Texture3d"
     }
 }

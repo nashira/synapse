@@ -278,9 +278,11 @@ class DecoderNode(
 
     override suspend fun release() {
         decoder.release()
-        outputSurface?.release()
-        outputSurfaceTexture?.release()
-        outputTexture.release()
+        glesManager.glContext {
+            outputSurface?.release()
+            outputSurfaceTexture?.release()
+            outputTexture.release()
+        }
     }
 
     @Suppress("UNCHECKED_CAST")

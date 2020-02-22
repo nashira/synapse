@@ -2,20 +2,17 @@ package com.rthqks.synapse.polish
 
 import android.Manifest
 import android.content.Context
+import android.content.Intent
 import android.content.SharedPreferences
 import android.content.pm.PackageManager
-import android.content.res.Configuration
-import android.hardware.SensorManager
 import android.os.Build
 import android.os.Bundle
-import android.os.SystemClock
 import android.util.Log
 import android.view.*
 import android.widget.TextView
 import android.widget.Toast
 import androidx.core.content.edit
 import androidx.core.view.doOnLayout
-import androidx.core.view.doOnNextLayout
 import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModelProvider
 import androidx.recyclerview.widget.LinearLayoutManager
@@ -23,6 +20,7 @@ import androidx.recyclerview.widget.LinearSnapHelper
 import androidx.recyclerview.widget.RecyclerView
 import com.google.android.material.bottomsheet.BottomSheetBehavior
 import com.rthqks.synapse.R
+import com.rthqks.synapse.util.throttleClick
 import dagger.android.support.DaggerAppCompatActivity
 import kotlinx.android.synthetic.polish.activity_polish.*
 import javax.inject.Inject
@@ -111,18 +109,12 @@ class PolishActivity : DaggerAppCompatActivity() {
             behavior.state = BottomSheetBehavior.STATE_HALF_EXPANDED
         }
 
-        button_camera.setOnClickListener {
+        button_camera.setOnClickListener(throttleClick {
             Log.d(TAG, "flip camera")
             viewModel.flipCamera()
-        }
+        })
 
-        var clickTime = 0L
-        button_record.setOnClickListener {
-            val time = SystemClock.elapsedRealtime()
-            if (time - clickTime < 1000) {
-                Log.d(TAG, "click debounce")
-                return@setOnClickListener
-            }
+        button_record.setOnClickListener(throttleClick {
             recording = !recording
             if (recording) {
                 focusMode()
@@ -131,13 +123,18 @@ class PolishActivity : DaggerAppCompatActivity() {
                 exploreMode()
                 viewModel.stopRecording()
             }
-            clickTime = time
             Log.d(TAG, "recording $recording")
-        }
+        })
 
         button_settings.setOnClickListener {
             Log.d(TAG, "show settings")
             SettingsDialog().show(supportFragmentManager, "settings")
+        }
+
+        button_gallery.setOnClickListener {
+            Intent(this, GalleryActivity::class.java).also {
+                startActivity(it)
+            }
         }
 
         val snapHelper = LinearSnapHelper()

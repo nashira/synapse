@@ -3,6 +3,7 @@ package com.rthqks.synapse.gl
 import android.graphics.Bitmap
 import android.opengl.GLES30.*
 import android.opengl.GLUtils
+import android.util.Log
 
 class Texture2d(
     val target: Int = GL_TEXTURE_2D,
@@ -39,6 +40,7 @@ class Texture2d(
         }
 
         id = textureHandle[0]
+        Log.d(TAG, "gen $id")
     }
 
     fun bind(unit: Int) {
@@ -48,6 +50,7 @@ class Texture2d(
 
     fun release() {
         glDeleteTextures(1, intArrayOf(id), 0)
+        Log.d(TAG, "rel $id")
     }
 
     fun initData(
@@ -107,5 +110,9 @@ class Texture2d(
             buffer
         )
         glBindTexture(target, 0)
+    }
+
+    companion object {
+        const val TAG = "Texture2d"
     }
 }

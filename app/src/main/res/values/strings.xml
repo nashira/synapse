@@ -184,4 +184,5 @@
     <string name="property_label_rotation_90">Clockwise</string>
     <string name="property_label_rotation_270">Counter-Clockwise</string>
     <string name="property_label_rotation_180">Upside Down</string>
+    <string name="title_gallery">Videos</string>
 </resources>

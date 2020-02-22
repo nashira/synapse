@@ -182,6 +182,7 @@ class NetworkExecutor(
             Log.d(TAG, "release complete $it")
         }
         scope.cancel()
+        scope.coroutineContext[Job]?.join()
         logCoroutineInfo(scope.coroutineContext[Job])
     }
 

@@ -5,7 +5,6 @@ import android.opengl.GLES30
 import android.util.Log
 import android.util.Size
 import android.view.Surface
-import android.view.SurfaceHolder
 import com.rthqks.synapse.assets.AssetManager
 import com.rthqks.synapse.codec.Encoder
 import com.rthqks.synapse.exec.NodeExecutor
@@ -25,37 +24,22 @@ class EncoderNode(
     private val assetManager: AssetManager,
     private val glesManager: GlesManager,
     private val properties: Properties
-) : NodeExecutor(), SurfaceHolder.Callback {
-    private var surface: Surface? = null
+) : NodeExecutor() {
     private var startJob: Job? = null
     private var inputSize: Size = Size(0, 0)
-
     private val mesh = Quad()
+
     private val program = Program()
     private val encoder = Encoder(context)
-    private var recording = false
     private var startTimeVideo = -1L
     private var startTimeAudio = -1L
+    private var surface: Surface? = null
     private var windowSurface: WindowSurface? = null
+
+    private var recording = false
     private var frameCount = 0
 
     override suspend fun create() {
-    }
-
-    override fun surfaceCreated(holder: SurfaceHolder?) {
-        Log.d(TAG, "surfaceCreated: $holder")
-    }
-
-    override fun surfaceChanged(
-        holder: SurfaceHolder?,
-        format: Int,
-        width: Int,
-        height: Int
-    ) {
-
-    }
-
-    override fun surfaceDestroyed(holder: SurfaceHolder?) {
     }
 
     override suspend fun initialize() {
@@ -162,7 +146,10 @@ class EncoderNode(
                         executeGl(it.texture, it.timestamp - startTimeVideo)
                     }
                     videoIn.send(it)
-                    if (it.eos) running--
+                    if (it.eos) {
+                        running--
+                        Log.d(TAG, "video eos")
+                    }
                     running > 0
                 }
                 audioIn?.onReceive {
@@ -177,10 +164,16 @@ class EncoderNode(
                     }
 
                     audioIn.send(it)
-                    if (it.eos) running--
+                    if (it.eos) {
+                        running--
+                        Log.d(TAG, "audio eos")
+
+                    }
                     running > 0
                 }
             }
+
+            Log.d(TAG, "got eos, recording = $recording")
             if (recording) {
                 stopRecording()
                 //TODO: need to have encoder serialize it's own commands
@@ -217,7 +210,9 @@ class EncoderNode(
     }
 
     override suspend fun stop() {
+        Log.d(TAG, "stopping")
         startJob?.join()
+        Log.d(TAG, "stopped")
     }
 
     override suspend fun release() {

@@ -126,7 +126,11 @@ class Lut2dNode(
         }
     }
 
-    private fun initRenderTarget(framebuffer: Framebuffer, texture: Texture2d, config: VideoConfig) {
+    private fun initRenderTarget(
+        framebuffer: Framebuffer,
+        texture: Texture2d,
+        config: VideoConfig
+    ) {
         texture.initialize()
         texture.initData(
             0,
@@ -204,12 +208,14 @@ class Lut2dNode(
     }
 
     override suspend fun release() {
-        texture1.release()
-        texture2.release()
-        framebuffer1.release()
-        framebuffer2.release()
-        quadMesh.release()
-        program.release()
+        glesManager.glContext {
+            texture1.release()
+            texture2.release()
+            framebuffer1.release()
+            framebuffer2.release()
+            quadMesh.release()
+            program.release()
+        }
     }
 
     private suspend fun execute() {

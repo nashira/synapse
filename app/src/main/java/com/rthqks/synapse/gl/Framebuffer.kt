@@ -36,7 +36,7 @@ class Framebuffer {
         glBindFramebuffer(GL_FRAMEBUFFER, 0)
     }
 
-    fun initialize(texture3d: Texture3d, level: Int) {
+    fun initialize(texture3d: Texture3d, layer: Int) {
         val fbo = IntArray(1)
         glGenFramebuffers(1, fbo, 0)
         id = fbo[0]
@@ -49,7 +49,7 @@ class Framebuffer {
             GL_COLOR_ATTACHMENT0,
             texture3d.id,
             0,
-            level
+            layer
         )
         buffers.add(GL_COLOR_ATTACHMENT0)
 

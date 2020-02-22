@@ -15,6 +15,7 @@ import com.rthqks.synapse.R
 import com.rthqks.synapse.logic.FrameRate
 import com.rthqks.synapse.logic.Stabilize
 import com.rthqks.synapse.logic.VideoSize
+import com.rthqks.synapse.util.throttleClick
 import dagger.android.support.AndroidSupportInjection
 import kotlinx.android.synthetic.polish.fragment_settings.view.*
 import javax.inject.Inject
@@ -42,7 +43,7 @@ class SettingsDialog() : DialogFragment() {
         customView.fps_60,
         customView.stabilize_on,
         customView.stabilize_off).forEach {
-            it.setOnClickListener(this::onClick)
+            it.setOnClickListener(throttleClick(1000, this::onClick))
         }
     }
 

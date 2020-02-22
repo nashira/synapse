@@ -168,15 +168,10 @@ class SurfaceViewNode(
         glesManager.glContext {
             windowSurface?.release()
             windowSurface = null
-            surface?.also { surface ->
-                if (surface.isValid) {
-                    Log.d(TAG, "surf creating new input surface")
-//                    surfaceView?.tag?.let {
-//                        (it as? SurfaceViewNode)?.setSurface(null)
-//                    }
-                    windowSurface = it.createWindowSurface(surface)
-//                    surfaceView?.tag = this@SurfaceViewNode
-                }
+            val surface = surface
+            if (surface?.isValid == true) {
+                Log.d(TAG, "surf creating new input surface")
+                windowSurface = it.createWindowSurface(surface)
             }
 
             if (windowSurface == null) {

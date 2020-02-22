@@ -38,7 +38,7 @@ class CameraNode(
         GL_LINEAR
     )
 
-    private val facing: Int get() =  properties[CameraFacing]
+    private val facing: Int get() = properties[CameraFacing]
     private val requestedSize: Size get() = properties[VideoSize]
     private val frameRate: Int get() = properties[FrameRate]
     private val stabilize: Boolean get() = properties[Stabilize]
@@ -114,10 +114,10 @@ class CameraNode(
         } while (!eos)
     }
 
-    private suspend fun startTexture() {
-        val channel = channel(OUTPUT) ?: return
-        val surface = outputSurface ?: return
-        val cameraChannel = Channel<CameraManager.Event>(3)
+    private suspend fun startTexture() = coroutineScope {
+        val channel = channel(OUTPUT) ?: return@coroutineScope
+        val surface = outputSurface ?: return@coroutineScope
+        val cameraChannel = Channel<CameraManager.Event>(10)
 
         var copyMatrix = 0
         setOnFrameAvailableListener {
@@ -131,8 +131,9 @@ class CameraNode(
         do {
             val (count, timestamp, eos) = cameraChannel.receive()
             if (eos) {
-                outputSurfaceTexture?.setOnFrameAvailableListener(null)
                 Log.d(TAG, "got EOS from cam")
+                outputSurfaceTexture?.setOnFrameAvailableListener(null)
+                Log.d(TAG, "frame listener = null")
                 val event = channel.receive()
                 event.count = count
                 event.timestamp = timestamp
@@ -156,7 +157,7 @@ class CameraNode(
         surfaceTexture: SurfaceTexture,
         copyMatrix: Boolean
     ) {
-
+//        Log.d(TAG, "onFrame")
         val event = channel.receive()
         glesManager.glContext {
             surfaceTexture.updateTexImage()
@@ -177,7 +178,7 @@ class CameraNode(
                     }
                 }
             }
-//            Log.d(TAG, "surface ${surfaceTexture.timestamp}")
+
         }
         event.eos = false
         channel.send(event)
@@ -189,9 +190,11 @@ class CameraNode(
     }
 
     override suspend fun release() {
-        outputSurface?.release()
-        outputSurfaceTexture?.release()
-        outputTexture.release()
+        glesManager.glContext {
+            outputSurface?.release()
+            outputSurfaceTexture?.release()
+            outputTexture.release()
+        }
     }
 
     @Suppress("UNCHECKED_CAST")

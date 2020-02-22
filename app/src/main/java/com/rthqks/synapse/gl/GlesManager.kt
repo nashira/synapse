@@ -57,12 +57,12 @@ class GlesManager {
     }
 
     fun release() {
-        thread.quitSafely()
         emptyTexture2d.release()
         emptyTexture3d.release()
         eglSurface.release()
         eglCore.release()
         dispatcher.close()
+        thread.quitSafely()
     }
 
     fun createWindowSurface(surface: Surface): WindowSurface =

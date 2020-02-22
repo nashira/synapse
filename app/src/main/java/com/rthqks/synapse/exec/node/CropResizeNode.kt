@@ -172,12 +172,14 @@ class CropResizeNode(
     }
 
     override suspend fun release() {
-        texture1.release()
-        texture2.release()
-        framebuffer1.release()
-        framebuffer2.release()
-        quadMesh.release()
-        program.release()
+        glesManager.glContext {
+            texture1.release()
+            texture2.release()
+            framebuffer1.release()
+            framebuffer2.release()
+            quadMesh.release()
+            program.release()
+        }
     }
 
     private suspend fun execute(inputTexture: Texture2d) {

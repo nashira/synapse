@@ -169,9 +169,9 @@ class PolishViewModel @Inject constructor(
             executor.stop()
             executor.releaseNetwork()
             executor.initializeNetwork(network)
-            surfaceView?.let { executor.setSurfaceView(it) }
             executor.start()
             executor.await()
+            surfaceView?.let { executor.setSurfaceView(it) }
         }
     }
 
