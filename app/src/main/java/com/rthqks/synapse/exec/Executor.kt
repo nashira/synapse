@@ -5,6 +5,7 @@ import android.os.SystemClock
 import android.util.Log
 import android.view.SurfaceView
 import com.rthqks.synapse.assets.AssetManager
+import com.rthqks.synapse.assets.VideoStorage
 import com.rthqks.synapse.exec.node.CropResizeNode
 import com.rthqks.synapse.exec.node.SurfaceViewNode
 import com.rthqks.synapse.gl.GlesManager
@@ -17,7 +18,8 @@ import java.util.concurrent.Executors
 import javax.inject.Inject
 
 class Executor @Inject constructor(
-    private val context: Context
+    private val context: Context,
+    private val videoStorage: VideoStorage
 ) {
     private var networkExecutor: NetworkExecutor? = null
     private var network: Network? = null
@@ -206,6 +208,7 @@ class Executor @Inject constructor(
             glesManager,
             cameraManager,
             assetManager,
+            videoStorage,
             networkNew
         )
         networkExecutor?.initialize()

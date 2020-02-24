@@ -3,14 +3,39 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
-    android:layout_height="match_parent">
+    android:layout_height="wrap_content">
 
     <ImageView
         android:id="@+id/image_view"
         android:layout_width="match_parent"
         android:layout_height="0dp"
+        android:contentDescription="@string/name_node_type_video_file"
+        android:scaleType="fitCenter"
         app:layout_constraintDimensionRatio="1:1"
         app:layout_constraintTop_toTopOf="parent"
-        android:scaleType="fitCenter"
-        tools:src="@drawable/ic_launcher_web" />
+        tools:background="@color/light_grey"
+        tools:src="@drawable/ic_movie" />
+
+    <TextView
+        android:id="@+id/label_view"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textAppearance="?android:attr/textAppearanceListItem"
+        android:textSize="14sp"
+        app:layout_constraintStart_toStartOf="parent"
+        android:paddingBottom="12dp"
+        android:paddingTop="6dp"
+        app:layout_constraintTop_toBottomOf="@id/image_view"
+        tools:text="29 minutes ago" />
+
+    <ImageButton
+        android:id="@+id/button_share"
+        style="@style/Widget.AppCompat.Button.Borderless"
+        android:layout_width="48dp"
+        android:layout_height="48dp"
+        android:contentDescription="@string/button_share"
+        android:src="@drawable/ic_share"
+        android:tint="@color/white"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintBottom_toBottomOf="@id/image_view" />
 </androidx.constraintlayout.widget.ConstraintLayout>

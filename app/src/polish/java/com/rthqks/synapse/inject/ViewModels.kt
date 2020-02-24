@@ -2,6 +2,7 @@ package com.rthqks.synapse.inject
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
+import com.rthqks.synapse.polish.GalleryViewModel
 import com.rthqks.synapse.polish.PolishViewModel
 import dagger.Binds
 import dagger.MapKey
@@ -41,4 +42,9 @@ abstract class ViewModels {
     @IntoMap
     @ViewModelKey(PolishViewModel::class)
     internal abstract fun providePolishViewModel(polishViewModel: PolishViewModel): ViewModel
+
+    @Binds
+    @IntoMap
+    @ViewModelKey(GalleryViewModel::class)
+    internal abstract fun provideGalleryViewModel(viewModel: GalleryViewModel): ViewModel
 }

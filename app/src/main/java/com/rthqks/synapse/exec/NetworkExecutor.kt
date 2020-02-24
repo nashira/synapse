@@ -4,6 +4,7 @@ import android.content.Context
 import android.util.Log
 import android.view.SurfaceView
 import com.rthqks.synapse.assets.AssetManager
+import com.rthqks.synapse.assets.VideoStorage
 import com.rthqks.synapse.exec.link.Config
 import com.rthqks.synapse.exec.link.Connection
 import com.rthqks.synapse.exec.link.Event
@@ -22,6 +23,7 @@ class NetworkExecutor(
     private val glesManager: GlesManager,
     private val cameraManager: CameraManager,
     private val assetManager: AssetManager,
+    private val videoStorage: VideoStorage,
     private val network: Network
 ) {
     private val exceptionHandler = CoroutineExceptionHandler { _, throwable ->
@@ -115,7 +117,7 @@ class NetworkExecutor(
             NodeType.Shape -> ShapeNode(assetManager, glesManager, node.properties)
             NodeType.RingBuffer -> RingBufferNode(assetManager, glesManager, node.properties)
             NodeType.Slice3d -> Slice3dNode(assetManager, glesManager, node.properties)
-            NodeType.MediaEncoder -> EncoderNode(context, assetManager, glesManager, node.properties)
+            NodeType.MediaEncoder -> EncoderNode(context, assetManager, glesManager, videoStorage, node.properties)
             NodeType.Properties,
             NodeType.Creation,
             NodeType.Connection -> error("not an executable node type: ${node.type}")

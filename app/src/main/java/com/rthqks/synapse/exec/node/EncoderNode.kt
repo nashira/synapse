@@ -6,6 +6,7 @@ import android.util.Log
 import android.util.Size
 import android.view.Surface
 import com.rthqks.synapse.assets.AssetManager
+import com.rthqks.synapse.assets.VideoStorage
 import com.rthqks.synapse.codec.Encoder
 import com.rthqks.synapse.exec.NodeExecutor
 import com.rthqks.synapse.exec.link.*
@@ -24,6 +25,7 @@ class EncoderNode(
     private val context: Context,
     private val assetManager: AssetManager,
     private val glesManager: GlesManager,
+    private val videoStorage: VideoStorage,
     private val properties: Properties
 ) : NodeExecutor() {
     private var videoJob: Job? = null
@@ -33,7 +35,7 @@ class EncoderNode(
     private val mesh = Quad()
 
     private val program = Program()
-    private val encoder = Encoder(context)
+    private val encoder = Encoder(context, videoStorage)
     private var startTimeVideo = -1L
     private var startTimeAudio = -1L
     private var surface: Surface? = null
