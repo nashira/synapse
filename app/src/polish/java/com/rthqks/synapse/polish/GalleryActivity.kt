@@ -99,8 +99,8 @@ private class VideoViewHolder(
     init {
         itemView.image_view.setOnClickListener {
             video?.let {
-                val intent: Intent = Intent(Intent.ACTION_VIEW, it.uri).apply {
-                    type = VideoStorage.MIME_MP4
+                val intent: Intent = Intent(Intent.ACTION_VIEW).apply {
+                    setDataAndType(it.uri, "video/*")
                 }
 
                 if (intent.resolveActivity(itemView.context.packageManager) != null) {
