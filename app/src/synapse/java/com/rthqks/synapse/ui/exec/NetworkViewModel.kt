@@ -6,6 +6,7 @@ import android.view.SurfaceView
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import com.rthqks.synapse.assets.AssetManager
+import com.rthqks.synapse.assets.VideoStorage
 import com.rthqks.synapse.data.SynapseDao
 import com.rthqks.synapse.exec.CameraManager
 import com.rthqks.synapse.exec.NetworkExecutor
@@ -17,6 +18,7 @@ import javax.inject.Inject
 
 class NetworkViewModel @Inject constructor(
     private val context: Context,
+    private val videoStorage: VideoStorage,
     private val dao: SynapseDao
 ) : ViewModel() {
     private lateinit var surfaceView: SurfaceView
@@ -43,7 +45,7 @@ class NetworkViewModel @Inject constructor(
             glesManager.glContext { it.initialize() }
 
             networkExecutor = NetworkExecutor(
-                context, dispatcher, glesManager, cameraManager, assetManager, network
+                context, dispatcher, glesManager, cameraManager, assetManager, videoStorage, network
             )
 
             Log.d(TAG, "initialize")

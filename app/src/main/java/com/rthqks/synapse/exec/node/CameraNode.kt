@@ -19,7 +19,6 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.runBlocking
 
 class CameraNode(
     private val cameraManager: CameraManager,
@@ -98,7 +97,7 @@ class CameraNode(
         val output = channel(OUTPUT) ?: return
         val config = config(OUTPUT) ?: return
         val surface = config.surface.get()
-        val cameraChannel = Channel<CameraManager.Event>(3)
+        val cameraChannel = Channel<CameraManager.Event>(6)
         cameraManager.start(cameraId, surface, frameRate, stabilize, cameraChannel)
         do {
             val (count, timestamp, eos) = cameraChannel.receive()

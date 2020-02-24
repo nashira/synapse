@@ -1,24 +1,16 @@
 package com.rthqks.synapse.codec
 
-import android.content.ContentValues
 import android.content.Context
 import android.media.*
-import android.os.Build
-import android.os.Environment
 import android.os.Handler
 import android.os.HandlerThread
-import android.provider.MediaStore
 import android.util.Log
 import android.util.Size
 import android.view.Surface
-import androidx.core.net.toUri
 import com.rthqks.synapse.assets.VideoStorage
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.Channel
-import java.io.File
 import java.nio.ByteBuffer
-import java.text.SimpleDateFormat
-import java.util.*
 import java.util.concurrent.Executors
 
 

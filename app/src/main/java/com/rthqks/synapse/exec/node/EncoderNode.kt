@@ -19,7 +19,6 @@ import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.selects.whileSelect
-import java.util.concurrent.atomic.AtomicInteger
 
 class EncoderNode(
     private val context: Context,

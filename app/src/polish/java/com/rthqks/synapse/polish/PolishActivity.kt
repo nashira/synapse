@@ -121,6 +121,7 @@ class PolishActivity : DaggerAppCompatActivity() {
                 viewModel.startRecording()
             } else {
                 exploreMode()
+                highlightGalleryButton()
                 viewModel.stopRecording()
             }
             Log.d(TAG, "recording $recording")
@@ -170,6 +171,17 @@ class PolishActivity : DaggerAppCompatActivity() {
                 }
             }
         })
+    }
+
+    private fun highlightGalleryButton() {
+        button_gallery.animate()
+            .scaleX(1.5f)
+            .scaleY(1.5f)
+            .setInterpolator {
+                kotlin.math.sin(it * 4 * Math.PI).toFloat()
+            }
+            .setDuration(500)
+            .start()
     }
 
     private fun focusMode() {

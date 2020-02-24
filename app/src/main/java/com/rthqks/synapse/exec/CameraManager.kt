@@ -6,7 +6,6 @@ import android.hardware.camera2.*
 import android.os.Handler
 import android.os.HandlerThread
 import android.util.Log
-import android.util.Range
 import android.util.Size
 import android.view.Surface
 import android.view.WindowManager
@@ -47,9 +46,6 @@ class CameraManager(
         ids.forEach { id ->
             val characteristics = manager.getCameraCharacteristics(id)
             cameraMap[id] = characteristics
-//            characteristics.keys.forEach {
-//                Log.d(TAG, "${it.name}, ${characteristics[it]}")
-//            }
         }
     }
 
@@ -62,19 +58,38 @@ class CameraManager(
     ) {
         isEos = false
         val c = openCamera(cameraId)
+        val request = c.createCaptureRequest(CameraDevice.TEMPLATE_PREVIEW)
+        request.addTarget(surface)
         val s = createSession(c, surface)
-        val request = c.createCaptureRequest(CameraDevice.TEMPLATE_RECORD).also {
-            it.addTarget(surface)
-            it.set(CaptureRequest.CONTROL_AE_TARGET_FPS_RANGE, Range(fps, fps))
+
+        request.also {
+            it.set(
+                CaptureRequest.CONTROL_CAPTURE_INTENT,
+                CaptureRequest.CONTROL_CAPTURE_INTENT_PREVIEW
+            )
+            it.set(CaptureRequest.CONTROL_SCENE_MODE, CaptureRequest.CONTROL_SCENE_MODE_DISABLED)
+            it.set(CaptureRequest.CONTROL_MODE, CaptureRequest.CONTROL_MODE_AUTO)
+            it.set(CaptureRequest.CONTROL_AE_MODE, CaptureRequest.CONTROL_AE_MODE_ON)
+            it.set(CaptureRequest.CONTROL_AF_MODE, CaptureRequest.CONTROL_AF_MODE_CONTINUOUS_VIDEO)
+            it.set(CaptureRequest.CONTROL_AWB_MODE, CaptureRequest.CONTROL_AWB_MODE_AUTO)
+            val range =
+                cameraMap[cameraId]?.get(CameraCharacteristics.CONTROL_AE_AVAILABLE_TARGET_FPS_RANGES)
+                    ?.firstOrNull { it.lower == fps && it.upper == fps }
+            Log.d(TAG, "setting range $range")
+            it.set(CaptureRequest.CONTROL_AE_TARGET_FPS_RANGE, range)
             if (stabilize) {
                 it.set(
                     CaptureRequest.CONTROL_VIDEO_STABILIZATION_MODE,
                     CaptureRequest.CONTROL_VIDEO_STABILIZATION_MODE_ON
                 )
             }
-        }.build()
+        }
 
-        startRequest(c, s, request, channel)
+//        request.keys.forEach {
+//            Log.d(TAG, "${it.name} ${request[it]}")
+//        }
+
+        startRequest(c, s, request.build(), channel)
     }
 
     fun stop() {
@@ -164,18 +179,18 @@ class CameraManager(
                 result: TotalCaptureResult
             ) {
 
-                    val eos = isEos
+                val eos = isEos
 
-                    if (eos) {
-                        Log.d(TAG, "got eos")
+                if (eos) {
+                    Log.d(TAG, "got eos")
 //                    session.stopRepeating()
-                        session.close()
-                        camera.close()
-                    }
+                    session.close()
+                    camera.close()
+                }
 
-                    val time = result[CaptureResult.SENSOR_TIMESTAMP]!!
-                    val event = nextEvent()
-                    event.set(result.frameNumber.toInt(), time, eos)
+                val time = result[CaptureResult.SENSOR_TIMESTAMP]!!
+                val event = nextEvent()
+                event.set(result.frameNumber.toInt(), time, eos)
 
                 runBlocking {
                     channel.send(event)
