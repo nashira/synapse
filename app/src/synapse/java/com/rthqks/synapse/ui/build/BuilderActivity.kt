@@ -73,8 +73,6 @@ class BuilderActivity : DaggerAppCompatActivity() {
         savedInstanceState ?: run {
             val networkId = intent.getIntExtra(NETWORK_ID, -1)
             viewModel.setNetworkId(networkId)
-            FirebaseAnalytics.getInstance(this)
-                .logEvent("EditNetwork", Bundle().also { it.putInt("network_id", networkId) })
         }
 
         toolbar.setOnMenuItemClickListener {

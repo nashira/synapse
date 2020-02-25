@@ -15,23 +15,31 @@ import androidx.core.content.edit
 import androidx.core.view.doOnLayout
 import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModelProvider
+import androidx.lifecycle.viewModelScope
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.LinearSnapHelper
 import androidx.recyclerview.widget.RecyclerView
 import com.google.android.material.bottomsheet.BottomSheetBehavior
 import com.rthqks.synapse.R
+import com.rthqks.synapse.ops.Analytics
 import com.rthqks.synapse.util.throttleClick
 import dagger.android.support.DaggerAppCompatActivity
 import kotlinx.android.synthetic.polish.activity_polish.*
+import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 
 class PolishActivity : DaggerAppCompatActivity() {
     @Inject
     lateinit var viewModelFactory: ViewModelProvider.Factory
+    @Inject
+    lateinit var analytics: Analytics
     lateinit var viewModel: PolishViewModel
     private lateinit var orientationEventListener:  OrientationEventListener
     private lateinit var preferences: SharedPreferences
+    private val deviceSupported = CompletableDeferred<Boolean>()
+    private val permissionsGranted = CompletableDeferred<Boolean>()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -50,23 +58,13 @@ class PolishActivity : DaggerAppCompatActivity() {
 
         if (neededPermissions.isNotEmpty()) {
             requestPermissions(neededPermissions.toTypedArray(), 123)
-            return
+        } else {
+            permissionsGranted.complete(true)
         }
 
         viewModel.deviceSupported.observe(this, Observer {
-            if (!it) {
-                Toast.makeText(this, "device not supported", Toast.LENGTH_LONG).show()
-                finish()
-                return@Observer
-            }
-
-            if (finishedIntro) {
-                onReady()
-            } else {
-                showIntro()
-            }
+            deviceSupported.complete(it)
         })
-
 
         var orientation = 0
         orientationEventListener = object : OrientationEventListener(this) {
@@ -81,6 +79,30 @@ class PolishActivity : DaggerAppCompatActivity() {
                 if (orientation != update) {
                     orientation = update
                     viewModel.setDeviceOrientation(orientation)
+                }
+            }
+        }
+
+        viewModel.viewModelScope.launch {
+            val supported = deviceSupported.await()
+            val permissions = permissionsGranted.await()
+
+            analytics.logEvent(Analytics.Event.PolishInit(supported, permissions))
+
+            when {
+                !supported -> {
+                    Toast.makeText(this@PolishActivity, "device not supported", Toast.LENGTH_LONG).show()
+                    finish()
+                }
+                !permissions -> {
+                    Toast.makeText(this@PolishActivity, "Permissions Required", Toast.LENGTH_LONG).show()
+                }
+                else -> {
+                    if (finishedIntro) {
+                        onReady()
+                    } else {
+                        showIntro()
+                    }
                 }
             }
         }
@@ -129,10 +151,12 @@ class PolishActivity : DaggerAppCompatActivity() {
 
         button_settings.setOnClickListener {
             Log.d(TAG, "show settings")
+            analytics.logEvent(Analytics.Event.OpenSettings())
             SettingsDialog().show(supportFragmentManager, "settings")
         }
 
         button_gallery.setOnClickListener {
+            analytics.logEvent(Analytics.Event.OpenGallery())
             Intent(this, GalleryActivity::class.java).also {
                 startActivity(it)
             }
@@ -178,9 +202,10 @@ class PolishActivity : DaggerAppCompatActivity() {
             .scaleX(1.5f)
             .scaleY(1.5f)
             .setInterpolator {
-                kotlin.math.sin(it * 4 * Math.PI).toFloat()
+                kotlin.math.sin(it * 6 * Math.PI).toFloat()
             }
-            .setDuration(500)
+            .setDuration(1000)
+            .withEndAction { button_gallery.scaleX = 1f; button_gallery.scaleY = 1f }
             .start()
     }
 
@@ -188,6 +213,7 @@ class PolishActivity : DaggerAppCompatActivity() {
         listOf(
             button_camera,
             button_settings,
+            button_gallery,
 //            button_color,
             effect_list
         ).forEach {
@@ -203,6 +229,7 @@ class PolishActivity : DaggerAppCompatActivity() {
         listOf(
             button_camera,
             button_settings,
+            button_gallery,
 //            button_color,
             effect_list
         ).forEach {
@@ -230,13 +257,10 @@ class PolishActivity : DaggerAppCompatActivity() {
         grantResults: IntArray
     ) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
+
         val perms = checkPermissions()
         val neededPermissions = perms.filter { !it.granted }
-        if (neededPermissions.isEmpty()) {
-            onReady()
-        } else {
-            Toast.makeText(this, "NEED PERMS", Toast.LENGTH_LONG).show()
-        }
+        permissionsGranted.complete(neededPermissions.isEmpty())
     }
 
     override fun onWindowFocusChanged(hasFocus: Boolean) {
@@ -287,9 +311,9 @@ enum class Effect(
 ) {
     None("none"),
     TimeWarp("time warp"),
-    Sparkle("sparkle"),
-    Trip("trip"),
-    Topography("topography")
+    More("more"),
+//    Trip("trip"),
+//    Topography("topography")
 }
 
 private class EffectAdapter(

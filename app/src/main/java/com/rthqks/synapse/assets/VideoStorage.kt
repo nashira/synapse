@@ -49,14 +49,15 @@ class VideoStorage @Inject constructor(
             val file = uri.toString()
             return Pair(file, mediaMuxer)
         } else {
-            val baseDir =
-                Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_MOVIES)
-                    .let { "$it/$SYNAPSE_VIDEO_DIR" }
+            @Suppress("DEPRECATION")
+            val baseDir = Environment
+                .getExternalStoragePublicDirectory(Environment.DIRECTORY_MOVIES)
+                .let { "$it/$SYNAPSE_VIDEO_DIR" }
             val file = "$baseDir/$fileName"
 
-            File(baseDir).also {
-                if (!it.exists()) {
-                    it.mkdirs()
+            File(baseDir).apply {
+                if (!exists()) {
+                    mkdirs()
                 }
             }
 
@@ -69,82 +70,25 @@ class VideoStorage @Inject constructor(
 
     fun setVideoFileReady(fileUri: String) {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-                val contentValues = ContentValues()
-                contentValues.put(MediaStore.MediaColumns.IS_PENDING, 0)
-                context.contentResolver.update(
-                    fileUri.toUri(),
-                    contentValues,
-                    null,
-                    null
-                )
+            val contentValues = ContentValues()
+            contentValues.put(MediaStore.MediaColumns.IS_PENDING, 0)
+            context.contentResolver.update(
+                fileUri.toUri(),
+                contentValues,
+                null,
+                null
+            )
 
         } else {
-                MediaScannerConnection.scanFile(
-                    context,
-                    Array(1) { fileUri },
-                    Array(1) { MIME_MP4 }
-                ) { _, _ -> }
+            MediaScannerConnection.scanFile(
+                context,
+                Array(1) { fileUri },
+                Array(1) { MIME_MP4 }
+            ) { _, _ -> }
         }
     }
 
     fun getLocalVideos(): List<Video> {
-        return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-            localFilesQ()
-        } else {
-            localFilesLegacy()
-        }
-    }
-
-    private fun localFilesQ(): List<Video> {
-        val videoList = mutableListOf<Video>()
-
-        val projection = arrayOf(
-            MediaStore.Video.Media._ID,
-            MediaStore.Video.Media.DISPLAY_NAME,
-            MediaStore.Video.Media.DATE_ADDED,
-            MediaStore.Video.Media.SIZE
-        )
-
-
-        // Display videos in alphabetical order based on their display name.
-        val sortOrder = "${MediaStore.Video.Media.DATE_ADDED} DESC"
-
-        val query = context.contentResolver.query(
-            MediaStore.Video.Media.EXTERNAL_CONTENT_URI,
-            projection,
-            null,
-            null,
-            sortOrder
-        )
-        query?.use { cursor ->
-            // Cache column indices.
-            val idColumn = cursor.getColumnIndexOrThrow(MediaStore.Video.Media._ID)
-            val nameColumn =
-                cursor.getColumnIndexOrThrow(MediaStore.Video.Media.DISPLAY_NAME)
-            val dateColumn =
-                cursor.getColumnIndexOrThrow(MediaStore.Video.Media.DATE_ADDED)
-            val sizeColumn = cursor.getColumnIndexOrThrow(MediaStore.Video.Media.SIZE)
-
-            while (cursor.moveToNext()) {
-                // Get values of columns for a given video.
-                val id = cursor.getLong(idColumn)
-                val name = cursor.getString(nameColumn)
-                val date = cursor.getLong(dateColumn) * 1000 // s -> ms
-                val size = cursor.getInt(sizeColumn)
-
-                val contentUri: Uri = ContentUris.withAppendedId(
-                    MediaStore.Video.Media.EXTERNAL_CONTENT_URI,
-                    id
-                )
-
-                // Stores column values and the contentUri in a local object
-                // that represents the media file.
-                videoList += Video(contentUri, name, date, size)
-            }
-        }
-        return videoList
-    }
-    private fun localFilesLegacy(): List<Video> {
         val videoList = mutableListOf<Video>()
 
         val projection = arrayOf(
@@ -170,10 +114,8 @@ class VideoStorage @Inject constructor(
         query?.use { cursor ->
             // Cache column indices.
             val idColumn = cursor.getColumnIndexOrThrow(MediaStore.Video.Media._ID)
-            val nameColumn =
-                cursor.getColumnIndexOrThrow(MediaStore.Video.Media.DISPLAY_NAME)
-            val dateColumn =
-                cursor.getColumnIndexOrThrow(MediaStore.Video.Media.DATE_ADDED)
+            val nameColumn = cursor.getColumnIndexOrThrow(MediaStore.Video.Media.DISPLAY_NAME)
+            val dateColumn = cursor.getColumnIndexOrThrow(MediaStore.Video.Media.DATE_ADDED)
             val sizeColumn = cursor.getColumnIndexOrThrow(MediaStore.Video.Media.SIZE)
 
             while (cursor.moveToNext()) {

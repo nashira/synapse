@@ -117,7 +117,7 @@ class NetworkExecutor(
             NodeType.Shape -> ShapeNode(assetManager, glesManager, node.properties)
             NodeType.RingBuffer -> RingBufferNode(assetManager, glesManager, node.properties)
             NodeType.Slice3d -> Slice3dNode(assetManager, glesManager, node.properties)
-            NodeType.MediaEncoder -> EncoderNode(context, assetManager, glesManager, videoStorage, node.properties)
+            NodeType.MediaEncoder -> EncoderNode(assetManager, glesManager, videoStorage, node.properties)
             NodeType.Properties,
             NodeType.Creation,
             NodeType.Connection -> error("not an executable node type: ${node.type}")

@@ -1,6 +1,5 @@
 package com.rthqks.synapse.codec
 
-import android.content.Context
 import android.media.*
 import android.os.Handler
 import android.os.HandlerThread
@@ -15,7 +14,6 @@ import java.util.concurrent.Executors
 
 
 class Encoder(
-    private val context: Context,
     private val videoStorage: VideoStorage
 ) : MediaCodec.Callback() {
     private val dispatcher = Executors.newSingleThreadExecutor().asCoroutineDispatcher()

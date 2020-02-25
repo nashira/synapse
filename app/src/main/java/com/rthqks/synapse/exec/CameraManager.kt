@@ -58,14 +58,14 @@ class CameraManager(
     ) {
         isEos = false
         val c = openCamera(cameraId)
-        val request = c.createCaptureRequest(CameraDevice.TEMPLATE_PREVIEW)
+        val request = c.createCaptureRequest(CameraDevice.TEMPLATE_RECORD)
         request.addTarget(surface)
         val s = createSession(c, surface)
 
         request.also {
             it.set(
                 CaptureRequest.CONTROL_CAPTURE_INTENT,
-                CaptureRequest.CONTROL_CAPTURE_INTENT_PREVIEW
+                CaptureRequest.CONTROL_CAPTURE_INTENT_VIDEO_RECORD
             )
             it.set(CaptureRequest.CONTROL_SCENE_MODE, CaptureRequest.CONTROL_SCENE_MODE_DISABLED)
             it.set(CaptureRequest.CONTROL_MODE, CaptureRequest.CONTROL_MODE_AUTO)

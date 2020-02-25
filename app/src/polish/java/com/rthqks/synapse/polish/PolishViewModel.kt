@@ -2,6 +2,7 @@ package com.rthqks.synapse.polish
 
 import android.content.Context
 import android.hardware.camera2.CameraCharacteristics
+import android.os.SystemClock
 import android.util.Log
 import android.util.Size
 import android.view.SurfaceView
@@ -12,14 +13,18 @@ import androidx.lifecycle.viewModelScope
 import com.rthqks.synapse.R
 import com.rthqks.synapse.exec.Executor
 import com.rthqks.synapse.logic.*
+import com.rthqks.synapse.ops.Analytics
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 class PolishViewModel @Inject constructor(
     private val executor: Executor,
-    private val context: Context
+    private val context: Context,
+    private val analytics: Analytics
 ) : ViewModel() {
     val deviceSupported = MutableLiveData<Boolean>()
+    private var currentEffect: Effect? = null
+    private var recordingStart = 0L
 
     init {
         viewModelScope.launch {
@@ -95,13 +100,18 @@ class PolishViewModel @Inject constructor(
     }
 
     fun flipCamera() {
-        when (properties[CameraFacing]) {
-            CameraCharacteristics.LENS_FACING_BACK -> properties[CameraFacing] =
+        val facing = when (properties[CameraFacing]) {
+            CameraCharacteristics.LENS_FACING_BACK ->
                 CameraCharacteristics.LENS_FACING_FRONT
-            CameraCharacteristics.LENS_FACING_FRONT -> properties[CameraFacing] =
+            CameraCharacteristics.LENS_FACING_FRONT ->
                 CameraCharacteristics.LENS_FACING_BACK
+            else -> CameraCharacteristics.LENS_FACING_BACK
         }
+        properties[CameraFacing] = facing
         restartNetwork()
+
+        val string = if (facing == 0) "front" else "back"
+        analytics.logEvent(Analytics.Event.EditSetting(CameraFacing.name, string))
     }
 
     private fun restartNetwork() {
@@ -118,12 +128,17 @@ class PolishViewModel @Inject constructor(
     }
 
     fun startRecording() {
+        recordingStart = SystemClock.elapsedRealtime()
+        val effectName = currentEffect?.title ?: "unknown"
+        analytics.logEvent(Analytics.Event.RecordStart(effectName))
         network?.apply {
             getNode(4)?.properties?.set(Recording, true)
         }
     }
 
     fun stopRecording() {
+        val effectName = currentEffect?.title ?: "unknown"
+        analytics.logEvent(Analytics.Event.RecordStop(effectName, SystemClock.elapsedRealtime() - recordingStart))
         network?.apply {
             getNode(4)?.properties?.set(Recording, false)
         }
@@ -135,6 +150,7 @@ class PolishViewModel @Inject constructor(
         restart: Boolean = false,
         recreate: Boolean = false
     ) {
+        analytics.logEvent(Analytics.Event.EditSetting(key.name, value.toString()))
         properties[key] = value
         Log.d(TAG, "${key.name} = $value")
         when {
@@ -143,23 +159,25 @@ class PolishViewModel @Inject constructor(
         }
     }
 
-    fun setEffect(effect: Effect) = when (effect) {
-        Effect.None -> {
-            EffectNetworks.none.getNode(1)?.properties?.plusAssign(properties)
-            recreateNetwork(EffectNetworks.none)
-            true
-        }
-        Effect.TimeWarp -> {
-            EffectNetworks.timeWarp.getNode(1)?.properties?.plusAssign(properties)
-            EffectNetworks.timeWarp.getNode(5)?.properties?.plusAssign(properties)
-            recreateNetwork(EffectNetworks.timeWarp)
-            true
-        }
-        Effect.Sparkle,
-        Effect.Trip,
-        Effect.Topography -> {
-            Toast.makeText(context, "Coming Soon", Toast.LENGTH_LONG).show()
-            false
+    fun setEffect(effect: Effect): Boolean {
+        currentEffect = effect
+        analytics.logEvent(Analytics.Event.SetEffect(effect.title))
+        return when (effect) {
+            Effect.None -> {
+                EffectNetworks.none.getNode(1)?.properties?.plusAssign(properties)
+                recreateNetwork(EffectNetworks.none)
+                true
+            }
+            Effect.TimeWarp -> {
+                EffectNetworks.timeWarp.getNode(1)?.properties?.plusAssign(properties)
+                EffectNetworks.timeWarp.getNode(5)?.properties?.plusAssign(properties)
+                recreateNetwork(EffectNetworks.timeWarp)
+                true
+            }
+            Effect.More -> {
+                Toast.makeText(context, "Coming Soon!", Toast.LENGTH_LONG).show()
+                false
+            }
         }
     }
 

@@ -1,6 +1,5 @@
 package com.rthqks.synapse.exec.node
 
-import android.content.Context
 import android.opengl.GLES30
 import android.util.Log
 import android.util.Size
@@ -21,7 +20,6 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.selects.whileSelect
 
 class EncoderNode(
-    private val context: Context,
     private val assetManager: AssetManager,
     private val glesManager: GlesManager,
     private val videoStorage: VideoStorage,
@@ -34,7 +32,7 @@ class EncoderNode(
     private val mesh = Quad()
 
     private val program = Program()
-    private val encoder = Encoder(context, videoStorage)
+    private val encoder = Encoder(videoStorage)
     private var startTimeVideo = -1L
     private var startTimeAudio = -1L
     private var surface: Surface? = null

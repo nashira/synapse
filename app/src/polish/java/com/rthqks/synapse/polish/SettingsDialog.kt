@@ -33,7 +33,7 @@ class SettingsDialog() : DialogFragment() {
     override fun onActivityCreated(savedInstanceState: Bundle?) {
         super.onActivityCreated(savedInstanceState)
         Log.d("Settings", "activity")
-        viewModel = ViewModelProvider(activity!!, viewModelFactory)[PolishViewModel::class.java]
+        viewModel = ViewModelProvider(requireActivity(), viewModelFactory)[PolishViewModel::class.java]
 
         updateStates()
 
@@ -75,11 +75,13 @@ class SettingsDialog() : DialogFragment() {
 
     override fun onCreateDialog(savedInstanceState: Bundle?): Dialog {
         Log.d("Settings", "dialog")
-        val view = LayoutInflater.from(context).inflate(R.layout.fragment_settings, null)
+        val inflater = LayoutInflater.from(context)
+        val view = inflater.inflate(R.layout.fragment_settings, null)
         customView = view
 
-        return AlertDialog.Builder(context!!, R.style.DialogTheme).apply {
-            setTitle(R.string.title_camera_settings)
+        val titleView = inflater.inflate(R.layout.fragment_settings_title, null)
+        return AlertDialog.Builder(requireContext(), R.style.DialogTheme).apply {
+            setCustomTitle(titleView)
                 .setNeutralButton(R.string.done) { dialogInterface: DialogInterface, i: Int ->
                     dismiss()
                 }

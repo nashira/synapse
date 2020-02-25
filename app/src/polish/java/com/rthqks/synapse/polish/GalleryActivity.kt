@@ -14,6 +14,7 @@ import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
 import com.rthqks.synapse.R
 import com.rthqks.synapse.assets.VideoStorage
+import com.rthqks.synapse.ops.Analytics
 import dagger.android.support.DaggerAppCompatActivity
 import kotlinx.android.synthetic.polish.activity_gallery.*
 import kotlinx.android.synthetic.polish.layout_gallery_video.view.*
@@ -23,6 +24,8 @@ class GalleryActivity : DaggerAppCompatActivity() {
 
     @Inject
     lateinit var viewModelFactory: ViewModelProvider.Factory
+    @Inject
+    lateinit var analytics: Analytics
     lateinit var viewModel: GalleryViewModel
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -36,6 +39,11 @@ class GalleryActivity : DaggerAppCompatActivity() {
 
         val adapter = VideoAdapter {
             startActivity(it)
+            if (it.action == Intent.ACTION_VIEW) {
+                analytics.logEvent(Analytics.Event.ViewVideo())
+            } else {
+                analytics.logEvent(Analytics.Event.ShareVideo())
+            }
         }
 
         video_list.addItemDecoration(object : RecyclerView.ItemDecoration(){
