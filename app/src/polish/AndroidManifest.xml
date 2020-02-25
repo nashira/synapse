@@ -3,6 +3,8 @@
     xmlns:tools="http://schemas.android.com/tools"
     package="com.rthqks.synapse">
 
+<!--    <uses-permission android:name="com.android.vending.BILLING" />-->
+
     <application tools:ignore="GoogleAppIndexingWarning">
 
         <activity

@@ -66,7 +66,7 @@ class PolishActivity : DaggerAppCompatActivity() {
             deviceSupported.complete(it)
         })
 
-        var orientation = 0
+        var rotation = 0
         orientationEventListener = object : OrientationEventListener(this) {
             override fun onOrientationChanged(angle: Int) {
                 val update = when (angle) {
@@ -76,9 +76,17 @@ class PolishActivity : DaggerAppCompatActivity() {
                     else -> 0
                 }
 
-                if (orientation != update) {
-                    orientation = update
-                    viewModel.setDeviceOrientation(orientation)
+                if (rotation != update) {
+                    rotation = update
+                    viewModel.setDeviceOrientation(rotation)
+
+                    val uiAngle = when (angle) {
+                        in 45..135 -> -90
+                        in 135..225 -> 180
+                        in 225..315 -> 90
+                        else -> 0
+                    }
+                    setUiOrientation(uiAngle)
                 }
             }
         }
@@ -108,8 +116,17 @@ class PolishActivity : DaggerAppCompatActivity() {
         }
     }
 
-    private fun setUiOrientation(orientation: Int) {
-
+    private fun setUiOrientation(rotation: Int) {
+        listOf(
+            button_camera,
+            button_settings,
+            button_gallery
+        ).forEach {
+            it.animate()
+                .rotation(rotation.toFloat())
+                .setDuration(200)
+                .start()
+        }
     }
 
     private fun showIntro() {
