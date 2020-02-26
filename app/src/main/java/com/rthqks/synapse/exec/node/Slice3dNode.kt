@@ -36,7 +36,6 @@ class Slice3dNode(
     private val program = Program()
     private val quadMesh = Quad()
 
-    private var inputEvent: VideoEvent? = null
     private var t3dEvent: Texture3dEvent? = null
 
     private val debounce = AtomicBoolean()
@@ -101,7 +100,7 @@ class Slice3dNode(
                 initialize(vertex, frag)
                 addUniform(
                     Uniform.Type.Mat4,
-                    "input_matrix",
+                    MATRIX,
                     GlesManager.identityMat()
                 )
 //                addUniform(
@@ -150,34 +149,16 @@ class Slice3dNode(
         frameCount = 0
 
         startJob = launch {
-            //            val inputLinked = linked(INPUT)
             val t3dLinked = linked(INPUT_3D)
             if (!t3dLinked) {
                 Log.d(TAG, "no connection")
                 return@launch
             }
             var running = 0
-            var copyMatrix = true
-//            val inputIn = channel(INPUT)
             val t3dIn = channel(INPUT_3D)
-//            if (inputLinked) running++
             if (t3dLinked) running++
 
             whileSelect {
-                //                inputIn?.onReceive {
-////                    Log.d(TAG, "input receive")
-//                    inputEvent?.let { inputIn.send(it) }
-//                    inputEvent = it
-//                    if (copyMatrix) {
-//                        copyMatrix = false
-//                        val uniform = program.getUniform(Uniform.Type.Mat4, "input_matrix")
-//                        System.arraycopy(it.matrix, 0, uniform.data!!, 0, 16)
-//                        uniform.dirty = true
-//                    }
-//                    debounceExecute(this@launch)
-//                    if (it.eos) running--
-//                    running > 0
-//                }
                 t3dIn?.onReceive {
                     //                    Log.d(TAG, "lut receive")
                     t3dEvent?.let { t3dIn.send(it) }
@@ -188,12 +169,8 @@ class Slice3dNode(
                 }
             }
 
-//            inputEvent?.let { Log.d(TAG, "got ${it.count} input events") }
             t3dEvent?.let { Log.d(TAG, "got ${it.count} lut events") }
-
-//            inputEvent?.let { inputIn?.send(it) }
             t3dEvent?.let { t3dIn?.send(it) }
-            inputEvent = null
             t3dEvent = null
         }
     }
@@ -224,11 +201,10 @@ class Slice3dNode(
         val output = channel(OUTPUT) ?: return
         val outEvent = output.receive()
 
-        val inputTexture = inputEvent?.texture ?: glesManager.emptyTexture2d
+
         val t3dTexture = t3dEvent?.texture ?: glesManager.emptyTexture3d
-        val t3dLayer =
-            t3dEvent?.let { it.index / outputConfig.depth.toFloat() + 0.5f / outputConfig.depth }
-                ?: 0f
+        val depth = outputConfig.depth.toFloat()
+        val t3dLayer = t3dEvent?.let { it.index / depth } ?: 0f
 
         val framebuffer = if (outEvent.texture == texture1) {
             framebuffer1
@@ -236,7 +212,7 @@ class Slice3dNode(
             framebuffer2
         }
 
-        val slice = (sliceDepth + t3dLayer) % 1f
+        val slice = t3dLayer + 0.5f / depth
 //        Log.d(TAG, "slice $t3dLayer $sliceDepth $slice")
         program.getUniform(Uniform.Type.Float, T3D_LAYER).set(slice)
 
@@ -280,6 +256,7 @@ class Slice3dNode(
         const val TAG = "Slice3dNode"
         const val INPUT_TEXTURE_LOCATION = 0
         const val LUT_TEXTURE_LOCATION = 0
+        const val MATRIX = "input_matrix"
         const val T3D_TEXTURE = "t3d_texture"
         const val T3D_LAYER = "t3d_layer"
         const val T3D_DEPTH = "t3d_depth"

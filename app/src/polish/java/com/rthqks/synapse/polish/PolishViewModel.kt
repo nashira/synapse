@@ -34,7 +34,6 @@ class PolishViewModel @Inject constructor(
         }
     }
 
-
     private var surfaceView: SurfaceView? = null
     private var network: Network? = null
 

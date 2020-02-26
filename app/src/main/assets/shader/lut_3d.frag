@@ -8,6 +8,7 @@
 
 precision mediump float;
 precision mediump sampler3D;
+precision mediump sampler2D;
 
 #ifdef EXT_INPUT
 uniform samplerExternalOES input_texture;
@@ -15,6 +16,7 @@ uniform samplerExternalOES input_texture;
 uniform sampler2D input_texture;
 #endif
 
+uniform mat4 lut_matrix;
 uniform sampler3D lut_texture;
 
 in vec2 uv;
@@ -23,5 +25,6 @@ out vec4 color;
 
 void main() {
     vec4 from = texture(input_texture, uv);
-    color = texture(lut_texture, from.rgb);
+    vec3 lookup = (lut_matrix * vec4(from.xyz, 1.0)).xyz;
+    color = texture(lut_texture, lookup);
 }

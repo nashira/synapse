@@ -35,6 +35,7 @@ class Lut3dNode(
 
     private var inputEvent: VideoEvent? = null
     private var lutEvent: Texture3dEvent? = null
+    private var matrixEvent: MatrixEvent? = null
 
     private val debounce = AtomicBoolean()
     private var frameCount = 0
@@ -103,7 +104,12 @@ class Lut3dNode(
                 initialize(vertex, frag)
                 addUniform(
                     Uniform.Type.Mat4,
-                    "input_matrix",
+                    INPUT_MATRIX,
+                    GlesManager.identityMat()
+                )
+                addUniform(
+                    Uniform.Type.Mat4,
+                    LUT_MATRIX.id,
                     GlesManager.identityMat()
                 )
                 addUniform(
@@ -144,7 +150,8 @@ class Lut3dNode(
         startJob = launch {
             val inputLinked = linked(INPUT)
             val lutLinked = linked(INPUT_LUT)
-            if (!inputLinked && !lutLinked) {
+            val matrixLinked = linked(LUT_MATRIX)
+            if (!inputLinked && !lutLinked && !matrixLinked) {
                 Log.d(TAG, "no connection")
                 return@launch
             }
@@ -152,8 +159,10 @@ class Lut3dNode(
             var copyMatrix = true
             val inputIn = channel(INPUT)
             val lutIn = channel(INPUT_LUT)
+            val matrixIn = channel(LUT_MATRIX)
             if (inputLinked) running++
             if (lutLinked) running++
+            if (matrixLinked) running++
 
             whileSelect {
                 inputIn?.onReceive {
@@ -162,7 +171,7 @@ class Lut3dNode(
                     inputEvent = it
                     if (copyMatrix) {
                         copyMatrix = false
-                        val uniform = program.getUniform(Uniform.Type.Mat4, "input_matrix")
+                        val uniform = program.getUniform(Uniform.Type.Mat4, INPUT_MATRIX)
                         System.arraycopy(it.matrix, 0, uniform.data!!, 0, 16)
                         uniform.dirty = true
                     }
@@ -178,15 +187,25 @@ class Lut3dNode(
                     if (it.eos) running--
                     running > 0
                 }
+                matrixIn?.onReceive {
+                    matrixEvent?.let { matrixIn.send(it) }
+                    matrixEvent = it
+                    if (it.eos) running--
+                    running > 0
+                }
             }
 
             inputEvent?.let { Log.d(TAG, "got ${it.count} input events") }
-            lutEvent?.let { Log.d(TAG, "got ${it.count} lut events") }
-
             inputEvent?.let { inputIn?.send(it) }
-            lutEvent?.let { lutIn?.send(it) }
             inputEvent = null
+
+            lutEvent?.let { Log.d(TAG, "got ${it.count} lut events") }
+            lutEvent?.let { lutIn?.send(it) }
             lutEvent = null
+
+            matrixEvent?.let { Log.d(TAG, "got ${it.count} matrix events") }
+            matrixEvent?.let { matrixIn?.send(it) }
+            matrixEvent = null
         }
     }
 
@@ -223,6 +242,10 @@ class Lut3dNode(
             framebuffer1
         } else {
             framebuffer2
+        }
+
+        matrixEvent?.let {
+            program.getUniform(Uniform.Type.Mat4, LUT_MATRIX.id).set(it.matrix)
         }
 
         glesManager.glContext {
@@ -264,8 +287,10 @@ class Lut3dNode(
         const val TAG = "Lut3dNode"
         const val INPUT_TEXTURE_LOCATION = 0
         const val LUT_TEXTURE_LOCATION = 1
+        const val INPUT_MATRIX = "input_matrix"
         val INPUT = Connection.Key<VideoConfig, VideoEvent>("input")
         val INPUT_LUT = Connection.Key<Texture3dConfig, Texture3dEvent>("input_lut")
+        val LUT_MATRIX = Connection.Key<MatrixConfig, MatrixEvent>("lut_matrix")
         val OUTPUT = Connection.Key<VideoConfig, VideoEvent>("output")
         val DEFAULT_CONFIG = Texture3dConfig(
             0, 0, 0, GLES30.GL_RGB8, GLES30.GL_RGB, GLES30.GL_UNSIGNED_BYTE

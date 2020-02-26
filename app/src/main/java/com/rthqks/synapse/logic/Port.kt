@@ -10,6 +10,7 @@ class Port(
     enum class Type {
         Audio,
         Video,
-        Texture3D
+        Texture3D,
+        Matrix
     }
 }

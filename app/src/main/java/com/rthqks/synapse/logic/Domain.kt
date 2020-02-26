@@ -320,6 +320,7 @@ val Nodes = listOf(
     Node(NodeType.Lut3d).apply {
         add(Port(Port.Type.Video, Lut3dNode.INPUT.id, "Input", false))
         add(Port(Port.Type.Texture3D, Lut3dNode.INPUT_LUT.id, "LUT", false))
+        add(Port(Port.Type.Matrix, Lut3dNode.LUT_MATRIX.id, "LUT Matrix", false))
         add(Port(Port.Type.Video, Lut3dNode.OUTPUT.id, "Output", true))
         add(
             Property(
@@ -648,6 +649,23 @@ val Nodes = listOf(
             ), IntConverter
         )
     },
+    Node(NodeType.MatrixRotate).apply {
+        add(Port(Port.Type.Matrix, RotateMatrixNode.OUTPUT.id, "Matrix", true))
+        add(
+            Property(
+                FrameRate,
+                ChoiceType(
+                    R.string.property_name_frame_rate,
+                    R.drawable.ic_speed,
+                    Choice(10, R.string.property_label_camera_fps_10),
+                    Choice(15, R.string.property_label_camera_fps_15),
+                    Choice(20, R.string.property_label_camera_fps_20),
+                    Choice(30, R.string.property_label_camera_fps_30),
+                    Choice(60, R.string.property_label_camera_fps_60)
+                ), 30, false
+            ), IntConverter
+        )
+    },
     Node(NodeType.Properties).also { it.id = -2 },
     Node(NodeType.Connection).also { it.id = -3 },
     Node(NodeType.Creation).also { it.id = -4 }
@@ -678,6 +696,7 @@ val NodeTypes = listOf(
     NodeType.RingBuffer,
     NodeType.Slice3d,
     NodeType.MediaEncoder,
+    NodeType.MatrixRotate,
     NodeType.Properties,
     NodeType.Creation,
     NodeType.Connection
