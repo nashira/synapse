@@ -1,1 +1,17 @@
-Synapse is an app for artistic video effects.
+Synapse is an app for artistic video effects and digital art.
+
+This app is brand new!
+
+We are just getting started, check back often for updates and let us know about any issues you find.
+
+Right now:
+Record videos with interesting effects.
+
+Coming soon:
+  * Settings for Effects
+  * Add a LUT (color filter) to any Effect
+  * Add a post-processing filter to any Effect (Bloom, Godrays, Vignette, Blur and more!)
+  * Many More Effects!
+
+We would love to hear your thoughts on the app, please email contact@rthqks.com with any and all feedback!
+
