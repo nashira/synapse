@@ -2,6 +2,7 @@ package com.rthqks.synapse.exec.node
 
 import android.opengl.Matrix
 import android.os.SystemClock
+import android.util.Log
 import com.rthqks.synapse.exec.NodeExecutor
 import com.rthqks.synapse.exec.link.*
 import com.rthqks.synapse.logic.FrameRate
@@ -65,6 +66,13 @@ class RotateMatrixNode(
     override suspend fun stop() {
         running = false
         startJob?.join()
+        val output = channel(OUTPUT)
+
+        output?.receive()?.also {
+            it.eos = true
+            output.send(it)
+            Log.d(TAG, "sent ${it.count}")
+        }
     }
 
     override suspend fun release() {

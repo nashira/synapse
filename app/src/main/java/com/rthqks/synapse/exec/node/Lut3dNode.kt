@@ -235,6 +235,10 @@ class Lut3dNode(
         val output = channel(OUTPUT) ?: return
         val outEvent = output.receive()
 
+        val timestamp = max(
+            inputEvent?.timestamp ?: 0,
+            lutEvent?.timestamp ?: 0
+        )
         val inputTexture = inputEvent?.texture ?: glesManager.emptyTexture2d
         val lutTexture = lutEvent?.texture ?: glesManager.emptyTexture3d
 
@@ -263,6 +267,7 @@ class Lut3dNode(
         outEvent.let {
             it.count = frameCount
             it.eos = false
+            it.timestamp = timestamp
             output.send(it)
         }
     }
