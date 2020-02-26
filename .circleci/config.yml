@@ -1,0 +1,25 @@
+version: 2.1
+
+orbs:
+  android: circleci/android@0.2.0
+
+jobs:
+  build:
+    executor: android/android
+
+    steps:
+      - checkout
+      - run:
+          name: Decrypt Credentials
+          command: |
+            chmod +x .circleci/decrypt-local.sh
+            .circleci/decrypt-local.sh
+      - run:
+          command: ./gradlew assemblePolishRelease
+
+      - run:
+          name: Delete Credentials
+          command: |
+            rm keystore.properties
+            rm keystore_synapse.jks
+            rm play-api.json

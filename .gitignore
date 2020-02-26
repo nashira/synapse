@@ -2,6 +2,8 @@
 .gradle
 /local.properties
 /keystore.properties
+/keystore_synapse.jks
+/play-api.json
 /.idea
 .DS_Store
 /build

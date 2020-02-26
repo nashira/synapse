@@ -4,6 +4,7 @@ apply plugin: 'io.fabric'
 apply plugin: 'kotlin-android'
 apply plugin: 'kotlin-android-extensions'
 apply plugin: 'kotlin-kapt'
+apply plugin: 'com.github.triplet.play'
 
 def keystorePropertiesFile = rootProject.file("keystore.properties")
 def keystoreProperties = new Properties()
@@ -63,6 +64,17 @@ android {
         unitTests.returnDefaultValues = true
     }
     buildToolsVersion = '28.0.3'
+    playConfigs {
+        polishRelease {
+            enabled = true
+            userFraction = 1.0
+        }
+    }
+}
+
+play {
+    serviceAccountCredentials = file("../play-api.json")
+    enabled = false
 }
 
 dependencies {
@@ -108,7 +120,7 @@ dependencies {
 
     //glide
     implementation 'com.github.bumptech.glide:glide:4.11.0'
-    annotationProcessor 'com.github.bumptech.glide:compiler:4.11.0'
+    kapt 'com.github.bumptech.glide:compiler:4.11.0'
 
     testImplementation 'junit:junit:4.13'
     androidTestImplementation 'androidx.test:runner:1.2.0'
