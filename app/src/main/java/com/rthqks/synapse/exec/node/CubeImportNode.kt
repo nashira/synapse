@@ -54,7 +54,7 @@ class CubeImportNode(
                     val g = it.groupValues[2].toFloat()
                     val b = it.groupValues[3].toFloat()
 
-                    Log.d(TAG, "rgb($r, $g, $b)")
+//                    Log.d(TAG, "rgb($r, $g, $b)")
                     buffer?.put((cube.scale(r, 0) * 255).toByte())
                     buffer?.put((cube.scale(g, 1) * 255).toByte())
                     buffer?.put((cube.scale(b, 2) * 255).toByte())

@@ -173,6 +173,11 @@ class PolishViewModel @Inject constructor(
                 recreateNetwork(EffectNetworks.timeWarp)
                 true
             }
+            Effect.RotoHue -> {
+                EffectNetworks.rotoHue.getNode(1)?.properties?.plusAssign(properties)
+                recreateNetwork(EffectNetworks.rotoHue)
+                true
+            }
             Effect.More -> {
                 Toast.makeText(context, "Coming Soon!", Toast.LENGTH_LONG).show()
                 false

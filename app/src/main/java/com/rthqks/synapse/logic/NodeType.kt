@@ -173,7 +173,7 @@ sealed class NodeType(
         R.drawable.ic_movie
     )
 
-    object MatrixRotate : NodeType(
+    object RotateMatrix : NodeType(
         "matrix_rotate",
         R.string.name_node_type_matrix_rotate,
         R.drawable.ic_3d_rotation

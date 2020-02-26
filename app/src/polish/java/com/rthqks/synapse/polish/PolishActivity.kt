@@ -328,8 +328,8 @@ enum class Effect(
 ) {
     None("none"),
     TimeWarp("time warp"),
+    RotoHue("roto hue"),
     More("more"),
-//    Trip("trip"),
 //    Topography("topography")
 }
 

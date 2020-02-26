@@ -649,7 +649,7 @@ val Nodes = listOf(
             ), IntConverter
         )
     },
-    Node(NodeType.MatrixRotate).apply {
+    Node(NodeType.RotateMatrix).apply {
         add(Port(Port.Type.Matrix, RotateMatrixNode.OUTPUT.id, "Matrix", true))
         add(
             Property(
@@ -696,7 +696,7 @@ val NodeTypes = listOf(
     NodeType.RingBuffer,
     NodeType.Slice3d,
     NodeType.MediaEncoder,
-    NodeType.MatrixRotate,
+    NodeType.RotateMatrix,
     NodeType.Properties,
     NodeType.Creation,
     NodeType.Connection
