@@ -175,6 +175,7 @@ class PolishViewModel @Inject constructor(
             }
             Effect.RotoHue -> {
                 EffectNetworks.rotoHue.getNode(1)?.properties?.plusAssign(properties)
+                EffectNetworks.rotoHue.getNode(5)?.properties?.plusAssign(properties)
                 recreateNetwork(EffectNetworks.rotoHue)
                 true
             }
