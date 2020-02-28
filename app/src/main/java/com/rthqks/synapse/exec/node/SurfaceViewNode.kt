@@ -8,7 +8,7 @@ import android.view.Surface
 import android.view.SurfaceHolder
 import android.view.SurfaceView
 import androidx.core.view.updateLayoutParams
-import com.rthqks.synapse.assets.AssetManager
+import com.rthqks.synapse.exec.ExecutionContext
 import com.rthqks.synapse.exec.NodeExecutor
 import com.rthqks.synapse.exec.link.*
 import com.rthqks.synapse.gl.*
@@ -16,15 +16,14 @@ import com.rthqks.synapse.logic.CropToFit
 import com.rthqks.synapse.logic.FixedWidth
 import com.rthqks.synapse.logic.Properties
 import kotlinx.coroutines.*
-import kotlinx.coroutines.channels.Channel
-import kotlinx.coroutines.channels.actor
 
 class SurfaceViewNode(
-    private val scope: CoroutineScope,
-    private val assetManager: AssetManager,
-    private val glesManager: GlesManager,
+    context: ExecutionContext,
     private val properties: Properties
-) : NodeExecutor(), SurfaceHolder.Callback {
+) : NodeExecutor(context),
+    SurfaceHolder.Callback {
+    private val assetManager = context.assetManager
+    private val glesManager = context.glesManager
     private var outScaleY: Float = 1f
     private var outScaleX: Float = 1f
     private var surface: Surface? = null
@@ -34,11 +33,6 @@ class SurfaceViewNode(
     private var outputSize: Size = Size(0, 0)
     private var surfaceViewSize: Size = Size(0, 0)
     private var surfaceView: SurfaceView? = null
-    private val commandChannel = scope.actor<suspend () -> Unit>(capacity = Channel.UNLIMITED) {
-        for (action in channel) {
-            action()
-        }
-    }
 
     private val mesh = Quad()
     private val program = Program()
@@ -53,9 +47,9 @@ class SurfaceViewNode(
     val string = toString()
     private val TAG = "SVN ${string.substring(string.length - 8, string.length)}"
 
-    override suspend fun create() {}
+    override suspend fun onCreate() {}
 
-    suspend fun setSurfaceView(surfaceView: SurfaceView) = commandChannel.send {
+    suspend fun setSurfaceView(surfaceView: SurfaceView) = exec {
         val valid = surfaceView.holder.surface?.isValid ?: false
         if (surfaceViewSize.width == 0 || surfaceView != this.surfaceView) {
             surfaceViewSize = Size(surfaceView.width, surfaceView.height)
@@ -82,8 +76,8 @@ class SurfaceViewNode(
         width: Int,
         height: Int
     ) {
-        runBlocking {
-            commandChannel.send {
+        scope.launch {
+            exec {
                 Log.d(TAG, "surfaceChanged: $holder $format $width $height")
                 outputSize = Size(width, height)
                 setSurface(holder!!.surface)
@@ -106,7 +100,7 @@ class SurfaceViewNode(
         Log.d(TAG, "surfaceCreated: $holder")
     }
 
-    override suspend fun initialize() {
+    override suspend fun onInitialize() {
         val config = config(INPUT) ?: return
         if (true || !config.offersSurface) {
             val grayscale = config.format == GLES30.GL_RED
@@ -124,11 +118,13 @@ class SurfaceViewNode(
                     addUniform(
                         Uniform.Type.Mat4,
                         "vertex_matrix0",
-                        GlesManager.identityMat())
+                        GlesManager.identityMat()
+                    )
                     addUniform(
                         Uniform.Type.Mat4,
                         "texture_matrix0",
-                        GlesManager.identityMat())
+                        GlesManager.identityMat()
+                    )
                     addUniform(
                         Uniform.Type.Int,
                         "input_texture0",
@@ -139,7 +135,7 @@ class SurfaceViewNode(
         }
     }
 
-    override suspend fun start() {
+    override suspend fun onStart() {
         when (config(INPUT)?.offersSurface) {
 //            true -> startSurface()
             true,
@@ -148,8 +144,8 @@ class SurfaceViewNode(
         }
     }
 
-    private suspend fun startSurface() = coroutineScope {
-        playJob = launch {
+    private suspend fun startSurface() {
+        playJob = scope.launch {
             val connection = channel(INPUT) ?: return@launch
             running = true
             while (running) {
@@ -184,8 +180,8 @@ class SurfaceViewNode(
         }
     }
 
-    private suspend fun startTexture() = coroutineScope {
-        playJob = launch {
+    private suspend fun startTexture() {
+        playJob = scope.launch {
             val input = channel(INPUT) ?: return@launch
 
             var copyMatrix = true
@@ -244,18 +240,17 @@ class SurfaceViewNode(
         mesh.execute()
     }
 
-    override suspend fun stop() {
+    override suspend fun onStop() {
         playJob?.join()
     }
 
-    override suspend fun release() {
+    override suspend fun onRelease() {
         glesManager.glContext {
             surfaceView?.holder?.removeCallback(this@SurfaceViewNode)
             windowSurface?.release()
             mesh.release()
             program.release()
         }
-        commandChannel.close()
         debug.remove(this)
     }
 
@@ -265,7 +260,7 @@ class SurfaceViewNode(
             //            it.acceptsSurface = true
             inputSize = it.size
             val rotation = it.rotation
-            commandChannel.send {
+            exec {
                 updateSurfaceViewConfig()
             }
         }
@@ -275,7 +270,6 @@ class SurfaceViewNode(
         Log.d(TAG, "updateSurfaceViewConfig")
         val surfaceView = surfaceView ?: return
         withContext(Dispatchers.Main) {
-
             val inSize = inputSize
             val outSize = surfaceViewSize
 

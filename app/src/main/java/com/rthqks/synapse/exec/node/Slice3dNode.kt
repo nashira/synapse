@@ -4,7 +4,7 @@ import android.opengl.GLES30
 import android.os.SystemClock
 import android.util.Log
 import android.util.Size
-import com.rthqks.synapse.assets.AssetManager
+import com.rthqks.synapse.exec.ExecutionContext
 import com.rthqks.synapse.exec.NodeExecutor
 import com.rthqks.synapse.exec.link.*
 import com.rthqks.synapse.gl.*
@@ -12,16 +12,20 @@ import com.rthqks.synapse.logic.FrameRate
 import com.rthqks.synapse.logic.Properties
 import com.rthqks.synapse.logic.SliceDepth
 import com.rthqks.synapse.logic.VideoSize
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.selects.whileSelect
 import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.math.max
 
 class Slice3dNode(
-    private val assetManager: AssetManager,
-    private val glesManager: GlesManager,
+    context: ExecutionContext,
     private val properties: Properties
-) : NodeExecutor() {
+) : NodeExecutor(context) {
+    private val assetManager = context.assetManager
+    private val glesManager = context.glesManager
     private var startJob: Job? = null
     private val frameDuration: Long get() = 1000L / properties[FrameRate]
     private val sliceDepth: Float get() = properties[SliceDepth]
@@ -78,10 +82,10 @@ class Slice3dNode(
         }
     }
 
-    override suspend fun create() {
+    override suspend fun onCreate() {
     }
 
-    override suspend fun initialize() {
+    override suspend fun onInitialize() {
 //        val input = connection(INPUT)
         val output = connection(OUTPUT)
 
@@ -145,10 +149,10 @@ class Slice3dNode(
         framebuffer.initialize(texture)
     }
 
-    override suspend fun start() = coroutineScope {
+    override suspend fun onStart() {
         frameCount = 0
 
-        startJob = launch {
+        startJob = scope.launch {
             val t3dLinked = linked(INPUT_3D)
             if (!t3dLinked) {
                 Log.d(TAG, "no connection")
@@ -175,7 +179,7 @@ class Slice3dNode(
         }
     }
 
-    override suspend fun stop() {
+    override suspend fun onStop() {
         startJob?.join()
         val output = channel(OUTPUT)
 
@@ -186,7 +190,7 @@ class Slice3dNode(
         Log.d(TAG, "sent $frameCount")
     }
 
-    override suspend fun release() {
+    override suspend fun onRelease() {
         glesManager.glContext {
             texture1.release()
             texture2.release()

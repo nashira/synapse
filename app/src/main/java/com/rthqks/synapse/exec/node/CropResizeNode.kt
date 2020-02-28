@@ -4,22 +4,22 @@ import android.opengl.GLES30
 import android.opengl.Matrix
 import android.util.Log
 import android.util.Size
-import com.rthqks.synapse.assets.AssetManager
+import com.rthqks.synapse.exec.ExecutionContext
 import com.rthqks.synapse.exec.NodeExecutor
 import com.rthqks.synapse.exec.link.*
 import com.rthqks.synapse.gl.*
 import com.rthqks.synapse.logic.Properties
 import com.rthqks.synapse.logic.VideoSize
 import kotlinx.coroutines.Job
-import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 
 class CropResizeNode(
-    private val assetManager: AssetManager,
-    private val glesManager: GlesManager,
+    context: ExecutionContext,
     private val properties: Properties
-) : NodeExecutor() {
+) : NodeExecutor(context) {
+    private val assetManager = context.assetManager
+    private val glesManager = context.glesManager
     private var outScaleX: Float = 1f
     private var outScaleY: Float = 1f
     private var startJob: Job? = null
@@ -64,10 +64,10 @@ class CropResizeNode(
         }
     }
 
-    override suspend fun create() {
+    override suspend fun onCreate() {
     }
 
-    override suspend fun initialize() {
+    override suspend fun onInitialize() {
         val input = connection(INPUT)
         val output = connection(OUTPUT)
 
@@ -128,10 +128,10 @@ class CropResizeNode(
         framebuffer.initialize(texture)
     }
 
-    override suspend fun start() = coroutineScope {
+    override suspend fun onStart() {
         frameCount = 0
 
-        startJob = launch {
+        startJob = scope.launch {
             val inputLinked = linked(INPUT)
             if (!inputLinked) {
                 Log.d(TAG, "no connection")
@@ -161,7 +161,7 @@ class CropResizeNode(
         }
     }
 
-    override suspend fun stop() {
+    override suspend fun onStop() {
         startJob?.join()
         val output = channel(OUTPUT)
 
@@ -171,7 +171,7 @@ class CropResizeNode(
         }
     }
 
-    override suspend fun release() {
+    override suspend fun onRelease() {
         glesManager.glContext {
             texture1.release()
             texture2.release()

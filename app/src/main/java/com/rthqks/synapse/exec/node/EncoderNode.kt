@@ -4,9 +4,8 @@ import android.opengl.GLES30
 import android.util.Log
 import android.util.Size
 import android.view.Surface
-import com.rthqks.synapse.assets.AssetManager
-import com.rthqks.synapse.assets.VideoStorage
 import com.rthqks.synapse.codec.Encoder
+import com.rthqks.synapse.exec.ExecutionContext
 import com.rthqks.synapse.exec.NodeExecutor
 import com.rthqks.synapse.exec.link.*
 import com.rthqks.synapse.gl.*
@@ -14,17 +13,17 @@ import com.rthqks.synapse.logic.Properties
 import com.rthqks.synapse.logic.Recording
 import com.rthqks.synapse.logic.Rotation
 import kotlinx.coroutines.Job
-import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.selects.whileSelect
 
 class EncoderNode(
-    private val assetManager: AssetManager,
-    private val glesManager: GlesManager,
-    private val videoStorage: VideoStorage,
+    context: ExecutionContext,
     private val properties: Properties
-) : NodeExecutor() {
+) : NodeExecutor(context) {
+    private val assetManager = context.assetManager
+    private val glesManager = context.glesManager
+    private val videoStorage = context.videoStorage
     private var videoJob: Job? = null
     private var audioJob: Job? = null
     private var startJob: Job? = null
@@ -41,10 +40,10 @@ class EncoderNode(
     private var recording = false
     private var frameCount = 0
 
-    override suspend fun create() {
+    override suspend fun onCreate() {
     }
 
-    override suspend fun initialize() {
+    override suspend fun onInitialize() {
 
         config(INPUT_VIDEO)?.let { config ->
 
@@ -113,10 +112,10 @@ class EncoderNode(
         encoder.stopEncoding()
     }
 
-    override suspend fun start() = coroutineScope {
+    override suspend fun onStart() {
         frameCount = 0
 
-        startJob = launch {
+        startJob = scope.launch {
             val inputLinked = linked(INPUT_VIDEO)
             val lutLinked = linked(INPUT_AUDIO)
             if (!inputLinked && !lutLinked) {
@@ -258,7 +257,7 @@ class EncoderNode(
         }
     }
 
-    override suspend fun stop() {
+    override suspend fun onStop() {
         Log.d(TAG, "stopping")
         startJob?.join()
 
@@ -272,7 +271,7 @@ class EncoderNode(
         Log.d(TAG, "stopped")
     }
 
-    override suspend fun release() {
+    override suspend fun onRelease() {
         glesManager.glContext {
             windowSurface?.release()
             surface?.release()

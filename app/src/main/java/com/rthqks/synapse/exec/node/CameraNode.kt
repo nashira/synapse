@@ -10,21 +10,22 @@ import android.util.Log
 import android.util.Size
 import android.view.Surface
 import com.rthqks.synapse.exec.CameraManager
+import com.rthqks.synapse.exec.ExecutionContext
 import com.rthqks.synapse.exec.NodeExecutor
 import com.rthqks.synapse.exec.link.*
-import com.rthqks.synapse.gl.GlesManager
 import com.rthqks.synapse.gl.Texture2d
 import com.rthqks.synapse.logic.*
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.channels.Channel
-import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 
 class CameraNode(
-    private val cameraManager: CameraManager,
-    private val glesManager: GlesManager,
+    context: ExecutionContext,
     private val properties: Properties
-) : NodeExecutor() {
+) : NodeExecutor(context) {
+    private val cameraManager = context.cameraManager
+    private val glesManager = context.glesManager
     private lateinit var size: Size
     private lateinit var cameraId: String
     private var surfaceRotation = 0
@@ -42,11 +43,11 @@ class CameraNode(
     private val frameRate: Int get() = properties[FrameRate]
     private val stabilize: Boolean get() = properties[Stabilize]
 
-    override suspend fun create() {
+    override suspend fun onCreate() {
         updateCameraConfig()
     }
 
-    override suspend fun initialize() {
+    override suspend fun onInitialize() {
         val connection = connection(OUTPUT) ?: return
         val config = connection.config
 
@@ -77,14 +78,14 @@ class CameraNode(
         surfaceRotation = conf.rotation
     }
 
-    override suspend fun start() = coroutineScope {
+    override suspend fun onStart() {
         updateCameraConfig()
         when (config(OUTPUT)?.acceptsSurface) {
             true -> {
-                startJob = launch { startSurface() }
+                startJob = scope.launch { startSurface() }
             }
             false -> {
-                startJob = launch { startTexture() }
+                startJob = scope.launch { startTexture() }
             }
             else -> {
                 Log.w(TAG, "no connection, not starting")
@@ -113,14 +114,14 @@ class CameraNode(
         } while (!eos)
     }
 
-    private suspend fun startTexture() = coroutineScope {
-        val channel = channel(OUTPUT) ?: return@coroutineScope
-        val surface = outputSurface ?: return@coroutineScope
+    private suspend fun startTexture() {
+        val channel = channel(OUTPUT) ?: return
+        val surface = outputSurface ?: return
         val cameraChannel = Channel<CameraManager.Event>(10)
 
         var copyMatrix = 0
         setOnFrameAvailableListener {
-            launch {
+            runBlocking {
                 onFrame(channel, it, copyMatrix < 2)
                 copyMatrix++
             }
@@ -184,12 +185,12 @@ class CameraNode(
         channel.send(event)
     }
 
-    override suspend fun stop() {
+    override suspend fun onStop() {
         cameraManager.stop()
         startJob?.join()
     }
 
-    override suspend fun release() {
+    override suspend fun onRelease() {
         glesManager.glContext {
             outputSurface?.release()
             outputSurfaceTexture?.release()

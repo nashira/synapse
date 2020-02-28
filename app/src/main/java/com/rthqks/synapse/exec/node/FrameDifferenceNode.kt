@@ -4,21 +4,23 @@ import android.opengl.GLES30.*
 import android.opengl.Matrix
 import android.util.Log
 import android.util.Size
-import com.rthqks.synapse.assets.AssetManager
+import com.rthqks.synapse.exec.ExecutionContext
 import com.rthqks.synapse.exec.NodeExecutor
 import com.rthqks.synapse.exec.link.*
 import com.rthqks.synapse.gl.*
+import com.rthqks.synapse.logic.Properties
 import kotlinx.coroutines.Job
-import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 
 class FrameDifferenceNode(
-    private val glesManager: GlesManager,
-    private val assetManager: AssetManager
-) : NodeExecutor() {
+    context: ExecutionContext,
+    private val properties: Properties
+) : NodeExecutor(context) {
+    private val assetManager = context.assetManager
+    private val glesManager = context.glesManager
     private var startJob: Job? = null
     private var size = Size(0, 0)
     private val connectMutex = Mutex(true)
@@ -34,10 +36,10 @@ class FrameDifferenceNode(
 
     private var framebuffer = framebuffer1
 
-    override suspend fun create() {
+    override suspend fun onCreate() {
     }
 
-    override suspend fun initialize() {
+    override suspend fun onInitialize() {
         config(INPUT)?.let {
             createProgram(it.isOes)
             createTextures()
@@ -138,11 +140,11 @@ class FrameDifferenceNode(
     }
 
 
-    override suspend fun start() = coroutineScope {
-        val output = channel(OUTPUT) ?: return@coroutineScope
-        val input = channel(INPUT) ?: return@coroutineScope
+    override suspend fun onStart() {
+        val output = channel(OUTPUT) ?: return
+        val input = channel(INPUT) ?: return
 
-        startJob = launch {
+        startJob = scope.launch {
             var copyMatrix = 0
             while (isActive) {
                 val outEvent = output.receive()
@@ -197,11 +199,11 @@ class FrameDifferenceNode(
         mesh.execute()
     }
 
-    override suspend fun stop() {
+    override suspend fun onStop() {
         startJob?.join()
     }
 
-    override suspend fun release() {
+    override suspend fun onRelease() {
         connection(INPUT)?.let {
             glesManager.glContext {
                 diffTexture1.release()

@@ -1,26 +1,24 @@
 package com.rthqks.synapse.exec.node
 
-import android.content.Context
 import android.net.Uri
 import android.opengl.GLES30
 import android.util.Log
+import com.rthqks.synapse.exec.ExecutionContext
 import com.rthqks.synapse.exec.NodeExecutor
 import com.rthqks.synapse.exec.link.*
-import com.rthqks.synapse.gl.GlesManager
 import com.rthqks.synapse.gl.Texture3d
 import com.rthqks.synapse.logic.MediaUri
 import com.rthqks.synapse.logic.Properties
 import kotlinx.coroutines.Job
-import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
 import java.io.InputStream
 import java.nio.ByteBuffer
 
 class CubeImportNode(
-    private val context: Context,
-    private val glesManager: GlesManager,
+    context: ExecutionContext,
     private val properties: Properties
-) : NodeExecutor() {
+) : NodeExecutor(context) {
+    private val glesManager = context.glesManager
 
     private var startJob: Job? = null
     private val cubeUri: Uri get() = properties[MediaUri]
@@ -31,13 +29,13 @@ class CubeImportNode(
 
     private fun getInputStream(): InputStream? {
         return when (cubeUri.scheme) {
-            "assets" -> context.assets.open(cubeUri.pathSegments.joinToString("/"))
-            else -> context.contentResolver.openInputStream(cubeUri)
+            "assets" -> context.context.assets.open(cubeUri.pathSegments.joinToString("/"))
+            else -> context.context.contentResolver.openInputStream(cubeUri)
         }
     }
 
     @Suppress("BlockingMethodInNonBlockingContext")
-    override suspend fun create() {
+    override suspend fun onCreate() {
         val stream = getInputStream() ?: return
         val reader = stream.bufferedReader()
         val cube = Cube()
@@ -103,7 +101,7 @@ class CubeImportNode(
         this.texture = texture
     }
 
-    override suspend fun initialize() {
+    override suspend fun onInitialize() {
         val connection = connection(OUTPUT) ?: return
 //        val inputStream = getInputStream() ?: return
 
@@ -114,9 +112,9 @@ class CubeImportNode(
         }
     }
 
-    override suspend fun start() = coroutineScope {
-        val channel = channel(OUTPUT) ?: return@coroutineScope
-        startJob = launch {
+    override suspend fun onStart() {
+        val channel = channel(OUTPUT) ?: return
+        startJob = scope.launch {
             channel.receive().also {
                 Log.d(TAG, "sending event $it")
                 it.eos = false
@@ -126,7 +124,7 @@ class CubeImportNode(
         }
     }
 
-    override suspend fun stop() {
+    override suspend fun onStop() {
         val channel = channel(OUTPUT) ?: return
         startJob?.join()
         channel.receive().also {
@@ -136,7 +134,7 @@ class CubeImportNode(
         }
     }
 
-    override suspend fun release() {
+    override suspend fun onRelease() {
         glesManager.glContext {
             texture?.release()
         }

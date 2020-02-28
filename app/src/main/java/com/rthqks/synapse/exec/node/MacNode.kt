@@ -4,7 +4,7 @@ import android.opengl.GLES30.*
 import android.opengl.Matrix
 import android.util.Log
 import android.util.Size
-import com.rthqks.synapse.assets.AssetManager
+import com.rthqks.synapse.exec.ExecutionContext
 import com.rthqks.synapse.exec.NodeExecutor
 import com.rthqks.synapse.exec.link.*
 import com.rthqks.synapse.gl.*
@@ -12,17 +12,17 @@ import com.rthqks.synapse.logic.AccumulateFactor
 import com.rthqks.synapse.logic.MultiplyFactor
 import com.rthqks.synapse.logic.Properties
 import kotlinx.coroutines.Job
-import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 
 class MacNode(
-    private val glesManager: GlesManager,
-    private val assetManager: AssetManager,
+    context: ExecutionContext,
     private val properties: Properties
-) : NodeExecutor() {
+) : NodeExecutor(context) {
+    private val glesManager = context.glesManager
+    private val assetManager = context.assetManager
     private var startJob: Job? = null
     private var size = Size(0, 0)
     private val connectMutex = Mutex(true)
@@ -47,10 +47,10 @@ class MacNode(
     private val multiplyFactor: Float get() = properties[MultiplyFactor]
     private val accumulateFactor: Float get() = properties[AccumulateFactor]
 
-    override suspend fun create() {
+    override suspend fun onCreate() {
     }
 
-    override suspend fun initialize() {
+    override suspend fun onInitialize() {
         config(INPUT)?.let {
             createProgram(it.isOes)
             createTextures()
@@ -132,8 +132,8 @@ class MacNode(
     }
 
 
-    override suspend fun start() = coroutineScope {
-        startJob = launch {
+    override suspend fun onStart() {
+        startJob = scope.launch {
             val input = channel(INPUT) ?: return@launch
             val output = channel(OUTPUT) ?: return@launch
 
@@ -211,11 +211,11 @@ class MacNode(
         mesh.execute()
     }
 
-    override suspend fun stop() {
+    override suspend fun onStop() {
         startJob?.join()
     }
 
-    override suspend fun release() {
+    override suspend fun onRelease() {
         connection(INPUT)?.let {
             glesManager.glContext {
                 texture1.release()

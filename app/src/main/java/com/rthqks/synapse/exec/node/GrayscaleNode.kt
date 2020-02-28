@@ -4,22 +4,22 @@ import android.opengl.GLES30.*
 import android.util.Log
 import android.util.Size
 import android.view.Surface
-import com.rthqks.synapse.assets.AssetManager
+import com.rthqks.synapse.exec.ExecutionContext
 import com.rthqks.synapse.exec.NodeExecutor
 import com.rthqks.synapse.exec.link.*
 import com.rthqks.synapse.gl.*
 import com.rthqks.synapse.logic.Properties
 import com.rthqks.synapse.logic.ScaleFactor
 import kotlinx.coroutines.Job
-import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 
 class GrayscaleNode(
-    private val glesManager: GlesManager,
-    private val assetManager: AssetManager,
+    context: ExecutionContext,
     private val properties: Properties
-) : NodeExecutor() {
+) : NodeExecutor(context) {
+    private val assetManager = context.assetManager
+    private val glesManager = context.glesManager
     private var startJob: Job? = null
     private var size = Size(0, 0)
 
@@ -38,10 +38,10 @@ class GrayscaleNode(
 
     private var prevEvent: VideoEvent? = null
 
-    override suspend fun create() {
+    override suspend fun onCreate() {
     }
 
-    override suspend fun initialize() {
+    override suspend fun onInitialize() {
         val config = config(INPUT) ?: error("missing input connection")
         val vertexSource = assetManager.readTextAsset("shader/vertex_texture.vert")
         val fragmentSource = assetManager.readTextAsset("shader/grayscale.frag").let {
@@ -105,7 +105,7 @@ class GrayscaleNode(
         }
     }
 
-    override suspend fun start() {
+    override suspend fun onStart() {
         when (config(OUTPUT)?.acceptsSurface) {
             true -> startSurface()
             false -> startTexture()
@@ -113,8 +113,8 @@ class GrayscaleNode(
         }
     }
 
-    private suspend fun startTexture() = coroutineScope {
-        startJob = launch {
+    private suspend fun startTexture() {
+        startJob = scope.launch {
             val output = channel(OUTPUT) ?: return@launch
             val input = channel(INPUT) ?: return@launch
 
@@ -164,8 +164,8 @@ class GrayscaleNode(
         }
     }
 
-    private suspend fun startSurface() = coroutineScope {
-        startJob = launch {
+    private suspend fun startSurface() {
+        startJob = scope.launch {
             val output = channel(OUTPUT) ?: return@launch
             val input = channel(INPUT) ?: return@launch
             val config = config(OUTPUT) ?: return@launch
@@ -229,11 +229,11 @@ class GrayscaleNode(
         mesh.execute()
     }
 
-    override suspend fun stop() {
+    override suspend fun onStop() {
         startJob?.join()
     }
 
-    override suspend fun release() {
+    override suspend fun onRelease() {
 
         glesManager.glContext {
             outputSurfaceWindow?.release()

@@ -3,18 +3,19 @@ package com.rthqks.synapse.exec.node
 import android.media.AudioFormat
 import android.media.AudioRecord
 import android.util.Log
+import com.rthqks.synapse.exec.ExecutionContext
 import com.rthqks.synapse.exec.NodeExecutor
 import com.rthqks.synapse.exec.link.*
 import com.rthqks.synapse.logic.*
 import kotlinx.coroutines.Job
-import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
 
 class AudioSourceNode(
+    context: ExecutionContext,
     private val properties: Properties
-) : NodeExecutor() {
+) : NodeExecutor(context) {
     private lateinit var recorder: AudioRecord
     private lateinit var audioFormat: AudioFormat
     private var bufferSize = 0
@@ -28,7 +29,7 @@ class AudioSourceNode(
     private var bytesPerFrame = 0
     private var running = false
 
-    override suspend fun create() {
+    override suspend fun onCreate() {
         bufferSize = AudioRecord.getMinBufferSize(
             sampleRate,
             channelMask,
@@ -53,7 +54,7 @@ class AudioSourceNode(
         bytesPerFrame = channelCount * bytesPerSample
     }
 
-    override suspend fun initialize() {
+    override suspend fun onInitialize() {
         connection(OUTPUT)?.let { con ->
             repeat(8) {
                 val item = AudioEvent()
@@ -63,11 +64,12 @@ class AudioSourceNode(
         }
     }
 
-    override suspend fun start() = coroutineScope {
+    override suspend fun onStart() {
+        val output = channel(OUTPUT) ?: return
         running = true
-        recordJob = launch {
-            val output = channel(OUTPUT) ?: return@launch
-            recorder.startRecording()
+        recorder.startRecording()
+
+        recordJob = scope.launch {
             var bytesWritten = 0L
             var numFrames = 0
             while (running) {
@@ -94,7 +96,7 @@ class AudioSourceNode(
         }
     }
 
-    override suspend fun stop() {
+    override suspend fun onStop() {
         Log.d(TAG, "stop")
         running = false
         Log.d(TAG, "stop running = false")
@@ -112,7 +114,7 @@ class AudioSourceNode(
         }
     }
 
-    override suspend fun release() {
+    override suspend fun onRelease() {
         recorder.release()
     }
 

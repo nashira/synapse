@@ -2,18 +2,16 @@ package com.rthqks.synapse.exec
 
 import android.util.Log
 import android.view.SurfaceView
-import com.rthqks.synapse.assets.AssetManager
-import com.rthqks.synapse.assets.VideoStorage
 import com.rthqks.synapse.exec.link.Config
 import com.rthqks.synapse.exec.link.Connection
 import com.rthqks.synapse.exec.link.Event
 import com.rthqks.synapse.exec.node.*
-import com.rthqks.synapse.gl.GlesManager
 import com.rthqks.synapse.logic.Link
 import com.rthqks.synapse.logic.Network
 import com.rthqks.synapse.logic.Node
 import com.rthqks.synapse.logic.NodeType
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.joinAll
 import kotlinx.coroutines.launch
 import java.util.concurrent.atomic.AtomicReference
@@ -22,17 +20,6 @@ class NetworkExecutor(
     context: ExecutionContext,
     private val network: Network
 ): Executor(context) {
-    private val glesManager: GlesManager = context.glesManager
-    private val cameraManager: CameraManager = context.cameraManager
-    private val assetManager: AssetManager = context.assetManager
-    private val videoStorage: VideoStorage = context.videoStorage
-
-//    private val exceptionHandler = CoroutineExceptionHandler { _, throwable ->
-//        Log.e(TAG, "error", throwable)
-//        throw throwable
-//    }
-//
-//    private val scope = CoroutineScope(SupervisorJob() + dispatcher + exceptionHandler)
     private val nodes = mutableMapOf<Int, NodeExecutor>()
 
     private var surfaceView: SurfaceView? = null
@@ -50,11 +37,12 @@ class NetworkExecutor(
         }
 
         Log.d(TAG, "create start")
-        parallelJoin(nodes.values) {
+        nodes.values.map {
             Log.d(TAG, "create $it")
-            it.create()
-            Log.d(TAG, "create complete $it")
-        }
+            val deferred = it.create()
+            Log.d(TAG, "create sent $it")
+            deferred
+        }.awaitAll()
         Log.d(TAG, "create done")
 
         Log.d(TAG, "connect start")
@@ -68,11 +56,12 @@ class NetworkExecutor(
         Log.d(TAG, "connect done")
 
         Log.d(TAG, "initialize start")
-        parallelJoin(nodes.values) {
+        nodes.values.map {
             Log.d(TAG, "initialize $it")
-            it.initialize()
-            Log.d(TAG, "initialize complete $it")
-        }
+            val deferred = it.inititalize()
+            Log.d(TAG, "initialize sent $it")
+            deferred
+        }.awaitAll()
         Log.d(TAG, "initialize done")
         logCoroutineInfo(scope.coroutineContext[Job])
     }
@@ -97,29 +86,29 @@ class NetworkExecutor(
 
     private fun nodeExecutor(node: Node): NodeExecutor {
         return when (node.type) {
-            NodeType.Camera -> CameraNode(cameraManager, glesManager, node.properties)
-            NodeType.FrameDifference -> FrameDifferenceNode(glesManager, assetManager)
-            NodeType.GrayscaleFilter -> GrayscaleNode(glesManager, assetManager, node.properties)
-            NodeType.BlurFilter -> BlurNode(glesManager, assetManager, node.properties)
-            NodeType.MultiplyAccumulate -> MacNode(glesManager, assetManager, node.properties)
-            NodeType.Microphone -> AudioSourceNode(node.properties)
-            NodeType.Image -> ImageSourceNode(context.context, glesManager, node.properties)
-            NodeType.CubeImport -> CubeImportNode(context.context, glesManager, node.properties)
+            NodeType.Camera -> CameraNode(context, node.properties)
+            NodeType.FrameDifference -> FrameDifferenceNode(context, node.properties)
+            NodeType.GrayscaleFilter -> GrayscaleNode(context, node.properties)
+            NodeType.BlurFilter -> BlurNode(context, node.properties)
+            NodeType.MultiplyAccumulate -> MacNode(context, node.properties)
+            NodeType.Microphone -> AudioSourceNode(context, node.properties)
+            NodeType.Image -> ImageSourceNode(context, node.properties)
+            NodeType.CubeImport -> CubeImportNode(context, node.properties)
             NodeType.AudioFile -> TODO()
-            NodeType.MediaFile -> DecoderNode(glesManager, context.context, node.properties)
-            NodeType.Lut2d -> Lut2dNode(assetManager, glesManager, node.properties)
-            NodeType.Lut3d -> Lut3dNode(assetManager, glesManager, node.properties)
+            NodeType.MediaFile -> DecoderNode(context, node.properties)
+            NodeType.Lut2d -> Lut2dNode(context, node.properties)
+            NodeType.Lut3d -> Lut3dNode(context, node.properties)
             NodeType.ShaderFilter -> TODO()
-            NodeType.Speakers -> AudioPlayerNode()
-            NodeType.Screen -> SurfaceViewNode(scope, assetManager, glesManager, node.properties + network.properties)
-            NodeType.SlimeMold -> PhysarumNode(assetManager, glesManager, node.properties)
-            NodeType.ImageBlend -> ImageBlendNode(assetManager, glesManager, node.properties)
-            NodeType.CropResize -> CropResizeNode(assetManager, glesManager, node.properties)
-            NodeType.Shape -> ShapeNode(assetManager, glesManager, node.properties)
-            NodeType.RingBuffer -> RingBufferNode(assetManager, glesManager, node.properties)
-            NodeType.Slice3d -> Slice3dNode(assetManager, glesManager, node.properties)
-            NodeType.MediaEncoder -> EncoderNode(assetManager, glesManager, videoStorage, node.properties)
-            NodeType.RotateMatrix -> RotateMatrixNode(node.properties)
+            NodeType.Speakers -> AudioPlayerNode(context)
+            NodeType.Screen -> SurfaceViewNode(context, node.properties + network.properties)
+            NodeType.SlimeMold -> PhysarumNode(context, node.properties)
+            NodeType.ImageBlend -> ImageBlendNode(context, node.properties)
+            NodeType.CropResize -> CropResizeNode(context, node.properties)
+            NodeType.Shape -> ShapeNode(context, node.properties)
+            NodeType.RingBuffer -> RingBufferNode(context, node.properties)
+            NodeType.Slice3d -> Slice3dNode(context, node.properties)
+            NodeType.MediaEncoder -> EncoderNode(context, node.properties)
+            NodeType.RotateMatrix -> RotateMatrixNode(context, node.properties)
             NodeType.Properties,
             NodeType.Creation,
             NodeType.Connection -> error("not an executable node type: ${node.type}")
@@ -146,12 +135,17 @@ class NetworkExecutor(
                 error("unexpected state $it")
             }
         }
-
-        parallel(nodes.values) {
+        nodes.values.map {
             Log.d(TAG, "start $it")
-            it.start()
-            Log.d(TAG, "start complete $it")
+            val deferred = it.start()
+            Log.d(TAG, "start sent $it")
+            deferred
         }
+//        parallel(nodes.values) {
+//            Log.d(TAG, "start $it")
+//            it.onStart()
+//            Log.d(TAG, "start complete $it")
+//        }
         logCoroutineInfo(scope.coroutineContext[Job])
     }
 
@@ -165,11 +159,17 @@ class NetworkExecutor(
 //                error("unexpected state $it")
             }
         }
-        parallelJoin(nodes.values) {
+        nodes.values.map {
             Log.d(TAG, "stop $it")
-            it.stop()
-            Log.d(TAG, "stop complete $it")
-        }
+            val deferred = it.stop()
+            Log.d(TAG, "stop sent $it")
+            deferred
+        }.awaitAll()
+//        parallelJoin(nodes.values) {
+//            Log.d(TAG, "stop $it")
+//            it.onStop()
+//            Log.d(TAG, "stop complete $it")
+//        }
         logCoroutineInfo(scope.coroutineContext[Job])
     }
 
@@ -218,9 +218,9 @@ class NetworkExecutor(
     suspend fun addNode(node: Node, link: Link) {
         val executor = nodeExecutor(node)
         nodes[node.id] = executor
-        executor.create()
+        executor.onCreate()
         addLink(link)
-        executor.initialize()
+        executor.onInitialize()
     }
 
     fun getNode(nodeId: Int): NodeExecutor = nodes[nodeId] ?: error("no node for id $nodeId")
@@ -234,7 +234,7 @@ class NetworkExecutor(
 
         parallelJoin(addedNodes) {
             Log.d(TAG, "create $it")
-            it.create()
+            it.onCreate()
             Log.d(TAG, "create complete $it")
         }
 
@@ -247,7 +247,7 @@ class NetworkExecutor(
 
         parallelJoin(addedNodes) {
             Log.d(TAG, "initialize $it")
-            it.initialize()
+            it.onInitialize()
             Log.d(TAG, "initialize complete $it")
         }
         logCoroutineInfo(scope.coroutineContext[Job])

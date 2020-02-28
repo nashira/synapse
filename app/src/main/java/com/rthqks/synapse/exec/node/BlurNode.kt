@@ -3,7 +3,7 @@ package com.rthqks.synapse.exec.node
 import android.opengl.GLES30.*
 import android.util.Log
 import android.util.Size
-import com.rthqks.synapse.assets.AssetManager
+import com.rthqks.synapse.exec.ExecutionContext
 import com.rthqks.synapse.exec.NodeExecutor
 import com.rthqks.synapse.exec.link.*
 import com.rthqks.synapse.gl.*
@@ -12,17 +12,18 @@ import com.rthqks.synapse.logic.NumPasses
 import com.rthqks.synapse.logic.Properties
 import com.rthqks.synapse.logic.ScaleFactor
 import kotlinx.coroutines.Job
-import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 
 class BlurNode(
-    private val glesManager: GlesManager,
-    private val assetManager: AssetManager,
+    context: ExecutionContext,
     private val properties: Properties
-) : NodeExecutor() {
+) : NodeExecutor(context) {
+
+    private val glesManager = context.glesManager
+    private val assetManager = context.assetManager
     private var startJob: Job? = null
     private val connectMutex = Mutex(true)
     private var inputSize = Size(0, 0)
@@ -45,10 +46,10 @@ class BlurNode(
     private val passes: Int get() = properties[NumPasses]
     private val scale: Int get() = properties[ScaleFactor]
 
-    override suspend fun create() {
+    override suspend fun onCreate() {
     }
 
-    override suspend fun initialize() {
+    override suspend fun onInitialize() {
         connection(INPUT)?.let {
             val config = it.config
             texture1 = Texture2d()
@@ -168,8 +169,8 @@ class BlurNode(
         }
     }
 
-    override suspend fun start() = coroutineScope {
-        startJob = launch {
+    override suspend fun onStart() {
+        startJob = scope.launch {
             val output = channel(OUTPUT) ?: return@launch
             val input = channel(INPUT) ?: return@launch
 
@@ -263,11 +264,11 @@ class BlurNode(
         }
     }
 
-    override suspend fun stop() {
+    override suspend fun onStop() {
         startJob?.join()
     }
 
-    override suspend fun release() {
+    override suspend fun onRelease() {
         glesManager.glContext {
             mesh.release()
 

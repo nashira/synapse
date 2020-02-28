@@ -1,6 +1,5 @@
 package com.rthqks.synapse.exec.node
 
-import android.content.Context
 import android.graphics.SurfaceTexture
 import android.media.AudioFormat
 import android.media.MediaCodec
@@ -15,20 +14,23 @@ import android.util.Log
 import android.util.Size
 import android.view.Surface
 import com.rthqks.synapse.codec.Decoder
+import com.rthqks.synapse.exec.ExecutionContext
 import com.rthqks.synapse.exec.NodeExecutor
 import com.rthqks.synapse.exec.link.*
-import com.rthqks.synapse.gl.GlesManager
 import com.rthqks.synapse.gl.Texture2d
 import com.rthqks.synapse.logic.MediaUri
 import com.rthqks.synapse.logic.Properties
-import kotlinx.coroutines.*
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 
 class DecoderNode(
-    private val glesManager: GlesManager,
-    private val context: Context,
+    context: ExecutionContext,
     private val properties: Properties
-) : NodeExecutor() {
+) : NodeExecutor(context) {
+    private val glesManager = context.glesManager
     private var size: Size = Size(0, 0)
     private var surfaceRotation = 0
     private var frameRate = 0
@@ -45,11 +47,11 @@ class DecoderNode(
         GL_CLAMP_TO_EDGE,
         GL_LINEAR
     )
-    private val decoder = Decoder(context, glesManager.backgroundHandler)
+    private val decoder = Decoder(context.context, glesManager.backgroundHandler)
 
     private val uri: Uri get() = properties[MediaUri]
 
-    override suspend fun create() {
+    override suspend fun onCreate() {
         if (uri.scheme == "none") {
             Log.d(TAG, "no uri")
             return
@@ -81,7 +83,7 @@ class DecoderNode(
         frameRate = decoder.outputVideoFormat?.getInteger(MediaFormat.KEY_FRAME_RATE) ?: 0
     }
 
-    override suspend fun initialize() {
+    override suspend fun onInitialize() {
         if (decoder.hasVideo) {
             connection(VIDEO)?.let {
                 if (it.config.acceptsSurface) {
@@ -108,7 +110,7 @@ class DecoderNode(
         }
     }
 
-    override suspend fun start() = coroutineScope {
+    override suspend fun onStart() {
         audioSession++
         val videoConfig = config(VIDEO)
         when {
@@ -116,14 +118,14 @@ class DecoderNode(
                 Log.w(TAG, "no connection, not starting")
             }
             videoConfig?.acceptsSurface == true -> {
-                videoJob = launch { start2() }
+                videoJob = scope.launch { start2() }
             }
             videoConfig?.acceptsSurface == false -> {
-                videoJob = launch { startTexture() }
+                videoJob = scope.launch { startTexture() }
             }
         }
         if (audioInput != null) {
-            audioJob = launch {
+            audioJob = scope.launch {
                 startAudio()
             }
         }
@@ -197,10 +199,10 @@ class DecoderNode(
         } while (!eos)
     }
 
-    private suspend fun startTexture() = coroutineScope {
-        val connection = channel(VIDEO) ?: return@coroutineScope
-        val surface = outputSurface ?: return@coroutineScope
-        val videoInput = videoInput ?: return@coroutineScope
+    private suspend fun startTexture() {
+        val connection = channel(VIDEO) ?: return
+        val surface = outputSurface ?: return
+        val videoInput = videoInput ?: return
 
         decoder.start(surface, videoInput, audioInput)
 
@@ -270,13 +272,13 @@ class DecoderNode(
         connection.send(event)
     }
 
-    override suspend fun stop() {
+    override suspend fun onStop() {
         decoder.stop()
         videoJob?.join()
         audioJob?.join()
     }
 
-    override suspend fun release() {
+    override suspend fun onRelease() {
         decoder.release()
         glesManager.glContext {
             outputSurface?.release()

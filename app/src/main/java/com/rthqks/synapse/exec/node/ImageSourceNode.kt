@@ -1,6 +1,5 @@
 package com.rthqks.synapse.exec.node
 
-import android.content.Context
 import android.graphics.BitmapFactory
 import android.net.Uri
 import android.opengl.GLES30
@@ -8,23 +7,21 @@ import android.opengl.Matrix
 import android.util.Log
 import android.util.Size
 import androidx.exifinterface.media.ExifInterface
+import com.rthqks.synapse.exec.ExecutionContext
 import com.rthqks.synapse.exec.NodeExecutor
 import com.rthqks.synapse.exec.link.*
-import com.rthqks.synapse.gl.GlesManager
 import com.rthqks.synapse.gl.Texture2d
 import com.rthqks.synapse.logic.MediaUri
 import com.rthqks.synapse.logic.Properties
 import kotlinx.coroutines.Job
-import kotlinx.coroutines.coroutineScope
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import java.io.InputStream
 
 class ImageSourceNode(
-    private val context: Context,
-    private val glesManager: GlesManager,
+    context: ExecutionContext,
     private val properties: Properties
-) : NodeExecutor() {
+) : NodeExecutor(context) {
+    private val glesManager = context.glesManager
 
     private var startJob: Job? = null
     private val imageUri: Uri get() = properties[MediaUri]
@@ -36,13 +33,13 @@ class ImageSourceNode(
 
     private fun getInputStream(): InputStream? {
         return when (imageUri.scheme) {
-            "assets" -> context.assets.open(imageUri.pathSegments.joinToString("/"))
-            else -> context.contentResolver.openInputStream(imageUri)
+            "assets" -> context.context.assets.open(imageUri.pathSegments.joinToString("/"))
+            else -> context.context.contentResolver.openInputStream(imageUri)
         }
     }
 
     @Suppress("BlockingMethodInNonBlockingContext")
-    override suspend fun create() {
+    override suspend fun onCreate() {
         val asset = getInputStream() ?: return
         val options = BitmapFactory.Options().apply {
             inJustDecodeBounds = true
@@ -73,7 +70,7 @@ class ImageSourceNode(
         Log.d(TAG, "options $size")
     }
 
-    override suspend fun initialize() {
+    override suspend fun onInitialize() {
         val connection = connection(OUTPUT) ?: return
         val inputStream = getInputStream() ?: return
 
@@ -99,24 +96,22 @@ class ImageSourceNode(
         connection.prime(item1, item2)
     }
 
-    override suspend fun start() = coroutineScope {
-        val channel = channel(OUTPUT) ?: return@coroutineScope
-        startJob = launch {
+    override suspend fun onStart() {
+        val channel = channel(OUTPUT) ?: return
+        startJob = scope.launch {
             // TODO: this delay is because the frames get sent before a surface is available for preview
             // non-surfaceviewnodes are not affected
-            delay(250)
-            repeat(1) {
-                channel.receive().also {
-                    Log.d(TAG, "sending event $it")
-                    it.eos = false
-                    it.count == ++frameCount
-                    channel.send(it)
-                }
+//            delay(250)
+            channel.receive().also {
+                Log.d(TAG, "sending event $it")
+                it.eos = false
+                it.count == ++frameCount
+                channel.send(it)
             }
         }
     }
 
-    override suspend fun stop() {
+    override suspend fun onStop() {
         val channel = channel(OUTPUT) ?: return
         startJob?.join()
         channel.receive().also {
@@ -125,7 +120,7 @@ class ImageSourceNode(
         }
     }
 
-    override suspend fun release() {
+    override suspend fun onRelease() {
         glesManager.glContext {
             texture?.release()
         }

@@ -3,23 +3,27 @@ package com.rthqks.synapse.exec.node
 import android.opengl.GLES30
 import android.os.SystemClock
 import android.util.Log
-import com.rthqks.synapse.assets.AssetManager
+import com.rthqks.synapse.exec.ExecutionContext
 import com.rthqks.synapse.exec.NodeExecutor
 import com.rthqks.synapse.exec.link.*
 import com.rthqks.synapse.gl.*
 import com.rthqks.synapse.logic.FrameRate
 import com.rthqks.synapse.logic.Properties
 import com.rthqks.synapse.logic.VideoSize
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.selects.whileSelect
 import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.math.max
 
 class Lut3dNode(
-    private val assetManager: AssetManager,
-    private val glesManager: GlesManager,
+    context: ExecutionContext,
     private val properties: Properties
-) : NodeExecutor() {
+) : NodeExecutor(context) {
+    private val assetManager = context.assetManager
+    private val glesManager = context.glesManager
     private var startJob: Job? = null
     private val frameDuration: Long get() = 1000L / properties[FrameRate]
     private var outputSize = properties[VideoSize]
@@ -76,10 +80,10 @@ class Lut3dNode(
         }
     }
 
-    override suspend fun create() {
+    override suspend fun onCreate() {
     }
 
-    override suspend fun initialize() {
+    override suspend fun onInitialize() {
         val input = connection(INPUT)
         val output = connection(OUTPUT)
 
@@ -144,10 +148,10 @@ class Lut3dNode(
         framebuffer.initialize(texture)
     }
 
-    override suspend fun start() = coroutineScope {
+    override suspend fun onStart() {
         frameCount = 0
 
-        startJob = launch {
+        startJob = scope.launch {
             val inputLinked = linked(INPUT)
             val lutLinked = linked(INPUT_LUT)
             val matrixLinked = linked(LUT_MATRIX)
@@ -209,7 +213,7 @@ class Lut3dNode(
         }
     }
 
-    override suspend fun stop() {
+    override suspend fun onStop() {
         startJob?.join()
         val output = channel(OUTPUT)
 
@@ -220,7 +224,7 @@ class Lut3dNode(
         Log.d(TAG, "sent $frameCount")
     }
 
-    override suspend fun release() {
+    override suspend fun onRelease() {
         glesManager.glContext {
             texture1.release()
             texture2.release()

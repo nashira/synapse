@@ -5,23 +5,23 @@ import android.media.AudioFormat
 import android.media.AudioRecord
 import android.media.AudioTrack
 import android.util.Log
+import com.rthqks.synapse.exec.ExecutionContext
 import com.rthqks.synapse.exec.NodeExecutor
 import com.rthqks.synapse.exec.link.AudioConfig
 import com.rthqks.synapse.exec.link.AudioEvent
 import com.rthqks.synapse.exec.link.Connection
 import kotlinx.coroutines.Job
-import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
 
-class AudioPlayerNode : NodeExecutor() {
+class AudioPlayerNode(context: ExecutionContext) : NodeExecutor(context) {
     private var audioTrack: AudioTrack? = null
     private var audioFormat: AudioFormat? = null
     private var playJob: Job? = null
 
-    override suspend fun create() {
+    override suspend fun onCreate() {
     }
 
-    override suspend fun initialize() {
+    override suspend fun onInitialize() {
         audioFormat = config(INPUT)?.audioFormat
 
         audioFormat?.let {
@@ -42,11 +42,12 @@ class AudioPlayerNode : NodeExecutor() {
         }
     }
 
-    override suspend fun start() = coroutineScope {
-        playJob = launch {
-            val channel = channel(INPUT) ?: return@launch
-            var running = true
-            audioTrack?.play()
+    override suspend fun onStart() {
+        val channel = channel(INPUT) ?: return
+        var running = true
+        audioTrack?.play()
+
+        playJob = scope.launch {
             var numFrames = 0
             while (running) {
                 val audioBuffer = channel.receive()
@@ -68,12 +69,12 @@ class AudioPlayerNode : NodeExecutor() {
         }
     }
 
-    override suspend fun stop() {
+    override suspend fun onStop() {
         playJob?.join()
         audioTrack?.stop()
     }
 
-    override suspend fun release() {
+    override suspend fun onRelease() {
         audioTrack?.release()
     }
 

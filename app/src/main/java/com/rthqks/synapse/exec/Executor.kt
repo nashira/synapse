@@ -29,7 +29,7 @@ abstract class Executor(
         return deferred
     }
 
-    protected suspend fun run(block: suspend () -> Unit) {
+    protected suspend fun exec(block: suspend () -> Unit) {
         actor.send(Cmd.Run(block))
     }
 
@@ -44,15 +44,6 @@ abstract class Executor(
         scope.cancel()
         scope.coroutineContext[Job]?.join()
     }
-
-//    suspend fun init() = await(this::onInit)
-//    suspend fun start() = await(this::onStart)
-//    suspend fun stop() = await(this::onStop)
-//    suspend fun release() = await(this::onRelease)
-//    abstract suspend fun onInit()
-//    abstract suspend fun onStart()
-//    abstract suspend fun onStop()
-//    abstract suspend fun onRelease()
 
     companion object {
         const val TAG = "Executor"

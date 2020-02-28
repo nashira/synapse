@@ -3,19 +3,20 @@ package com.rthqks.synapse.exec.node
 import android.opengl.Matrix
 import android.os.SystemClock
 import android.util.Log
+import com.rthqks.synapse.exec.ExecutionContext
 import com.rthqks.synapse.exec.NodeExecutor
 import com.rthqks.synapse.exec.link.*
 import com.rthqks.synapse.logic.FrameRate
 import com.rthqks.synapse.logic.Properties
 import kotlinx.coroutines.Job
-import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import java.lang.Math.max
 
 class RotateMatrixNode(
+    context: ExecutionContext,
     private val properties: Properties
-) : NodeExecutor() {
+) : NodeExecutor(context) {
     private val frameDuration: Long get() = 1000L / properties[FrameRate]
     private var startJob: Job? = null
     private var running = false
@@ -25,16 +26,16 @@ class RotateMatrixNode(
         return MatrixConfig() as C
     }
 
-    override suspend fun create() {
+    override suspend fun onCreate() {
 
     }
 
-    override suspend fun initialize() {
+    override suspend fun onInitialize() {
         connection(OUTPUT)?.prime(MatrixEvent(), MatrixEvent())
     }
 
-    override suspend fun start() = coroutineScope {
-        startJob = launch {
+    override suspend fun onStart() {
+        startJob = scope.launch {
             val output = channel(OUTPUT) ?: return@launch
 
             running = true
@@ -63,7 +64,7 @@ class RotateMatrixNode(
         }
     }
 
-    override suspend fun stop() {
+    override suspend fun onStop() {
         running = false
         startJob?.join()
         val output = channel(OUTPUT)
@@ -75,7 +76,7 @@ class RotateMatrixNode(
         }
     }
 
-    override suspend fun release() {
+    override suspend fun onRelease() {
 
     }
 

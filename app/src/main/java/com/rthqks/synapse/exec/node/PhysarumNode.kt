@@ -4,12 +4,15 @@ import android.opengl.GLES30
 import android.os.SystemClock
 import android.util.Log
 import android.util.Size
-import com.rthqks.synapse.assets.AssetManager
+import com.rthqks.synapse.exec.ExecutionContext
 import com.rthqks.synapse.exec.NodeExecutor
 import com.rthqks.synapse.exec.link.*
 import com.rthqks.synapse.gl.*
 import com.rthqks.synapse.logic.*
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.selects.whileSelect
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicInteger
@@ -18,10 +21,11 @@ import kotlin.math.max
 import kotlin.math.sqrt
 
 class PhysarumNode(
-    private val assetManager: AssetManager,
-    private val glesManager: GlesManager,
+    context: ExecutionContext,
     private val properties: Properties
-) : NodeExecutor() {
+) : NodeExecutor(context) {
+    private val assetManager = context.assetManager
+    private val glesManager = context.glesManager
     private var startJob: Job? = null
     private val numAgents = properties[NumAgents]
     private val frameDuration: Long get() = 1000L / properties[FrameRate]
@@ -99,11 +103,11 @@ class PhysarumNode(
         }
     }
 
-    override suspend fun create() {
+    override suspend fun onCreate() {
         Log.d(TAG, "numAgents $numAgents agentSize $agentSize")
     }
 
-    override suspend fun initialize() {
+    override suspend fun onInitialize() {
         val agentIn = connection(INPUT_AGENT)
         val agentOut = connection(OUTPUT_AGENT)
         val envIn = connection(INPUT_ENV)
@@ -208,11 +212,11 @@ class PhysarumNode(
         framebuffer.initialize(texture)
     }
 
-    override suspend fun start() = coroutineScope {
+    override suspend fun onStart() {
         frameCount = 0
         running.set(1)
 
-        startJob = launch {
+        startJob = scope.launch {
             if (!hasConnection()) {
                 Log.d(TAG, "no connection")
                 return@launch
@@ -273,7 +277,7 @@ class PhysarumNode(
                 || linked(OUTPUT_ENV))
     }
 
-    override suspend fun stop() {
+    override suspend fun onStop() {
         val count = running.decrementAndGet()
         Log.d(TAG, "stop running $count")
         startJob?.join()
@@ -319,7 +323,7 @@ class PhysarumNode(
         Log.d(TAG, "done stop running $count")
     }
 
-    override suspend fun release() {
+    override suspend fun onRelease() {
         glesManager.glContext {
             agentTexture1.release()
             agentTexture2.release()

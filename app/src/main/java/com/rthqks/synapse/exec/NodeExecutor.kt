@@ -7,12 +7,23 @@ import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 
-abstract class NodeExecutor {
-    abstract suspend fun create()
-    abstract suspend fun initialize()
-    abstract suspend fun start()
-    abstract suspend fun stop()
-    abstract suspend fun release()
+abstract class NodeExecutor(
+    context: ExecutionContext
+) : Executor(context) {
+    abstract suspend fun onCreate()
+    abstract suspend fun onInitialize()
+    abstract suspend fun onStart()
+    abstract suspend fun onStop()
+    abstract suspend fun onRelease()
+
+    suspend fun create() = async(this::onCreate)
+    suspend fun inititalize() = async(this::onInitialize)
+    suspend fun start() = async(this::onStart)
+    suspend fun stop() = async(this::onStop)
+    override suspend fun release() {
+        await { onRelease() }
+        super.release()
+    }
 
     private val connectionSet = mutableSetOf<Connection.Key<*, *>>()
     private val cycleSet = mutableSetOf<Connection.Key<*, *>>()
