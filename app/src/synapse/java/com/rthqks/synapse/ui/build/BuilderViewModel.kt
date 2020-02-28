@@ -8,7 +8,7 @@ import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.rthqks.synapse.data.*
-import com.rthqks.synapse.exec.Executor
+import com.rthqks.synapse.exec.ExecutorLegacy
 import com.rthqks.synapse.logic.*
 import com.rthqks.synapse.util.Consumable
 import kotlinx.coroutines.Dispatchers
@@ -16,7 +16,7 @@ import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 class BuilderViewModel @Inject constructor(
-    private val executor: Executor,
+    private val executor: ExecutorLegacy,
     private val dao: SynapseDao
 ) : ViewModel() {
     private val consumable = Consumable<SwipeEvent>()

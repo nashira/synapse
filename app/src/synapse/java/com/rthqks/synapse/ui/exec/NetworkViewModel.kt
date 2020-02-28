@@ -1,24 +1,18 @@
 package com.rthqks.synapse.ui.exec
 
-import android.content.Context
 import android.util.Log
 import android.view.SurfaceView
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
-import com.rthqks.synapse.assets.AssetManager
-import com.rthqks.synapse.assets.VideoStorage
 import com.rthqks.synapse.data.SynapseDao
-import com.rthqks.synapse.exec.CameraManager
+import com.rthqks.synapse.exec.ExecutionContext
 import com.rthqks.synapse.exec.NetworkExecutor
-import com.rthqks.synapse.gl.GlesManager
 import com.rthqks.synapse.logic.Network
 import kotlinx.coroutines.*
-import java.util.concurrent.Executors
 import javax.inject.Inject
 
 class NetworkViewModel @Inject constructor(
-    private val context: Context,
-    private val videoStorage: VideoStorage,
+    private val context: ExecutionContext,
     private val dao: SynapseDao
 ) : ViewModel() {
     private lateinit var surfaceView: SurfaceView
@@ -29,10 +23,10 @@ class NetworkViewModel @Inject constructor(
     private var stopJob: Job? = null
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
 
-    private val dispatcher = Executors.newFixedThreadPool(6).asCoroutineDispatcher()
-    private val glesManager = GlesManager()
-    private val cameraManager = CameraManager(context)
-    private val assetManager = AssetManager(context)
+    private val dispatcher = context.dispatcher
+    private val glesManager = context.glesManager
+    private val cameraManager = context.cameraManager
+    private val assetManager = context.assetManager
 
     fun loadNetwork(networkId: Int) {
         Log.d(TAG, "loadNetwork")
@@ -44,9 +38,7 @@ class NetworkViewModel @Inject constructor(
             cameraManager.initialize()
             glesManager.glContext { it.initialize() }
 
-            networkExecutor = NetworkExecutor(
-                context, dispatcher, glesManager, cameraManager, assetManager, videoStorage, network
-            )
+            networkExecutor = NetworkExecutor(context, network)
 
             Log.d(TAG, "initialize")
             networkExecutor.initialize()
@@ -97,10 +89,7 @@ class NetworkViewModel @Inject constructor(
                 stopJob?.cancel()
             }
             networkExecutor.release()
-            glesManager.release()
-            cameraManager.release()
-            dispatcher.close()
-
+            context.release()
             scope.cancel()
             Log.d(TAG, "released")
         }
