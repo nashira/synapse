@@ -5,7 +5,7 @@ import com.rthqks.synapse.polish.PolishActivity
 import dagger.Module
 import dagger.android.ContributesAndroidInjector
 
-@Module(includes = [MainModule::class, DataModule::class])
+@Module(includes = [MainModule::class, DataModule::class, ExecutionModule::class])
 abstract class AppModule {
 
     @ActivityScope

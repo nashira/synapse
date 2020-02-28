@@ -11,14 +11,14 @@ import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.rthqks.synapse.R
-import com.rthqks.synapse.exec.Executor
+import com.rthqks.synapse.exec.ExecutorLegacy
 import com.rthqks.synapse.logic.*
 import com.rthqks.synapse.ops.Analytics
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 class PolishViewModel @Inject constructor(
-    private val executor: Executor,
+    private val executor: ExecutorLegacy,
     private val context: Context,
     private val analytics: Analytics
 ) : ViewModel() {

@@ -1,6 +1,5 @@
 package com.rthqks.synapse.exec
 
-import android.content.Context
 import android.util.Log
 import android.view.SurfaceView
 import com.rthqks.synapse.assets.AssetManager
@@ -14,30 +13,32 @@ import com.rthqks.synapse.logic.Link
 import com.rthqks.synapse.logic.Network
 import com.rthqks.synapse.logic.Node
 import com.rthqks.synapse.logic.NodeType
-import kotlinx.coroutines.*
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.joinAll
+import kotlinx.coroutines.launch
 import java.util.concurrent.atomic.AtomicReference
 
 class NetworkExecutor(
-    private val context: Context,
-    private val dispatcher: CoroutineDispatcher,
-    private val glesManager: GlesManager,
-    private val cameraManager: CameraManager,
-    private val assetManager: AssetManager,
-    private val videoStorage: VideoStorage,
+    context: ExecutionContext,
     private val network: Network
-) {
-    private val exceptionHandler = CoroutineExceptionHandler { _, throwable ->
-        Log.e(TAG, "error", throwable)
-        throw throwable
-    }
+): Executor(context) {
+    private val glesManager: GlesManager = context.glesManager
+    private val cameraManager: CameraManager = context.cameraManager
+    private val assetManager: AssetManager = context.assetManager
+    private val videoStorage: VideoStorage = context.videoStorage
 
-    private val scope = CoroutineScope(SupervisorJob() + dispatcher + exceptionHandler)
+//    private val exceptionHandler = CoroutineExceptionHandler { _, throwable ->
+//        Log.e(TAG, "error", throwable)
+//        throw throwable
+//    }
+//
+//    private val scope = CoroutineScope(SupervisorJob() + dispatcher + exceptionHandler)
     private val nodes = mutableMapOf<Int, NodeExecutor>()
 
     private var surfaceView: SurfaceView? = null
     private var state = AtomicReference(State.Created)
 
-    suspend fun initialize() {
+    suspend fun initialize() = await {
         state.getAndSet(State.Initialized).let {
             if (it != State.Created) {
                 error("unexpected state $it")
@@ -102,10 +103,10 @@ class NetworkExecutor(
             NodeType.BlurFilter -> BlurNode(glesManager, assetManager, node.properties)
             NodeType.MultiplyAccumulate -> MacNode(glesManager, assetManager, node.properties)
             NodeType.Microphone -> AudioSourceNode(node.properties)
-            NodeType.Image -> ImageSourceNode(context, glesManager, node.properties)
-            NodeType.CubeImport -> CubeImportNode(context, glesManager, node.properties)
+            NodeType.Image -> ImageSourceNode(context.context, glesManager, node.properties)
+            NodeType.CubeImport -> CubeImportNode(context.context, glesManager, node.properties)
             NodeType.AudioFile -> TODO()
-            NodeType.MediaFile -> DecoderNode(glesManager, context, node.properties)
+            NodeType.MediaFile -> DecoderNode(glesManager, context.context, node.properties)
             NodeType.Lut2d -> Lut2dNode(assetManager, glesManager, node.properties)
             NodeType.Lut3d -> Lut3dNode(assetManager, glesManager, node.properties)
             NodeType.ShaderFilter -> TODO()
@@ -135,11 +136,11 @@ class NetworkExecutor(
         toNode.input(toKey, fromNode.output(fromKey))
     }
 
-    suspend fun start() {
+    suspend fun start() = await {
         state.getAndSet(State.Started).let {
             if (it == State.Started) {
                 Log.d(TAG, "already $it")
-                return
+                return@await
             }
             if (it != State.Initialized) {
                 error("unexpected state $it")
@@ -151,15 +152,14 @@ class NetworkExecutor(
             it.start()
             Log.d(TAG, "start complete $it")
         }
-
         logCoroutineInfo(scope.coroutineContext[Job])
     }
 
-    suspend fun stop() {
+    suspend fun stop() = await {
         state.getAndSet(State.Initialized).let {
             if (it == State.Initialized) {
                 Log.d(TAG, "already $it")
-                return
+                return@await
             }
             if (it != State.Started) {
 //                error("unexpected state $it")
@@ -173,20 +173,20 @@ class NetworkExecutor(
         logCoroutineInfo(scope.coroutineContext[Job])
     }
 
-    suspend fun release() {
-        state.getAndSet(State.Released).let {
-            if (it != State.Initialized) {
-                error("unexpected state $it")
+    override suspend fun release() {
+        await {
+            state.getAndSet(State.Released).let {
+                if (it != State.Initialized) {
+                    error("unexpected state $it")
+                }
+            }
+            parallelJoin(nodes.values) {
+                Log.d(TAG, "release $it")
+                it.release()
+                Log.d(TAG, "release complete $it")
             }
         }
-        parallelJoin(nodes.values) {
-            Log.d(TAG, "release $it")
-            it.release()
-            Log.d(TAG, "release complete $it")
-        }
-        scope.cancel()
-        scope.coroutineContext[Job]?.join()
-        logCoroutineInfo(scope.coroutineContext[Job])
+        super.release()
     }
 
     private fun logCoroutineInfo(job: Job?, indent: String = "") {
@@ -206,7 +206,7 @@ class NetworkExecutor(
         items.map { scope.launch { block(it) } }.joinAll()
     }
 
-    suspend fun tmpSetSurfaceView(surfaceView: SurfaceView) {
+    suspend fun tmpSetSurfaceView(surfaceView: SurfaceView) = await {
         this.surfaceView = surfaceView
         nodes.values.forEach {
             when (it) {
@@ -225,7 +225,7 @@ class NetworkExecutor(
 
     fun getNode(nodeId: Int): NodeExecutor = nodes[nodeId] ?: error("no node for id $nodeId")
 
-    suspend fun add(newNodes: List<Node>, newLinks: List<Link>) {
+    suspend fun add(newNodes: List<Node>, newLinks: List<Link>) = await {
         val addedNodes = newNodes.map {
             val node = nodeExecutor(it)
             nodes[it.id] = node

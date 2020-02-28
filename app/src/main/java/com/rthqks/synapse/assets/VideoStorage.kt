@@ -13,11 +13,8 @@ import androidx.core.net.toUri
 import java.io.File
 import java.text.SimpleDateFormat
 import java.util.*
-import javax.inject.Inject
-import javax.inject.Singleton
 
-@Singleton
-class VideoStorage @Inject constructor(
+class VideoStorage constructor(
     private val context: Context
 ) {
     // Container for information about each video.

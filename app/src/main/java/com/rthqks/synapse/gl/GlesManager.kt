@@ -28,6 +28,7 @@ class GlesManager {
         withContext(dispatcher) { block(this@GlesManager) }
 
     fun initialize() {
+
         thread.start()
         handler = Handler(thread.looper)
         eglCore = EglCore(null, EglCore.FLAG_TRY_GLES3 or EglCore.FLAG_RECORDABLE)
