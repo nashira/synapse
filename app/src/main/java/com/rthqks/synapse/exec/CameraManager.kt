@@ -95,7 +95,6 @@ class CameraManager(
     fun stop() {
         Log.d(TAG, "stop")
         isEos = true
-        Log.d(TAG, "stopped")
     }
 
     fun release() {

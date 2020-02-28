@@ -15,7 +15,8 @@ import com.rthqks.synapse.logic.Rotation
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.selects.whileSelect
+import java.util.concurrent.atomic.AtomicBoolean
+import java.util.concurrent.atomic.AtomicInteger
 
 class EncoderNode(
     context: ExecutionContext,
@@ -26,7 +27,6 @@ class EncoderNode(
     private val videoStorage = context.videoStorage
     private var videoJob: Job? = null
     private var audioJob: Job? = null
-    private var startJob: Job? = null
     private var inputSize: Size = Size(0, 0)
     private val mesh = Quad()
 
@@ -37,7 +37,7 @@ class EncoderNode(
     private var surface: Surface? = null
     private var windowSurface: WindowSurface? = null
 
-    private var recording = false
+    private var recording = AtomicBoolean()
     private var frameCount = 0
 
     override suspend fun onCreate() {
@@ -102,88 +102,36 @@ class EncoderNode(
 
     private fun startRecording() {
         encoder.startEncoding(properties[Rotation])
-        recording = true
         startTimeVideo = -1L
         startTimeAudio = -1L
     }
 
     private suspend fun stopRecording() {
-        recording = false
         encoder.stopEncoding()
     }
 
     override suspend fun onStart() {
         frameCount = 0
 
-        startJob = scope.launch {
-            val inputLinked = linked(INPUT_VIDEO)
-            val lutLinked = linked(INPUT_AUDIO)
-            if (!inputLinked && !lutLinked) {
-                Log.d(TAG, "no connection")
-                return@launch
-            }
-//            val running = AtomicInteger()
-            var running = 0
-            var copyMatrix = true
-            val videoIn = channel(INPUT_VIDEO)
-            val audioIn = channel(INPUT_AUDIO)
-            if (inputLinked) running++
-            if (lutLinked) running++
+        val inputLinked = linked(INPUT_VIDEO)
+        val lutLinked = linked(INPUT_AUDIO)
+        if (!inputLinked && !lutLinked) {
+            Log.d(TAG, "no connection")
+            return
+        }
+        val running = AtomicInteger()
+        var copyMatrix = true
+        val videoIn = channel(INPUT_VIDEO)
+        val audioIn = channel(INPUT_AUDIO)
+        if (inputLinked) running.incrementAndGet()
+        if (lutLinked) running.incrementAndGet()
 
-            Log.d(TAG, "video linked $inputLinked audio $lutLinked running=${running}")
+        Log.d(TAG, "video $inputLinked $videoIn audio $lutLinked $audioIn running=${running}")
 
-//            if (videoIn != null)
-//                videoJob = launch {
-//                    do {
-//                        val it = videoIn.receive()
-//                        if (copyMatrix) {
-//                            copyMatrix = false
-//                            val uniform = program.getUniform(Uniform.Type.Mat4, "texture_matrix0")
-//                            System.arraycopy(it.matrix, 0, uniform.data!!, 0, 16)
-//                            uniform.dirty = true
-//                        }
-//                        updateRecording()
-//
-//                        if (recording && !it.eos) {
-//                            if (startTimeVideo == -1L) {
-//                                startTimeVideo = it.timestamp
-//                            }
-//                            executeGl(it.texture, it.timestamp - startTimeVideo)
-//                        }
-//                        videoIn.send(it)
-//                        if (it.eos) {
-//                            running.decrementAndGet()
-//                            Log.d(TAG, "video eos")
-//                        }
-//                    } while (!it.eos)
-//                }
-//
-//            if (audioIn != null)
-//                audioJob = launch {
-//                    do {
-//                        val it = audioIn.receive()
-//
-//                        updateRecording()
-//
-//                        if (recording && !it.eos) {
-//                            if (startTimeAudio == -1L) {
-//                                startTimeAudio = it.timestamp
-//                            }
-//                            encoder.writeAudio(it.buffer, it.timestamp - startTimeAudio)
-//                        }
-//
-//                        audioIn.send(it)
-//                        if (it.eos) {
-//                            running.decrementAndGet()
-//                            Log.d(TAG, "audio eos")
-//
-//                        }
-//                    } while (!it.eos)
-//                }
-
-            whileSelect {
-                videoIn?.onReceive {
-//                    Log.d(TAG, "agent receive ${it.eos}")
+        if (videoIn != null)
+            videoJob = scope.launch {
+                do {
+                    val it = videoIn.receive()
                     if (copyMatrix) {
                         copyMatrix = false
                         val uniform = program.getUniform(Uniform.Type.Mat4, "texture_matrix0")
@@ -192,7 +140,7 @@ class EncoderNode(
                     }
                     updateRecording()
 
-                    if (recording && !it.eos) {
+                    if (recording.get() && !it.eos) {
                         if (startTimeVideo == -1L) {
                             startTimeVideo = it.timestamp
                         }
@@ -200,43 +148,48 @@ class EncoderNode(
                     }
                     videoIn.send(it)
                     if (it.eos) {
-                        running--
-                        Log.d(TAG, "video eos")
+                        val count = running.decrementAndGet()
+                        Log.d(TAG, "video eos $count")
                     }
-                    running > 0
-                }
-                audioIn?.onReceive {
-//                    Log.d(TAG, "env receive ${it.eos}")
+                } while (!it.eos)
+            }
+
+        if (audioIn != null)
+            audioJob = scope.launch {
+                do {
+//                        Log.d(TAG, "audio 1")
+                    val it = audioIn.receive()
+
+//                        Log.d(TAG, "audio 2 ${it.inFlight}")
                     updateRecording()
 
-                    if (recording && !it.eos) {
+                    if (recording.get() && !it.eos) {
                         if (startTimeAudio == -1L) {
                             startTimeAudio = it.timestamp
                         }
                         encoder.writeAudio(it.buffer, it.timestamp - startTimeAudio)
                     }
+//                        Log.d(TAG, "audio 3")
 
                     audioIn.send(it)
+//                        Log.d(TAG, "audio 4")
                     if (it.eos) {
-                        running--
-                        Log.d(TAG, "audio eos")
+                        val count = running.decrementAndGet()
+                        Log.d(TAG, "audio eos $count")
 
                     }
-                    running > 0
-                }
+                } while (!it.eos)
             }
-
-//            videoJob?.join()
-//            audioJob?.join()
-        }
     }
 
     private suspend fun updateRecording() {
         val r = properties[Recording]
-        if (r && !recording) {
-            startRecording()
-        } else if (!r && recording) {
-            stopRecording()
+        if (recording.compareAndSet(!r, r)) {
+            if (r) {
+                startRecording()
+            } else if (!r) {
+                stopRecording()
+            }
         }
     }
 
@@ -259,10 +212,12 @@ class EncoderNode(
 
     override suspend fun onStop() {
         Log.d(TAG, "stopping")
-        startJob?.join()
+
+        audioJob?.join()
+        videoJob?.join()
 
         Log.d(TAG, "got eos, recording = $recording")
-        if (recording) {
+        if (recording.getAndSet(false)) {
             stopRecording()
             //TODO: need to have encoder serialize it's own commands
             // this is here because a release is probably coming and we should wait

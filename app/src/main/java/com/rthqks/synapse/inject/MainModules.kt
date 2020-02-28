@@ -45,7 +45,7 @@ class DataModule {
 class ExecutionModule {
 
     @Provides
-    fun provideDispatcher() = Executors.newFixedThreadPool(2).asCoroutineDispatcher()
+    fun provideDispatcher() = Executors.newFixedThreadPool(4).asCoroutineDispatcher()
 
     @Provides
     fun provideGlesManager() = GlesManager()

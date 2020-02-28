@@ -73,7 +73,9 @@ class AudioSourceNode(
             var bytesWritten = 0L
             var numFrames = 0
             while (running) {
+//                Log.d(TAG, "1")
                 val audioEvent = output.receive()
+//                Log.d(TAG, "2")
                 audioEvent.eos = false
                 audioEvent.count = numFrames
 //                audioEvent.timestamp = (SystemClock.elapsedRealtimeNanos() - start) / 1000
@@ -84,11 +86,13 @@ class AudioSourceNode(
                     audioEvent.buffer.capacity(),
                     AudioRecord.READ_BLOCKING
                 )
+//                Log.d(TAG, "3")
                 audioEvent.buffer.limit(read)
                 bytesWritten += read
                 audioEvent.timestamp = ((bytesWritten / bytesPerFrame) * frameDurationNs) / 1000
 
                 output.send(audioEvent)
+//                Log.d(TAG, "4")
                 numFrames++
 //                Log.d(TAG, "read $read frames $numFrames")
             }

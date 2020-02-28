@@ -140,12 +140,7 @@ class NetworkExecutor(
             val deferred = it.start()
             Log.d(TAG, "start sent $it")
             deferred
-        }
-//        parallel(nodes.values) {
-//            Log.d(TAG, "start $it")
-//            it.onStart()
-//            Log.d(TAG, "start complete $it")
-//        }
+        }.awaitAll()
         logCoroutineInfo(scope.coroutineContext[Job])
     }
 

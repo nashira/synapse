@@ -39,27 +39,25 @@ abstract class NodeExecutor(
     }
 
     @Suppress("UNCHECKED_CAST")
-    suspend fun <C : Config, E : Event> output(key: Connection.Key<C, E>): Connection<C, E> {
-        connectMutex.withLock {
-            return when (val existing = connections[key] as Connection<C, E>?) {
-                null -> {
-                    val config = getConfig(key)
-                    SingleConsumer<C, E>(config).also {
-                        connections[key] = it
-                        channels[key] = it.producer()
-                    }
-                }
-                is SingleConsumer -> MultiConsumer<C, E>(existing.config).also {
-                    it.consumer(existing.duplex)
+    suspend fun <C : Config, E : Event> output(key: Connection.Key<C, E>): Connection<C, E> = await {
+        when (val existing = connections[key] as Connection<C, E>?) {
+            null -> {
+                val config = getConfig(key)
+                SingleConsumer<C, E>(config).also {
                     connections[key] = it
                     channels[key] = it.producer()
                 }
-                else -> existing
             }
+            is SingleConsumer -> MultiConsumer<C, E>(existing.config).also {
+                it.consumer(existing.duplex)
+                connections[key] = it
+                channels[key] = it.producer()
+            }
+            else -> existing
         }
     }
 
-    fun <C : Config, E : Event> input(key: Connection.Key<C, E>, connection: Connection<C, E>) {
+    suspend fun <C : Config, E : Event> input(key: Connection.Key<C, E>, connection: Connection<C, E>) = await {
         connections[key] = connection
         channels[key] = connection.consumer()
     }
