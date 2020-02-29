@@ -7,8 +7,10 @@ import com.rthqks.synapse.exec.ExecutionContext
 import com.rthqks.synapse.exec.NodeExecutor
 import com.rthqks.synapse.exec.link.*
 import com.rthqks.synapse.logic.*
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
 
@@ -78,20 +80,19 @@ class AudioSourceNode(
 //                Log.d(TAG, "2")
                 audioEvent.eos = false
                 audioEvent.count = numFrames
-//                audioEvent.timestamp = (SystemClock.elapsedRealtimeNanos() - start) / 1000
-//                audioEvent.timestamp = SystemClock.elapsedRealtimeNanos() / 1000
                 audioEvent.buffer.position(0)
-                val read = recorder.read(
-                    audioEvent.buffer,
-                    audioEvent.buffer.capacity(),
-                    AudioRecord.READ_BLOCKING
-                )
+                withContext(Dispatchers.IO) {
+                    val read = recorder.read(
+                        audioEvent.buffer,
+                        audioEvent.buffer.capacity(),
+                        AudioRecord.READ_BLOCKING
+                    )
 //                Log.d(TAG, "3")
-                audioEvent.buffer.limit(read)
-                bytesWritten += read
-                audioEvent.timestamp = ((bytesWritten / bytesPerFrame) * frameDurationNs) / 1000
-
-                output.send(audioEvent)
+                    audioEvent.buffer.limit(read)
+                    bytesWritten += read
+                    audioEvent.timestamp = ((bytesWritten / bytesPerFrame) * frameDurationNs) / 1000
+                }
+                audioEvent.queue()
 //                Log.d(TAG, "4")
                 numFrames++
 //                Log.d(TAG, "read $read frames $numFrames")
@@ -113,7 +114,7 @@ class AudioSourceNode(
             val e = it.receive()
             Log.d(TAG, "sending receive")
             e.eos = true
-            it.send(e)
+            e.queue()
             Log.d(TAG, "sending send")
         }
     }
@@ -130,7 +131,7 @@ class AudioSourceNode(
         }
     }
 
-    fun getBytesPerSample(audioFormat: Int): Int {
+    private fun getBytesPerSample(audioFormat: Int): Int {
         return when (audioFormat) {
             AudioFormat.ENCODING_PCM_8BIT -> 1
             AudioFormat.ENCODING_PCM_16BIT,

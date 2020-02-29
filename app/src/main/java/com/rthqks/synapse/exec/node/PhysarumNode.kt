@@ -230,17 +230,19 @@ class PhysarumNode(
 
             execute()
             whileSelect {
-                agentIn?.onReceive {
+                if (agentIn != null)
+                agentIn.onReceive {
                     //                    Log.d(TAG, "agent receive")
-                    agentEvent?.let { agentIn.send(it) }
+                    agentEvent?.release()
                     agentEvent = it
                     debounceExecute(this@launch)
                     if (it.eos) running.decrementAndGet()
                     running.get() > 0
                 }
-                envIn?.onReceive {
+                if (envIn != null)
+                envIn.onReceive {
                     //                    Log.d(TAG, "env receive")
-                    envEvent?.let { envIn.send(it) }
+                    envEvent?.release()
                     envEvent = it
                     if (copyMatrix) {
                         copyMatrix = false
@@ -263,8 +265,8 @@ class PhysarumNode(
             agentEvent?.let { Log.d(TAG, "got ${it.count} agent events") }
             envEvent?.let { Log.d(TAG, "got ${it.count} env events") }
 
-            agentEvent?.let { agentIn?.send(it) }
-            envEvent?.let { envIn?.send(it) }
+            agentEvent?.release()
+            envEvent?.release()
             agentEvent = null
             envEvent = null
         }
@@ -286,12 +288,12 @@ class PhysarumNode(
 
         agentOut?.receive()?.also {
             it.eos = true
-            agentOut.send(it)
+            it.queue()
         }
 
         envOut?.receive()?.also {
             it.eos = true
-            envOut.send(it)
+            it.queue()
         }
 
         // if there is a cycle, i expect to receive an EOS from the cycle
@@ -305,16 +307,16 @@ class PhysarumNode(
 
         if (cycleAgent || cycleEnv)
             whileSelect {
-                if (cycleAgent)
-                    agentIn?.onReceive {
-                        agentIn.send(it)
+                if (cycleAgent && agentIn != null)
+                    agentIn.onReceive {
+                        it.release()
                         if (it.eos) running.decrementAndGet()
                         running.get() > 0
                     }
-                if (cycleEnv)
-                    envIn?.onReceive {
+                if (cycleEnv && envIn != null)
+                    envIn.onReceive {
                         //                    Log.d(TAG, "env receive")
-                        envIn.send(it)
+                        it.release()
                         if (it.eos) running.decrementAndGet()
                         running.get() > 0
                     }
@@ -399,14 +401,14 @@ class PhysarumNode(
             it.texture = agentOutTexture
             it.count = frameCount
             it.eos = false
-            agentOut.send(it)
+            it.queue()
         }
 
         envOutEvent?.let {
             it.texture = envOutTexture
             it.count = frameCount
             it.eos = false
-            envOut.send(it)
+            it.queue()
         }
     }
 

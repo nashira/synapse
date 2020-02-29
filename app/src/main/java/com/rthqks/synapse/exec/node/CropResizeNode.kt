@@ -153,7 +153,7 @@ class CropResizeNode(
                     uniform.dirty = true
                 }
                 execute(inputEvent.texture)
-                inputIn.send(inputEvent)
+                inputEvent.release()
                 if (inputEvent.eos) {
                     startJob?.cancel()
                 }
@@ -167,7 +167,7 @@ class CropResizeNode(
 
         output?.receive()?.also {
             it.eos = true
-            output.send(it)
+            it.queue()
         }
     }
 
@@ -206,7 +206,7 @@ class CropResizeNode(
         outEvent.let {
             it.count = frameCount
             it.eos = false
-            output.send(it)
+            it.queue()
         }
     }
 

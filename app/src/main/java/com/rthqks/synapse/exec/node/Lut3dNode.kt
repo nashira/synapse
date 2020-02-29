@@ -169,9 +169,10 @@ class Lut3dNode(
             if (matrixLinked) running++
 
             whileSelect {
-                inputIn?.onReceive {
+                if (inputIn != null)
+                inputIn.onReceive {
                     //                    Log.d(TAG, "input receive")
-                    inputEvent?.let { inputIn.send(it) }
+                    inputEvent?.release()
                     inputEvent = it
                     if (copyMatrix) {
                         copyMatrix = false
@@ -183,16 +184,18 @@ class Lut3dNode(
                     if (it.eos) running--
                     running > 0
                 }
-                lutIn?.onReceive {
+                if (lutIn != null)
+                lutIn.onReceive {
                     //                    Log.d(TAG, "lut receive")
-                    lutEvent?.let { lutIn.send(it) }
+                    lutEvent?.release()
                     lutEvent = it
                     debounceExecute(this@launch)
                     if (it.eos) running--
                     running > 0
                 }
-                matrixIn?.onReceive {
-                    matrixEvent?.let { matrixIn.send(it) }
+                if (matrixIn != null)
+                matrixIn.onReceive {
+                    matrixEvent?.release()
                     matrixEvent = it
                     if (it.eos) running--
                     running > 0
@@ -200,15 +203,15 @@ class Lut3dNode(
             }
 
             inputEvent?.let { Log.d(TAG, "got ${it.count} input events") }
-            inputEvent?.let { inputIn?.send(it) }
+            inputEvent?.release()
             inputEvent = null
 
             lutEvent?.let { Log.d(TAG, "got ${it.count} lut events") }
-            lutEvent?.let { lutIn?.send(it) }
+            lutEvent?.release()
             lutEvent = null
 
             matrixEvent?.let { Log.d(TAG, "got ${it.count} matrix events") }
-            matrixEvent?.let { matrixIn?.send(it) }
+            matrixEvent?.release()
             matrixEvent = null
         }
     }
@@ -219,7 +222,7 @@ class Lut3dNode(
 
         output?.receive()?.also {
             it.eos = true
-            output.send(it)
+            it.queue()
         }
         Log.d(TAG, "sent $frameCount")
     }
@@ -272,7 +275,7 @@ class Lut3dNode(
             it.count = frameCount
             it.eos = false
             it.timestamp = timestamp
-            output.send(it)
+            it.queue()
         }
     }
 

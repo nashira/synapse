@@ -151,8 +151,8 @@ class GrayscaleNode(
                 }
 
 //                prevEvent = inEvent
-                input.send(inEvent)
-                output.send(outEvent)
+                inEvent.release()
+                outEvent.queue()
 
                 if (outEvent.eos) {
                     Log.d(TAG, "got EOS")
@@ -198,8 +198,8 @@ class GrayscaleNode(
                     }
                 }
 
-                input.send(inEvent)
-                output.send(outEvent)
+                inEvent.release()
+                outEvent.queue()
 
                 if (outEvent.eos) {
                     Log.d(TAG, "got EOS")

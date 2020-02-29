@@ -119,7 +119,7 @@ class CubeImportNode(
                 Log.d(TAG, "sending event $it")
                 it.eos = false
                 it.count == ++frameCount
-                channel.send(it)
+                it.queue()
             }
         }
     }
@@ -130,7 +130,7 @@ class CubeImportNode(
         channel.receive().also {
             it.eos = true
             it.count = frameCount
-            channel.send(it)
+            it.queue()
         }
     }
 

@@ -206,8 +206,8 @@ class BlurNode(
                     )
                 }
 
-                input.send(inEvent)
-                output.send(outEvent)
+                inEvent.release()
+                outEvent.queue()
 
                 if (outEvent.eos) {
                     Log.d(TAG, "got EOS")

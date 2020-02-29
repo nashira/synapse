@@ -168,11 +168,11 @@ class FrameDifferenceNode(
                     executeGl(inEvent.texture)
                 }
 
-                input.send(inEvent)
+                inEvent.release()
 
                 framebuffer = if (framebuffer == framebuffer1) framebuffer2 else framebuffer1
 
-                output.send(outEvent)
+                outEvent.queue()
 
                 if (inEvent.eos) {
                     Log.d(TAG, "got EOS")

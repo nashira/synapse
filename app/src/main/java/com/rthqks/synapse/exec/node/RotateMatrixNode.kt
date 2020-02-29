@@ -42,7 +42,7 @@ class RotateMatrixNode(
             var frameCount = 0
             var last = 0L
             var lastMatrix = output.receive()
-            output.send(lastMatrix)
+            lastMatrix.queue()
             while (running) {
                 val delayTime = max(
                     0,
@@ -56,7 +56,7 @@ class RotateMatrixNode(
                 Matrix.translateM(event.matrix, 0, -0.5f, -0.5f, -0.5f)
                 event.eos = false
                 event.count = ++frameCount
-                output.send(event)
+                event.queue()
 
                 lastMatrix = event
                 last = SystemClock.elapsedRealtime()
@@ -71,7 +71,7 @@ class RotateMatrixNode(
 
         output?.receive()?.also {
             it.eos = true
-            output.send(it)
+            it.queue()
             Log.d(TAG, "sent ${it.count}")
         }
     }

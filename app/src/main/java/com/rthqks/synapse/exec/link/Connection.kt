@@ -2,111 +2,53 @@ package com.rthqks.synapse.exec.link
 
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.ReceiveChannel
-import kotlinx.coroutines.channels.SendChannel
-import kotlinx.coroutines.selects.SelectClause1
-import kotlinx.coroutines.selects.select
 import java.util.concurrent.atomic.AtomicInteger
 
 interface Connection<C : Config, E : Event> {
     val config: C
-    fun producer(): Channel<E>
-    fun consumer(): Channel<E>
+    fun producer(): ReceiveChannel<E>
+    fun consumer(): ReceiveChannel<E>
     suspend fun prime(vararg item: E)
     data class Key<C : Config, E : Event>(val id: String)
 }
 
-class SingleConsumer<C : Config, E : Event>(
+class Connection2<C : Config, E : Event>(
     override val config: C
-) : Connection<C, E> {
-    val duplex = Duplex<E>(
-        Channel(Channel.UNLIMITED),
-        Channel(Channel.UNLIMITED)
-    )
+): Connection<C, E> {
+    private val consumers = mutableListOf<Channel<E>>()
+    private val producer = Channel<E>(CAPACITY)
 
-    override fun producer(): Channel<E> = duplex.host
-    override fun consumer(): Channel<E> = duplex.client
+    override fun producer(): ReceiveChannel<E> = producer
 
-    override suspend fun prime(vararg item: E) {
-        item.forEach {
-            it.inFlight.set(1)
-            duplex.rx.send(it)
+    override fun consumer(): ReceiveChannel<E> {
+        val channel = Channel<E>(CAPACITY)
+        consumers.add(channel)
+        return channel
+    }
+
+    private suspend fun queue(event: E) {
+        event.inFlight.set(consumers.size)
+        consumers.forEach {
+            it.send(event)
+        }
+    }
+
+    private suspend fun release(event: E) {
+        if (event.inFlight.decrementAndGet() <= 0) {
+            producer.send(event)
+        }
+    }
+
+    override suspend fun prime(vararg items: E) {
+        items.forEach {
+            it.blockQueue = { queue(it) }
+            it.blockRelease = { release(it) }
+            release(it)
         }
     }
 
     companion object {
-        const val TAG = "Connection"
-    }
-}
-
-class MultiConsumer<C : Config, E : Event>(
-    override val config: C
-) : Connection<C, E> {
-    protected val consumers = mutableListOf<Duplex<E>>()
-    protected val producer = object : Channel<E> by Channel() {
-        override suspend fun send(element: E) {
-            element.inFlight.set(consumers.size)
-            consumers.forEach {
-                it.tx.send(element)
-            }
-        }
-
-        override suspend fun receive(): E {
-            while (true) {
-                val item = select<E?> {
-                    consumers.forEach {
-                        it.rx.onReceive { item ->
-                            if (item.inFlight.decrementAndGet() == 0) {
-                                item
-                            } else {
-                                null
-                            }
-                        }
-                    }
-                }
-                item?.let {
-                    return it
-                }
-            }
-        }
-
-        override fun poll(): E? {
-            consumers.forEach {
-                it.rx.poll()?.let { item ->
-                    if (item.inFlight.decrementAndGet() == 0) {
-                        return item
-                    }
-                }
-            }
-            return null
-        }
-    }
-
-    fun consumer(duplex: Duplex<E>) {
-        consumers.add(duplex)
-    }
-
-    override fun producer(): Channel<E> = producer
-
-    override fun consumer(): Channel<E> {
-        val duplex = Duplex<E>(
-            Channel(Channel.UNLIMITED),
-            Channel(Channel.UNLIMITED)
-        )
-        consumers.add(duplex)
-        return duplex.client
-    }
-
-    override suspend fun prime(vararg item: E) {
-        item.forEach { item ->
-            item.inFlight.set(consumers.size)
-            consumers.forEach {
-                it.rx.send(item)
-            }
-        }
-    }
-
-    companion object {
-        const val TAG = "MultiConsumer"
+        const val CAPACITY = 20
     }
 }
 
@@ -117,17 +59,8 @@ abstract class Event {
     var eos: Boolean = false
     var count: Int = 0
     var timestamp: Long = 0
+    var blockQueue: (suspend () -> Unit)? = null
+    var blockRelease: (suspend () -> Unit)? = null
+    suspend fun queue() = blockQueue?.invoke()
+    suspend fun release() = blockRelease?.invoke()
 }
-
-class Duplex<E : Event>(
-    internal val tx: Channel<E>,
-    internal val rx: Channel<E>
-) {
-    val host = Simplex(tx, rx)
-    val client = Simplex(rx, tx)
-}
-
-class Simplex<E>(
-    tx: Channel<E>,
-    rx: Channel<E>
-) : Channel<E>, SendChannel<E> by tx, ReceiveChannel<E> by rx, SelectClause1<E> by rx.onReceive

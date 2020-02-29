@@ -157,8 +157,8 @@ class ExecutorLegacy @Inject constructor(
 
     private suspend fun doRelease() {
         commandChannel.close()
-        scope.cancel()
         context.release()
+        scope.cancel()
     }
 
     private suspend fun doStart() {

@@ -178,9 +178,10 @@ class ImageBlendNode(
             if (blendLinked) running++
 
             whileSelect {
-                baseIn?.onReceive {
+                if (baseIn != null)
+                baseIn.onReceive {
                     //                    Log.d(TAG, "agent receive")
-                    baseEvent?.let { baseIn.send(it) }
+                    baseEvent?.release()
                     baseEvent = it
                     if (copyMatrixBase) {
                         copyMatrixBase = false
@@ -192,9 +193,10 @@ class ImageBlendNode(
                     if (it.eos) running--
                     running > 0
                 }
-                blendIn?.onReceive {
+                if (blendIn != null)
+                blendIn.onReceive {
                     //                    Log.d(TAG, "env receive")
-                    blendEvent?.let { blendIn.send(it) }
+                    blendEvent?.release()
                     blendEvent = it
                     if (copyMatrixBlend) {
                         copyMatrixBlend = false
@@ -210,8 +212,8 @@ class ImageBlendNode(
             baseEvent?.let { Log.d(TAG, "got ${it.count} base events") }
             blendEvent?.let { Log.d(TAG, "got ${it.count} blend events") }
 
-            baseEvent?.let { baseIn?.send(it) }
-            blendEvent?.let { blendIn?.send(it) }
+            baseEvent?.release()
+            blendEvent?.release()
             baseEvent = null
             blendEvent = null
         }
@@ -223,7 +225,7 @@ class ImageBlendNode(
 
         output?.receive()?.also {
             it.eos = true
-            output.send(it)
+            it.queue()
         }
     }
 
@@ -276,7 +278,7 @@ class ImageBlendNode(
         outEvent.let {
             it.count = frameCount
             it.eos = false
-            output.send(it)
+            it.queue()
         }
     }
 

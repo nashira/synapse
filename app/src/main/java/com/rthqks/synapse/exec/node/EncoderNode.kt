@@ -146,7 +146,7 @@ class EncoderNode(
                         }
                         executeGl(it.texture, it.timestamp - startTimeVideo)
                     }
-                    videoIn.send(it)
+                    it.release()
                     if (it.eos) {
                         val count = running.decrementAndGet()
                         Log.d(TAG, "video eos $count")
@@ -171,7 +171,7 @@ class EncoderNode(
                     }
 //                        Log.d(TAG, "audio 3")
 
-                    audioIn.send(it)
+                    it.release()
 //                        Log.d(TAG, "audio 4")
                     if (it.eos) {
                         val count = running.decrementAndGet()

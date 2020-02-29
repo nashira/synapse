@@ -22,6 +22,7 @@ import com.rthqks.synapse.logic.MediaUri
 import com.rthqks.synapse.logic.Properties
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.channels.ReceiveChannel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
@@ -166,8 +167,7 @@ class DecoderNode(
                 frame.eos = true
             }
             decoder.releaseVideoBuffer(event.index, frame.eos)
-            connection.send(frame)
-
+            frame.queue()
         } while (!frame.eos)
     }
 
@@ -192,7 +192,7 @@ class DecoderNode(
             event.buffer?.let {
                 audioEvent.buffer = it
             }
-            audioChannel.send(audioEvent)
+            audioEvent.queue()
             if (eos) {
                 decoder.releaseAudioBuffer(audioEvent.index, audioEvent.eos)
             }
@@ -243,7 +243,7 @@ class DecoderNode(
 
         val event = connection.receive()
         event.eos = true
-        connection.send(event)
+        event.queue()
     }
 
     private fun setOnFrameAvailableListener(block: (SurfaceTexture) -> Unit) {
@@ -255,7 +255,7 @@ class DecoderNode(
     }
 
     private suspend fun onFrame(
-        connection: Channel<VideoEvent>,
+        connection: ReceiveChannel<VideoEvent>,
         surfaceTexture: SurfaceTexture,
         copyMatrix: Boolean
     ) {
@@ -269,7 +269,7 @@ class DecoderNode(
 //            Log.d(TAG, "surface ${surfaceTexture.timestamp}")
         }
         event.eos = false
-        connection.send(event)
+        event.queue()
     }
 
     override suspend fun onStop() {

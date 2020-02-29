@@ -17,6 +17,7 @@ import com.rthqks.synapse.gl.Texture2d
 import com.rthqks.synapse.logic.*
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.channels.ReceiveChannel
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 
@@ -106,7 +107,7 @@ class CameraNode(
             frame.count = count
             frame.timestamp = timestamp
             frame.eos = eos
-            output.send(frame)
+            frame.queue()
             if (eos) {
                 Log.d(TAG, "sending EOS")
                 Log.d(TAG, "sent frames $count")
@@ -139,7 +140,7 @@ class CameraNode(
                 event.count = count
                 event.timestamp = timestamp
                 event.eos = true
-                channel.send(event)
+                event.queue()
                 Log.d(TAG, "sent frames $count")
             }
         } while (!eos)
@@ -154,7 +155,7 @@ class CameraNode(
     }
 
     private suspend fun onFrame(
-        channel: Channel<VideoEvent>,
+        channel: ReceiveChannel<VideoEvent>,
         surfaceTexture: SurfaceTexture,
         copyMatrix: Boolean
     ) {
@@ -182,7 +183,7 @@ class CameraNode(
 
         }
         event.eos = false
-        channel.send(event)
+        event.queue()
     }
 
     override suspend fun onStop() {

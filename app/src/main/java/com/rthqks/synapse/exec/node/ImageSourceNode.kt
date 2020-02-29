@@ -105,8 +105,8 @@ class ImageSourceNode(
             channel.receive().also {
                 Log.d(TAG, "sending event $it")
                 it.eos = false
-                it.count == ++frameCount
-                channel.send(it)
+                it.count = ++frameCount
+                it.queue()
             }
         }
     }
@@ -116,7 +116,7 @@ class ImageSourceNode(
         startJob?.join()
         channel.receive().also {
             it.eos = true
-            channel.send(it)
+            it.queue()
         }
     }
 

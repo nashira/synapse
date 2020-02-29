@@ -154,7 +154,7 @@ class SurfaceViewNode(
                     Log.d(TAG, "got EOS ${surfaceEvent.count}")
                     running = false
                 }
-                connection.send(surfaceEvent)
+                surfaceEvent.release()
             }
         }
     }
@@ -218,7 +218,7 @@ class SurfaceViewNode(
                     }
                 }
 
-                input.send(inEvent)
+                inEvent.release()
 
                 if (inEvent.eos) {
                     Log.d(TAG, "got EOS ${inEvent.count}")

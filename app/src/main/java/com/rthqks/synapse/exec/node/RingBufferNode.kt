@@ -154,7 +154,7 @@ class RingBufferNode(
                     uniform.dirty = true
                 }
                 execute(inputEvent.texture, inputEvent.timestamp)
-                inputIn.send(inputEvent)
+                inputEvent.release()
                 if (inputEvent.eos) {
                     startJob?.cancel()
                 }
@@ -168,7 +168,7 @@ class RingBufferNode(
 
         output?.receive()?.also {
             it.eos = true
-            output.send(it)
+            it.queue()
         }
     }
 
@@ -207,7 +207,7 @@ class RingBufferNode(
             it.eos = false
             it.timestamp = timestamp
             it.index = currentLevel
-            output.send(it)
+            it.queue()
         }
     }
 

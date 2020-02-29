@@ -170,7 +170,7 @@ class MacNode(
                     executeGl(inEvent.texture)
                 }
 
-                input.send(inEvent)
+                inEvent.release()
 
                 val outTexture: Texture2d
                 if (framebuffer == framebuffer1) {
@@ -183,7 +183,7 @@ class MacNode(
 
                 outEvent.let {
                     it.texture = outTexture
-                    output.send(it)
+                    it.queue()
                 }
 
                 if (inEvent.eos) {

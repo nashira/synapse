@@ -9,33 +9,30 @@ abstract class Executor(
 ) {
     protected val scope = CoroutineScope(Job() + context.dispatcher)
     @Suppress("UNCHECKED_CAST")
-    private val actor = scope.actor<Cmd<*>> {
+    private val actor = scope.actor<suspend () -> Unit> {
         for (cmd in channel) {
-            Log.d(TAG, "executing $cmd")
-            when (cmd) {
-                is Cmd.Async -> {
-                    val value = cmd.block()
-                    (cmd.deferred as? CompletableDeferred<Any?>)?.complete(value)
-                }
-                is Cmd.Run -> cmd.block()
-            }
+            cmd()
         }
         Log.d(TAG, "actor closed")
     }
 
     protected suspend fun <T> async(block: suspend () -> T): Deferred<T> {
         val deferred = CompletableDeferred<T>()
-        actor.send(Cmd.Async(deferred, block))
+        actor.send {
+            deferred.complete(block())
+        }
         return deferred
     }
 
     protected suspend fun exec(block: suspend () -> Unit) {
-        actor.send(Cmd.Run(block))
+        actor.send(block)
     }
 
     protected suspend fun <T> await(block: suspend () -> T): T {
         val deferred = CompletableDeferred<T>()
-        actor.send(Cmd.Async(deferred, block))
+        actor.send {
+            deferred.complete(block())
+        }
         return deferred.await()
     }
 
@@ -48,14 +45,4 @@ abstract class Executor(
     companion object {
         const val TAG = "Executor"
     }
-}
-
-private sealed class Cmd<T>(
-    val block: suspend () -> T
-) {
-    class Run(block: suspend () -> Unit): Cmd<Unit>(block)
-    class Async<T>(
-        val deferred: Deferred<T>,
-        block: suspend () -> T
-    ) : Cmd<T>(block)
 }

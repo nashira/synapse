@@ -63,7 +63,7 @@ class AudioPlayerNode(context: ExecutionContext) : NodeExecutor(context) {
                     numFrames++
 //                    Log.d(TAG, "written $write frames $numFrames")
                 }
-                channel.send(audioBuffer)
+                audioBuffer.release()
             }
             Log.d(TAG, "wrote frames $numFrames")
         }

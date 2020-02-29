@@ -167,9 +167,10 @@ class Lut2dNode(
             if (lutLinked) running++
 
             whileSelect {
-                inputIn?.onReceive {
+                if (inputIn != null)
+                inputIn.onReceive {
                     //                    Log.d(TAG, "agent receive")
-                    inputEvent?.let { inputIn.send(it) }
+                    inputEvent?.release()
                     inputEvent = it
                     if (copyMatrix) {
                         copyMatrix = false
@@ -181,9 +182,10 @@ class Lut2dNode(
                     if (it.eos) running--
                     running > 0
                 }
-                lutIn?.onReceive {
+                if (lutIn != null)
+                lutIn.onReceive {
                     //                    Log.d(TAG, "env receive")
-                    lutEvent?.let { lutIn.send(it) }
+                    lutEvent?.release()
                     lutEvent = it
                     debounceExecute(this@launch)
                     if (it.eos) running--
@@ -194,8 +196,8 @@ class Lut2dNode(
             inputEvent?.let { Log.d(TAG, "got ${it.count} input events") }
             lutEvent?.let { Log.d(TAG, "got ${it.count} lut events") }
 
-            inputEvent?.let { inputIn?.send(it) }
-            lutEvent?.let { lutIn?.send(it) }
+            inputEvent?.release()
+            lutEvent?.release()
             inputEvent = null
             lutEvent = null
         }
@@ -207,7 +209,7 @@ class Lut2dNode(
 
         output?.receive()?.also {
             it.eos = true
-            output.send(it)
+            it.queue()
         }
     }
 
@@ -250,7 +252,7 @@ class Lut2dNode(
         outEvent.let {
             it.count = frameCount
             it.eos = false
-            output.send(it)
+            it.queue()
         }
     }
 

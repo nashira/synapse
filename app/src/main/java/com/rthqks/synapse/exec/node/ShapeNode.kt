@@ -166,9 +166,10 @@ class ShapeNode(
             if (inputLinked) running.incrementAndGet()
 
             whileSelect {
-                inputIn?.onReceive {
+                if (inputIn != null)
+                inputIn.onReceive {
                     //                    Log.d(TAG, "agent receive")
-                    inputEvent?.let { inputIn.send(it) }
+                    inputEvent?.release()
                     inputEvent = it
 //                    if (copyMatrix) {
 //                        copyMatrix = false
@@ -190,7 +191,7 @@ class ShapeNode(
 
             inputEvent?.let { Log.d(TAG, "got ${it.count} input events") }
 
-            inputEvent?.let { inputIn?.send(it) }
+            inputEvent?.release()
             inputEvent = null
         }
     }
@@ -202,7 +203,7 @@ class ShapeNode(
 
         output?.receive()?.also {
             it.eos = true
-            output.send(it)
+            it.queue()
         }
     }
 
@@ -247,7 +248,7 @@ class ShapeNode(
         outEvent.let {
             it.count = frameCount
             it.eos = false
-            output.send(it)
+            it.queue()
         }
     }
 

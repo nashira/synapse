@@ -163,9 +163,10 @@ class Slice3dNode(
             if (t3dLinked) running++
 
             whileSelect {
-                t3dIn?.onReceive {
+                if (t3dIn != null)
+                t3dIn.onReceive {
                     //                    Log.d(TAG, "lut receive")
-                    t3dEvent?.let { t3dIn.send(it) }
+                    t3dEvent?.release()
                     t3dEvent = it
                     debounceExecute(this@launch)
                     if (it.eos) running--
@@ -174,7 +175,7 @@ class Slice3dNode(
             }
 
             t3dEvent?.let { Log.d(TAG, "got ${it.count} lut events") }
-            t3dEvent?.let { t3dIn?.send(it) }
+            t3dEvent?.release()
             t3dEvent = null
         }
     }
@@ -185,7 +186,7 @@ class Slice3dNode(
 
         output?.receive()?.also {
             it.eos = true
-            output.send(it)
+            it.queue()
         }
         Log.d(TAG, "sent $frameCount")
     }
@@ -236,7 +237,7 @@ class Slice3dNode(
             it.count = frameCount
             it.eos = false
             it.timestamp = t3dEvent?.timestamp ?: 0
-            output.send(it)
+            it.queue()
         }
     }
 

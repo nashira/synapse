@@ -1,9 +1,12 @@
 package com.rthqks.synapse.exec
 
-import com.rthqks.synapse.exec.link.*
+import com.rthqks.synapse.exec.link.Config
+import com.rthqks.synapse.exec.link.Connection
+import com.rthqks.synapse.exec.link.Connection2
+import com.rthqks.synapse.exec.link.Event
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Deferred
-import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.channels.ReceiveChannel
 import kotlinx.coroutines.sync.Mutex
 
 abstract class NodeExecutor(
@@ -27,11 +30,10 @@ abstract class NodeExecutor(
     private val connectionSet = mutableSetOf<Connection.Key<*, *>>()
     private val cycleSet = mutableSetOf<Connection.Key<*, *>>()
     private val connections = mutableMapOf<Connection.Key<*, *>, Connection<*, *>>()
-    private val channels = mutableMapOf<Connection.Key<*, *>, Channel<*>>()
+    private val channels = mutableMapOf<Connection.Key<*, *>, ReceiveChannel<*>>()
     private val configs = mutableMapOf<Connection.Key<*, *>, Config>()
     private val waitingConfigs =
         mutableMapOf<Connection.Key<*, *>, MutableSet<CompletableDeferred<Config>>>()
-    private val connectMutex = Mutex()
 
     open suspend fun <C : Config, E : Event> makeConfig(key: Connection.Key<C, E>): C {
         error("makeConfig not implemented")
@@ -42,15 +44,10 @@ abstract class NodeExecutor(
         when (val existing = connections[key] as Connection<C, E>?) {
             null -> {
                 val config = getConfig(key)
-                SingleConsumer<C, E>(config).also {
+                Connection2<C, E>(config).also {
                     connections[key] = it
                     channels[key] = it.producer()
                 }
-            }
-            is SingleConsumer -> MultiConsumer<C, E>(existing.config).also {
-                it.consumer(existing.duplex)
-                connections[key] = it
-                channels[key] = it.producer()
             }
             else -> existing
         }
@@ -81,8 +78,8 @@ abstract class NodeExecutor(
     }
 
     @Suppress("UNCHECKED_CAST")
-    protected fun <C : Config, E : Event> channel(key: Connection.Key<C, E>): Channel<E>? {
-        return channels[key] as Channel<E>?
+    protected fun <C : Config, E : Event> channel(key: Connection.Key<C, E>): ReceiveChannel<E>? {
+        return channels[key] as ReceiveChannel<E>?
     }
 
     @Suppress("UNCHECKED_CAST")
