@@ -7,6 +7,7 @@ import android.util.Log
 import android.util.Size
 import android.view.Surface
 import com.rthqks.synapse.assets.VideoStorage
+import com.rthqks.synapse.exec.ExecutionContext
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.Channel
 import java.nio.ByteBuffer
@@ -14,8 +15,10 @@ import java.util.concurrent.Executors
 
 
 class Encoder(
-    private val videoStorage: VideoStorage
+    private val context: ExecutionContext
 ) : MediaCodec.Callback() {
+    private val videoStorage: VideoStorage = context.videoStorage
+
     private val dispatcher = Executors.newSingleThreadExecutor().asCoroutineDispatcher()
     private val scope = CoroutineScope(dispatcher + Job())
     private var trackCompletable: CompletableDeferred<Unit>? = null
@@ -48,16 +51,12 @@ class Encoder(
     private var audioInputBuffers = Channel<Int>(20)
     private var inputSurface: Surface? = null
 
-//    private val commands = scope.actor {
-//
-//    }
-
     fun setVideo(size: Size, fps: Int, rotation: Int): Surface {
         hasVideo = true
         this.size = size
         this.fps = fps
         this.rotation = rotation
-        videoEncoder = MediaCodec.createEncoderByType(MediaFormat.MIMETYPE_VIDEO_AVC)
+        videoEncoder = context.videoEncoder
         inputSurface = MediaCodec.createPersistentInputSurface()
         configureVideo()
         return inputSurface!!
@@ -89,7 +88,7 @@ class Encoder(
     fun setAudio(audioFormat: AudioFormat) {
         hasAudio = true
         inputAudioFormat = audioFormat
-        audioEncoder = MediaCodec.createEncoderByType(MediaFormat.MIMETYPE_AUDIO_AAC)
+        audioEncoder = context.audioEncoder
 //        configureAudio()
     }
 
@@ -170,7 +169,7 @@ class Encoder(
         val isEos = info.flags and MediaCodec.BUFFER_FLAG_END_OF_STREAM != 0
         when (codec) {
             audioEncoder -> {
-//                Log.d(TAG, "audio $index ${info.presentationTimeUs}")
+//                Log.d(TAG, "audio $index ${info.size} ${info.offset} ${info.presentationTimeUs}")
                 mediaMuxer?.also {
                     when {
                         isConfig -> Log.d(TAG, "audio config")
@@ -277,8 +276,6 @@ class Encoder(
     }
 
     suspend fun release() {
-        audioEncoder?.release()
-        videoEncoder?.release()
         scope.cancel()
         scope.coroutineContext[Job]?.join()
         dispatcher.close()

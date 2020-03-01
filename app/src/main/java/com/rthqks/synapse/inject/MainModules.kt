@@ -1,6 +1,8 @@
 package com.rthqks.synapse.inject
 
 import android.content.Context
+import android.media.MediaCodec
+import android.media.MediaFormat
 import androidx.room.Room
 import com.rthqks.synapse.SynapseApp
 import com.rthqks.synapse.assets.AssetManager
@@ -13,6 +15,7 @@ import dagger.Module
 import dagger.Provides
 import kotlinx.coroutines.asCoroutineDispatcher
 import java.util.concurrent.Executors
+import javax.inject.Named
 import javax.inject.Singleton
 
 @Module
@@ -52,6 +55,14 @@ class ExecutionModule {
 
     @Provides
     fun provideCameraManager(context: Context) = CameraManager(context)
+
+    @Provides
+    @Named("video")
+    fun provideVideoEncoder() = MediaCodec.createEncoderByType(MediaFormat.MIMETYPE_VIDEO_AVC)
+
+    @Provides
+    @Named("audio")
+    fun provideAudioEncoder() = MediaCodec.createEncoderByType(MediaFormat.MIMETYPE_AUDIO_AAC)
 
     @Singleton
     @Provides

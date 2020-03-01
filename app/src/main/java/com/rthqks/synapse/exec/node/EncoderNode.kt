@@ -31,7 +31,7 @@ class EncoderNode(
     private val mesh = Quad()
 
     private val program = Program()
-    private val encoder = Encoder(videoStorage)
+    private val encoder = Encoder(context)
     private var startTimeVideo = -1L
     private var startTimeAudio = -1L
     private var surface: Surface? = null
@@ -101,13 +101,24 @@ class EncoderNode(
     }
 
     private fun startRecording() {
-        encoder.startEncoding(properties[Rotation])
         startTimeVideo = -1L
         startTimeAudio = -1L
+        encoder.startEncoding(properties[Rotation])
     }
 
     private suspend fun stopRecording() {
         encoder.stopEncoding()
+    }
+
+    private suspend fun updateRecording() {
+        val r = properties[Recording]
+        if (recording.compareAndSet(!r, r)) {
+            if (r) {
+                startRecording()
+            } else if (!r) {
+                stopRecording()
+            }
+        }
     }
 
     override suspend fun onStart() {
@@ -180,17 +191,6 @@ class EncoderNode(
                     }
                 } while (!it.eos)
             }
-    }
-
-    private suspend fun updateRecording() {
-        val r = properties[Recording]
-        if (recording.compareAndSet(!r, r)) {
-            if (r) {
-                startRecording()
-            } else if (!r) {
-                stopRecording()
-            }
-        }
     }
 
     private suspend fun executeGl(texture: Texture2d, timestamp: Long) {
