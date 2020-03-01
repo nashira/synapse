@@ -9,6 +9,7 @@ import android.os.Build
 import android.os.Bundle
 import android.util.Log
 import android.view.*
+import android.view.animation.AccelerateDecelerateInterpolator
 import android.widget.TextView
 import android.widget.Toast
 import androidx.core.content.edit
@@ -41,6 +42,7 @@ class PolishActivity : DaggerAppCompatActivity() {
     private val deviceSupported = CompletableDeferred<Boolean>()
     private val permissionsGranted = CompletableDeferred<Boolean>()
     private var uiAngle = 0
+    private val interpolator =  AccelerateDecelerateInterpolator()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -210,26 +212,23 @@ class PolishActivity : DaggerAppCompatActivity() {
         ).forEach {
             it.animate()
                 .rotation(rotation.toFloat())
+                .setInterpolator(interpolator)
                 .setDuration(200)
         }
     }
 
     private fun highlightGalleryButton() {
         button_gallery.animate()
-            .withStartAction {
-                button_gallery.visibility = View.VISIBLE
-                button_gallery.alpha = 1f
-                button_gallery.rotation = 0f
-            }
             .scaleX(1.5f)
             .scaleY(1.5f)
             .setInterpolator {
                 kotlin.math.sin(it * 6 * Math.PI).toFloat()
             }
-            .setDuration(1000)
+            .setDuration(600)
             .withEndAction {
                 button_gallery.scaleX = 1f
-                button_gallery.scaleY = 1f}
+                button_gallery.scaleY = 1f
+            }
             .start()
     }
 
@@ -242,6 +241,7 @@ class PolishActivity : DaggerAppCompatActivity() {
             effect_list
         ).forEach {
             it.animate()
+                .setInterpolator(interpolator)
                 .alpha(0f)
                 .setDuration(200)
                 .withEndAction { it.visibility = View.GONE }
@@ -259,6 +259,7 @@ class PolishActivity : DaggerAppCompatActivity() {
         ).forEach {
             it.visibility = View.VISIBLE
             it.animate()
+                .setInterpolator(interpolator)
                 .alpha(1f)
                 .setDuration(200)
                 .start()
