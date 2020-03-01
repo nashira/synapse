@@ -15,7 +15,6 @@ import com.rthqks.synapse.logic.Rotation
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
-import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicInteger
 
 class EncoderNode(
@@ -37,7 +36,7 @@ class EncoderNode(
     private var surface: Surface? = null
     private var windowSurface: WindowSurface? = null
 
-    private var recording = AtomicBoolean()
+    private var recording = AtomicInteger()
     private var frameCount = 0
 
     override suspend fun onCreate() {
@@ -104,20 +103,26 @@ class EncoderNode(
         startTimeVideo = -1L
         startTimeAudio = -1L
         encoder.startEncoding(properties[Rotation])
+        val check = recording.getAndSet(RECORDING)
+        if (check != START_RECORDING) {
+            Log.w(TAG, "start recording unexpected state $check")
+        }
     }
 
     private suspend fun stopRecording() {
         encoder.stopEncoding()
+        val check = recording.getAndSet(NOT_RECORDING)
+        if (check != STOP_RECORDING) {
+            Log.w(TAG, "stop recording unexpected state $check")
+        }
     }
 
     private suspend fun updateRecording() {
         val r = properties[Recording]
-        if (recording.compareAndSet(!r, r)) {
-            if (r) {
-                startRecording()
-            } else if (!r) {
-                stopRecording()
-            }
+        if (r && recording.compareAndSet(NOT_RECORDING, START_RECORDING)) {
+            startRecording()
+        } else if (!r && recording.compareAndSet(RECORDING, STOP_RECORDING)) {
+            stopRecording()
         }
     }
 
@@ -151,7 +156,7 @@ class EncoderNode(
                     }
                     updateRecording()
 
-                    if (recording.get() && !it.eos) {
+                    if (recording.get() == RECORDING && !it.eos) {
                         if (startTimeVideo == -1L) {
                             startTimeVideo = it.timestamp
                         }
@@ -174,7 +179,7 @@ class EncoderNode(
 //                        Log.d(TAG, "audio 2 ${it.inFlight}")
                     updateRecording()
 
-                    if (recording.get() && !it.eos) {
+                    if (recording.get() == RECORDING && !it.eos) {
                         if (startTimeAudio == -1L) {
                             startTimeAudio = it.timestamp
                         }
@@ -217,7 +222,7 @@ class EncoderNode(
         videoJob?.join()
 
         Log.d(TAG, "got eos, recording = $recording")
-        if (recording.getAndSet(false)) {
+        if (recording.compareAndSet(RECORDING, STOP_RECORDING)) {
             stopRecording()
             //TODO: need to have encoder serialize it's own commands
             // this is here because a release is probably coming and we should wait
@@ -239,6 +244,10 @@ class EncoderNode(
 
     companion object {
         const val TAG = "EncoderNode"
+        const val NOT_RECORDING = 0
+        const val START_RECORDING = 1
+        const val STOP_RECORDING = 2
+        const val RECORDING = 3
         val INPUT_VIDEO = Connection.Key<VideoConfig, VideoEvent>("input_video")
         val INPUT_AUDIO = Connection.Key<AudioConfig, AudioEvent>("input_audio")
     }
