@@ -65,7 +65,6 @@ class SurfaceViewNode(
 
         config(INPUT)?.let {
             inputSize = it.size
-            val rotation = it.rotation
             updateSurfaceViewConfig()
         }
     }
@@ -259,7 +258,6 @@ class SurfaceViewNode(
         config(INPUT)?.let {
             //            it.acceptsSurface = true
             inputSize = it.size
-            val rotation = it.rotation
             exec {
                 updateSurfaceViewConfig()
             }

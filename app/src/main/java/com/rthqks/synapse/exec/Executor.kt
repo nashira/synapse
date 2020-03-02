@@ -8,7 +8,6 @@ abstract class Executor(
     protected val context: ExecutionContext
 ) {
     protected val scope = CoroutineScope(Job() + context.dispatcher)
-    @Suppress("UNCHECKED_CAST")
     private val actor = scope.actor<suspend () -> Unit> {
         for (cmd in channel) {
             cmd()

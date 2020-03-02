@@ -2,7 +2,6 @@ package com.rthqks.synapse.exec
 
 import com.rthqks.synapse.exec.link.Config
 import com.rthqks.synapse.exec.link.Connection
-import com.rthqks.synapse.exec.link.Connection2
 import com.rthqks.synapse.exec.link.Event
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Deferred
@@ -43,7 +42,7 @@ abstract class NodeExecutor(
         when (val existing = connections[key] as Connection<C, E>?) {
             null -> {
                 val config = getConfig(key)
-                Connection2<C, E>(config).also {
+                Connection<C, E>(config).also {
                     connections[key] = it
                     channels[key] = it.producer()
                 }

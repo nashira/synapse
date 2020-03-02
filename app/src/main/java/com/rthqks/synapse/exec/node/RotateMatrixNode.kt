@@ -56,10 +56,11 @@ class RotateMatrixNode(
                 Matrix.translateM(event.matrix, 0, -0.5f, -0.5f, -0.5f)
                 event.eos = false
                 event.count = ++frameCount
+                event.timestamp = SystemClock.elapsedRealtime()
                 event.queue()
 
                 lastMatrix = event
-                last = SystemClock.elapsedRealtime()
+                last = event.timestamp
             }
         }
     }

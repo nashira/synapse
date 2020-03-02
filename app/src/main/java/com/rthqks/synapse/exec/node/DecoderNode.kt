@@ -88,7 +88,7 @@ class DecoderNode(
         if (decoder.hasVideo) {
             connection(VIDEO)?.let {
                 if (it.config.acceptsSurface) {
-                    repeat(3) { n -> it.prime(VideoEvent()) }
+                    repeat(3) { _ -> it.prime(VideoEvent()) }
                 } else {
                     glesManager.glContext {
                         outputTexture.initialize()

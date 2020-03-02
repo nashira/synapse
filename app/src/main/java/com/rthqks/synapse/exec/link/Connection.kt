@@ -4,29 +4,23 @@ import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.ReceiveChannel
 import java.util.concurrent.atomic.AtomicInteger
 
-interface Connection<C : Config, E : Event> {
+class Connection<C : Config, E : Event>(
     val config: C
-    fun producer(): ReceiveChannel<E>
-    fun consumer(): ReceiveChannel<E>
-    suspend fun prime(vararg item: E)
-    data class Key<C : Config, E : Event>(val id: String)
-}
-
-class Connection2<C : Config, E : Event>(
-    override val config: C
-): Connection<C, E> {
+) {
     private val consumers = mutableListOf<Channel<E>>()
     private val producer = Channel<E>(CAPACITY)
+    private var count = 0
 
-    override fun producer(): ReceiveChannel<E> = producer
+    fun producer(): ReceiveChannel<E> = producer
 
-    override fun consumer(): ReceiveChannel<E> {
+    fun consumer(): ReceiveChannel<E> {
         val channel = Channel<E>(CAPACITY)
         consumers.add(channel)
         return channel
     }
 
     private suspend fun queue(event: E) {
+        event.count = ++count
         event.inFlight.set(consumers.size)
         consumers.forEach {
             it.send(event)
@@ -39,13 +33,15 @@ class Connection2<C : Config, E : Event>(
         }
     }
 
-    override suspend fun prime(vararg items: E) {
+    suspend fun prime(vararg items: E) {
         items.forEach {
             it.blockQueue = { queue(it) }
             it.blockRelease = { release(it) }
             release(it)
         }
     }
+
+    data class Key<C : Config, E : Event>(val id: String)
 
     companion object {
         const val CAPACITY = 20

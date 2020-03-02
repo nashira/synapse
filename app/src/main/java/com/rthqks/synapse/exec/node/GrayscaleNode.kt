@@ -98,7 +98,7 @@ class GrayscaleNode(
 
         connection(OUTPUT)?.let {
             if (it.config.acceptsSurface) {
-                repeat(3) { n -> it.prime(VideoEvent()) }
+                repeat(3) { _ -> it.prime(VideoEvent()) }
             } else {
                 it.prime(VideoEvent(texture1!!), VideoEvent(texture2!!))
             }
