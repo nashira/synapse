@@ -1,9 +1,6 @@
 This is the first Beta version -- congratulations you get to find the bugs and crashes!
 Seriously, there will be bugs, this is a very early release, please let me know how it goes for you.
 
-There is only one effect right now, but stick around for weekly releases with lots and lots of good stuff to come.
+Stick around for weekly releases with lots and lots of good stuff to come.
 
 Thank you for checking out Synapse.
-
-New this release:
-View and share the videos you've recorded in the Gallery!
