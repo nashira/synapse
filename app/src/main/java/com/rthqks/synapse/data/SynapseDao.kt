@@ -97,7 +97,7 @@ abstract class SynapseDao {
         val properties = getProperties(networkId)
 
         nodes.forEach {
-            network.addNode(NewNode(it.type, it.networkId, it.id))
+            network.addNode(NewNode(it.type, it.id))
         }
 
         links.map { Link(it.fromNodeId, it.fromKey, it.toNodeId, it.toKey) }.let(network::addLinks)

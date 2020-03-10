@@ -24,6 +24,9 @@ sealed class PropertyType<T>(
     }
 }
 
+// because properties are a pain to deal with right now
+class EmptyType<T> : PropertyType<T>()
+
 class ChoiceType<T>(
     @StringRes title: Int,
     @DrawableRes icon: Int,

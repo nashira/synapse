@@ -5,6 +5,7 @@ import com.rthqks.synapse.exec.link.Connection
 import com.rthqks.synapse.exec.link.Event
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Deferred
+import kotlinx.coroutines.async
 import kotlinx.coroutines.channels.ReceiveChannel
 
 abstract class NodeExecutor(
@@ -21,7 +22,7 @@ abstract class NodeExecutor(
     suspend fun start() = async(this::onStart)
     suspend fun stop() = async(this::onStop)
     override suspend fun release() {
-        await { onRelease() }
+        exec { onRelease() }
         super.release()
     }
 

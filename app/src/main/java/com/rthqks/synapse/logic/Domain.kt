@@ -704,5 +704,5 @@ val NodeTypes = listOf(
 
 fun GetNode(type: NodeType) = NodeMap[type] ?: error("missing node $type")
 
-fun NewNode(type: NodeType, networkId: Int = -1, id: Int = -1) =
-    (NodeMap[type] ?: error("missing node $type")).copy(networkId, id)
+fun NewNode(type: NodeType, id: Int = -1) =
+    (NodeMap[type] ?: error("missing node $type")).copy(id = id)

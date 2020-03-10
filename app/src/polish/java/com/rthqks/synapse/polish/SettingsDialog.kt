@@ -48,15 +48,16 @@ class SettingsDialog() : DialogFragment() {
     }
 
     private fun updateStates() {
-        when (viewModel.properties[VideoSize]) {
+        val properties = viewModel.properties ?: return
+        when (properties[VideoSize]) {
             Size(1280, 720) -> customView.size_720p.isChecked = true
             Size(1920, 1080) -> customView.size_1080p.isChecked = true
         }
-        when (viewModel.properties[FrameRate]) {
+        when (properties[FrameRate]) {
             30 -> customView.fps_30.isChecked = true
             60 -> customView.fps_60.isChecked = true
         }
-        when (viewModel.properties[Stabilize]) {
+        when (properties[Stabilize]) {
             true -> customView.stabilize_on.isChecked = true
             false -> customView.stabilize_off.isChecked = true
         }

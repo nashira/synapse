@@ -36,7 +36,9 @@ abstract class Executor(
     }
 
     open suspend fun release() {
+        val done = async {  }
         actor.close()
+        done.await()
         scope.cancel()
         scope.coroutineContext[Job]?.join()
     }

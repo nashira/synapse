@@ -6,18 +6,29 @@ import com.rthqks.synapse.exec.node.*
 import com.rthqks.synapse.logic.*
 
 
-object EffectNetworks {
-    val none = Network(1).apply {
-        val camera = addNode(NewNode(NodeType.Camera))
-        val microphone = addNode(NewNode(NodeType.Microphone))
+object Effects {
+    const val ID_NONE = 1
+    const val ID_TIME_WARP = 2
+    const val ID_ROTO_HUE = 3
+
+    val none = Network(ID_NONE).apply {
+        val camera = addNode(NewNode(NodeType.Camera, Effect.ID_CAMERA))
+        val microphone = addNode(NewNode(NodeType.Microphone, Effect.ID_MIC))
+        val screen = addNode(NewNode(NodeType.Screen, Effect.ID_SURFACE_VIEW))
+        val encoder = addNode(NewNode(NodeType.MediaEncoder, Effect.ID_ENCODER))
+
         microphone.properties[AudioSource] = MediaRecorder.AudioSource.CAMCORDER
-        val screen = addNode(NewNode(NodeType.Screen))
-        val encoder = addNode(NewNode(NodeType.MediaEncoder))
+
         addLinkNoCompute(Link(camera.id, CameraNode.OUTPUT.id, screen.id, SurfaceViewNode.INPUT.id))
         addLinkNoCompute(Link(camera.id, CameraNode.OUTPUT.id, encoder.id, EncoderNode.INPUT_VIDEO.id))
         addLinkNoCompute(Link(microphone.id, AudioSourceNode.OUTPUT.id, encoder.id, EncoderNode.INPUT_AUDIO.id))
         computeComponents()
+    }.let {
+        Effect(it)
+    }.apply {
+        properties[AudioSource] = MediaRecorder.AudioSource.CAMCORDER
     }
+
     val timeWarp = Network(2).apply {
         val camera = addNode(NewNode(NodeType.Camera))
         val microphone = addNode(NewNode(NodeType.Microphone))

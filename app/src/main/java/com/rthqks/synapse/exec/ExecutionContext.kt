@@ -20,6 +20,13 @@ class ExecutionContext @Inject constructor(
     @Named("audio") val audioEncoder: MediaCodec
 ) {
 
+    suspend fun setup() {
+        glesManager.glContext {
+            it.initialize()
+        }
+        cameraManager.initialize()
+    }
+
     suspend fun release() {
         videoEncoder.release()
         audioEncoder.release()

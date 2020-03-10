@@ -169,9 +169,11 @@ class PolishActivity : DaggerAppCompatActivity() {
             }
         }
 
+        val effects = listOf(Effects.none)
+
         val snapHelper = LinearSnapHelper()
         val layoutManager = effect_list.layoutManager as LinearLayoutManager
-        effect_list.adapter = EffectAdapter {
+        effect_list.adapter = EffectAdapter(effects) {
             val view = layoutManager.findViewByPosition(it)!!
             val snapDistance = snapHelper.calculateDistanceToFinalSnap(layoutManager, view)!!
             if (snapDistance[0] != 0 || snapDistance[1] != 0) {
@@ -192,7 +194,7 @@ class PolishActivity : DaggerAppCompatActivity() {
                     val view = snapHelper.findSnapView(layoutManager)
                     val pos = view?.let { effect_list.getChildAdapterPosition(it) } ?: 0
                     if (oldPos != pos) {
-                        val effect = Effect.values()[pos]
+                        val effect = effects[pos]
                         val changed = viewModel.setEffect(effect)
                         if (changed) {
                             oldPos = pos
@@ -331,20 +333,20 @@ class PolishActivity : DaggerAppCompatActivity() {
 
 private data class Permission(val name: String, val granted: Boolean, val showRationale: Boolean)
 
-enum class Effect(
-    val title: String
-) {
-    None("none"),
-    TimeWarp("time warp"),
-    RotoHue("roto hue"),
-    More("more"),
-//    Topography("topography")
-}
+//enum class PolishEffect(
+//    val title: String
+//) {
+//    None("none"),
+////    TimeWarp("time warp"),
+////    RotoHue("roto hue"),
+//    More("more"),
+////    Topography("topography")
+//}
 
 private class EffectAdapter(
+    private val effects: List<Effect>,
     private val onClick: (Int) -> Unit
 ) : RecyclerView.Adapter<EffectViewHolder>() {
-    private val effects = Effect.values()
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): EffectViewHolder {
         val view = LayoutInflater.from(parent.context)

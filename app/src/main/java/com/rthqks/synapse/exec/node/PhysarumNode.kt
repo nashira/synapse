@@ -9,7 +9,6 @@ import com.rthqks.synapse.exec.NodeExecutor
 import com.rthqks.synapse.exec.link.*
 import com.rthqks.synapse.gl.*
 import com.rthqks.synapse.logic.*
-import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -235,7 +234,7 @@ class PhysarumNode(
                     //                    Log.d(TAG, "agent receive")
                     agentEvent?.release()
                     agentEvent = it
-                    debounceExecute(this@launch)
+                    debounceExecute()
                     if (it.eos) running.decrementAndGet()
                     running.get() > 0
                 }
@@ -250,7 +249,7 @@ class PhysarumNode(
                         System.arraycopy(it.matrix, 0, uniform.data!!, 0, 16)
                         uniform.dirty = true
                     }
-                    debounceExecute(this@launch)
+                    debounceExecute()
                     if (it.eos) running.decrementAndGet()
                     running.get() > 0
                 }
@@ -412,7 +411,7 @@ class PhysarumNode(
         }
     }
 
-    private suspend fun debounceExecute(scope: CoroutineScope) {
+    private suspend fun debounceExecute() {
         if (!debounce.getAndSet(true)) {
             scope.launch {
                 while (debounce.getAndSet(false)) {

@@ -13,7 +13,7 @@ import java.util.*
 import javax.inject.Inject
 
 class ExecutorLegacy @Inject constructor(
-    private val context: ExecutionContext
+    val context: ExecutionContext
 ) {
     private var networkExecutor: NetworkExecutor? = null
     private var network: Network? = null
@@ -116,6 +116,12 @@ class ExecutorLegacy @Inject constructor(
         deferred.await()
     }
 
+    private suspend fun async(): CompletableDeferred<Unit> {
+        val deferred = CompletableDeferred<Unit>()
+        commandChannel.send(Operation.Wait(deferred))
+        return deferred
+    }
+
     private suspend fun doSetSurfaceViewNetwork(surfaceView: SurfaceView) {
         networkExecutor?.tmpSetSurfaceView(surfaceView)
     }
@@ -181,7 +187,7 @@ class ExecutorLegacy @Inject constructor(
                 source.ports.values.filter {
                     it.output && it.type == Port.Type.Video
                 }.map {
-                    val node = NewNode(NodeType.Screen, networkNew.id)
+                    val node = NewNode(NodeType.Screen)
                     networkNew.addNode(node)
                     Link(source.id, it.id, node.id, SurfaceViewNode.INPUT.id)
                 }
@@ -211,7 +217,7 @@ class ExecutorLegacy @Inject constructor(
         var sourceNode = source.node
 
         if (source.port.type == Port.Type.Video) {
-            val cropNode = NewNode(NodeType.CropResize, network.id)
+            val cropNode = NewNode(NodeType.CropResize)
             sourceNode = cropNode
             network.addNode(cropNode)
             val se = Link(source.node.id, source.port.id, cropNode.id, CropResizeNode.INPUT.id)
@@ -231,7 +237,7 @@ class ExecutorLegacy @Inject constructor(
             target.ports.values.firstOrNull {
                 it.output && it.type == Port.Type.Video
             }?.id?.let {
-                val screen = NewNode(NodeType.Screen, network.id)
+                val screen = NewNode(NodeType.Screen)
                 network.addNode(screen)
                 val se = Link(target.id, it, screen.id, SurfaceViewNode.INPUT.id)
                 network.addLinkNoCompute(se)

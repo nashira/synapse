@@ -12,7 +12,6 @@ class Network(
     private val linkIndex = mutableMapOf<Int, MutableSet<Link>>()
     val properties = Properties()
     private var maxNodeId = 0
-//    private var components
 
     val name: String get() = properties[NetworkName]
 
@@ -39,6 +38,7 @@ class Network(
     }
 
     fun addNode(node: Node): Node {
+        node.networkId = id
         if (node.id == -1) {
             node.id = ++maxNodeId
         }
@@ -173,7 +173,7 @@ class Network(
     // find connected components to detect cycles
     // Kosaraju-Sharir algorithm
     // https://algs4.cs.princeton.edu/42digraph/
-    // for now just make that a link is in a cycle
+    // for now just mark that a link is in a cycle
     fun computeComponents() {
         val mark = mutableSetOf<Pair<Int, String>>()
         // reverse post order traversal of reversed graph

@@ -59,7 +59,6 @@ class NetworkExecutor(
         nodes.values.map {
             Log.d(TAG, "initialize $it")
             val deferred = it.inititalize()
-            Log.d(TAG, "initialize sent $it")
             deferred
         }.awaitAll()
         Log.d(TAG, "initialize done")
@@ -138,7 +137,6 @@ class NetworkExecutor(
         nodes.values.map {
             Log.d(TAG, "start $it")
             val deferred = it.start()
-            Log.d(TAG, "start sent $it")
             deferred
         }.awaitAll()
         logCoroutineInfo(scope.coroutineContext[Job])
@@ -157,7 +155,6 @@ class NetworkExecutor(
         nodes.values.map {
             Log.d(TAG, "stop $it")
             val deferred = it.stop()
-            Log.d(TAG, "stop sent $it")
             deferred
         }.awaitAll()
 //        parallelJoin(nodes.values) {
@@ -169,18 +166,15 @@ class NetworkExecutor(
     }
 
     override suspend fun release() {
-        await {
-            state.getAndSet(State.Released).let {
-                if (it != State.Initialized) {
-                    error("unexpected state $it")
-                }
-            }
-            parallelJoin(nodes.values) {
-                Log.d(TAG, "release $it")
-                it.release()
-                Log.d(TAG, "release complete $it")
+        state.getAndSet(State.Released).let {
+            if (it != State.Initialized) {
+                error("unexpected state $it")
             }
         }
+        nodes.values.map {
+            Log.d(TAG, "release $it")
+            scope.launch { it.release() }
+        }.joinAll()
         super.release()
     }
 
