@@ -17,8 +17,6 @@ object Effects {
         val screen = addNode(NewNode(NodeType.Screen, Effect.ID_SURFACE_VIEW))
         val encoder = addNode(NewNode(NodeType.MediaEncoder, Effect.ID_ENCODER))
 
-        microphone.properties[AudioSource] = MediaRecorder.AudioSource.CAMCORDER
-
         addLinkNoCompute(Link(camera.id, CameraNode.OUTPUT.id, screen.id, SurfaceViewNode.INPUT.id))
         addLinkNoCompute(Link(camera.id, CameraNode.OUTPUT.id, encoder.id, EncoderNode.INPUT_VIDEO.id))
         addLinkNoCompute(Link(microphone.id, AudioSourceNode.OUTPUT.id, encoder.id, EncoderNode.INPUT_AUDIO.id))
@@ -27,29 +25,37 @@ object Effects {
         Effect(it)
     }.apply {
         properties[AudioSource] = MediaRecorder.AudioSource.CAMCORDER
+        properties[Effect.Title] = "None"
     }
 
-    val timeWarp = Network(2).apply {
-        val camera = addNode(NewNode(NodeType.Camera))
-        val microphone = addNode(NewNode(NodeType.Microphone))
-        microphone.properties[AudioSource] = MediaRecorder.AudioSource.CAMCORDER
+    val timeWarp = Network(ID_TIME_WARP).apply {
+        val camera = addNode(NewNode(NodeType.Camera, Effect.ID_CAMERA))
+        val microphone = addNode(NewNode(NodeType.Microphone, Effect.ID_MIC))
+        val screen = addNode(NewNode(NodeType.Screen, Effect.ID_SURFACE_VIEW))
+        val encoder = addNode(NewNode(NodeType.MediaEncoder, Effect.ID_ENCODER))
+
         val ringBuffer = addNode(NewNode(NodeType.RingBuffer))
-        val encoder = addNode(NewNode(NodeType.MediaEncoder))
         val slice = addNode(NewNode(NodeType.Slice3d))
-        val screen = addNode(NewNode(NodeType.Screen))
-        ringBuffer.properties[HistorySize] = 30
+
         addLinkNoCompute(Link(camera.id, CameraNode.OUTPUT.id, ringBuffer.id, RingBufferNode.INPUT.id))
         addLinkNoCompute(Link(ringBuffer.id, RingBufferNode.OUTPUT.id, slice.id, Slice3dNode.INPUT_3D.id))
         addLinkNoCompute(Link(slice.id, Slice3dNode.OUTPUT.id, screen.id, SurfaceViewNode.INPUT.id))
         addLinkNoCompute(Link(slice.id, Slice3dNode.OUTPUT.id, encoder.id, EncoderNode.INPUT_VIDEO.id))
         addLinkNoCompute(Link(microphone.id, AudioSourceNode.OUTPUT.id, encoder.id, EncoderNode.INPUT_AUDIO.id))
         computeComponents()
+        Effect(this).apply {
+            properties[AudioSource] = MediaRecorder.AudioSource.CAMCORDER
+            properties[Effect.Title] = "Time Warp"
+            properties[HistorySize] = 30
+        }
+        ringBuffer.properties.put(properties.find(HistorySize)!!, IntConverter)
     }
-    val rotoHue = Network(3).apply {
-        val camera = addNode(NewNode(NodeType.Camera))
-        val microphone = addNode(NewNode(NodeType.Microphone))
-        val screen = addNode(NewNode(NodeType.Screen))
-        val encoder = addNode(NewNode(NodeType.MediaEncoder))
+
+    val rotoHue = Network(ID_ROTO_HUE).apply {
+        val camera = addNode(NewNode(NodeType.Camera, Effect.ID_CAMERA))
+        val microphone = addNode(NewNode(NodeType.Microphone, Effect.ID_MIC))
+        val screen = addNode(NewNode(NodeType.Screen, Effect.ID_SURFACE_VIEW))
+        val encoder = addNode(NewNode(NodeType.MediaEncoder, Effect.ID_ENCODER))
 
         val lut = addNode(NewNode(NodeType.Lut3d))
         val cube = addNode(NewNode(NodeType.CubeImport))
@@ -66,5 +72,10 @@ object Effects {
         addLinkNoCompute(Link(lut.id, Lut3dNode.OUTPUT.id, encoder.id, EncoderNode.INPUT_VIDEO.id))
         addLinkNoCompute(Link(microphone.id, AudioSourceNode.OUTPUT.id, encoder.id, EncoderNode.INPUT_AUDIO.id))
         computeComponents()
+    }.let {
+        Effect(it)
+    }.apply {
+        properties[AudioSource] = MediaRecorder.AudioSource.CAMCORDER
+        properties[Effect.Title] = "Roto-Hue"
     }
 }
