@@ -7,7 +7,7 @@ import java.util.*
 class Network(
     val id: Int
 ) {
-    private val nodes = mutableMapOf<Int, Node>()
+    val nodes = mutableMapOf<Int, Node>()
     private val links = mutableSetOf<Link>()
     private val linkIndex = mutableMapOf<Int, MutableSet<Link>>()
     val properties = Properties()

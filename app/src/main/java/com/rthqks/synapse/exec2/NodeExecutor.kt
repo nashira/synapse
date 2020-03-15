@@ -10,22 +10,24 @@ abstract class NodeExecutor(
     private val linkedSet = mutableSetOf<Connection.Key<*>>()
     private val cycleSet = mutableSetOf<Connection.Key<*>>()
     private val connections = mutableMapOf<Connection.Key<*>, Connection<*>>()
-    private val channels = mutableMapOf<Connection.Key<*>, ReceiveChannel<*>>()
+    private val channels = mutableMapOf<Connection.Key<*>, ReceiveChannel<Message<*>>>()
 
     abstract suspend fun onSetup()
-    abstract suspend fun <E : Event> onConnect(key: Connection.Key<E>, producer: Boolean)
-    abstract suspend fun <E : Event> onDisconnect(key: Connection.Key<E>, producer: Boolean)
+    abstract suspend fun <T> onConnect(key: Connection.Key<T>, producer: Boolean)
+    abstract suspend fun <T> onDisconnect(key: Connection.Key<T>, producer: Boolean)
     abstract suspend fun onRelease()
 
     suspend fun setup() = async(this::onSetup)
 
-    suspend fun <E : Event> disconnectProducer(key: Connection.Key<E>, channel: ReceiveChannel<E>) = async {
+    suspend fun <T> stopConsumer(key: Connection.Key<T>, channel: ReceiveChannel<Message<T>>) = async {
         val con = connection(key)
         con?.removeConsumer(channel)
+        val linked = con?.consumerCount ?: 0 > 1
+        setLinked(key, linked)
         onDisconnect(key, true)
     }
 
-    suspend fun <E : Event> disconnectConsumer(key: Connection.Key<E>) = async {
+    suspend fun waitForConsumer(key: Connection.Key<*>) = async {
         onDisconnect(key, false)
     }
 
@@ -34,30 +36,31 @@ abstract class NodeExecutor(
         super.release()
     }
 
-    suspend fun <E : Event> connectConsumer(key: Connection.Key<E>, channel: ReceiveChannel<E>) = async {
+    suspend fun <T> startConsumer(key: Connection.Key<T>, channel: ReceiveChannel<Message<T>>) = async {
         channels[key] = channel
         onConnect(key, false)
     }
 
-    suspend fun <E : Event> connectProducer(key: Connection.Key<E>) = async {
+    suspend fun <T> getConsumer(key: Connection.Key<T>) = async {
         val connection = connections.getOrPut(key) {
-            Connection<E>().also {
+            Connection<T>().also {
                 channels[key] = it.producer()
             }
         }
 
+        val consumer = connection.consumer()
         onConnect(key, true)
-        return@async connection.consumer()
+        return@async consumer
     }
 
     @Suppress("UNCHECKED_CAST")
-    fun <E : Event> connection(key: Connection.Key<E>): Connection<E>? {
-        return connections[key] as Connection<E>?
+    fun <T> connection(key: Connection.Key<T>): Connection<T>? {
+        return connections[key] as Connection<T>?
     }
 
     @Suppress("UNCHECKED_CAST")
-    fun <E : Event> channel(key: Connection.Key<E>): ReceiveChannel<E>? {
-        return channels[key] as ReceiveChannel<E>?
+    fun <T> channel(key: Connection.Key<T>): ReceiveChannel<Message<T>>? {
+        return channels[key] as ReceiveChannel<Message<T>>?
     }
 
     fun setLinked(key: Connection.Key<*>, linked: Boolean = true) {

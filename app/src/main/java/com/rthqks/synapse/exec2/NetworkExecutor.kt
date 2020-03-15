@@ -6,25 +6,30 @@ import com.rthqks.synapse.exec.Executor
 import com.rthqks.synapse.logic.Link
 import com.rthqks.synapse.logic.Network
 import com.rthqks.synapse.logic.Node
+import com.rthqks.synapse.logic.NodeType
 import kotlinx.coroutines.*
+import kotlinx.coroutines.channels.ReceiveChannel
 import java.util.concurrent.ConcurrentHashMap
 
 open class NetworkExecutor(context: ExecutionContext) : Executor(context) {
     private val nodes = ConcurrentHashMap<Int, NodeExecutor>()
     var network: Network? = null
 
-    suspend fun setup() = async {
-//        context.setup()
+    suspend fun setup() = await {
+        context.setup()
     }
 
+    fun getNode(id: Int) = nodes[id]
+
     suspend fun addNode(node: Node) {
+        Log.d(TAG, "add node ${node.id}")
         val executor = node.executor()
         nodes[node.id] = executor
         network?.getLinks(node.id)?.forEach {
             val key = if (it.fromNodeId == node.id) {
-                Connection.Key<Event>(it.fromPortId)
+                Connection.Key<Any?>(it.fromPortId)
             } else {
-                Connection.Key<Event>(it.toPortId)
+                Connection.Key(it.toPortId)
             }
             executor.setLinked(key)
             if (it.inCycle) {
@@ -35,24 +40,22 @@ open class NetworkExecutor(context: ExecutionContext) : Executor(context) {
     }
 
     suspend fun removeNode(node: Node) {
-        network?.getLinks(node.id)?.map {
-            scope.launch { removeLink(it) }
-        }?.joinAll()
-
+        Log.d(TAG, "remove node ${node.id}")
         nodes.remove(node.id)?.release()
     }
 
     suspend fun addLink(link: Link) {
         val fromNode = nodes[link.fromNodeId] ?: error("missing node ${link.fromNodeId}")
         val toNode = nodes[link.toNodeId] ?: error("missing node ${link.toNodeId}")
-        val fromKey = Connection.Key<Event>(link.fromPortId)
-        val toKey = Connection.Key<Event>(link.toPortId)
+        val fromKey = Connection.Key<Any?>(link.fromPortId)
+        val toKey = Connection.Key<Any?>(link.toPortId)
 
 //        val connectionKey = "${link.fromNodeId}:${link.fromPortId}"
 //        val connection = getConnection(connectionKey)
+        Log.d(TAG, "add link $link")
 
-        val channel = fromNode.connectProducer(fromKey).await()
-        val consume = toNode.connectConsumer(toKey, channel)
+        val channel = fromNode.getConsumer(fromKey).await()
+        val consume = toNode.startConsumer(toKey, channel as ReceiveChannel<Message<Any?>>)
 
         consume.await()
     }
@@ -63,20 +66,19 @@ open class NetworkExecutor(context: ExecutionContext) : Executor(context) {
     suspend fun removeLink(link: Link) {
         val fromNode = nodes[link.fromNodeId] ?: error("missing node ${link.fromNodeId}")
         val toNode = nodes[link.toNodeId] ?: error("missing node ${link.toNodeId}")
-        val fromKey = Connection.Key<Event>(link.fromPortId)
-        val toKey = Connection.Key<Event>(link.toPortId)
-
-        val linked = network?.getLinks(link.fromNodeId)?.any { it.fromPortId == link.fromPortId } == true
+        val fromKey = Connection.Key<Any?>(link.fromPortId)
+        val toKey = Connection.Key<Any?>(link.toPortId)
 
         val channel = toNode.channel(toKey)!!
 
-        fromNode.setLinked(fromKey, linked)
+        Log.d(TAG, "remove link $link")
+
         fromNode.setCycle(fromKey, link.inCycle)
-        fromNode.disconnectProducer(fromKey, channel).await()
+        fromNode.stopConsumer(fromKey, channel).await()
 
         toNode.setLinked(toKey, false)
         toNode.setCycle(toKey, link.inCycle)
-        toNode.disconnectConsumer(toKey).await()
+        toNode.waitForConsumer(toKey).await()
     }
 
     suspend fun addAllLinks() {
@@ -98,26 +100,28 @@ open class NetworkExecutor(context: ExecutionContext) : Executor(context) {
     }
 
     suspend fun removeAllNodes() {
-        nodes.values.map {
-            scope.launch { it.release() }
+        nodes.map {
+            Log.d(TAG, "remove node ${it.key}")
+            scope.launch { it.value.release() }
         }.joinAll()
+        nodes.clear()
     }
 
     override suspend fun release() {
+        Log.d(TAG, "release")
         exec { context.release() }
         super.release()
     }
 
     companion object {
-        const val TAG = "NetworkExecutor"
+        const val TAG = "NetworkExecutor2"
     }
 
     private fun Node.executor(): NodeExecutor {
-
         return when (type) {
-//            NodeType.Camera -> CameraNode(context, properties)
+            NodeType.Camera -> CameraNode(context, properties)
 //            NodeType.Microphone -> AudioSourceNode(context, node.properties)
-//            NodeType.Screen -> SurfaceViewNode(context, node.properties + network.properties)
+            NodeType.Screen -> SurfaceViewNode(context, properties)
 //            NodeType.MediaEncoder -> EncoderNode(context, node.properties)
 //            NodeType.Properties,
 //            NodeType.Creation,
@@ -129,8 +133,8 @@ open class NetworkExecutor(context: ExecutionContext) : Executor(context) {
                     Log.d(TAG, "onSetup $id")
                 }
 
-                override suspend fun <E : Event> onConnect(
-                    key: Connection.Key<E>,
+                override suspend fun <T> onConnect(
+                    key: Connection.Key<T>,
                     producer: Boolean
                 ) {
                     Log.d(TAG, "onConnect $id ${key.id}")
@@ -139,13 +143,13 @@ open class NetworkExecutor(context: ExecutionContext) : Executor(context) {
                             scope.launch {
                                 val connection = connection(key) ?: error("missing connection $id ${key.id}")
                                 running[key.id] = true
-                                connection.prime(Event() as E,Event() as E,Event() as E)
+                                connection.prime(1 as T, 2 as T, 3 as T)
                                 val channel = channel(key)!!
                                 while (running[key.id] == true) {
                                     val event = channel.receive()
                                     event.queue()
-                                    println("sending $id ${key.id} ${event.count}")
-                                    delay(50L + 5 * id)
+//                                    Log.d(TAG, "sending $id ${key.id} ${event.count}")
+                                    delay(500L + 5 * id)
                                 }
                             }
                         }
@@ -154,7 +158,7 @@ open class NetworkExecutor(context: ExecutionContext) : Executor(context) {
                             scope.launch {
                                 val channel = channel(key)!!
                                 for (event in channel) {
-                                    println("receiving $id ${key.id} ${event.count}")
+//                                    Log.d(TAG, "receiving $id ${key.id} ${event.count}")
                                     event.release()
                                 }
                             }
@@ -162,8 +166,8 @@ open class NetworkExecutor(context: ExecutionContext) : Executor(context) {
                     }
                 }
 
-                override suspend fun <E : Event> onDisconnect(
-                    key: Connection.Key<E>,
+                override suspend fun <T> onDisconnect(
+                    key: Connection.Key<T>,
                     producer: Boolean
                 ) {
                     Log.d(TAG, "onDisconnect $id ${key.id}")
@@ -171,7 +175,7 @@ open class NetworkExecutor(context: ExecutionContext) : Executor(context) {
                     if (producer) {
                         if (!linked(key)) {
                             running[key.id] = false
-                            jobs.remove(key.id)?.join()
+                            jobs.remove(key.id)?.cancelAndJoin()
                         }
                     } else {
                         jobs.remove(key.id)?.join()

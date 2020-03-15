@@ -80,6 +80,7 @@ class CameraNode(
     }
 
     override suspend fun onStart() {
+        return
         updateCameraConfig()
         when (config(OUTPUT)?.acceptsSurface) {
             true -> {
@@ -187,7 +188,7 @@ class CameraNode(
     }
 
     override suspend fun onStop() {
-        cameraManager.stop()
+//        cameraManager.stop()
         startJob?.join()
     }
 

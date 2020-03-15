@@ -1,6 +1,7 @@
 package com.rthqks.synapse.gl
 
 import android.graphics.Bitmap
+import android.opengl.GLES11Ext
 import android.opengl.GLES30.*
 import android.opengl.GLUtils
 import android.util.Log
@@ -18,6 +19,9 @@ class Texture2d(
     var internalFormat: Int = 0
     var format: Int = 0
     var type: Int = 0
+
+    val matrix = GlesManager.identityMat()
+    val oes: Boolean get() = target == GLES11Ext.GL_TEXTURE_EXTERNAL_OES
 
     fun initialize() {
         val textureHandle = IntArray(1)

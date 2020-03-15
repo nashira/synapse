@@ -20,6 +20,7 @@ import kotlin.coroutines.suspendCoroutine
 class CameraManager(
     private val context: Context
 ) {
+
     private lateinit var manager: android.hardware.camera2.CameraManager
     private val cameraMap = mutableMapOf<String, CameraCharacteristics>()
     private val thread = HandlerThread(TAG)
@@ -30,6 +31,11 @@ class CameraManager(
     }
     var displayRotation = 0
     var isEos: Boolean = false
+
+    private var camera: CameraDevice? = null
+    private var session: CameraCaptureSession? = null
+    private var request: CaptureRequest? = null
+    private var surface: Surface? = null
 
     fun initialize() {
         thread.start()
@@ -58,11 +64,15 @@ class CameraManager(
     ) {
         isEos = false
         val c = openCamera(cameraId)
-        val request = c.createCaptureRequest(CameraDevice.TEMPLATE_RECORD)
-        request.addTarget(surface)
+        val builder = c.createCaptureRequest(CameraDevice.TEMPLATE_RECORD)
+        builder.addTarget(surface)
         val s = createSession(c, surface)
 
-        request.also {
+        this.surface = surface
+        camera = c
+        session = s
+
+        builder.also {
             it.set(
                 CaptureRequest.CONTROL_CAPTURE_INTENT,
                 CaptureRequest.CONTROL_CAPTURE_INTENT_VIDEO_RECORD
@@ -89,7 +99,76 @@ class CameraManager(
 //            Log.d(TAG, "${it.name} ${request[it]}")
 //        }
 
-        startRequest(c, s, request.build(), channel)
+        val r = builder.build()
+
+        request = r
+
+        startRequest(c, s, r, channel)
+    }
+
+    suspend fun reopenCamera(conf: Conf, channel: Channel<Event>) {
+        camera?.close()
+        isEos = false
+        val c = openCamera(conf.id)
+        camera = c
+        restartSession(conf, channel)
+    }
+
+    suspend fun restartSession(conf: Conf, channel: Channel<Event>) {
+        val camera = camera ?: error("missing camera")
+        val surface = surface ?: error("missing surface")
+        val builder = camera.createCaptureRequest(CameraDevice.TEMPLATE_RECORD)
+        builder.addTarget(surface)
+        val s = createSession(camera, surface)
+        val r = getRequest(conf, builder)
+        session = s
+        request = r
+
+        startRequest(camera, s, r, channel)
+    }
+
+    fun restartRequest(conf: Conf, channel: Channel<Event>) {
+        val camera = camera ?: error("missing camera")
+        val session = session ?: error("missing session")
+        val builder = camera.createCaptureRequest(CameraDevice.TEMPLATE_RECORD)
+        val request = camera.let { getRequest(conf, builder) }
+        this.request = request
+
+        startRequest(camera, session, request, channel)
+    }
+
+    private fun getRequest(conf: Conf, builder: CaptureRequest.Builder): CaptureRequest {
+        val surface = surface ?: error("missing surface")
+
+        builder.also {
+            it.addTarget(surface)
+            it.set(
+                CaptureRequest.CONTROL_CAPTURE_INTENT,
+                CaptureRequest.CONTROL_CAPTURE_INTENT_VIDEO_RECORD
+            )
+            it.set(CaptureRequest.CONTROL_SCENE_MODE, CaptureRequest.CONTROL_SCENE_MODE_DISABLED)
+            it.set(CaptureRequest.CONTROL_MODE, CaptureRequest.CONTROL_MODE_AUTO)
+            it.set(CaptureRequest.CONTROL_AE_MODE, CaptureRequest.CONTROL_AE_MODE_ON)
+            it.set(CaptureRequest.CONTROL_AF_MODE, CaptureRequest.CONTROL_AF_MODE_CONTINUOUS_VIDEO)
+            it.set(CaptureRequest.CONTROL_AWB_MODE, CaptureRequest.CONTROL_AWB_MODE_AUTO)
+            val range =
+                cameraMap[conf.id]?.get(CameraCharacteristics.CONTROL_AE_AVAILABLE_TARGET_FPS_RANGES)
+                    ?.firstOrNull { it.lower == conf.fps && it.upper == conf.fps }
+            Log.d(TAG, "setting range $range")
+            it.set(CaptureRequest.CONTROL_AE_TARGET_FPS_RANGE, range)
+            if (conf.stabilize) {
+                it.set(
+                    CaptureRequest.CONTROL_VIDEO_STABILIZATION_MODE,
+                    CaptureRequest.CONTROL_VIDEO_STABILIZATION_MODE_ON
+                )
+            }
+        }
+
+//        request.keys.forEach {
+//            Log.d(TAG, "${it.name} ${request[it]}")
+//        }
+
+        return builder.build()
     }
 
     fun stop() {
@@ -209,7 +288,7 @@ class CameraManager(
         val orientation = characteristics[CameraCharacteristics.SENSOR_ORIENTATION] ?: 0
         val surfaceRotation = ORIENTATIONS[displayRotation] ?: 0
         val rotation = (surfaceRotation + orientation + 270) % 360
-        return Conf(id, size, frameRate, rotation, stabilize)
+        return Conf(id, size, frameRate, rotation, stabilize, facing)
     }
 
     companion object {
@@ -227,7 +306,8 @@ class CameraManager(
         val size: Size,
         val fps: Int,
         val rotation: Int,
-        val stabilize: Boolean
+        val stabilize: Boolean,
+        val facing: Int
     )
 
     data class Event(

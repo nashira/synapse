@@ -6,26 +6,33 @@ import android.view.SurfaceView
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.rthqks.synapse.exec.ExecutionContext
 import com.rthqks.synapse.exec.ExecutorLegacy
 import com.rthqks.synapse.logic.*
 import com.rthqks.synapse.ops.Analytics
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 import javax.inject.Inject
 
 class PolishViewModel @Inject constructor(
-    private val executor: ExecutorLegacy,
+//    private val executor: ExecutorLegacy,
+    private val context: ExecutionContext,
     private val analytics: Analytics
 ) : ViewModel() {
     val deviceSupported = MutableLiveData<Boolean>()
     private var currentEffect: Effect? = null
     private var recordingStart = 0L
+    private var svSetup = false
     val properties: Properties? get() = currentEffect?.properties
+
+    private val effectExecutor = EffectExecutor(context)
 
     init {
         viewModelScope.launch {
-            executor.initialize(false)
-            executor.await()
-            deviceSupported.value = executor.deviceSupported
+//            executor.initialize(false)
+//            executor.await()
+            effectExecutor.setup()
+            deviceSupported.value = context.glesManager.supportedDevice
         }
     }
 
@@ -45,16 +52,19 @@ class PolishViewModel @Inject constructor(
     }
 
     private fun restartNetwork() {
-        executor.stop()
-        executor.start()
+//        executor.stop()
+//        executor.start()
+//        viewModelScope.launch {
+//            effectExecutor.removeAllLinks()
+//        }
     }
 
     fun startExecution() {
-        executor.start()
+//        executor.start()
     }
 
     fun stopExecution() {
-        executor.stop()
+//        executor.stop()
     }
 
     fun startRecording() {
@@ -89,10 +99,10 @@ class PolishViewModel @Inject constructor(
         analytics.logEvent(Analytics.Event.EditSetting(key.name, value.toString()))
         properties[key] = value
         Log.d(TAG, "${key.name} = $value")
-        when {
-            recreate -> network?.let { recreateNetwork(it) }
-            restart -> restartNetwork()
-        }
+//        when {
+//            recreate -> currentEffect?.let { recreateNetwork(it) }
+//            restart -> restartNetwork()
+//        }
     }
 
     fun setEffect(effect: Effect): Boolean {
@@ -101,7 +111,7 @@ class PolishViewModel @Inject constructor(
         effect.network.getNode(Effect.ID_CAMERA)?.properties?.plusAssign(effect.properties)
 
         analytics.logEvent(Analytics.Event.SetEffect(effect.title))
-        recreateNetwork(effect.network)
+        recreateNetwork(effect)
         return true
 //        return when (effect) {
 //            PolishEffect.None -> {
@@ -128,23 +138,37 @@ class PolishViewModel @Inject constructor(
 //        }
     }
 
-    private fun recreateNetwork(network: Network) {
-        this.network = network
+    private fun recreateNetwork(effect: Effect) {
+        this.network = effect.network
         viewModelScope.launch {
-            executor.stop()
-            executor.releaseNetwork()
-            executor.initializeNetwork(network)
-            executor.start()
-            executor.await()
-            surfaceView?.let { executor.setSurfaceView(it) }
+//            executor.stop()
+//            executor.releaseNetwork()
+//            executor.initializeNetwork(effect.network)
+//            executor.start()
+//            executor.await()
+//            surfaceView?.let { executor.setSurfaceView(it) }
+        }
+
+        viewModelScope.launch {
+            effectExecutor.swapEffect(effect).await()
+            if (!svSetup) {
+                svSetup = true
+                surfaceView?.let { effectExecutor.setSurfaceView(it) }
+            }
         }
     }
 
     override fun onCleared() {
         Log.d(TAG, "onCleared")
-        Log.d(TAG, "release")
-        executor.releaseNetwork()
-        executor.release()
+
+        runBlocking {
+            effectExecutor.removeAllLinks()
+            effectExecutor.removeAllNodes()
+        }
+
+//        executor.releaseNetwork()
+//        executor.release()
+
         Log.d(TAG, "released")
         super.onCleared()
     }

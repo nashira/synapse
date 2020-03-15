@@ -43,12 +43,13 @@ object Effects {
         addLinkNoCompute(Link(slice.id, Slice3dNode.OUTPUT.id, encoder.id, EncoderNode.INPUT_VIDEO.id))
         addLinkNoCompute(Link(microphone.id, AudioSourceNode.OUTPUT.id, encoder.id, EncoderNode.INPUT_AUDIO.id))
         computeComponents()
-        Effect(this).apply {
+//        ringBuffer.properties.put(properties.find(HistorySize)!!, IntConverter)
+    }.let {
+        Effect(it).apply {
             properties[AudioSource] = MediaRecorder.AudioSource.CAMCORDER
             properties[Effect.Title] = "Time Warp"
-            properties[HistorySize] = 30
+//            properties[HistorySize] = 30
         }
-        ringBuffer.properties.put(properties.find(HistorySize)!!, IntConverter)
     }
 
     val rotoHue = Network(ID_ROTO_HUE).apply {
