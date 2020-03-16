@@ -154,6 +154,7 @@ class Camera(
 
     @SuppressLint("MissingPermission")
     suspend fun open(cameraId: String) {
+        Log.d(TAG, "open")
         openDeferred = CompletableDeferred()
         closeDeferred = CompletableDeferred()
         cameraManager.openCamera(cameraId, cameraCallback, handler)
@@ -162,12 +163,14 @@ class Camera(
     }
 
     suspend fun close() {
+        Log.d(TAG, "close")
         camera?.close()
         closeDeferred?.await()
         closeDeferred = null
     }
 
     suspend fun openSession(surface: Surface) {
+        Log.d(TAG, "openSession")
         sessionReadyDeferred = CompletableDeferred()
         sessionClosedDeferred = CompletableDeferred()
         requestBuilder = camera?.createCaptureRequest(CameraDevice.TEMPLATE_RECORD)
@@ -178,18 +181,21 @@ class Camera(
     }
 
     suspend fun closeSession() {
+        Log.d(TAG, "closeSession")
         session?.close()
         sessionClosedDeferred?.await()
         sessionClosedDeferred = null
     }
 
     suspend fun startRequest(conf: CameraManager.Conf) {
+        Log.d(TAG, "startRequest")
         getRequest(conf)?.let {
             session?.setRepeatingRequest(it, null, null)
         }
     }
 
     suspend fun stopRequest() {
+        Log.d(TAG, "stopRequest")
         sessionReadyDeferred = CompletableDeferred()
         session?.abortCaptures()
         sessionReadyDeferred?.await()
@@ -221,5 +227,9 @@ class Camera(
         }
 
         return requestBuilder?.build()
+    }
+
+    companion object {
+        const val TAG = "*cam*"
     }
 }

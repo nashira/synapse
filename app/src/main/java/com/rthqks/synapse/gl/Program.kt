@@ -81,6 +81,8 @@ class Program {
 
     fun release() {
         GLES30.glDeleteProgram(programId)
+        uniforms.clear()
+        uniformList.clear()
         Log.d(TAG, "release program: $programId")
     }
 

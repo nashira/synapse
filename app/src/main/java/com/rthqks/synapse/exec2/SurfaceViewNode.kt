@@ -28,6 +28,9 @@ class SurfaceViewNode(
     private var previousTexture: Texture2d? = null
 
     override suspend fun onSetup() {
+        glesManager.glContext {
+            mesh.initialize()
+        }
     }
 
     override suspend fun <T> onConnect(key: Connection.Key<T>, producer: Boolean) {
@@ -184,8 +187,8 @@ class SurfaceViewNode(
         }
 
         glesManager.glContext {
-            mesh.initialize()
             program.apply {
+                release()
                 initialize(vertexSource, fragmentSource)
                 addUniform(
                     Uniform.Type.Mat4,

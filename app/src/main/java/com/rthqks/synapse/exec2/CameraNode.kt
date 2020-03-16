@@ -13,7 +13,6 @@ import com.rthqks.synapse.exec.ExecutionContext
 import com.rthqks.synapse.gl.Texture2d
 import com.rthqks.synapse.logic.*
 import kotlinx.coroutines.Job
-import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.ReceiveChannel
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
@@ -63,7 +62,7 @@ class CameraNode(
     }
 
     override suspend fun <T> onDisconnect(key: Connection.Key<T>, producer: Boolean) {
-        Log.d(TAG, "onDisconnect ${key.id}")
+        Log.d(TAG, "onDisconnect ${key.id} ${linked(OUTPUT)}")
         if (key == OUTPUT && !linked(OUTPUT)) {
             camera.stopRequest()
             startJob?.join()
@@ -102,8 +101,6 @@ class CameraNode(
 
     private suspend fun startTexture() {
         val channel = channel(OUTPUT) ?: return
-
-        val surface = outputSurface ?: return
 
         var copyMatrix = 0
         setOnFrameAvailableListener {
@@ -157,6 +154,7 @@ class CameraNode(
     }
 
     private suspend fun checkConfig(): Boolean {
+//        Log.d(TAG, "checkConfig")
         var restartRequest = false
         var restartSession = false
         var reopenCamera = false
@@ -184,6 +182,7 @@ class CameraNode(
                 outputTexture.width = size.width
                 outputTexture.height = size.height
                 cameraConfig?.let {
+                    camera.closeSession()
                     camera.close()
                     camera.open(cameraId)
                     outputSurface?.let { surface -> camera.openSession(surface) }
@@ -198,6 +197,7 @@ class CameraNode(
                 outputTexture.width = size.width
                 outputTexture.height = size.height
                 cameraConfig?.let {
+                    camera.closeSession()
                     outputSurface?.let { surface -> camera.openSession(surface) }
                     cameraConfig?.let { conf -> camera.startRequest(conf) }
                 }
@@ -208,6 +208,7 @@ class CameraNode(
                 cameraConfig?.let { conf -> camera.startRequest(conf) }
             }
         }
+//        Log.d(TAG, "checkConfig done")
         return false
     }
 
