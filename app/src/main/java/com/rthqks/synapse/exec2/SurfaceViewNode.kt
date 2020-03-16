@@ -42,6 +42,7 @@ class SurfaceViewNode(
 
     override suspend fun <T> onDisconnect(key: Connection.Key<T>, producer: Boolean) {
         startJob?.join()
+        startJob = null
     }
 
     override suspend fun onRelease() {
@@ -135,24 +136,27 @@ class SurfaceViewNode(
     }
 
     private suspend fun checkInit(texture2d: Texture2d) {
+        var recreateProgram = false
 //        if (previousTexture?.width != texture2d.width
 //            || previousTexture?.height != texture2d.height
 //        ) {
 //
 //        }
 //
-//        if (previousTexture?.oes != texture2d.oes
-//            || previousTexture?.format != texture2d.format
-//        ) {
-//
-//        }
-
+        if (previousTexture?.oes != texture2d.oes
+            || previousTexture?.format != texture2d.format
+        ) {
+            recreateProgram = true
+        }
 
         if (program.programId == 0) {
-            recreateProgram(texture2d)
-
-
+            recreateProgram = true
         }
+
+        if (recreateProgram) {
+            recreateProgram(texture2d)
+        }
+
         val uniform = program.getUniform(Uniform.Type.Mat4, "texture_matrix0")
         val matrix = uniform.data!!
 

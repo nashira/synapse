@@ -28,6 +28,25 @@ object Effects {
         properties[Effect.Title] = "None"
     }
 
+    val grayscale = Network(4).apply {
+        val camera = addNode(NewNode(NodeType.Camera, Effect.ID_CAMERA))
+        val microphone = addNode(NewNode(NodeType.Microphone, Effect.ID_MIC))
+        val screen = addNode(NewNode(NodeType.Screen, Effect.ID_SURFACE_VIEW))
+        val encoder = addNode(NewNode(NodeType.MediaEncoder, Effect.ID_ENCODER))
+        val grayscale = addNode(NewNode(NodeType.GrayscaleFilter))
+
+        addLinkNoCompute(Link(camera.id, CameraNode.OUTPUT.id, grayscale.id, GrayscaleNode.INPUT.id))
+        addLinkNoCompute(Link(grayscale.id, GrayscaleNode.OUTPUT.id, screen.id, SurfaceViewNode.INPUT.id))
+        addLinkNoCompute(Link(grayscale.id, GrayscaleNode.OUTPUT.id, encoder.id, EncoderNode.INPUT_VIDEO.id))
+        addLinkNoCompute(Link(microphone.id, AudioSourceNode.OUTPUT.id, encoder.id, EncoderNode.INPUT_AUDIO.id))
+        computeComponents()
+    }.let {
+        Effect(it)
+    }.apply {
+        properties[AudioSource] = MediaRecorder.AudioSource.CAMCORDER
+        properties[Effect.Title] = "None"
+    }
+
     val timeWarp = Network(ID_TIME_WARP).apply {
         val camera = addNode(NewNode(NodeType.Camera, Effect.ID_CAMERA))
         val microphone = addNode(NewNode(NodeType.Microphone, Effect.ID_MIC))

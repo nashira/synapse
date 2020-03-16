@@ -164,6 +164,7 @@ class PolishViewModel @Inject constructor(
         runBlocking {
             effectExecutor.removeAllLinks()
             effectExecutor.removeAllNodes()
+            effectExecutor.release()
         }
 
 //        executor.releaseNetwork()

@@ -181,21 +181,21 @@ class Network(
         nodes.keys.forEach { node ->
             dfsReverse(node, mark, result)
         }
-        Log.d(TAG, "result " + result.joinToString())
+//        Log.d(TAG, "result " + result.joinToString())
 
         mark.clear()
         val components = mutableListOf<MutableList<Pair<Int, String>>>()
         result.forEach {
             val component = mutableListOf<Pair<Int, String>>()
             components.add(component)
-            Log.d(TAG, "node ${it.first} ${nodes[it.first]} ${it.second}")
+//            Log.d(TAG, "node ${it.first} ${nodes[it.first]} ${it.second}")
             val output = nodes[it.first]!!.getPort(it.second).output
             if (!output && it !in mark) {
                 mark.add(it)
                 component.add(it)
             }
             dfs(it.first, mark, component, if (output) it.second else null)
-            Log.d(TAG, component.joinToString())
+//            Log.d(TAG, component.joinToString())
             if (component.size > 1) {
                 component.add(component.removeAt(0))
                 component.windowed(2, 2) {

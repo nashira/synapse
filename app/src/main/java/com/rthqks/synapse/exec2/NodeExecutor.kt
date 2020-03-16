@@ -21,13 +21,17 @@ abstract class NodeExecutor(
 
     suspend fun <T> stopConsumer(key: Connection.Key<T>, channel: ReceiveChannel<Message<T>>) = async {
         val con = connection(key)
-        con?.removeConsumer(channel)
         val linked = con?.consumerCount ?: 0 > 1
         setLinked(key, linked)
+        if (!linked) {
+            channels.remove(key)
+        }
         onDisconnect(key, true)
+        con?.removeConsumer(channel)
     }
 
     suspend fun waitForConsumer(key: Connection.Key<*>) = async {
+        channels.remove(key)
         onDisconnect(key, false)
     }
 
@@ -42,12 +46,9 @@ abstract class NodeExecutor(
     }
 
     suspend fun <T> getConsumer(key: Connection.Key<T>) = async {
-        val connection = connections.getOrPut(key) {
-            Connection<T>().also {
-                channels[key] = it.producer()
-            }
-        }
+        val connection = connections.getOrPut(key) { Connection<T>() }
 
+        channels[key] = connection.producer()
         val consumer = connection.consumer()
         onConnect(key, true)
         return@async consumer

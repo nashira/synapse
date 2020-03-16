@@ -31,17 +31,23 @@ class Connection<T>(
     suspend fun queue(message: Message<T>) {
         message.count = ++messageCount
         val consumers = consumers
-        message.consumers.set(consumers.size)
-        consumers.forEach {
-//            if (it.isClosedForSend) {
-//                event.inFlight.decrementAndGet()
-//            } else {
-            it.send(message)
-//            }
+        if (consumers.isEmpty()) {
+            Log.d(TAG, "consumers.isEmpty")
+            producer.send(message)
+        } else {
+            message.consumers.set(consumers.size)
+            consumers.forEach {
+                if (it.isClosedForSend) {
+                    message.consumers.decrementAndGet()
+                    Log.e(TAG, "isClosedForSend ${message.consumers.get()}")
+                } else {
+                    it.send(message)
+                }
+            }
         }
     }
 
-    internal suspend fun release(message: Message<T>) {
+    suspend fun release(message: Message<T>) {
         if (message.consumers.decrementAndGet() <= 0) {
             producer.send(message)
         }
@@ -70,6 +76,6 @@ class Message<T>(
     val consumers = AtomicInteger()
     var count: Int = 0
     var timestamp: Long = 0
-    suspend fun queue() = connection.queue(this)
-    suspend fun release() = connection.release(this)
+    suspend inline fun queue() = connection.queue(this)
+    suspend inline fun release() = connection.release(this)
 }

@@ -42,6 +42,7 @@ class CameraNode(
     private val requestedSize: Size get() = properties[VideoSize]
     private val frameRate: Int get() = properties[FrameRate]
     private val stabilize: Boolean get() = properties[Stabilize]
+    private val cameraChannel = Channel<CameraManager.Event>(10)
 
     override suspend fun onSetup() {
         Log.d(TAG, "onSetup")
@@ -64,7 +65,7 @@ class CameraNode(
     override suspend fun <T> onDisconnect(key: Connection.Key<T>, producer: Boolean) {
         Log.d(TAG, "onDisconnect ${key.id}")
         if (key == OUTPUT && !linked(OUTPUT)) {
-            cameraManager.stop()
+            cameraManager.stopRequest(cameraChannel)
             startJob?.join()
             startJob = null
         }
@@ -100,17 +101,16 @@ class CameraNode(
         val channel = channel(OUTPUT) ?: return
 
         val surface = outputSurface ?: return
-        val cameraChannel = Channel<CameraManager.Event>(10)
 
         var copyMatrix = 0
         setOnFrameAvailableListener {
             runBlocking {
-                onFrame(channel, it, copyMatrix < 2, cameraChannel)
+                onFrame(channel, it, copyMatrix < 2)
                 copyMatrix++
             }
         }
 
-        cameraManager.start(cameraId, surface, frameRate, stabilize, cameraChannel)
+        cameraConfig?.let { cameraManager.start(it, surface, cameraChannel) }
         do {
             val (count, timestamp, eos) = cameraChannel.receive()
             if (eos) {
@@ -132,12 +132,11 @@ class CameraNode(
     private suspend fun onFrame(
         channel: ReceiveChannel<Message<Texture2d>>,
         surfaceTexture: SurfaceTexture,
-        copyMatrix: Boolean,
-        cameraChannel: Channel<CameraManager.Event>
+        copyMatrix: Boolean
     ) {
 //        Log.d(TAG, "onFrame")
         val event = channel.receive()
-        val updateMatrix = checkConfig(cameraChannel)
+        val updateMatrix = checkConfig()
         glesManager.glContext {
             surfaceTexture.updateTexImage()
             event.timestamp = surfaceTexture.timestamp
@@ -162,7 +161,7 @@ class CameraNode(
         event.queue()
     }
 
-    private suspend fun checkConfig(cameraChannel: Channel<CameraManager.Event>): Boolean {
+    private suspend fun checkConfig(): Boolean {
         var restartRequest = false
         var restartSession = false
         var reopenCamera = false
@@ -211,6 +210,7 @@ class CameraNode(
 
     override suspend fun onRelease() {
         Log.d(TAG, "onRelease")
+        cameraManager.stop()
         glesManager.glContext {
             outputSurface?.release()
             outputSurfaceTexture?.release()

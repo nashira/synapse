@@ -101,7 +101,7 @@ class CameraNode(
         val config = config(OUTPUT) ?: return
         val surface = config.surface.get()
         val cameraChannel = Channel<CameraManager.Event>(6)
-        cameraManager.start(cameraId, surface, frameRate, stabilize, cameraChannel)
+//        cameraManager.start(cameraId, surface, frameRate, stabilize, cameraChannel)
         do {
             val (count, timestamp, eos) = cameraChannel.receive()
             val frame = output.receive()
@@ -129,7 +129,7 @@ class CameraNode(
             }
         }
 
-        cameraManager.start(cameraId, surface, frameRate, stabilize, cameraChannel)
+//        cameraManager.start(cameraId, surface, frameRate, stabilize, cameraChannel)
         do {
             val (count, timestamp, eos) = cameraChannel.receive()
             if (eos) {

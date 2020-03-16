@@ -56,54 +56,16 @@ class CameraManager(
     }
 
     suspend fun start(
-        cameraId: String,
+        conf: Conf,
         surface: Surface,
-        fps: Int,
-        stabilize: Boolean,
         channel: Channel<Event>
     ) {
         isEos = false
-        val c = openCamera(cameraId)
-        val builder = c.createCaptureRequest(CameraDevice.TEMPLATE_RECORD)
-        builder.addTarget(surface)
-        val s = createSession(c, surface)
-
         this.surface = surface
+        val c = camera ?: openCamera(conf.id)
+
         camera = c
-        session = s
-
-        builder.also {
-            it.set(
-                CaptureRequest.CONTROL_CAPTURE_INTENT,
-                CaptureRequest.CONTROL_CAPTURE_INTENT_VIDEO_RECORD
-            )
-            it.set(CaptureRequest.CONTROL_SCENE_MODE, CaptureRequest.CONTROL_SCENE_MODE_DISABLED)
-            it.set(CaptureRequest.CONTROL_MODE, CaptureRequest.CONTROL_MODE_AUTO)
-            it.set(CaptureRequest.CONTROL_AE_MODE, CaptureRequest.CONTROL_AE_MODE_ON)
-            it.set(CaptureRequest.CONTROL_AF_MODE, CaptureRequest.CONTROL_AF_MODE_CONTINUOUS_VIDEO)
-            it.set(CaptureRequest.CONTROL_AWB_MODE, CaptureRequest.CONTROL_AWB_MODE_AUTO)
-            val range =
-                cameraMap[cameraId]?.get(CameraCharacteristics.CONTROL_AE_AVAILABLE_TARGET_FPS_RANGES)
-                    ?.firstOrNull { it.lower == fps && it.upper == fps }
-            Log.d(TAG, "setting range $range")
-            it.set(CaptureRequest.CONTROL_AE_TARGET_FPS_RANGE, range)
-            if (stabilize) {
-                it.set(
-                    CaptureRequest.CONTROL_VIDEO_STABILIZATION_MODE,
-                    CaptureRequest.CONTROL_VIDEO_STABILIZATION_MODE_ON
-                )
-            }
-        }
-
-//        request.keys.forEach {
-//            Log.d(TAG, "${it.name} ${request[it]}")
-//        }
-
-        val r = builder.build()
-
-        request = r
-
-        startRequest(c, s, r, channel)
+        restartSession(conf, channel)
     }
 
     suspend fun reopenCamera(conf: Conf, channel: Channel<Event>) {
@@ -171,6 +133,11 @@ class CameraManager(
         return builder.build()
     }
 
+    suspend fun stopRequest(channel: Channel<Event>) {
+        session?.stopRepeating()
+        channel.send(nextEvent().apply { eos = true })
+    }
+
     fun stop() {
         Log.d(TAG, "stop")
         isEos = true
@@ -216,6 +183,7 @@ class CameraManager(
 
             override fun onClosed(camera: CameraDevice) {
                 Log.d(TAG, "onClosed")
+                this@CameraManager.camera = null
             }
         }, handler)
     }
@@ -261,8 +229,6 @@ class CameraManager(
 
                 if (eos) {
                     Log.d(TAG, "got eos")
-//                    session.stopRepeating()
-                    session.close()
                     camera.close()
                 }
 

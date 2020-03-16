@@ -48,13 +48,13 @@ class EffectExecutor(context: ExecutionContext) : NetworkExecutor(context) {
         }
     }
 
-    override suspend fun release() {
-        exec {
-            removeAllLinks()
-            removeAllNodes()
-        }
-        super.release()
-    }
+//    override suspend fun release() {
+//        await {
+//            removeAllLinks()
+//            removeAllNodes()
+//        }
+//        super.release()
+//    }
 
     suspend fun setSurfaceView(surfaceView: SurfaceView) {
         (getNode(Effect.ID_SURFACE_VIEW) as? SurfaceViewNode)?.setSurfaceView(surfaceView)

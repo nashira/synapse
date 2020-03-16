@@ -109,8 +109,8 @@ open class NetworkExecutor(context: ExecutionContext) : Executor(context) {
 
     override suspend fun release() {
         Log.d(TAG, "release")
-        exec { context.release() }
         super.release()
+        context.release()
     }
 
     companion object {
@@ -122,6 +122,7 @@ open class NetworkExecutor(context: ExecutionContext) : Executor(context) {
             NodeType.Camera -> CameraNode(context, properties)
 //            NodeType.Microphone -> AudioSourceNode(context, node.properties)
             NodeType.Screen -> SurfaceViewNode(context, properties)
+            NodeType.GrayscaleFilter -> GrayscaleNode(context, properties)
 //            NodeType.MediaEncoder -> EncoderNode(context, node.properties)
 //            NodeType.Properties,
 //            NodeType.Creation,
