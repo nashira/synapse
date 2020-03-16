@@ -37,12 +37,12 @@ class CameraNode(
     )
 
     private var cameraConfig: CameraManager.Conf? = null
+    private val camera = cameraManager.getCamera()
 
     private val facing: Int get() = properties[CameraFacing]
     private val requestedSize: Size get() = properties[VideoSize]
     private val frameRate: Int get() = properties[FrameRate]
     private val stabilize: Boolean get() = properties[Stabilize]
-    private val cameraChannel = Channel<CameraManager.Event>(10)
 
     override suspend fun onSetup() {
         Log.d(TAG, "onSetup")
@@ -65,7 +65,7 @@ class CameraNode(
     override suspend fun <T> onDisconnect(key: Connection.Key<T>, producer: Boolean) {
         Log.d(TAG, "onDisconnect ${key.id}")
         if (key == OUTPUT && !linked(OUTPUT)) {
-            cameraManager.stopRequest(cameraChannel)
+            camera.stopRequest()
             startJob?.join()
             startJob = null
         }
@@ -85,6 +85,9 @@ class CameraNode(
         }
 
         connection(OUTPUT)?.prime(outputTexture, outputTexture)
+
+        camera.open(cameraId)
+        outputSurface?.let { camera.openSession(it) }
     }
 
     private fun updateCameraConfig() {
@@ -110,15 +113,7 @@ class CameraNode(
             }
         }
 
-        cameraConfig?.let { cameraManager.start(it, surface, cameraChannel) }
-        do {
-            val (count, timestamp, eos) = cameraChannel.receive()
-            if (eos) {
-                Log.d(TAG, "got EOS from cam")
-                outputSurfaceTexture?.setOnFrameAvailableListener(null)
-                Log.d(TAG, "sent frames $count")
-            }
-        } while (!eos)
+        cameraConfig?.let { camera.startRequest(it) }
     }
 
     private fun setOnFrameAvailableListener(block: (SurfaceTexture) -> Unit) {
@@ -188,7 +183,12 @@ class CameraNode(
                 outputSurfaceTexture?.setDefaultBufferSize(size.width, size.height)
                 outputTexture.width = size.width
                 outputTexture.height = size.height
-                cameraConfig?.let { cameraManager.reopenCamera(it, cameraChannel) }
+                cameraConfig?.let {
+                    camera.close()
+                    camera.open(cameraId)
+                    outputSurface?.let { surface -> camera.openSession(surface) }
+                    cameraConfig?.let { conf -> camera.startRequest(conf) }
+                }
                 return true
             }
 
@@ -197,12 +197,15 @@ class CameraNode(
                 outputSurfaceTexture?.setDefaultBufferSize(size.width, size.height)
                 outputTexture.width = size.width
                 outputTexture.height = size.height
-                cameraConfig?.let { cameraManager.restartSession(it, cameraChannel) }
+                cameraConfig?.let {
+                    outputSurface?.let { surface -> camera.openSession(surface) }
+                    cameraConfig?.let { conf -> camera.startRequest(conf) }
+                }
             }
 
             restartRequest -> {
                 updateCameraConfig()
-                cameraConfig?.let { cameraManager.restartRequest(it, cameraChannel) }
+                cameraConfig?.let { conf -> camera.startRequest(conf) }
             }
         }
         return false
@@ -210,7 +213,8 @@ class CameraNode(
 
     override suspend fun onRelease() {
         Log.d(TAG, "onRelease")
-        cameraManager.stop()
+        camera.closeSession()
+        camera.close()
         glesManager.glContext {
             outputSurface?.release()
             outputSurfaceTexture?.release()

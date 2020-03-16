@@ -97,54 +97,54 @@ class CameraNode(
     }
 
     private suspend fun startSurface() {
-        val output = channel(OUTPUT) ?: return
-        val config = config(OUTPUT) ?: return
-        val surface = config.surface.get()
-        val cameraChannel = Channel<CameraManager.Event>(6)
-//        cameraManager.start(cameraId, surface, frameRate, stabilize, cameraChannel)
-        do {
-            val (count, timestamp, eos) = cameraChannel.receive()
-            val frame = output.receive()
-            frame.count = count
-            frame.timestamp = timestamp
-            frame.eos = eos
-            frame.queue()
-            if (eos) {
-                Log.d(TAG, "sending EOS")
-                Log.d(TAG, "sent frames $count")
-            }
-        } while (!eos)
+//        val output = channel(OUTPUT) ?: return
+//        val config = config(OUTPUT) ?: return
+//        val surface = config.surface.get()
+//        val cameraChannel = Channel<CameraManager.Event>(6)
+////        cameraManager.start(cameraId, surface, frameRate, stabilize, cameraChannel)
+//        do {
+//            val (count, timestamp, eos) = cameraChannel.receive()
+//            val frame = output.receive()
+//            frame.count = count
+//            frame.timestamp = timestamp
+//            frame.eos = eos
+//            frame.queue()
+//            if (eos) {
+//                Log.d(TAG, "sending EOS")
+//                Log.d(TAG, "sent frames $count")
+//            }
+//        } while (!eos)
     }
 
     private suspend fun startTexture() {
-        val channel = channel(OUTPUT) ?: return
-        val surface = outputSurface ?: return
-        val cameraChannel = Channel<CameraManager.Event>(10)
-
-        var copyMatrix = 0
-        setOnFrameAvailableListener {
-            runBlocking {
-                onFrame(channel, it, copyMatrix < 2)
-                copyMatrix++
-            }
-        }
-
-//        cameraManager.start(cameraId, surface, frameRate, stabilize, cameraChannel)
-        do {
-            val (count, timestamp, eos) = cameraChannel.receive()
-            if (eos) {
-                Log.d(TAG, "got EOS from cam")
-                outputSurfaceTexture?.setOnFrameAvailableListener(null)
-                Log.d(TAG, "frame listener = null")
-                val event = channel.receive()
-                Log.d(TAG, "receive event")
-                event.count = count
-                event.timestamp = timestamp
-                event.eos = true
-                event.queue()
-                Log.d(TAG, "sent frames $count")
-            }
-        } while (!eos)
+//        val channel = channel(OUTPUT) ?: return
+//        val surface = outputSurface ?: return
+//        val cameraChannel = Channel<CameraManager.Event>(10)
+//
+//        var copyMatrix = 0
+//        setOnFrameAvailableListener {
+//            runBlocking {
+//                onFrame(channel, it, copyMatrix < 2)
+//                copyMatrix++
+//            }
+//        }
+//
+////        cameraManager.start(cameraId, surface, frameRate, stabilize, cameraChannel)
+//        do {
+//            val (count, timestamp, eos) = cameraChannel.receive()
+//            if (eos) {
+//                Log.d(TAG, "got EOS from cam")
+//                outputSurfaceTexture?.setOnFrameAvailableListener(null)
+//                Log.d(TAG, "frame listener = null")
+//                val event = channel.receive()
+//                Log.d(TAG, "receive event")
+//                event.count = count
+//                event.timestamp = timestamp
+//                event.eos = true
+//                event.queue()
+//                Log.d(TAG, "sent frames $count")
+//            }
+//        } while (!eos)
     }
 
     private fun setOnFrameAvailableListener(block: (SurfaceTexture) -> Unit) {
