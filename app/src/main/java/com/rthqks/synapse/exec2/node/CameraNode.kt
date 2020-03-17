@@ -2,6 +2,7 @@ package com.rthqks.synapse.exec2.node
 
 import android.graphics.SurfaceTexture
 import android.opengl.GLES11Ext
+import android.opengl.GLES30
 import android.opengl.GLES30.GL_CLAMP_TO_EDGE
 import android.opengl.GLES30.GL_LINEAR
 import android.opengl.Matrix
@@ -78,6 +79,9 @@ class CameraNode(
             outputTexture.initialize()
         }
 
+        outputTexture.format = GLES30.GL_RGB
+        outputTexture.internalFormat = GLES30.GL_RGB8
+        outputTexture.type = GLES30.GL_UNSIGNED_BYTE
 
         outputSurfaceTexture = SurfaceTexture(outputTexture.id)
         updateOutputSize()

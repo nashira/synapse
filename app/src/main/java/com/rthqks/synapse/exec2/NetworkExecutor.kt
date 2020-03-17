@@ -129,6 +129,8 @@ open class NetworkExecutor(context: ExecutionContext) : Executor(context) {
                 properties
             )
             NodeType.MediaEncoder -> EncoderNode(context, properties)
+            NodeType.RingBuffer -> RingBufferNode(context, properties)
+            NodeType.Slice3d -> Slice3dNode(context, properties)
 //            NodeType.Properties,
 //            NodeType.Creation,
 //            NodeType.Connection -> error("not an executable node type: ${node.type}")

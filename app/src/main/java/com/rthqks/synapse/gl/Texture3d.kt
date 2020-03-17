@@ -17,6 +17,9 @@ class Texture3d(
     var format: Int = 0
     var type: Int = 0
 
+    // used slice3d
+    var index = 0
+
     fun initialize() {
         val textureHandle = IntArray(1)
 
@@ -99,12 +102,6 @@ class Texture3d(
         }
         glBindTexture(GL_TEXTURE_3D, 0)
     }
-
-//    fun initData(level: Int, bitmap: Bitmap, border: Int = 0) {
-//        glBindTexture(GL_TEXTURE_3D, id)
-//        GLUtils.texImage2D(GL_TEXTURE_3D, level, bitmap, border)
-//        glBindTexture(GL_TEXTURE_3D, 0)
-//    }
 
     fun updateData(
         level: Int,

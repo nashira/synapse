@@ -62,7 +62,7 @@ object Effects {
         addLinkNoCompute(Link(slice.id, Slice3dNode.OUTPUT.id, encoder.id, EncoderNode.INPUT_VIDEO.id))
         addLinkNoCompute(Link(microphone.id, AudioSourceNode.OUTPUT.id, encoder.id, EncoderNode.INPUT_AUDIO.id))
         computeComponents()
-//        ringBuffer.properties.put(properties.find(HistorySize)!!, IntConverter)
+        ringBuffer.properties[HistorySize] = 30
     }.let {
         Effect(it).apply {
             properties[AudioSource] = MediaRecorder.AudioSource.CAMCORDER

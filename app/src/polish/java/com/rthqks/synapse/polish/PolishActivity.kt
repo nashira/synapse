@@ -238,9 +238,9 @@ class PolishActivity : DaggerAppCompatActivity() {
         listOf(
             button_camera,
             button_settings,
-            button_gallery,
+            button_gallery
 //            button_color,
-            effect_list
+//            effect_list
         ).forEach {
             it.animate()
                 .setInterpolator(interpolator)
@@ -255,9 +255,9 @@ class PolishActivity : DaggerAppCompatActivity() {
         listOf(
             button_camera,
             button_settings,
-            button_gallery,
+            button_gallery
 //            button_color,
-            effect_list
+//            effect_list
         ).forEach {
             it.visibility = View.VISIBLE
             it.animate()

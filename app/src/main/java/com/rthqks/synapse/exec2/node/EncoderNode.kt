@@ -109,8 +109,10 @@ class EncoderNode(
             }
 
             inputSize = Size(texture.width, texture.height)
-            surface = encoder.setVideo(inputSize, frameRate)
-            updateWindowSurface()
+            if (surface == null) {
+                surface = encoder.setVideo(inputSize, frameRate)
+                updateWindowSurface()
+            }
         }
     }
 
