@@ -304,7 +304,9 @@ class PolishActivity : DaggerAppCompatActivity() {
     override fun onPause() {
         super.onPause()
         orientationEventListener.disable()
-        viewModel.stopExecution()
+        if (!isFinishing) {
+            viewModel.stopExecution()
+        }
     }
 
     private fun hideSystemUI() {
@@ -332,16 +334,6 @@ class PolishActivity : DaggerAppCompatActivity() {
 }
 
 private data class Permission(val name: String, val granted: Boolean, val showRationale: Boolean)
-
-//enum class PolishEffect(
-//    val title: String
-//) {
-//    None("none"),
-////    TimeWarp("time warp"),
-////    RotoHue("roto hue"),
-//    More("more"),
-////    Topography("topography")
-//}
 
 private class EffectAdapter(
     private val effects: List<Effect>,

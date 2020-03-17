@@ -1,4 +1,4 @@
-package com.rthqks.synapse.exec.node
+package com.rthqks.synapse.exec2.node
 
 import android.opengl.GLES30
 import android.util.Log
@@ -6,9 +6,11 @@ import android.util.Size
 import android.view.Surface
 import com.rthqks.synapse.codec.Encoder
 import com.rthqks.synapse.exec.ExecutionContext
-import com.rthqks.synapse.exec.NodeExecutor
-import com.rthqks.synapse.exec.link.*
+import com.rthqks.synapse.exec2.Connection
+import com.rthqks.synapse.exec2.NodeExecutor
+import com.rthqks.synapse.exec2.link.AudioData
 import com.rthqks.synapse.gl.*
+import com.rthqks.synapse.logic.FrameRate
 import com.rthqks.synapse.logic.Properties
 import com.rthqks.synapse.logic.Recording
 import com.rthqks.synapse.logic.Rotation
@@ -23,7 +25,6 @@ class EncoderNode(
 ) : NodeExecutor(context) {
     private val assetManager = context.assetManager
     private val glesManager = context.glesManager
-    private val videoStorage = context.videoStorage
     private var videoJob: Job? = null
     private var audioJob: Job? = null
     private var inputSize: Size = Size(0, 0)
@@ -36,27 +37,58 @@ class EncoderNode(
     private var surface: Surface? = null
     private var windowSurface: WindowSurface? = null
 
+    private val frameRate: Int get() = properties[FrameRate]
     private var recording = AtomicInteger()
-    private var frameCount = 0
 
-    override suspend fun onCreate() {
+    private var needAudioConfig = true
+    private var needVideoConfig = true
+    private var previousFormat: Int = -1
+
+    override suspend fun onSetup() {
     }
 
-    override suspend fun onInitialize() {
+    override suspend fun <T> onConnect(key: Connection.Key<T>, producer: Boolean) {
+        when (key) {
+            INPUT_AUDIO -> {
+                audioJob = scope.launch {
+                    startAudio()
+                }
+            }
+            INPUT_VIDEO -> {
+                videoJob = scope.launch {
+                    startVideo()
+                }
+            }
+        }
+    }
 
-        config(INPUT_VIDEO)?.let { config ->
+    override suspend fun <T> onDisconnect(key: Connection.Key<T>, producer: Boolean) {
+        when (key) {
+            INPUT_AUDIO -> {
+                audioJob?.join()
+            }
+            INPUT_VIDEO -> {
+                videoJob?.join()
+            }
+        }
+    }
 
-            val grayscale = config.format == GLES30.GL_RED
+    private suspend fun checkVideo(texture: Texture2d) {
+        if (needVideoConfig || previousFormat != texture.format) {
+            needVideoConfig = false
+            previousFormat = texture.format
+            val grayscale = texture.format == GLES30.GL_RED
 
             val vertexSource = assetManager.readTextAsset("shader/vertex_texture.vert")
             val fragmentSource = assetManager.readTextAsset("shader/copy.frag").let {
-                if (config.isOes) it.replace("//{EXT}", "#define EXT") else it
+                if (texture.oes) it.replace("//{EXT}", "#define EXT") else it
             }.let {
                 if (grayscale) it.replace("//{RED}", "#define RED") else it
             }
             glesManager.glContext {
                 mesh.initialize()
                 program.apply {
+                    release()
                     initialize(vertexSource, fragmentSource)
                     addUniform(
                         Uniform.Type.Mat4,
@@ -75,13 +107,17 @@ class EncoderNode(
                     )
                 }
             }
-            inputSize = config.size
-            surface = encoder.setVideo(inputSize, config.fps)
+
+            inputSize = Size(texture.width, texture.height)
+            surface = encoder.setVideo(inputSize, frameRate)
             updateWindowSurface()
         }
+    }
 
-        config(INPUT_AUDIO)?.let { config ->
-            encoder.setAudio(config.audioFormat)
+    private fun checkAudio(audioData: AudioData) {
+        if (needAudioConfig) {
+            needAudioConfig = false
+            encoder.setAudio(audioData.audioFormat)
         }
     }
 
@@ -102,6 +138,7 @@ class EncoderNode(
     private fun startRecording() {
         startTimeVideo = -1L
         startTimeAudio = -1L
+        Log.d(TAG, "startRecording ${properties[Rotation]}")
         encoder.startEncoding(properties[Rotation])
         val check = recording.getAndSet(RECORDING)
         if (check != START_RECORDING) {
@@ -118,6 +155,11 @@ class EncoderNode(
     }
 
     private suspend fun updateRecording() {
+        if (linked(INPUT_AUDIO) && needAudioConfig
+            || linked(INPUT_VIDEO) && needVideoConfig) {
+            Log.d(TAG, "not recording, waiting for init")
+            return
+        }
         val r = properties[Recording]
         if (r && recording.compareAndSet(NOT_RECORDING, START_RECORDING)) {
             startRecording()
@@ -126,76 +168,43 @@ class EncoderNode(
         }
     }
 
-    override suspend fun onStart() {
-        frameCount = 0
+    private suspend fun startVideo() {
+        val videoIn = channel(INPUT_VIDEO) ?: error("missing video input")
+        for (msg in videoIn) {
+            val data = msg.data
+            checkVideo(data)
+            val uniform = program.getUniform(Uniform.Type.Mat4, "texture_matrix0")
+            System.arraycopy(data.matrix, 0, uniform.data!!, 0, 16)
+            uniform.dirty = true
+            updateRecording()
 
-        val inputLinked = linked(INPUT_VIDEO)
-        val lutLinked = linked(INPUT_AUDIO)
-        if (!inputLinked && !lutLinked) {
-            Log.d(TAG, "no connection")
-            return
+            if (recording.get() == RECORDING) {
+                if (startTimeVideo == -1L) {
+                    startTimeVideo = msg.timestamp
+                }
+                executeGl(data, msg.timestamp - startTimeVideo)
+            }
+            msg.release()
         }
-        val running = AtomicInteger()
-        var copyMatrix = true
-        val videoIn = channel(INPUT_VIDEO)
-        val audioIn = channel(INPUT_AUDIO)
-        if (inputLinked) running.incrementAndGet()
-        if (lutLinked) running.incrementAndGet()
+    }
 
-        Log.d(TAG, "video $inputLinked $videoIn audio $lutLinked $audioIn running=${running}")
+    private suspend fun startAudio() {
+        val audioIn = channel(INPUT_AUDIO) ?: error("missing audio input")
+        for (msg in audioIn) {
+            val data = msg.data
 
-        if (videoIn != null)
-            videoJob = scope.launch {
-                do {
-                    val it = videoIn.receive()
-                    if (copyMatrix) {
-                        copyMatrix = false
-                        val uniform = program.getUniform(Uniform.Type.Mat4, "texture_matrix0")
-                        System.arraycopy(it.matrix, 0, uniform.data!!, 0, 16)
-                        uniform.dirty = true
-                    }
-                    updateRecording()
+            checkAudio(data)
 
-                    if (recording.get() == RECORDING && !it.eos) {
-                        if (startTimeVideo == -1L) {
-                            startTimeVideo = it.timestamp
-                        }
-                        executeGl(it.texture, it.timestamp - startTimeVideo)
-                    }
-                    it.release()
-                    if (it.eos) {
-                        val count = running.decrementAndGet()
-                        Log.d(TAG, "video eos $count")
-                    }
-                } while (!it.eos)
+            updateRecording()
+
+            if (recording.get() == RECORDING) {
+                if (startTimeAudio == -1L) {
+                    startTimeAudio = msg.timestamp
+                }
+                encoder.writeAudio(data.buffer, msg.timestamp - startTimeAudio)
             }
-
-        if (audioIn != null)
-            audioJob = scope.launch {
-                do {
-//                        Log.d(TAG, "audio 1")
-                    val it = audioIn.receive()
-
-//                        Log.d(TAG, "audio 2 ${it.inFlight}")
-                    updateRecording()
-
-                    if (recording.get() == RECORDING && !it.eos) {
-                        if (startTimeAudio == -1L) {
-                            startTimeAudio = it.timestamp
-                        }
-                        encoder.writeAudio(it.buffer, it.timestamp - startTimeAudio)
-                    }
-//                        Log.d(TAG, "audio 3")
-
-                    it.release()
-//                        Log.d(TAG, "audio 4")
-                    if (it.eos) {
-                        val count = running.decrementAndGet()
-                        Log.d(TAG, "audio eos $count")
-
-                    }
-                } while (!it.eos)
-            }
+            msg.release()
+        }
     }
 
     private suspend fun executeGl(texture: Texture2d, timestamp: Long) {
@@ -215,7 +224,7 @@ class EncoderNode(
         }
     }
 
-    override suspend fun onStop() {
+    private suspend fun onStop() {
         Log.d(TAG, "stopping")
 
         audioJob?.join()
@@ -241,14 +250,13 @@ class EncoderNode(
         }
     }
 
-
     companion object {
         const val TAG = "EncoderNode"
         const val NOT_RECORDING = 0
         const val START_RECORDING = 1
         const val STOP_RECORDING = 2
         const val RECORDING = 3
-        val INPUT_VIDEO = Connection.Key<VideoConfig, VideoEvent>("input_video")
-        val INPUT_AUDIO = Connection.Key<AudioConfig, AudioEvent>("input_audio")
+        val INPUT_VIDEO = Connection.Key<Texture2d>("input_video")
+        val INPUT_AUDIO = Connection.Key<AudioData>("input_audio")
     }
 }

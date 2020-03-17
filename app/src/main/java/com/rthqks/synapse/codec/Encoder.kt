@@ -33,7 +33,6 @@ class Encoder(
 
     private var size: Size = Size(0, 0)
     private var fps = 0
-    private var rotation = 0
 
     private var outputVideoFormat: MediaFormat? = null
     private var outputAudioFormat: MediaFormat? = null
@@ -49,15 +48,13 @@ class Encoder(
     private var running = 0
     private var currentFile: String? = null
     private var audioInputBuffers = Channel<Int>(20)
-    private var inputSurface: Surface? = null
+    private val inputSurface = MediaCodec.createPersistentInputSurface()
 
-    fun setVideo(size: Size, fps: Int, rotation: Int): Surface {
+    fun setVideo(size: Size, fps: Int): Surface {
         hasVideo = true
         this.size = size
         this.fps = fps
-        this.rotation = rotation
         videoEncoder = context.videoEncoder
-        inputSurface = MediaCodec.createPersistentInputSurface()
         configureVideo()
         return inputSurface!!
     }

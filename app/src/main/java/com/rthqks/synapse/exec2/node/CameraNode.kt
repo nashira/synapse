@@ -1,4 +1,4 @@
-package com.rthqks.synapse.exec2
+package com.rthqks.synapse.exec2.node
 
 import android.graphics.SurfaceTexture
 import android.opengl.GLES11Ext
@@ -10,6 +10,9 @@ import android.util.Size
 import android.view.Surface
 import com.rthqks.synapse.exec.CameraManager
 import com.rthqks.synapse.exec.ExecutionContext
+import com.rthqks.synapse.exec2.Connection
+import com.rthqks.synapse.exec2.Message
+import com.rthqks.synapse.exec2.NodeExecutor
 import com.rthqks.synapse.gl.Texture2d
 import com.rthqks.synapse.logic.*
 import kotlinx.coroutines.Job
@@ -49,7 +52,6 @@ class CameraNode(
     }
 
     override suspend fun <T> onConnect(key: Connection.Key<T>, producer: Boolean) {
-        Log.d(TAG, "onConnect ${key.id}")
         when (key) {
             OUTPUT -> if (startJob == null) {
                 startJob = scope.launch {
@@ -62,8 +64,9 @@ class CameraNode(
     }
 
     override suspend fun <T> onDisconnect(key: Connection.Key<T>, producer: Boolean) {
-        Log.d(TAG, "onDisconnect ${key.id} ${linked(OUTPUT)}")
-        if (key == OUTPUT && !linked(OUTPUT)) {
+        if (key == OUTPUT && !linked(
+                OUTPUT
+            )) {
             camera.stopRequest()
             startJob?.join()
             startJob = null
@@ -75,13 +78,10 @@ class CameraNode(
             outputTexture.initialize()
         }
 
-        outputTexture.width = size.width
-        outputTexture.height = size.height
 
-        outputSurfaceTexture = SurfaceTexture(outputTexture.id).also {
-            it.setDefaultBufferSize(size.width, size.height)
-            outputSurface = Surface(it)
-        }
+        outputSurfaceTexture = SurfaceTexture(outputTexture.id)
+        updateOutputSize()
+        outputSurface = Surface(outputSurfaceTexture)
 
         connection(OUTPUT)?.prime(outputTexture, outputTexture)
 
@@ -178,9 +178,7 @@ class CameraNode(
         when {
             reopenCamera -> {
                 updateCameraConfig()
-                outputSurfaceTexture?.setDefaultBufferSize(size.width, size.height)
-                outputTexture.width = size.width
-                outputTexture.height = size.height
+                updateOutputSize()
                 cameraConfig?.let {
                     camera.closeSession()
                     camera.close()
@@ -193,9 +191,7 @@ class CameraNode(
 
             restartSession -> {
                 updateCameraConfig()
-                outputSurfaceTexture?.setDefaultBufferSize(size.width, size.height)
-                outputTexture.width = size.width
-                outputTexture.height = size.height
+                updateOutputSize()
                 cameraConfig?.let {
                     camera.closeSession()
                     outputSurface?.let { surface -> camera.openSession(surface) }
@@ -212,6 +208,17 @@ class CameraNode(
         return false
     }
 
+    private fun updateOutputSize() {
+        outputSurfaceTexture?.setDefaultBufferSize(size.width, size.height)
+
+        val rotatedSize =
+            if (surfaceRotation == 90 || surfaceRotation == 270)
+                Size(size.height, size.width) else size
+
+        outputTexture.width = rotatedSize.width
+        outputTexture.height = rotatedSize.height
+    }
+
     override suspend fun onRelease() {
         Log.d(TAG, "onRelease")
         camera.closeSession()
@@ -223,8 +230,19 @@ class CameraNode(
         }
     }
 
+    suspend fun stopCamera() = await {
+        camera.closeSession()
+        camera.close()
+    }
+
+    suspend fun resumeCamera() = await {
+        camera.open(cameraId)
+        outputSurface?.let { camera.openSession(it) }
+    }
+
     companion object {
         const val TAG = "CameraNode2"
-        val OUTPUT = Connection.Key<Texture2d>("video_1")
+        val OUTPUT =
+            Connection.Key<Texture2d>("video_1")
     }
 }

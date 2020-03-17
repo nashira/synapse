@@ -1,9 +1,11 @@
-package com.rthqks.synapse.exec2
+package com.rthqks.synapse.exec2.node
 
 import android.opengl.GLES30.*
 import android.util.Log
 import android.util.Size
 import com.rthqks.synapse.exec.ExecutionContext
+import com.rthqks.synapse.exec2.Connection
+import com.rthqks.synapse.exec2.NodeExecutor
 import com.rthqks.synapse.gl.*
 import com.rthqks.synapse.logic.Properties
 import com.rthqks.synapse.logic.ScaleFactor
@@ -36,7 +38,6 @@ class GrayscaleNode(
     }
 
     override suspend fun <T> onConnect(key: Connection.Key<T>, producer: Boolean) {
-        Log.d(TAG, "onConnect ${key.id}")
         when (key) {
             INPUT -> connectInput()
             OUTPUT -> connectOutput()
@@ -60,7 +61,6 @@ class GrayscaleNode(
     }
 
     override suspend fun <T> onDisconnect(key: Connection.Key<T>, producer: Boolean) {
-        Log.d(TAG, "onDisconnect ${key.id}")
         when (key) {
             INPUT -> {
                 startJob?.join()
@@ -89,12 +89,14 @@ class GrayscaleNode(
             program.programId == 0 -> {
                 createProgram(texture)
                 size = Size(texture.width, texture.height)
+                Log.d(TAG, "size $size")
             }
             size.width != texture.width || size.height != texture.height -> {
                 glesManager.glContext {
                     texture1.initData(0, GL_R8, texture.width, texture.height, GL_RED, GL_UNSIGNED_BYTE)
                     texture2.initData(0, GL_R8, texture.width, texture.height, GL_RED, GL_UNSIGNED_BYTE)
                 }
+                Log.d(TAG, "size $size")
                 size = Size(texture.width, texture.height)
             }
         }
@@ -199,6 +201,7 @@ class GrayscaleNode(
     companion object {
         const val TAG = "GrayscaleNode"
         val INPUT = Connection.Key<Texture2d>("video_1")
-        val OUTPUT = Connection.Key<Texture2d>("video_2")
+        val OUTPUT =
+            Connection.Key<Texture2d>("video_2")
     }
 }

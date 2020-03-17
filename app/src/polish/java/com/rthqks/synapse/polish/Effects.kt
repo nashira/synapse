@@ -44,7 +44,7 @@ object Effects {
         Effect(it)
     }.apply {
         properties[AudioSource] = MediaRecorder.AudioSource.CAMCORDER
-        properties[Effect.Title] = "None"
+        properties[Effect.Title] = "Grayscale"
     }
 
     val timeWarp = Network(ID_TIME_WARP).apply {

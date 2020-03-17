@@ -3,6 +3,7 @@ package com.rthqks.synapse.exec2
 import android.util.Log
 import com.rthqks.synapse.exec.ExecutionContext
 import com.rthqks.synapse.exec.Executor
+import com.rthqks.synapse.exec2.node.*
 import com.rthqks.synapse.logic.Link
 import com.rthqks.synapse.logic.Network
 import com.rthqks.synapse.logic.Node
@@ -50,8 +51,6 @@ open class NetworkExecutor(context: ExecutionContext) : Executor(context) {
         val fromKey = Connection.Key<Any?>(link.fromPortId)
         val toKey = Connection.Key<Any?>(link.toPortId)
 
-//        val connectionKey = "${link.fromNodeId}:${link.fromPortId}"
-//        val connection = getConnection(connectionKey)
         Log.d(TAG, "add link $link")
 
         val channel = fromNode.getConsumer(fromKey).await()
@@ -59,9 +58,6 @@ open class NetworkExecutor(context: ExecutionContext) : Executor(context) {
 
         consume.await()
     }
-
-//    private fun getConnection(connectionKey: String): Connection<Event> =
-//        connections.getOrPut(connectionKey) { Connection(context) }
 
     suspend fun removeLink(link: Link) {
         val fromNode = nodes[link.fromNodeId] ?: error("missing node ${link.fromNodeId}")
@@ -119,11 +115,20 @@ open class NetworkExecutor(context: ExecutionContext) : Executor(context) {
 
     private fun Node.executor(): NodeExecutor {
         return when (type) {
-            NodeType.Camera -> CameraNode(context, properties)
-//            NodeType.Microphone -> AudioSourceNode(context, node.properties)
-            NodeType.Screen -> SurfaceViewNode(context, properties)
-            NodeType.GrayscaleFilter -> GrayscaleNode(context, properties)
-//            NodeType.MediaEncoder -> EncoderNode(context, node.properties)
+            NodeType.Camera -> CameraNode(
+                context,
+                properties
+            )
+            NodeType.Microphone -> AudioSourceNode(context, properties)
+            NodeType.Screen -> SurfaceViewNode(
+                context,
+                properties
+            )
+            NodeType.GrayscaleFilter -> GrayscaleNode(
+                context,
+                properties
+            )
+            NodeType.MediaEncoder -> EncoderNode(context, properties)
 //            NodeType.Properties,
 //            NodeType.Creation,
 //            NodeType.Connection -> error("not an executable node type: ${node.type}")
@@ -142,7 +147,8 @@ open class NetworkExecutor(context: ExecutionContext) : Executor(context) {
                     if (producer) {
                         jobs.getOrPut(key.id) {
                             scope.launch {
-                                val connection = connection(key) ?: error("missing connection $id ${key.id}")
+                                val connection =
+                                    connection(key) ?: error("missing connection $id ${key.id}")
                                 running[key.id] = true
                                 connection.prime(1 as T, 2 as T, 3 as T)
                                 val channel = channel(key)!!

@@ -1,4 +1,4 @@
-package com.rthqks.synapse.exec2
+package com.rthqks.synapse.exec2.node
 
 import android.opengl.GLES30
 import android.util.Log
@@ -7,6 +7,8 @@ import android.view.Surface
 import android.view.SurfaceHolder
 import android.view.SurfaceView
 import com.rthqks.synapse.exec.ExecutionContext
+import com.rthqks.synapse.exec2.Connection
+import com.rthqks.synapse.exec2.NodeExecutor
 import com.rthqks.synapse.gl.*
 import com.rthqks.synapse.logic.Properties
 import kotlinx.coroutines.Job

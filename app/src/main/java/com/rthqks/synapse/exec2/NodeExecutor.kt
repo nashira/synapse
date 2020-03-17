@@ -1,5 +1,6 @@
 package com.rthqks.synapse.exec2
 
+import android.util.Log
 import com.rthqks.synapse.exec.ExecutionContext
 import com.rthqks.synapse.exec.Executor
 import kotlinx.coroutines.channels.ReceiveChannel
@@ -19,37 +20,47 @@ abstract class NodeExecutor(
 
     suspend fun setup() = async(this::onSetup)
 
-    suspend fun <T> stopConsumer(key: Connection.Key<T>, channel: ReceiveChannel<Message<T>>) = async {
-        val con = connection(key)
-        val linked = con?.consumerCount ?: 0 > 1
-        setLinked(key, linked)
-        if (!linked) {
-            channels.remove(key)
+    suspend fun <T> stopConsumer(key: Connection.Key<T>, channel: ReceiveChannel<Message<T>>) =
+        async {
+            val con = connection(key)
+            val linked = con?.consumerCount ?: 0 > 1
+            setLinked(key, linked)
+            if (!linked) {
+                channels.remove(key)
+            }
+
+            Log.d(TAG, "onDisconnect ${key.id}")
+            onDisconnect(key, true)
+            con?.removeConsumer(channel)
         }
-        onDisconnect(key, true)
-        con?.removeConsumer(channel)
-    }
 
     suspend fun waitForConsumer(key: Connection.Key<*>) = async {
         channels.remove(key)
+        Log.d(TAG, "onDisconnect ${key.id}")
         onDisconnect(key, false)
     }
 
     override suspend fun release() {
-        exec { onRelease() }
+        exec {
+            Log.d(TAG, "onRelease")
+            onRelease()
+        }
         super.release()
     }
 
-    suspend fun <T> startConsumer(key: Connection.Key<T>, channel: ReceiveChannel<Message<T>>) = async {
-        channels[key] = channel
-        onConnect(key, false)
-    }
+    suspend fun <T> startConsumer(key: Connection.Key<T>, channel: ReceiveChannel<Message<T>>) =
+        async {
+            channels[key] = channel
+            Log.d(TAG, "onConnect ${key.id}")
+            onConnect(key, false)
+        }
 
     suspend fun <T> getConsumer(key: Connection.Key<T>) = async {
         val connection = connections.getOrPut(key) { Connection<T>() }
 
         channels[key] = connection.producer()
         val consumer = connection.consumer()
+        Log.d(TAG, "onConnect ${key.id}")
         onConnect(key, true)
         return@async consumer
     }

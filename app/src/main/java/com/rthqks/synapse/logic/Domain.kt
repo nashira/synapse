@@ -626,6 +626,20 @@ val Nodes = listOf(
         add(Port(Port.Type.Audio, EncoderNode.INPUT_AUDIO.id, "Audio", false))
         add(
             Property(
+                FrameRate,
+                ChoiceType(
+                    R.string.property_name_frame_rate,
+                    R.drawable.ic_speed,
+                    Choice(10, R.string.property_label_camera_fps_10),
+                    Choice(15, R.string.property_label_camera_fps_15),
+                    Choice(20, R.string.property_label_camera_fps_20),
+                    Choice(30, R.string.property_label_camera_fps_30),
+                    Choice(60, R.string.property_label_camera_fps_60)
+                ), 30, false
+            ), IntConverter
+        )
+        add(
+            Property(
                 Recording,
                 ToggleType(
                     R.string.property_name_recording,

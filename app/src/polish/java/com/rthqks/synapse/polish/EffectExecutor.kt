@@ -5,10 +5,9 @@ import com.rthqks.synapse.exec.ExecutionContext
 import com.rthqks.synapse.exec.node.AudioSourceNode
 import com.rthqks.synapse.exec.node.EncoderNode
 import com.rthqks.synapse.exec2.NetworkExecutor
-import com.rthqks.synapse.exec2.SurfaceViewNode
+import com.rthqks.synapse.exec2.node.SurfaceViewNode
 import com.rthqks.synapse.logic.Link
 import com.rthqks.synapse.logic.Node
-import com.rthqks.synapse.polish.Effect
 import kotlinx.coroutines.joinAll
 import kotlinx.coroutines.launch
 
@@ -19,7 +18,6 @@ class EffectExecutor(context: ExecutionContext) : NetworkExecutor(context) {
         if (network == null) {
             network = effect.network
             addAllNodes()
-            network?.getNode(Effect.ID_CAMERA)?.properties?.plusAssign(effect.properties)
             addAllLinks()
         } else {
             val old = network!!
