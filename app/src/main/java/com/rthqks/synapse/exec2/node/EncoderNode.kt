@@ -42,9 +42,10 @@ class EncoderNode(
 
     private var needAudioConfig = true
     private var needVideoConfig = true
-    private var previousFormat: Int = -1
+    private var previousFormat: Texture2d? = null
 
     override suspend fun onSetup() {
+        Log.d(TAG, "onSetup")
     }
 
     override suspend fun <T> onConnect(key: Connection.Key<T>, producer: Boolean) {
@@ -74,9 +75,13 @@ class EncoderNode(
     }
 
     private suspend fun checkVideo(texture: Texture2d) {
-        if (needVideoConfig || previousFormat != texture.format) {
+        if (previousFormat?.format != texture.format
+            || previousFormat?.oes != texture.oes) {
+            needVideoConfig = true
+        }
+        if (needVideoConfig) {
             needVideoConfig = false
-            previousFormat = texture.format
+            previousFormat = texture
             val grayscale = texture.format == GLES30.GL_RED
 
             val vertexSource = assetManager.readTextAsset("shader/vertex_texture.vert")
@@ -108,11 +113,14 @@ class EncoderNode(
                 }
             }
 
-            inputSize = Size(texture.width, texture.height)
+            val size = Size(texture.width, texture.height)
+
+//            if (!properties[Recording] && size != inputSize) {
             if (surface == null) {
-                surface = encoder.setVideo(inputSize, frameRate)
+                surface = encoder.setVideo(size, frameRate)
                 updateWindowSurface()
             }
+            inputSize = size
         }
     }
 

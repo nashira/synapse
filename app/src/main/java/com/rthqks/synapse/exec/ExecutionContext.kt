@@ -5,6 +5,7 @@ import android.media.MediaCodec
 import com.rthqks.synapse.assets.AssetManager
 import com.rthqks.synapse.assets.VideoStorage
 import com.rthqks.synapse.gl.GlesManager
+import com.rthqks.synapse.logic.Properties
 import kotlinx.coroutines.ExecutorCoroutineDispatcher
 import javax.inject.Inject
 import javax.inject.Named
@@ -19,6 +20,7 @@ class ExecutionContext @Inject constructor(
     @Named("video") val videoEncoder: MediaCodec,
     @Named("audio") val audioEncoder: MediaCodec
 ) {
+    val properties = Properties()
 
     suspend fun setup() {
         glesManager.glContext {

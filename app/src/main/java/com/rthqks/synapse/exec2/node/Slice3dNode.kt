@@ -145,7 +145,7 @@ class Slice3dNode(
             t3dEvent?.release()
             t3dEvent = msg
             checkConfig(msg.data)
-            debounceExecute()
+            execute()
         }
 
         t3dEvent?.let { Log.d(TAG, "got ${it.count} lut events") }
@@ -155,6 +155,7 @@ class Slice3dNode(
 
     private suspend fun onStop() {
         startJob?.join()
+        startJob = null
     }
 
     override suspend fun onRelease() {

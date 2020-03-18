@@ -1,11 +1,14 @@
 package com.rthqks.synapse.polish
 
+import android.hardware.camera2.CameraCharacteristics
 import android.os.SystemClock
 import android.util.Log
+import android.util.Size
 import android.view.SurfaceView
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.rthqks.synapse.R
 import com.rthqks.synapse.exec.ExecutionContext
 import com.rthqks.synapse.exec2.node.CameraNode
 import com.rthqks.synapse.logic.*
@@ -24,11 +27,124 @@ class PolishViewModel @Inject constructor(
     private var recordingStart = 0L
     private var svSetup = false
     private var stopped = false
-    val properties: Properties? get() = currentEffect?.properties
-
     private val effectExecutor = EffectExecutor(context)
 
+    val properties = context.properties
+
     init {
+        context.properties.apply {
+            put(
+                Property(
+                    CameraFacing,
+                    ChoiceType(
+                        R.string.property_name_camera_device,
+                        R.drawable.ic_switch_camera,
+                        Choice(
+                            CameraCharacteristics.LENS_FACING_BACK,
+                            R.string.property_label_camera_lens_facing_back
+                        ),
+                        Choice(
+                            CameraCharacteristics.LENS_FACING_FRONT,
+                            R.string.property_label_camera_lens_facing_front
+                        )
+                    ), CameraCharacteristics.LENS_FACING_BACK, true
+                ), IntConverter
+            )
+            put(
+                Property(
+                    FrameRate,
+                    ChoiceType(
+                        R.string.property_name_frame_rate,
+                        R.drawable.ic_speed,
+                        Choice(
+                            10,
+                            R.string.property_label_camera_fps_10
+                        ),
+                        Choice(
+                            15,
+                            R.string.property_label_camera_fps_15
+                        ),
+                        Choice(
+                            20,
+                            R.string.property_label_camera_fps_20
+                        ),
+                        Choice(
+                            30,
+                            R.string.property_label_camera_fps_30
+                        ),
+                        Choice(
+                            60,
+                            R.string.property_label_camera_fps_60
+                        )
+                    ), 30, true
+                ), IntConverter
+            )
+            put(
+                Property(
+                    VideoSize,
+                    ChoiceType(
+                        R.string.property_name_camera_capture_size,
+                        R.drawable.ic_photo_size_select,
+                        Choice(
+                            Size(3840, 2160),
+                            R.string.property_label_camera_capture_size_2160
+                        ),
+                        Choice(
+                            Size(1920, 1080),
+                            R.string.property_label_camera_capture_size_1080
+                        ),
+                        Choice(
+                            Size(1280, 720),
+                            R.string.property_label_camera_capture_size_720
+                        ),
+                        Choice(
+                            Size(640, 480),
+                            R.string.property_label_camera_capture_size_480
+                        )
+                    ), Size(1280, 720), true
+                ), SizeConverter
+            )
+            put(
+                Property(
+                    Stabilize,
+                    ToggleType(
+                        R.string.property_name_camera_stabilize, R.drawable.ic_texture,
+                        R.string.property_label_on,
+                        R.string.property_label_off
+                    ), value = true, requiresRestart = true
+                ), BooleanConverter
+            )
+            put(
+                Property(
+                    Recording,
+                    ToggleType(
+                        R.string.property_name_recording,
+                        R.drawable.ic_movie,
+                        R.string.property_name_recording,
+                        R.string.property_name_recording
+                    ), false
+                ), BooleanConverter
+            )
+            put(
+                Property(
+                    Rotation,
+                    ChoiceType(
+                        R.string.property_name_rotation,
+                        R.drawable.ic_rotate_left,
+                        Choice(0, R.string.property_label_rotation_0),
+                        Choice(90, R.string.property_label_rotation_90),
+                        Choice(270, R.string.property_label_rotation_270),
+                        Choice(180, R.string.property_label_rotation_180)
+                    ), 0
+                ), IntConverter
+            )
+        }
+
+        listOf(Effects.none, Effects.grayscale, Effects.timeWarp).forEach { e ->
+            e.network.getNodes().forEach {
+                it.properties += properties
+            }
+        }
         viewModelScope.launch {
 //            executor.initialize(false)
 //            executor.await()
@@ -45,7 +161,17 @@ class PolishViewModel @Inject constructor(
     }
 
     fun flipCamera() {
-        val facing = currentEffect?.flipCamera()
+        val facing = currentEffect?.let {
+            val facing = when (properties[CameraFacing]) {
+                CameraCharacteristics.LENS_FACING_BACK ->
+                    CameraCharacteristics.LENS_FACING_FRONT
+                CameraCharacteristics.LENS_FACING_FRONT ->
+                    CameraCharacteristics.LENS_FACING_BACK
+                else -> CameraCharacteristics.LENS_FACING_BACK
+            }
+            properties[CameraFacing] = facing
+            facing
+        }
         val string = if (facing == 0) "front" else "back"
         analytics.logEvent(Analytics.Event.EditSetting(CameraFacing.name, string))
     }
@@ -68,9 +194,7 @@ class PolishViewModel @Inject constructor(
         val effectName = currentEffect?.title ?: "unknown"
         analytics.logEvent(Analytics.Event.RecordStart(effectName))
         recordingStart = SystemClock.elapsedRealtime()
-        network?.apply {
-            getNode(4)?.properties?.set(Recording, true)
-        }
+        properties[Recording] = true
     }
 
     fun stopRecording() {
@@ -81,9 +205,7 @@ class PolishViewModel @Inject constructor(
                 SystemClock.elapsedRealtime() - recordingStart
             )
         )
-        network?.apply {
-            getNode(4)?.properties?.set(Recording, false)
-        }
+        properties[Recording] = false
     }
 
     fun <T> editProperty(
@@ -92,18 +214,13 @@ class PolishViewModel @Inject constructor(
         restart: Boolean = false,
         recreate: Boolean = false
     ) {
-        val properties = currentEffect?.properties ?: return
         analytics.logEvent(Analytics.Event.EditSetting(key.name, value.toString()))
         properties[key] = value
         Log.d(TAG, "${key.name} = $value")
     }
 
     fun setEffect(effect: Effect): Boolean {
-        currentEffect?.let { effect.properties += it.properties }
         currentEffect = effect
-
-        effect.network.getNode(Effect.ID_CAMERA)?.properties?.plusAssign(effect.properties)
-        effect.network.getNode(Effect.ID_ENCODER)?.properties?.plusAssign(effect.properties)
 
         analytics.logEvent(Analytics.Event.SetEffect(effect.title))
         recreateNetwork(effect)
@@ -138,10 +255,7 @@ class PolishViewModel @Inject constructor(
     }
 
     fun setDeviceOrientation(orientation: Int) {
-        currentEffect?.properties?.set(Rotation, orientation)
-        network?.apply {
-            getNode(Effect.ID_ENCODER)?.properties?.set(Rotation, orientation)
-        }
+        properties[Rotation] = orientation
     }
 
 

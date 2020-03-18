@@ -32,7 +32,7 @@ class Connection<T>(
         message.count = ++messageCount
         val consumers = consumers
         if (consumers.isEmpty()) {
-            Log.d(TAG, "consumers.isEmpty")
+            Log.e(TAG, "consumers.isEmpty")
             producer.send(message)
         } else {
             message.consumers.set(consumers.size)

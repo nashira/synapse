@@ -65,10 +65,9 @@ class CameraNode(
     }
 
     override suspend fun <T> onDisconnect(key: Connection.Key<T>, producer: Boolean) {
-        if (key == OUTPUT && !linked(
-                OUTPUT
-            )) {
+        if (key == OUTPUT && !linked(OUTPUT)) {
             camera.stopRequest()
+            outputSurfaceTexture?.setOnFrameAvailableListener(null)
             startJob?.join()
             startJob = null
         }
