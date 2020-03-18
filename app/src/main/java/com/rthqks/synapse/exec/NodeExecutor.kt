@@ -5,7 +5,6 @@ import com.rthqks.synapse.exec.link.Connection
 import com.rthqks.synapse.exec.link.Event
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Deferred
-import kotlinx.coroutines.async
 import kotlinx.coroutines.channels.ReceiveChannel
 
 abstract class NodeExecutor(

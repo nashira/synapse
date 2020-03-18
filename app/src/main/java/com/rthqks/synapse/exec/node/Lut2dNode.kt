@@ -10,7 +10,10 @@ import com.rthqks.synapse.gl.*
 import com.rthqks.synapse.logic.FrameRate
 import com.rthqks.synapse.logic.Properties
 import com.rthqks.synapse.logic.VideoSize
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.selects.whileSelect
 import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.math.max

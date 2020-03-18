@@ -9,17 +9,14 @@ import android.opengl.Matrix
 import android.util.Log
 import android.util.Size
 import android.view.Surface
-import com.rthqks.synapse.exec.CameraManager
 import com.rthqks.synapse.exec.ExecutionContext
 import com.rthqks.synapse.exec.NodeExecutor
 import com.rthqks.synapse.exec.link.*
 import com.rthqks.synapse.gl.Texture2d
 import com.rthqks.synapse.logic.*
 import kotlinx.coroutines.Job
-import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.ReceiveChannel
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.runBlocking
 
 class CameraNode(
     context: ExecutionContext,

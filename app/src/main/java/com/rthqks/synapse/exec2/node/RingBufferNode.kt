@@ -1,7 +1,6 @@
 package com.rthqks.synapse.exec2.node
 
 import android.opengl.GLES30
-import android.opengl.Matrix
 import android.util.Log
 import android.util.Size
 import com.rthqks.synapse.exec.ExecutionContext

@@ -13,7 +13,6 @@ import com.rthqks.synapse.logic.Properties
 import com.rthqks.synapse.logic.VideoSize
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
-import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.math.max
 
 class Lut3dNode(
@@ -39,11 +38,6 @@ class Lut3dNode(
     private var inputEvent: Message<Texture2d>? = null
     private var lutEvent: Message<Texture3d>? = null
     private var matrixEvent: Message<FloatArray>? = null
-
-    private val debounce = AtomicBoolean()
-    private var frameCount = 0
-    private var lastExecutionTime = 0L
-
 
     override suspend fun onSetup() {
     }

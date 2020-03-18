@@ -2,18 +2,13 @@ package com.rthqks.synapse
 
 import com.nhaarman.mockitokotlin2.doReturn
 import com.nhaarman.mockitokotlin2.mock
-import com.nhaarman.mockitokotlin2.whenever
 import com.rthqks.synapse.exec.ExecutionContext
-import com.rthqks.synapse.exec.link.*
 import com.rthqks.synapse.exec2.NetworkExecutor
-import com.rthqks.synapse.logic.Network
 import com.rthqks.synapse.polish.Effects
-import kotlinx.coroutines.*
-import org.junit.Assert.assertEquals
-import org.junit.Assert.assertNotEquals
+import kotlinx.coroutines.asCoroutineDispatcher
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.runBlocking
 import org.junit.Test
-import org.junit.runner.RunWith
-import org.robolectric.RobolectricTestRunner
 import java.util.concurrent.Executors
 
 /**
