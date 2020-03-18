@@ -1,7 +1,6 @@
 package com.rthqks.synapse.exec2.node
 
 import android.opengl.GLES30
-import android.os.SystemClock
 import android.util.Log
 import android.util.Size
 import com.rthqks.synapse.exec.ExecutionContext
@@ -12,11 +11,8 @@ import com.rthqks.synapse.gl.*
 import com.rthqks.synapse.logic.FrameRate
 import com.rthqks.synapse.logic.Properties
 import com.rthqks.synapse.logic.VideoSize
-import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.selects.whileSelect
 import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.math.max
 
@@ -179,7 +175,8 @@ class Lut3dNode(
             inputEvent?.release()
             inputEvent = msg
             checkConfig()
-            debounceExecute()
+            execute()
+//            debounceExecute()
         }
         inputEvent?.let { Log.d(TAG, "got ${it.count} input events") }
         inputEvent?.release()
@@ -192,7 +189,7 @@ class Lut3dNode(
             lutEvent?.release()
             lutEvent = msg
             checkConfig()
-            debounceExecute()
+//            debounceExecute()
         }
         lutEvent?.let { Log.d(TAG, "got ${it.count} lut events") }
         lutEvent?.release()
@@ -204,7 +201,7 @@ class Lut3dNode(
         for (msg in channel) {
             matrixEvent?.release()
             matrixEvent = msg
-            debounceExecute()
+//            debounceExecute()
         }
         matrixEvent?.let { Log.d(TAG, "got ${it.count} matrix events") }
         matrixEvent?.release()
@@ -262,22 +259,6 @@ class Lut3dNode(
         outEvent.let {
             it.timestamp = timestamp
             it.queue()
-        }
-    }
-
-    private suspend fun debounceExecute() {
-        if (!debounce.getAndSet(true)) {
-            scope.launch {
-                while (debounce.getAndSet(false)) {
-                    val delay = max(
-                        0,
-                        frameDuration - (SystemClock.elapsedRealtime() - lastExecutionTime)
-                    )
-                    delay(delay)
-                    lastExecutionTime = SystemClock.elapsedRealtime()
-                    execute()
-                }
-            }
         }
     }
 

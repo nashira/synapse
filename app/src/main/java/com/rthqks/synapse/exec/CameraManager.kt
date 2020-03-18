@@ -165,6 +165,8 @@ class Camera(
     suspend fun close() {
         Log.d(TAG, "close")
         camera?.close()
+        camera = null
+        requestBuilder = null
         closeDeferred?.await()
         closeDeferred = null
     }
@@ -183,6 +185,7 @@ class Camera(
     suspend fun closeSession() {
         Log.d(TAG, "closeSession")
         session?.close()
+        session = null
         sessionClosedDeferred?.await()
         sessionClosedDeferred = null
     }
