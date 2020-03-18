@@ -132,6 +132,7 @@ open class NetworkExecutor(context: ExecutionContext) : Executor(context) {
             NodeType.RingBuffer -> RingBufferNode(context, properties)
             NodeType.Slice3d -> Slice3dNode(context, properties)
             NodeType.CubeImport -> CubeImportNode(context, properties)
+            NodeType.BCubeImport -> BCubeImportNode(context, properties)
             NodeType.Lut3d -> Lut3dNode(context, properties)
             NodeType.RotateMatrix -> RotateMatrixNode(context, properties)
 //            NodeType.Properties,
@@ -141,61 +142,22 @@ open class NetworkExecutor(context: ExecutionContext) : Executor(context) {
                 private val jobs = ConcurrentHashMap<String, Job>()
                 private val running = ConcurrentHashMap<String, Boolean>()
                 override suspend fun onSetup() {
-                    Log.d(TAG, "onSetup $id")
+                    error("check yo nodes")
                 }
 
                 override suspend fun <T> onConnect(
                     key: Connection.Key<T>,
                     producer: Boolean
                 ) {
-                    Log.d(TAG, "onConnect $id ${key.id}")
-                    if (producer) {
-                        jobs.getOrPut(key.id) {
-                            scope.launch {
-                                val connection =
-                                    connection(key) ?: error("missing connection $id ${key.id}")
-                                running[key.id] = true
-                                connection.prime(1 as T, 2 as T, 3 as T)
-                                val channel = channel(key)!!
-                                while (running[key.id] == true) {
-                                    val event = channel.receive()
-                                    event.queue()
-//                                    Log.d(TAG, "sending $id ${key.id} ${event.count}")
-                                    delay(500L + 5 * id)
-                                }
-                            }
-                        }
-                    } else {
-                        jobs.getOrPut(key.id) {
-                            scope.launch {
-                                val channel = channel(key)!!
-                                for (event in channel) {
-//                                    Log.d(TAG, "receiving $id ${key.id} ${event.count}")
-                                    event.release()
-                                }
-                            }
-                        }
-                    }
                 }
 
                 override suspend fun <T> onDisconnect(
                     key: Connection.Key<T>,
                     producer: Boolean
                 ) {
-                    Log.d(TAG, "onDisconnect $id ${key.id}")
-
-                    if (producer) {
-                        if (!linked(key)) {
-                            running[key.id] = false
-                            jobs.remove(key.id)?.cancelAndJoin()
-                        }
-                    } else {
-                        jobs.remove(key.id)?.join()
-                    }
                 }
 
                 override suspend fun onRelease() {
-                    Log.d(TAG, "onRelease $id")
                 }
             }
         }

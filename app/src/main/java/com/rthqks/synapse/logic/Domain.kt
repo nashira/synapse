@@ -7,6 +7,7 @@ import android.net.Uri
 import android.util.Size
 import com.rthqks.synapse.R
 import com.rthqks.synapse.exec.node.*
+import com.rthqks.synapse.exec2.node.BCubeImportNode
 import com.rthqks.synapse.logic.PropertyType.Companion.RangeType
 
 val AudioSampleRate = Property.Key<Int>("audio_sample_rate")
@@ -203,6 +204,16 @@ val Nodes = listOf(
                 MediaUri,
                 UriType(R.string.property_name_uri, R.drawable.ic_image, "*/*"),
                 Uri.parse("assets:///cube/invert.cube"), true
+            ), UriConverter
+        )
+    },
+    Node(NodeType.BCubeImport).apply {
+        add(Port(Port.Type.Texture3D, BCubeImportNode.OUTPUT.id, "BLUT", true))
+        add(
+            Property(
+                MediaUri,
+                UriType(R.string.property_name_uri, R.drawable.ic_image, "*/*"),
+                Uri.parse("assets:///cube/invert.bcube"), true
             ), UriConverter
         )
     },
@@ -697,6 +708,7 @@ val NodeTypes = listOf(
     NodeType.BlurFilter,
     NodeType.Image,
     NodeType.CubeImport,
+    NodeType.BCubeImport,
     NodeType.AudioFile,
     NodeType.Lut2d,
     NodeType.Lut3d,

@@ -2,7 +2,7 @@ package com.rthqks.synapse.polish
 
 import android.media.MediaRecorder
 import android.net.Uri
-import com.rthqks.synapse.exec.node.*
+import com.rthqks.synapse.exec2.node.*
 import com.rthqks.synapse.logic.*
 
 
@@ -28,23 +28,27 @@ object Effects {
         properties[Effect.Title] = "None"
     }
 
-    val grayscale = Network(4).apply {
+    val lut = Network(4).apply {
         val camera = addNode(NewNode(NodeType.Camera, Effect.ID_CAMERA))
         val microphone = addNode(NewNode(NodeType.Microphone, Effect.ID_MIC))
         val screen = addNode(NewNode(NodeType.Screen, Effect.ID_SURFACE_VIEW))
         val encoder = addNode(NewNode(NodeType.MediaEncoder, Effect.ID_ENCODER))
-        val grayscale = addNode(NewNode(NodeType.GrayscaleFilter))
+        val cube = addNode(NewNode(NodeType.BCubeImport, Effect.ID_LUT_IMPORT))
+        val lut = addNode(NewNode(NodeType.Lut3d))
 
-        addLinkNoCompute(Link(camera.id, CameraNode.OUTPUT.id, grayscale.id, GrayscaleNode.INPUT.id))
-        addLinkNoCompute(Link(grayscale.id, GrayscaleNode.OUTPUT.id, screen.id, SurfaceViewNode.INPUT.id))
-        addLinkNoCompute(Link(grayscale.id, GrayscaleNode.OUTPUT.id, encoder.id, EncoderNode.INPUT_VIDEO.id))
+        cube.properties[MediaUri] = Uri.parse("assets:///cube/chemical.bcube")
+
+        addLinkNoCompute(Link(camera.id, CameraNode.OUTPUT.id, lut.id, Lut3dNode.INPUT.id))
+        addLinkNoCompute(Link(lut.id, Lut3dNode.OUTPUT.id, screen.id, SurfaceViewNode.INPUT.id))
+        addLinkNoCompute(Link(lut.id, Lut3dNode.OUTPUT.id, encoder.id, EncoderNode.INPUT_VIDEO.id))
+        addLinkNoCompute(Link(cube.id, BCubeImportNode.OUTPUT.id, lut.id, Lut3dNode.INPUT_LUT.id))
         addLinkNoCompute(Link(microphone.id, AudioSourceNode.OUTPUT.id, encoder.id, EncoderNode.INPUT_AUDIO.id))
         computeComponents()
     }.let {
         Effect(it)
     }.apply {
         properties[AudioSource] = MediaRecorder.AudioSource.CAMCORDER
-        properties[Effect.Title] = "Grayscale"
+        properties[Effect.Title] = "LUT"
     }
 
     val timeWarp = Network(ID_TIME_WARP).apply {
@@ -78,15 +82,15 @@ object Effects {
         val encoder = addNode(NewNode(NodeType.MediaEncoder, Effect.ID_ENCODER))
 
         val lut = addNode(NewNode(NodeType.Lut3d))
-        val cube = addNode(NewNode(NodeType.CubeImport))
+        val cube = addNode(NewNode(NodeType.BCubeImport))
         val rotate = addNode(NewNode(NodeType.RotateMatrix))
 
         microphone.properties[AudioSource] = MediaRecorder.AudioSource.CAMCORDER
-        cube.properties[MediaUri] = Uri.parse("assets:///cube/identity.cube")
+        cube.properties[MediaUri] = Uri.parse("assets:///cube/identity.bcube")
 
         addLinkNoCompute(Link(camera.id, CameraNode.OUTPUT.id, lut.id, Lut3dNode.INPUT.id))
         addLinkNoCompute(Link(rotate.id, RotateMatrixNode.OUTPUT.id, lut.id, Lut3dNode.LUT_MATRIX.id))
-        addLinkNoCompute(Link(cube.id, CubeImportNode.OUTPUT.id, lut.id, Lut3dNode.INPUT_LUT.id))
+        addLinkNoCompute(Link(cube.id, BCubeImportNode.OUTPUT.id, lut.id, Lut3dNode.INPUT_LUT.id))
 
         addLinkNoCompute(Link(lut.id, Lut3dNode.OUTPUT.id, screen.id, SurfaceViewNode.INPUT.id))
         addLinkNoCompute(Link(lut.id, Lut3dNode.OUTPUT.id, encoder.id, EncoderNode.INPUT_VIDEO.id))

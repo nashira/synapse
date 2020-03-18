@@ -25,6 +25,7 @@ class Effect(
         const val ID_MIC = 2
         const val ID_SURFACE_VIEW = 3
         const val ID_ENCODER = 4
+        const val ID_LUT_IMPORT = 5
         val Title = Property.Key<String>("name")
     }
 }

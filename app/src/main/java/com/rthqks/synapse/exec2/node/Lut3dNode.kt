@@ -141,6 +141,16 @@ class Lut3dNode(
                     "lut_texture",
                     LUT_TEXTURE_LOCATION
                 )
+                addUniform(
+                    Uniform.Type.Float,
+                    "lut_offset",
+                    0.5f / lutEvent.data.width
+                )
+                addUniform(
+                    Uniform.Type.Float,
+                    "lut_scale",
+                    (lutEvent.data.width - 1f) / lutEvent.data.width
+                )
             }
         }
     }

@@ -140,7 +140,7 @@ class PolishViewModel @Inject constructor(
             )
         }
 
-        listOf(Effects.none, Effects.grayscale, Effects.timeWarp).forEach { e ->
+        listOf(Effects.none, Effects.lut, Effects.timeWarp, Effects.rotoHue).forEach { e ->
             e.network.getNodes().forEach {
                 it.properties += properties
             }

@@ -142,6 +142,13 @@ sealed class NodeType(
         FLAG_PRODUCER
     )
 
+    object BCubeImport : NodeType(
+        "bcube_import",
+        R.string.name_node_type_bcube_importer,
+        R.drawable.ic_3d_rotation,
+        FLAG_PRODUCER
+    )
+
     object CropResize : NodeType(
         "crop_resize",
         R.string.name_node_type_crop_resize,
