@@ -7,7 +7,7 @@ import com.rthqks.synapse.exec.ExecutionContext
 import com.rthqks.synapse.exec2.Connection
 import com.rthqks.synapse.exec2.NodeExecutor
 import com.rthqks.synapse.gl.Texture3d
-import com.rthqks.synapse.logic.MediaUri
+import com.rthqks.synapse.logic.LutUri
 import com.rthqks.synapse.logic.Properties
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -24,7 +24,7 @@ class CubeImportNode(
     private var startJob: Job? = null
     private var needsPriming = true
 
-    private val cubeUri: Uri get() = properties[MediaUri]
+    private val cubeUri: Uri get() = properties[LutUri]
     private var size = Triple(0, 0, 0)
 
     private var texture: Texture3d? = null

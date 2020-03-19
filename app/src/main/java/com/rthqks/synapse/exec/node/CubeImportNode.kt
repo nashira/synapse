@@ -7,7 +7,7 @@ import com.rthqks.synapse.exec.ExecutionContext
 import com.rthqks.synapse.exec.NodeExecutor
 import com.rthqks.synapse.exec.link.*
 import com.rthqks.synapse.gl.Texture3d
-import com.rthqks.synapse.logic.MediaUri
+import com.rthqks.synapse.logic.LutUri
 import com.rthqks.synapse.logic.Properties
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
@@ -21,7 +21,7 @@ class CubeImportNode(
     private val glesManager = context.glesManager
 
     private var startJob: Job? = null
-    private val cubeUri: Uri get() = properties[MediaUri]
+    private val cubeUri: Uri get() = properties[LutUri]
     private var size = Triple(0, 0, 0)
     private var frameCount = 0
 

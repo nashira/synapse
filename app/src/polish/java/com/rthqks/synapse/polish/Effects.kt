@@ -16,6 +16,7 @@ object Effects {
         val microphone = addNode(NewNode(NodeType.Microphone, Effect.ID_MIC))
         val screen = addNode(NewNode(NodeType.Screen, Effect.ID_SURFACE_VIEW))
         val encoder = addNode(NewNode(NodeType.MediaEncoder, Effect.ID_ENCODER))
+        microphone.properties[AudioSource] = MediaRecorder.AudioSource.CAMCORDER
 
         addLinkNoCompute(Link(camera.id, CameraNode.OUTPUT.id, screen.id, SurfaceViewNode.INPUT.id))
         addLinkNoCompute(Link(camera.id, CameraNode.OUTPUT.id, encoder.id, EncoderNode.INPUT_VIDEO.id))
@@ -24,7 +25,6 @@ object Effects {
     }.let {
         Effect(it)
     }.apply {
-        properties[AudioSource] = MediaRecorder.AudioSource.CAMCORDER
         properties[Effect.Title] = "None"
     }
 
@@ -36,7 +36,8 @@ object Effects {
         val cube = addNode(NewNode(NodeType.BCubeImport, Effect.ID_LUT_IMPORT))
         val lut = addNode(NewNode(NodeType.Lut3d))
 
-        cube.properties[MediaUri] = Uri.parse("assets:///cube/chemical.bcube")
+        microphone.properties[AudioSource] = MediaRecorder.AudioSource.CAMCORDER
+        cube.properties[LutUri] = Uri.parse("assets:///cube/chemical.bcube")
 
         addLinkNoCompute(Link(camera.id, CameraNode.OUTPUT.id, lut.id, Lut3dNode.INPUT.id))
         addLinkNoCompute(Link(lut.id, Lut3dNode.OUTPUT.id, screen.id, SurfaceViewNode.INPUT.id))
@@ -47,7 +48,6 @@ object Effects {
     }.let {
         Effect(it)
     }.apply {
-        properties[AudioSource] = MediaRecorder.AudioSource.CAMCORDER
         properties[Effect.Title] = "LUT"
     }
 
@@ -56,9 +56,10 @@ object Effects {
         val microphone = addNode(NewNode(NodeType.Microphone, Effect.ID_MIC))
         val screen = addNode(NewNode(NodeType.Screen, Effect.ID_SURFACE_VIEW))
         val encoder = addNode(NewNode(NodeType.MediaEncoder, Effect.ID_ENCODER))
-
         val ringBuffer = addNode(NewNode(NodeType.RingBuffer))
         val slice = addNode(NewNode(NodeType.Slice3d))
+
+        microphone.properties[AudioSource] = MediaRecorder.AudioSource.CAMCORDER
 
         addLinkNoCompute(Link(camera.id, CameraNode.OUTPUT.id, ringBuffer.id, RingBufferNode.INPUT.id))
         addLinkNoCompute(Link(ringBuffer.id, RingBufferNode.OUTPUT.id, slice.id, Slice3dNode.INPUT_3D.id))
@@ -69,9 +70,7 @@ object Effects {
         ringBuffer.properties[HistorySize] = 30
     }.let {
         Effect(it).apply {
-            properties[AudioSource] = MediaRecorder.AudioSource.CAMCORDER
             properties[Effect.Title] = "Time Warp"
-//            properties[HistorySize] = 30
         }
     }
 
@@ -86,7 +85,7 @@ object Effects {
         val rotate = addNode(NewNode(NodeType.RotateMatrix))
 
         microphone.properties[AudioSource] = MediaRecorder.AudioSource.CAMCORDER
-        cube.properties[MediaUri] = Uri.parse("assets:///cube/identity.bcube")
+        cube.properties[LutUri] = Uri.parse("assets:///cube/identity.bcube")
 
         addLinkNoCompute(Link(camera.id, CameraNode.OUTPUT.id, lut.id, Lut3dNode.INPUT.id))
         addLinkNoCompute(Link(rotate.id, RotateMatrixNode.OUTPUT.id, lut.id, Lut3dNode.LUT_MATRIX.id))
@@ -99,7 +98,6 @@ object Effects {
     }.let {
         Effect(it)
     }.apply {
-        properties[AudioSource] = MediaRecorder.AudioSource.CAMCORDER
         properties[Effect.Title] = "Roto-Hue"
     }
 }

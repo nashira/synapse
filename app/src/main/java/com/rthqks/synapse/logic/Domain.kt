@@ -26,6 +26,7 @@ val ScaleFactor = Property.Key<Int>("scale_factor")
 val AccumulateFactor = Property.Key<Float>("accumulate_factor")
 val MultiplyFactor = Property.Key<Float>("multiply_factor")
 val MediaUri = Property.Key<Uri>("media_uri")
+val LutUri = Property.Key<Uri>("lut_uri")
 val CropToFit = Property.Key<Boolean>("crop_to_fit")
 val NetworkName = Property.Key<String>("network_name")
 val NumAgents = Property.Key<Int>("num_agents")
@@ -201,7 +202,7 @@ val Nodes = listOf(
         add(Port(Port.Type.Texture3D, CubeImportNode.OUTPUT.id, "LUT", true))
         add(
             Property(
-                MediaUri,
+                LutUri,
                 UriType(R.string.property_name_uri, R.drawable.ic_image, "*/*"),
                 Uri.parse("assets:///cube/invert.cube"), true
             ), UriConverter
@@ -211,7 +212,7 @@ val Nodes = listOf(
         add(Port(Port.Type.Texture3D, BCubeImportNode.OUTPUT.id, "BLUT", true))
         add(
             Property(
-                MediaUri,
+                LutUri,
                 UriType(R.string.property_name_uri, R.drawable.ic_image, "*/*"),
                 Uri.parse("assets:///cube/invert.bcube"), true
             ), UriConverter

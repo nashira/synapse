@@ -1,6 +1,7 @@
 package com.rthqks.synapse.polish
 
 import android.hardware.camera2.CameraCharacteristics
+import android.net.Uri
 import android.os.SystemClock
 import android.util.Log
 import android.util.Size
@@ -10,6 +11,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.rthqks.synapse.R
 import com.rthqks.synapse.exec.ExecutionContext
+import com.rthqks.synapse.exec2.node.BCubeImportNode
 import com.rthqks.synapse.exec2.node.CameraNode
 import com.rthqks.synapse.logic.*
 import com.rthqks.synapse.ops.Analytics
@@ -28,6 +30,7 @@ class PolishViewModel @Inject constructor(
     private var svSetup = false
     private var stopped = false
     private val effectExecutor = EffectExecutor(context)
+    private var lutIndex = 0
 
     val properties = context.properties
 
@@ -138,6 +141,13 @@ class PolishViewModel @Inject constructor(
                     ), 0
                 ), IntConverter
             )
+//            put(
+//                Property(
+//                    LutUri,
+//                    UriType(R.string.property_name_uri, R.drawable.ic_image, "*/*"),
+//                    Uri.parse("assets:///cube/identity.bcube"), true
+//                ), UriConverter
+//            )
         }
 
         listOf(Effects.none, Effects.lut, Effects.timeWarp, Effects.rotoHue).forEach { e ->
@@ -256,6 +266,18 @@ class PolishViewModel @Inject constructor(
 
     fun setDeviceOrientation(orientation: Int) {
         properties[Rotation] = orientation
+    }
+
+    fun testLuts() {
+        viewModelScope.launch {
+            lutIndex = (lutIndex + 1) % Effect.LUTS.size
+            val uri = Uri.parse(Effect.LUTS[lutIndex])
+            network?.getNode(Effect.ID_LUT_IMPORT)?.properties?.set(LutUri, uri)
+            (effectExecutor.getNode(Effect.ID_LUT_IMPORT) as? BCubeImportNode)?.let {
+                it.loadCubeFile()
+                it.sendMessage()
+            }
+        }
     }
 
 

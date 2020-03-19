@@ -133,6 +133,10 @@ class PolishActivity : DaggerAppCompatActivity() {
 
         viewModel.setSurfaceView(surface_view)
 
+        surface_view.setOnClickListener {
+            viewModel.testLuts()
+        }
+
         button_color.setOnClickListener {
             Log.d(TAG, "show luts")
             behavior.state = BottomSheetBehavior.STATE_HALF_EXPANDED
