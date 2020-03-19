@@ -100,14 +100,14 @@
 
     </androidx.constraintlayout.widget.ConstraintLayout>
 
-    <LinearLayout
+    <androidx.constraintlayout.widget.ConstraintLayout
         android:id="@+id/layout_colors"
         android:layout_width="match_parent"
         android:layout_height="480dp"
         android:background="#aa000000"
         app:behavior_hideable="true"
         app:behavior_peekHeight="180dp"
-        app:behavior_skipCollapsed="false"
+        app:behavior_skipCollapsed="true"
         app:layout_behavior="@string/bottom_sheet_behavior">
 
         <androidx.recyclerview.widget.RecyclerView
@@ -116,11 +116,23 @@
             android:layout_height="match_parent"
             android:clipToPadding="false"
             android:orientation="vertical"
-            android:paddingTop="@dimen/connector_margin"
+            android:paddingTop="48dp"
             android:paddingBottom="48dp"
             app:layoutManager="androidx.recyclerview.widget.GridLayoutManager"
             app:spanCount="4"
             tools:itemCount="37"
             tools:listitem="@layout/layout_lut" />
-    </LinearLayout>
+
+        <ImageButton
+            android:id="@+id/button_lut_close"
+            style="@style/Widget.AppCompat.Button.Borderless"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
+            android:contentDescription="@string/done"
+            android:src="@drawable/ic_clear"
+            android:tint="@color/white"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
+
+    </androidx.constraintlayout.widget.ConstraintLayout>
 </androidx.coordinatorlayout.widget.CoordinatorLayout>

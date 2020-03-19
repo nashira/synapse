@@ -1,19 +1,19 @@
 package com.rthqks.synapse.exec2.node
 
 import android.opengl.GLES30
+import android.opengl.Matrix
 import android.util.Log
 import android.util.Size
 import com.rthqks.synapse.exec.ExecutionContext
 import com.rthqks.synapse.exec2.Connection
 import com.rthqks.synapse.exec2.NodeExecutor
 import com.rthqks.synapse.gl.*
-import com.rthqks.synapse.logic.HistorySize
 import com.rthqks.synapse.logic.Properties
 import com.rthqks.synapse.logic.VideoSize
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 
-class RingBufferNode(
+class CropResizeNode(
     context: ExecutionContext,
     private val properties: Properties
 ) : NodeExecutor(context) {
@@ -22,23 +22,26 @@ class RingBufferNode(
     private var outScaleX: Float = 1f
     private var outScaleY: Float = 1f
     private var startJob: Job? = null
-    private var outputSize = properties[VideoSize]
-    private val depth: Int get() = properties[HistorySize]
+    private val outputSize = properties[VideoSize]
     private var inputSize = Size(0, 0)
-    private var prevConfig: Texture2d? = null
+    private var outputConfig: Texture2d? = null
+    private val texture1 = Texture2d()
 
-    private val texture = Texture3d()
-    private var currentLevel = 0
-    private val framebuffers = List(depth) { Framebuffer() }
-
+    private val texture2 = Texture2d()
+    private val framebuffer1 = Framebuffer()
+    private val framebuffer2 = Framebuffer()
     private val program = Program()
+
     private val quadMesh = Quad()
     private var needsPriming = true
 
     override suspend fun onSetup() {
         glesManager.glContext {
-            texture.initialize()
             quadMesh.initialize()
+            texture1.initialize()
+            framebuffer1.initialize(texture1)
+            texture2.initialize()
+            framebuffer2.initialize(texture2)
         }
     }
 
@@ -47,7 +50,7 @@ class RingBufferNode(
             OUTPUT -> {
                 if (needsPriming) {
                     needsPriming = false
-                    connection(OUTPUT)?.prime(texture, texture)
+                    connection(OUTPUT)?.prime(texture1, texture2)
                 }
             }
             INPUT -> {
@@ -65,18 +68,19 @@ class RingBufferNode(
             INPUT -> {
                 onStop()
             }
-            OUTPUT -> {}
+            OUTPUT -> {
+            }
         }
     }
 
     private suspend fun checkConfig(texture2d: Texture2d) {
-        val programChanged = prevConfig?.oes != texture2d.oes
-
-        val sizeChanged = inputSize.width != texture2d.width
+        val inputSizeChanged = inputSize.width != texture2d.width
                 || inputSize.height != texture2d.height
 
-        if (programChanged) {
-            prevConfig = texture2d
+        val oesChanged = outputConfig?.oes != texture2d.oes
+
+        if (oesChanged) {
+            outputConfig = texture2d
             glesManager.glContext {
                 val vertex = assetManager.readTextAsset("shader/crop_resize.vert")
                 val frag = assetManager.readTextAsset("shader/crop_resize.frag").let {
@@ -104,12 +108,8 @@ class RingBufferNode(
             }
         }
 
-        if (sizeChanged) {
+        if (inputSizeChanged) {
             inputSize = Size(texture2d.width, texture2d.height)
-            outputSize = inputSize
-
-            Log.d(TAG, "input $inputSize output $outputSize")
-
             val inAspect = inputSize.width / inputSize.height.toFloat()
             val outAspect = outputSize.width / outputSize.height.toFloat()
 
@@ -117,43 +117,46 @@ class RingBufferNode(
             outScaleY = if (inAspect < outAspect) inAspect / outAspect else 1f
 
             glesManager.glContext {
-                texture.initData(
-                    0,
-                    texture2d.internalFormat,
-                    outputSize.width,
-                    outputSize.height,
-                    depth,
-                    texture2d.format,
-                    texture2d.type
-                )
-                framebuffers.forEachIndexed { index, framebuffer ->
-                    framebuffer.release()
-                    framebuffer.initialize(texture, index)
-                    Log.d(TAG, "glGetError() ${GLES30.glGetError()}")
-                }
+                initTextureData(texture1, texture2d)
+                initTextureData(texture2, texture2d)
             }
         }
     }
 
+    private fun initTextureData(
+        texture: Texture2d,
+        config: Texture2d
+    ) {
+        texture.initData(
+            0,
+            config.internalFormat,
+            outputSize.width,
+            outputSize.height,
+            config.format,
+            config.type
+        )
+        Log.d(TAG, "glGetError() ${GLES30.glGetError()}")
+    }
+
     private suspend fun onStart() {
         val inputIn = channel(INPUT) ?: error("missing input")
-        for (msg in inputIn) {
-            val data = msg.data
-            checkConfig(data)
-            val uniform = program.getUniform(Uniform.Type.Mat4, "input_matrix")
-            val matrix = uniform.data!!
-            System.arraycopy(data.matrix, 0, matrix, 0, 16)
-            uniform.dirty = true
+        var copyMatrix = true
 
-            channel(OUTPUT)?.receive()?.let {
-                execute(data)
-                it.timestamp = msg.timestamp
-                it.data.index = currentLevel
-                it.queue()
+        for (msg in inputIn) {
+            checkConfig(msg.data)
+            if (copyMatrix) {
+                copyMatrix = false
+                val uniform = program.getUniform(Uniform.Type.Mat4, "input_matrix")
+                val matrix = uniform.data!!
+                System.arraycopy(msg.data.matrix, 0, matrix, 0, 16)
+                Matrix.translateM(matrix, 0, 0.5f, 0.5f, 0f)
+                Matrix.scaleM(matrix, 0, outScaleX, outScaleY, 1f)
+                Matrix.translateM(matrix, 0, -0.5f, -0.5f, 0f)
+                uniform.dirty = true
             }
+            execute(msg.data)
             msg.release()
         }
-        Log.d(TAG, "end of input")
     }
 
     private suspend fun onStop() {
@@ -163,16 +166,24 @@ class RingBufferNode(
 
     override suspend fun onRelease() {
         glesManager.glContext {
-            framebuffers.forEach { it.release() }
-            texture.release()
+            texture1.release()
+            texture2.release()
+            framebuffer1.release()
+            framebuffer2.release()
             quadMesh.release()
             program.release()
         }
     }
 
     private suspend fun execute(inputTexture: Texture2d) {
-        val framebuffer = framebuffers[currentLevel]
-        currentLevel = (currentLevel + 1) % framebuffers.size
+        val output = channel(OUTPUT) ?: return
+        val outEvent = output.receive()
+
+        val framebuffer = if (outEvent.data == texture1) {
+            framebuffer1
+        } else {
+            framebuffer2
+        }
 
         glesManager.glContext {
             GLES30.glUseProgram(program.programId)
@@ -182,12 +193,14 @@ class RingBufferNode(
             program.bindUniforms()
             quadMesh.execute()
         }
+
+        outEvent.queue()
     }
 
     companion object {
-        const val TAG = "RingBufferNode"
+        const val TAG = "CropResizeNode"
         const val INPUT_TEXTURE_LOCATION = 0
         val INPUT = Connection.Key<Texture2d>("input")
-        val OUTPUT = Connection.Key<Texture3d>("output")
+        val OUTPUT = Connection.Key<Texture2d>("output")
     }
 }

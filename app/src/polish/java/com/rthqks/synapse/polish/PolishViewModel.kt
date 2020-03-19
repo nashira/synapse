@@ -141,13 +141,13 @@ class PolishViewModel @Inject constructor(
                     ), 0
                 ), IntConverter
             )
-//            put(
-//                Property(
-//                    LutUri,
-//                    UriType(R.string.property_name_uri, R.drawable.ic_image, "*/*"),
-//                    Uri.parse("assets:///cube/identity.bcube"), true
-//                ), UriConverter
-//            )
+            put(
+                Property(
+                    LutUri,
+                    UriType(R.string.property_name_uri, R.drawable.ic_image, "*/*"),
+                    Uri.parse("assets:///cube/identity.bcube"), true
+                ), UriConverter
+            )
         }
 
         listOf(Effects.none, Effects.timeWarp, Effects.rotoHue).forEach { e ->
@@ -231,14 +231,9 @@ class PolishViewModel @Inject constructor(
 
     fun setEffect(effect: Effect): Boolean {
         currentEffect = effect
+        network = effect.network
 
         analytics.logEvent(Analytics.Event.SetEffect(effect.title))
-        recreateNetwork(effect)
-        return true
-    }
-
-    private fun recreateNetwork(effect: Effect) {
-        this.network = effect.network
         viewModelScope.launch {
             effectExecutor.swapEffect(effect).await()
             if (!svSetup) {
@@ -246,6 +241,7 @@ class PolishViewModel @Inject constructor(
                 surfaceView?.let { effectExecutor.setSurfaceView(it) }
             }
         }
+        return true
     }
 
     override fun onCleared() {
@@ -271,12 +267,17 @@ class PolishViewModel @Inject constructor(
     fun setLut(lut: String) {
         viewModelScope.launch {
             val uri = Uri.parse("assets:///cube/$lut.bcube")
-            network?.getNode(Effect.ID_LUT_IMPORT)?.properties?.set(LutUri, uri)
+            properties[LutUri] = uri
+//            network?.getNode(Effect.ID_LUT_IMPORT)?.properties?.set(LutUri, uri)
             (effectExecutor.getNode(Effect.ID_LUT_IMPORT) as? BCubeImportNode)?.let {
                 it.loadCubeFile()
                 it.sendMessage()
             }
         }
+    }
+
+    fun startLutPreview() {
+//        effectExecutor.setSurfaceView()
     }
 
 

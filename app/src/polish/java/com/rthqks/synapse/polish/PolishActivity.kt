@@ -172,22 +172,25 @@ class PolishActivity : DaggerAppCompatActivity() {
                     BottomSheetBehavior.STATE_HIDDEN -> {
                         started = false
                         Log.d(TAG, "stop lut previews")
-
                     }
                     else -> {
                         if (!started) {
                             Log.d(TAG, "start lut previews")
                             started = true
+                            viewModel.startLutPreview()
                         }
                     }
                 }
             }
-
         })
 
         button_color.setOnClickListener {
             Log.d(TAG, "show luts")
             behavior.state = BottomSheetBehavior.STATE_EXPANDED
+        }
+
+        button_lut_close.setOnClickListener {
+            behavior.state = BottomSheetBehavior.STATE_HIDDEN
         }
 
         button_camera.setOnClickListener(throttleClick {

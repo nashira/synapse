@@ -1,6 +1,7 @@
 package com.rthqks.synapse.exec2.node
 
 import android.opengl.GLES30
+import android.opengl.Matrix
 import android.util.Log
 import android.util.Size
 import com.rthqks.synapse.exec.ExecutionContext
@@ -10,7 +11,6 @@ import com.rthqks.synapse.exec2.NodeExecutor
 import com.rthqks.synapse.gl.*
 import com.rthqks.synapse.logic.FrameRate
 import com.rthqks.synapse.logic.Properties
-import com.rthqks.synapse.logic.VideoSize
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import kotlin.math.max
@@ -25,7 +25,9 @@ class Lut3dNode(
     private var lutJob: Job? = null
     private var matrixJob: Job? = null
     private val frameDuration: Long get() = 1000L / properties[FrameRate]
-    private var outputSize = properties[VideoSize]
+    private var outputSize = Size(0, 0)
+    private var inputConfig: Texture2d? = null
+    private var needsPriming = true
 
     private val texture1 = Texture2d()
     private val texture2 = Texture2d()
@@ -40,6 +42,11 @@ class Lut3dNode(
     private var matrixEvent: Message<FloatArray>? = null
 
     override suspend fun onSetup() {
+        glesManager.glContext {
+            quadMesh.initialize()
+            texture1.initialize()
+            texture2.initialize()
+        }
     }
 
     override suspend fun <T> onConnect(key: Connection.Key<T>, producer: Boolean) {
@@ -65,6 +72,10 @@ class Lut3dNode(
                     }
                 }
             }
+            OUTPUT -> if (needsPriming) {
+                needsPriming = false
+                connection(OUTPUT)?.prime(texture1, texture2)
+            }
         }
     }
 
@@ -88,79 +99,85 @@ class Lut3dNode(
     private suspend fun checkConfig() {
         val inputEvent = inputEvent ?: return
         val lutEvent = lutEvent ?: return
-        if (program.programId != 0) {
-            return
-        }
 
-        connection(OUTPUT)?.prime(texture1, texture2)
+        val eosChanged = inputConfig?.oes != inputEvent.data.oes
+        val sizeChanged = outputSize.width != inputEvent.data.width
+                || outputSize.height != inputEvent.data.height
 
-        outputSize = Size(inputEvent.data.width, inputEvent.data.height)
+        if (eosChanged) {
+            inputConfig = inputEvent.data
+            glesManager.glContext {
+                val vertex = assetManager.readTextAsset("shader/lut_3d.vert")
+                val frag = assetManager.readTextAsset("shader/lut_3d.frag").let {
+                    if (inputEvent.data.oes) {
+                        it.replace("//{EXT_INPUT}", "#define EXT_INPUT")
+                    } else {
+                        it
+                    }
+                }
 
-        glesManager.glContext {
-            initRenderTarget(
-                framebuffer1,
-                texture1,
-                lutEvent.data
-            )
-            initRenderTarget(
-                framebuffer2,
-                texture2,
-                lutEvent.data
-            )
-
-            val vertex = assetManager.readTextAsset("shader/lut_3d.vert")
-            val frag = assetManager.readTextAsset("shader/lut_3d.frag").let {
-                if (inputEvent.data.oes) {
-                    it.replace("//{EXT_INPUT}", "#define EXT_INPUT")
-                } else {
-                    it
+                program.apply {
+                    release()
+                    initialize(vertex, frag)
+                    addUniform(
+                        Uniform.Type.Mat4,
+                        INPUT_MATRIX,
+                        GlesManager.identityMat()
+                    )
+                    addUniform(
+                        Uniform.Type.Mat4,
+                        LUT_MATRIX.id,
+                        GlesManager.identityMat()
+                    )
+                    addUniform(
+                        Uniform.Type.Int,
+                        "input_texture",
+                        INPUT_TEXTURE_LOCATION
+                    )
+                    addUniform(
+                        Uniform.Type.Int,
+                        "lut_texture",
+                        LUT_TEXTURE_LOCATION
+                    )
+                    addUniform(
+                        Uniform.Type.Float,
+                        "lut_offset",
+                        0.5f / lutEvent.data.width
+                    )
+                    addUniform(
+                        Uniform.Type.Float,
+                        "lut_scale",
+                        (lutEvent.data.width - 1f) / lutEvent.data.width
+                    )
                 }
             }
+        }
 
-            quadMesh.initialize()
+        if (sizeChanged) {
+            outputSize = Size(inputEvent.data.width, inputEvent.data.height)
+            glesManager.glContext {
+                initTextureData(
+                    texture1,
+                    lutEvent.data
+                )
+                initTextureData(
+                    texture2,
+                    lutEvent.data
+                )
 
-            program.apply {
-                initialize(vertex, frag)
-                addUniform(
-                    Uniform.Type.Mat4,
-                    INPUT_MATRIX,
-                    GlesManager.identityMat()
-                )
-                addUniform(
-                    Uniform.Type.Mat4,
-                    LUT_MATRIX.id,
-                    GlesManager.identityMat()
-                )
-                addUniform(
-                    Uniform.Type.Int,
-                    "input_texture",
-                    INPUT_TEXTURE_LOCATION
-                )
-                addUniform(
-                    Uniform.Type.Int,
-                    "lut_texture",
-                    LUT_TEXTURE_LOCATION
-                )
-                addUniform(
-                    Uniform.Type.Float,
-                    "lut_offset",
-                    0.5f / lutEvent.data.width
-                )
-                addUniform(
-                    Uniform.Type.Float,
-                    "lut_scale",
-                    (lutEvent.data.width - 1f) / lutEvent.data.width
-                )
+                framebuffer1.release()
+                framebuffer2.release()
+                framebuffer1.initialize(texture1)
+                framebuffer2.initialize(texture2)
+
             }
         }
     }
 
-    private fun initRenderTarget(
-        framebuffer: Framebuffer,
+    private fun initTextureData(
         texture: Texture2d,
         config: Texture3d
     ) {
-        texture.initialize()
         texture.initData(
             0,
             config.internalFormat,
@@ -170,7 +187,6 @@ class Lut3dNode(
             config.type
         )
         Log.d(TAG, "glGetError() ${GLES30.glGetError()}")
-        framebuffer.initialize(texture)
     }
 
     private suspend fun startInput() {
@@ -263,6 +279,13 @@ class Lut3dNode(
         outEvent.let {
             it.timestamp = timestamp
             it.queue()
+        }
+    }
+
+    suspend fun resetLutMatrix() {
+        program.getUniform(Uniform.Type.Mat4, LUT_MATRIX.id)?.let {
+            Matrix.setIdentityM(it.data, 0)
+            it.dirty = true
         }
     }
 

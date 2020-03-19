@@ -79,6 +79,10 @@ class EncoderNode(
             || previousFormat?.oes != texture.oes) {
             needVideoConfig = true
         }
+
+        val sizeChanged = inputSize.width != texture.width
+                || inputSize.height != texture.height
+
         if (needVideoConfig) {
             needVideoConfig = false
             previousFormat = texture
@@ -112,14 +116,13 @@ class EncoderNode(
                     )
                 }
             }
+        }
 
+        if (sizeChanged) {
             val size = Size(texture.width, texture.height)
 
-//            if (!properties[Recording] && size != inputSize) {
-            if (surface == null) {
-                surface = encoder.setVideo(size, frameRate)
-                updateWindowSurface()
-            }
+            surface = encoder.setVideo(size, frameRate)
+            updateWindowSurface()
             inputSize = size
         }
     }

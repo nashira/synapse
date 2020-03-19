@@ -5,6 +5,8 @@ import com.rthqks.synapse.exec.ExecutionContext
 import com.rthqks.synapse.exec.node.AudioSourceNode
 import com.rthqks.synapse.exec.node.EncoderNode
 import com.rthqks.synapse.exec2.NetworkExecutor
+import com.rthqks.synapse.exec2.node.BCubeImportNode
+import com.rthqks.synapse.exec2.node.Lut3dNode
 import com.rthqks.synapse.exec2.node.SurfaceViewNode
 import com.rthqks.synapse.logic.Link
 import com.rthqks.synapse.logic.Node
@@ -37,12 +39,14 @@ class EffectExecutor(context: ExecutionContext) : NetworkExecutor(context) {
 
             val oldLinks = old.getLinks()
             val newLinks = effect.network.getLinks()
-            val linksToRemove = oldLinks - STABLE_LINK
-            val linksToAdd = newLinks - STABLE_LINK
+            val linksToRemove = oldLinks - STABLE_LINKS
+            val linksToAdd = newLinks - STABLE_LINKS
             linksToRemove.map { scope.launch { removeLink(it) } }.joinAll()
             nodesToRemove.map { scope.launch { removeNode(it) } }.joinAll()
             nodesToAdd.map { scope.launch { addNode(it) } }.joinAll()
             linksToAdd.map { scope.launch { addLink(it) } }.joinAll()
+
+            (getNode(Effect.ID_LUT) as? Lut3dNode)?.resetLutMatrix()
         }
     }
 
@@ -64,13 +68,25 @@ class EffectExecutor(context: ExecutionContext) : NetworkExecutor(context) {
             Effect.ID_CAMERA,
             Effect.ID_MIC,
             Effect.ID_ENCODER,
-            Effect.ID_SURFACE_VIEW
+            Effect.ID_SURFACE_VIEW,
+            Effect.ID_LUT,
+            Effect.ID_LUT_IMPORT
         )
-        val STABLE_LINK = Link(
-            Effect.ID_MIC,
-            AudioSourceNode.OUTPUT.id,
-            Effect.ID_ENCODER,
-            EncoderNode.INPUT_AUDIO.id
+        val STABLE_LINKS = listOf(
+            Link(
+                Effect.ID_MIC,
+                AudioSourceNode.OUTPUT.id,
+                Effect.ID_ENCODER,
+                EncoderNode.INPUT_AUDIO.id
+            ),
+            Link(
+                Effect.ID_LUT_IMPORT,
+                BCubeImportNode.OUTPUT.id,
+                Effect.ID_LUT,
+                Lut3dNode.INPUT_LUT.id
+            ),
+            Link(Effect.ID_LUT, Lut3dNode.OUTPUT.id, Effect.ID_SURFACE_VIEW, SurfaceViewNode.INPUT.id),
+            Link(Effect.ID_LUT, Lut3dNode.OUTPUT.id, Effect.ID_ENCODER, EncoderNode.INPUT_VIDEO.id)
         )
     }
 }

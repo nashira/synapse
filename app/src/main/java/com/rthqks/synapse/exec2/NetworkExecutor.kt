@@ -115,19 +115,10 @@ open class NetworkExecutor(context: ExecutionContext) : Executor(context) {
 
     private fun Node.executor(): NodeExecutor {
         return when (type) {
-            NodeType.Camera -> CameraNode(
-                context,
-                properties
-            )
+            NodeType.Camera -> CameraNode(context, properties)
             NodeType.Microphone -> AudioSourceNode(context, properties)
-            NodeType.Screen -> SurfaceViewNode(
-                context,
-                properties
-            )
-            NodeType.GrayscaleFilter -> GrayscaleNode(
-                context,
-                properties
-            )
+            NodeType.Screen -> SurfaceViewNode(context, properties)
+            NodeType.GrayscaleFilter -> GrayscaleNode(context, properties)
             NodeType.MediaEncoder -> EncoderNode(context, properties)
             NodeType.RingBuffer -> RingBufferNode(context, properties)
             NodeType.Slice3d -> Slice3dNode(context, properties)
@@ -135,31 +126,8 @@ open class NetworkExecutor(context: ExecutionContext) : Executor(context) {
             NodeType.BCubeImport -> BCubeImportNode(context, properties)
             NodeType.Lut3d -> Lut3dNode(context, properties)
             NodeType.RotateMatrix -> RotateMatrixNode(context, properties)
-//            NodeType.Properties,
-//            NodeType.Creation,
-//            NodeType.Connection -> error("not an executable node type: ${node.type}")
-            else -> object : NodeExecutor(context) {
-                private val jobs = ConcurrentHashMap<String, Job>()
-                private val running = ConcurrentHashMap<String, Boolean>()
-                override suspend fun onSetup() {
-                    error("check yo nodes")
-                }
-
-                override suspend fun <T> onConnect(
-                    key: Connection.Key<T>,
-                    producer: Boolean
-                ) {
-                }
-
-                override suspend fun <T> onDisconnect(
-                    key: Connection.Key<T>,
-                    producer: Boolean
-                ) {
-                }
-
-                override suspend fun onRelease() {
-                }
-            }
+            NodeType.CropResize -> CropResizeNode(context, properties)
+            else -> error("check yo nodes")
         }
     }
 }

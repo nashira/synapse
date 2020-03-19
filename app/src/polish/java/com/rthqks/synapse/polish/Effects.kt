@@ -17,15 +17,20 @@ object Effects {
         val screen = addNode(NewNode(NodeType.Screen, Effect.ID_SURFACE_VIEW))
         val encoder = addNode(NewNode(NodeType.MediaEncoder, Effect.ID_ENCODER))
         val cube = addNode(NewNode(NodeType.BCubeImport, Effect.ID_LUT_IMPORT))
-        val lut = addNode(NewNode(NodeType.Lut3d))
+//        val crop = addNode(NewNode(NodeType.CropResize, Effect.ID_THUMBNAIL))
+        val lut = addNode(NewNode(NodeType.Lut3d, Effect.ID_LUT))
 
         microphone.properties[AudioSource] = MediaRecorder.AudioSource.CAMCORDER
         cube.properties[LutUri] = Uri.parse("assets:///cube/identity.bcube")
 
         addLinkNoCompute(Link(camera.id, CameraNode.OUTPUT.id, lut.id, Lut3dNode.INPUT.id))
+//        addLinkNoCompute(Link(camera.id, CameraNode.OUTPUT.id, crop.id, CropResizeNode.INPUT.id))
+
         addLinkNoCompute(Link(lut.id, Lut3dNode.OUTPUT.id, screen.id, SurfaceViewNode.INPUT.id))
         addLinkNoCompute(Link(lut.id, Lut3dNode.OUTPUT.id, encoder.id, EncoderNode.INPUT_VIDEO.id))
+
         addLinkNoCompute(Link(cube.id, BCubeImportNode.OUTPUT.id, lut.id, Lut3dNode.INPUT_LUT.id))
+
         addLinkNoCompute(Link(microphone.id, AudioSourceNode.OUTPUT.id, encoder.id, EncoderNode.INPUT_AUDIO.id))
         computeComponents()
     }.let {
@@ -40,19 +45,19 @@ object Effects {
         val screen = addNode(NewNode(NodeType.Screen, Effect.ID_SURFACE_VIEW))
         val encoder = addNode(NewNode(NodeType.MediaEncoder, Effect.ID_ENCODER))
         val cube = addNode(NewNode(NodeType.BCubeImport, Effect.ID_LUT_IMPORT))
-        val lut = addNode(NewNode(NodeType.Lut3d))
+        val lut = addNode(NewNode(NodeType.Lut3d, Effect.ID_LUT))
         val ringBuffer = addNode(NewNode(NodeType.RingBuffer))
         val slice = addNode(NewNode(NodeType.Slice3d))
 
         microphone.properties[AudioSource] = MediaRecorder.AudioSource.CAMCORDER
         cube.properties[LutUri] = Uri.parse("assets:///cube/identity.bcube")
 
-        addLinkNoCompute(Link(camera.id, CameraNode.OUTPUT.id, lut.id, Lut3dNode.INPUT.id))
-        addLinkNoCompute(Link(cube.id, BCubeImportNode.OUTPUT.id, lut.id, Lut3dNode.INPUT_LUT.id))
-        addLinkNoCompute(Link(lut.id, Lut3dNode.OUTPUT.id, ringBuffer.id, RingBufferNode.INPUT.id))
+        addLinkNoCompute(Link(camera.id, CameraNode.OUTPUT.id, ringBuffer.id, RingBufferNode.INPUT.id))
         addLinkNoCompute(Link(ringBuffer.id, RingBufferNode.OUTPUT.id, slice.id, Slice3dNode.INPUT_3D.id))
-        addLinkNoCompute(Link(slice.id, Slice3dNode.OUTPUT.id, screen.id, SurfaceViewNode.INPUT.id))
-        addLinkNoCompute(Link(slice.id, Slice3dNode.OUTPUT.id, encoder.id, EncoderNode.INPUT_VIDEO.id))
+        addLinkNoCompute(Link(slice.id, Slice3dNode.OUTPUT.id, lut.id, Lut3dNode.INPUT.id))
+        addLinkNoCompute(Link(cube.id, BCubeImportNode.OUTPUT.id, lut.id, Lut3dNode.INPUT_LUT.id))
+        addLinkNoCompute(Link(lut.id, Lut3dNode.OUTPUT.id, screen.id, SurfaceViewNode.INPUT.id))
+        addLinkNoCompute(Link(lut.id, Lut3dNode.OUTPUT.id, encoder.id, EncoderNode.INPUT_VIDEO.id))
         addLinkNoCompute(Link(microphone.id, AudioSourceNode.OUTPUT.id, encoder.id, EncoderNode.INPUT_AUDIO.id))
         computeComponents()
         ringBuffer.properties[HistorySize] = 30
@@ -68,25 +73,18 @@ object Effects {
         val screen = addNode(NewNode(NodeType.Screen, Effect.ID_SURFACE_VIEW))
         val encoder = addNode(NewNode(NodeType.MediaEncoder, Effect.ID_ENCODER))
         val cube = addNode(NewNode(NodeType.BCubeImport, Effect.ID_LUT_IMPORT))
-        val lut = addNode(NewNode(NodeType.Lut3d))
+        val lut = addNode(NewNode(NodeType.Lut3d, Effect.ID_LUT))
 
-        val lut1 = addNode(NewNode(NodeType.Lut3d))
-        val cube1 = addNode(NewNode(NodeType.BCubeImport))
         val rotate = addNode(NewNode(NodeType.RotateMatrix))
 
         microphone.properties[AudioSource] = MediaRecorder.AudioSource.CAMCORDER
         cube.properties[LutUri] = Uri.parse("assets:///cube/identity.bcube")
-        cube1.properties[LutUri] = Uri.parse("assets:///cube/identity.bcube")
 
         addLinkNoCompute(Link(camera.id, CameraNode.OUTPUT.id, lut.id, Lut3dNode.INPUT.id))
         addLinkNoCompute(Link(cube.id, BCubeImportNode.OUTPUT.id, lut.id, Lut3dNode.INPUT_LUT.id))
-
-        addLinkNoCompute(Link(cube1.id, BCubeImportNode.OUTPUT.id, lut1.id, Lut3dNode.INPUT_LUT.id))
-        addLinkNoCompute(Link(rotate.id, RotateMatrixNode.OUTPUT.id, lut1.id, Lut3dNode.LUT_MATRIX.id))
-
-        addLinkNoCompute(Link(lut.id, Lut3dNode.OUTPUT.id, lut1.id, Lut3dNode.INPUT.id))
-        addLinkNoCompute(Link(lut1.id, Lut3dNode.OUTPUT.id, screen.id, SurfaceViewNode.INPUT.id))
-        addLinkNoCompute(Link(lut1.id, Lut3dNode.OUTPUT.id, encoder.id, EncoderNode.INPUT_VIDEO.id))
+        addLinkNoCompute(Link(rotate.id, RotateMatrixNode.OUTPUT.id, lut.id, Lut3dNode.LUT_MATRIX.id))
+        addLinkNoCompute(Link(lut.id, Lut3dNode.OUTPUT.id, screen.id, SurfaceViewNode.INPUT.id))
+        addLinkNoCompute(Link(lut.id, Lut3dNode.OUTPUT.id, encoder.id, EncoderNode.INPUT_VIDEO.id))
         addLinkNoCompute(Link(microphone.id, AudioSourceNode.OUTPUT.id, encoder.id, EncoderNode.INPUT_AUDIO.id))
         computeComponents()
     }.let {
