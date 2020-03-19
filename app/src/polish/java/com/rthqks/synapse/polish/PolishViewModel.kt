@@ -150,7 +150,7 @@ class PolishViewModel @Inject constructor(
 //            )
         }
 
-        listOf(Effects.none, Effects.lut, Effects.timeWarp, Effects.rotoHue).forEach { e ->
+        listOf(Effects.none, Effects.timeWarp, Effects.rotoHue).forEach { e ->
             e.network.getNodes().forEach {
                 it.properties += properties
             }
@@ -268,10 +268,9 @@ class PolishViewModel @Inject constructor(
         properties[Rotation] = orientation
     }
 
-    fun testLuts() {
+    fun setLut(lut: String) {
         viewModelScope.launch {
-            lutIndex = (lutIndex + 1) % Effect.LUTS.size
-            val uri = Uri.parse(Effect.LUTS[lutIndex])
+            val uri = Uri.parse("assets:///cube/$lut.bcube")
             network?.getNode(Effect.ID_LUT_IMPORT)?.properties?.set(LutUri, uri)
             (effectExecutor.getNode(Effect.ID_LUT_IMPORT) as? BCubeImportNode)?.let {
                 it.loadCubeFile()

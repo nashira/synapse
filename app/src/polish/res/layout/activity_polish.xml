@@ -16,6 +16,9 @@
             app:layout_constraintDimensionRatio="9:16"
             app:layout_constraintTop_toTopOf="parent" />
 
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="match_parent" />
 
         <ImageButton
             android:id="@+id/button_record"
@@ -50,10 +53,9 @@
             android:contentDescription="@string/name_node_type_color_filter"
             android:src="@drawable/ic_color_lens"
             android:tint="@color/white"
-            android:visibility="gone"
             app:layout_constraintBottom_toBottomOf="@id/button_record"
-            app:layout_constraintEnd_toStartOf="@id/button_record"
-            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toStartOf="@id/button_gallery"
+            app:layout_constraintStart_toEndOf="@id/button_record"
             app:layout_constraintTop_toTopOf="@id/button_record" />
 
 
@@ -80,7 +82,7 @@
             android:tint="@color/white"
             app:layout_constraintBottom_toBottomOf="@id/button_record"
             app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toEndOf="@id/button_record"
+            app:layout_constraintStart_toEndOf="@id/button_color"
             app:layout_constraintTop_toTopOf="@id/button_record" />
 
         <androidx.recyclerview.widget.RecyclerView
@@ -98,13 +100,27 @@
 
     </androidx.constraintlayout.widget.ConstraintLayout>
 
-    <FrameLayout
+    <LinearLayout
         android:id="@+id/layout_colors"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:background="#a0000000"
-        android:visibility="gone"
+        android:layout_height="480dp"
+        android:background="#aa000000"
         app:behavior_hideable="true"
-        app:behavior_skipCollapsed="true"
-        app:layout_behavior="@string/bottom_sheet_behavior" />
+        app:behavior_peekHeight="180dp"
+        app:behavior_skipCollapsed="false"
+        app:layout_behavior="@string/bottom_sheet_behavior">
+
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/lut_list"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:clipToPadding="false"
+            android:orientation="vertical"
+            android:paddingTop="@dimen/connector_margin"
+            android:paddingBottom="48dp"
+            app:layoutManager="androidx.recyclerview.widget.GridLayoutManager"
+            app:spanCount="4"
+            tools:itemCount="37"
+            tools:listitem="@layout/layout_lut" />
+    </LinearLayout>
 </androidx.coordinatorlayout.widget.CoordinatorLayout>

@@ -3,14 +3,13 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="wrap_content"
     android:layout_height="match_parent"
+    android:background="?android:attr/selectableItemBackground"
     android:paddingStart="48dp"
     android:paddingTop="12dp"
     android:paddingEnd="48dp"
     android:paddingBottom="12dp"
     android:textAppearance="?android:attr/textAppearanceButton"
-    android:background="?android:attr/selectableItemBackground"
     android:textColor="@color/white"
-    tools:text="none
-">
+    tools:text="none">
 
 </TextView>

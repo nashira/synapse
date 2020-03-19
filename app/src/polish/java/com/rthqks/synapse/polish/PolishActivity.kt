@@ -5,6 +5,7 @@ import android.content.Context
 import android.content.Intent
 import android.content.SharedPreferences
 import android.content.pm.PackageManager
+import android.graphics.Rect
 import android.os.Build
 import android.os.Bundle
 import android.util.Log
@@ -17,6 +18,7 @@ import androidx.core.view.doOnLayout
 import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
+import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.LinearSnapHelper
 import androidx.recyclerview.widget.RecyclerView
@@ -25,10 +27,12 @@ import com.rthqks.synapse.R
 import com.rthqks.synapse.ops.Analytics
 import com.rthqks.synapse.util.throttleClick
 import dagger.android.support.DaggerAppCompatActivity
+import kotlinx.android.synthetic.main.layout_lut.view.*
 import kotlinx.android.synthetic.polish.activity_polish.*
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.launch
 import javax.inject.Inject
+import kotlin.math.roundToInt
 
 
 class PolishActivity : DaggerAppCompatActivity() {
@@ -48,6 +52,9 @@ class PolishActivity : DaggerAppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_polish)
         viewModel = ViewModelProvider(this, viewModelFactory)[PolishViewModel::class.java]
+
+        val behavior = BottomSheetBehavior.from(layout_colors)
+        behavior.state = BottomSheetBehavior.STATE_HIDDEN
 
         preferences = getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE)
 
@@ -128,18 +135,59 @@ class PolishActivity : DaggerAppCompatActivity() {
 
     private fun onReady() {
         val behavior = BottomSheetBehavior.from(layout_colors)
-        behavior.state = BottomSheetBehavior.STATE_HIDDEN
         var recording = false
 
         viewModel.setSurfaceView(surface_view)
 
-        surface_view.setOnClickListener {
-            viewModel.testLuts()
+        lut_list.adapter = LutAdapter(Effect.LUTS) {
+            val lut = Effect.LUTS[it]
+            viewModel.setLut(lut)
         }
+
+        lut_list.addItemDecoration(object : RecyclerView.ItemDecoration(){
+            private val spans = 4
+            private val margin = resources.getDimension(R.dimen.connector_margin).roundToInt()
+            override fun getItemOffsets(
+                outRect: Rect,
+                view: View,
+                parent: RecyclerView,
+                state: RecyclerView.State
+            ) {
+                val index = (view.layoutParams as GridLayoutManager.LayoutParams).spanIndex % spans
+                val left = margin * (spans - index) / spans
+                val right = margin * (index + 1) / spans
+                outRect.set(left, 0, right, margin)
+            }
+        })
+
+        behavior.addBottomSheetCallback(object : BottomSheetBehavior.BottomSheetCallback() {
+            private var started = false
+
+            override fun onSlide(bottomSheet: View, slideOffset: Float) {
+            }
+
+            override fun onStateChanged(bottomSheet: View, newState: Int) {
+                Log.d(TAG, "state changed $newState")
+                when (newState) {
+                    BottomSheetBehavior.STATE_HIDDEN -> {
+                        started = false
+                        Log.d(TAG, "stop lut previews")
+
+                    }
+                    else -> {
+                        if (!started) {
+                            Log.d(TAG, "start lut previews")
+                            started = true
+                        }
+                    }
+                }
+            }
+
+        })
 
         button_color.setOnClickListener {
             Log.d(TAG, "show luts")
-            behavior.state = BottomSheetBehavior.STATE_HALF_EXPANDED
+            behavior.state = BottomSheetBehavior.STATE_EXPANDED
         }
 
         button_camera.setOnClickListener(throttleClick {
@@ -173,7 +221,7 @@ class PolishActivity : DaggerAppCompatActivity() {
             }
         }
 
-        val effects = listOf(Effects.none, Effects.lut, Effects.timeWarp, Effects.rotoHue)
+        val effects = listOf(Effects.none, Effects.timeWarp, Effects.rotoHue)
 
         val snapHelper = LinearSnapHelper()
         val layoutManager = effect_list.layoutManager as LinearLayoutManager
@@ -369,3 +417,37 @@ private class EffectViewHolder(
         }
     }
 }
+
+private class LutAdapter(
+    private val luts: List<String>,
+    private val onClick: (Int) -> Unit
+) : RecyclerView.Adapter<LutViewHolder>() {
+
+    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): LutViewHolder {
+        val view = LayoutInflater.from(parent.context)
+            .inflate(R.layout.layout_lut, parent, false)
+        return LutViewHolder(view, onClick)
+    }
+
+    override fun getItemCount(): Int {
+        return luts.size
+    }
+
+    override fun onBindViewHolder(holder: LutViewHolder, position: Int) {
+        holder.itemView.title_view.text = luts[position]
+    }
+}
+
+private class LutViewHolder(
+    itemView: View,
+    onClick: (Int) -> Unit
+) : RecyclerView.ViewHolder(itemView) {
+    init {
+        itemView.surface_view.setZOrderOnTop(true)
+
+        itemView.setOnClickListener {
+            onClick(adapterPosition)
+        }
+    }
+}
+
