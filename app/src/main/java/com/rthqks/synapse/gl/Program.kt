@@ -46,6 +46,11 @@ class Program {
         return uniforms[name] as Uniform<T>
     }
 
+    fun <T> getUniformOrNull(type: Uniform.Type<T>, name: String): Uniform<T>? {
+        @Suppress("UNCHECKED_CAST")
+        return uniforms[name] as? Uniform<T>
+    }
+
     fun bindUniforms() {
         uniformList.forEach { uniform ->
             if (uniform.dirty) {

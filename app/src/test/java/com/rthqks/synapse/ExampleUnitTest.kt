@@ -26,19 +26,6 @@ class ExampleUnitTest {
 
         val n = NetworkExecutor(c)
 
-        runBlocking {
-            n.network = Effects.none.network
-            println("add nodes")
-            n.addAllNodes()
-            println("add links")
-            n.addAllLinks()
-            delay(1000)
-            println("remove links")
-            n.removeAllLinks()
-            println("remove nodes")
-            n.removeAllNodes()
-            println("done")
-        }
 
         println(n)
     }

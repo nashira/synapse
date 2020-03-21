@@ -28,7 +28,7 @@ class BCubeImportNode(
     private val cubeUri: Uri get() = properties[LutUri]
     private var size = Triple(0, 0, 0)
 
-    private var texture: Texture3d? = null
+    private var texture = Texture3d()
 
     private fun getInputStream(): InputStream? {
         return when (cubeUri.scheme) {
@@ -38,8 +38,6 @@ class BCubeImportNode(
     }
 
     override suspend fun onSetup() {
-        val texture = Texture3d()
-        this.texture = texture
         glesManager.glContext {
             texture.initialize()
         }
@@ -49,26 +47,24 @@ class BCubeImportNode(
     suspend fun loadCubeFile() {
         val stream = getInputStream() ?: return
         val reader = DataInputStream(stream)
-        val cube = Cube()
 
         val buffer = withContext(Dispatchers.IO) {
-            val size = reader.readInt()
-            cube.n = size
-            val bytes = ByteArray(size * size * size * 3)
-            reader.read(bytes)
+            val dimen = reader.readInt()
+            size = Triple(dimen, dimen, dimen)
+            val bytes = ByteArray(dimen * dimen * dimen * 3)
+            reader.readFully(bytes)
             reader.close()
             ByteBuffer.allocateDirect(bytes.size).apply {
                 put(bytes)
             }
         }
 
-        size = Triple(cube.n, cube.n, cube.n)
         Log.d(TAG, "options $size ${buffer.position()}")
 
         buffer.position(0)
 
         glesManager.glContext {
-            texture?.initData(
+            texture.initData(
                 0,
                 GLES30.GL_RGB8,
                 size.first,
@@ -86,7 +82,7 @@ class BCubeImportNode(
             OUTPUT -> if (startJob == null) {
                 if (needsPriming) {
                     needsPriming = false
-                    texture?.let { connection(OUTPUT)?.prime(it, it) }
+                    connection(OUTPUT)?.prime(texture, texture)
                 }
                 startJob = scope.launch {
                     sendMessage()
@@ -117,21 +113,12 @@ class BCubeImportNode(
 
     override suspend fun onRelease() {
         glesManager.glContext {
-            texture?.release()
+            texture.release()
         }
     }
 
     companion object {
         const val TAG = "BCubeImportNode"
         val OUTPUT = Connection.Key<Texture3d>("output_lut")
-    }
-
-    private class Cube {
-        var n = 0
-        var is3d = false
-        val min = floatArrayOf(0f, 0f, 0f)
-        val max = floatArrayOf(1f, 1f, 1f)
-
-        fun scale(v: Float, i: Int) = (v - min[i]) / (max[i] - min[i])
     }
 }

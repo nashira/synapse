@@ -31,6 +31,7 @@ class Effect(
         val Title = Property.Key<String>("name")
 
         val LUTS = listOf(
+            "fuji3513",
             "arabica",
             "ava",
             "azrael",

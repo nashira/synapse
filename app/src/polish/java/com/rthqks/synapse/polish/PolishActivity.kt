@@ -139,10 +139,7 @@ class PolishActivity : DaggerAppCompatActivity() {
 
         viewModel.setSurfaceView(surface_view)
 
-        lut_list.adapter = LutAdapter(Effect.LUTS) {
-            val lut = Effect.LUTS[it]
-            viewModel.setLut(lut)
-        }
+        lut_list.adapter = LutAdapter(Effect.LUTS, viewModel)
 
         lut_list.addItemDecoration(object : RecyclerView.ItemDecoration(){
             private val spans = 4
@@ -423,13 +420,13 @@ private class EffectViewHolder(
 
 private class LutAdapter(
     private val luts: List<String>,
-    private val onClick: (Int) -> Unit
+    private val viewModel: PolishViewModel
 ) : RecyclerView.Adapter<LutViewHolder>() {
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): LutViewHolder {
         val view = LayoutInflater.from(parent.context)
             .inflate(R.layout.layout_lut, parent, false)
-        return LutViewHolder(view, onClick)
+        return LutViewHolder(view, viewModel)
     }
 
     override fun getItemCount(): Int {
@@ -437,20 +434,47 @@ private class LutAdapter(
     }
 
     override fun onBindViewHolder(holder: LutViewHolder, position: Int) {
-        holder.itemView.title_view.text = luts[position]
+        holder.bind(luts[position])
     }
 }
 
 private class LutViewHolder(
     itemView: View,
-    onClick: (Int) -> Unit
+    viewModel: PolishViewModel
 ) : RecyclerView.ViewHolder(itemView) {
-    init {
-        itemView.surface_view.setZOrderOnTop(true)
+    private var lut: String? = null
 
+    init {
+        Log.d("Lut", "onCreateViewHolder $this")
+        itemView.surface_view.setZOrderOnTop(true)
+        itemView.surface_view.holder.addCallback(object: SurfaceHolder.Callback{
+            override fun surfaceChanged(
+                holder: SurfaceHolder?,
+                format: Int,
+                width: Int,
+                height: Int
+            ) {
+                Log.d("Lut", "changed $lut")
+            }
+
+            override fun surfaceDestroyed(holder: SurfaceHolder?) {
+                Log.d("Lut", "destroyed $lut")
+            }
+
+            override fun surfaceCreated(holder: SurfaceHolder?) {
+//                Log.d("Lut", "created $lut")
+            }
+
+        })
         itemView.setOnClickListener {
-            onClick(adapterPosition)
+            lut?.let { it1 -> viewModel.setLut(it1) }
         }
+    }
+
+    fun bind(lut: String) {
+        Log.d("Lut", "onBindViewHolder $lut")
+        this.lut = lut
+        itemView.title_view.text = lut
     }
 }
 

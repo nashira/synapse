@@ -26,17 +26,22 @@ fun convert(cubeFile: String) {
 
     var output = DataOutputStream(File(cubeFile.replace(".cube", ".bcube")).outputStream())
 
+    var lineCount = 0
     reader.forEachLine { line ->
         when {
             line matches TABLE_DATA -> TABLE_DATA.find(line)?.let {
+                lineCount++
                 val r = it.groupValues[1].toFloat()
                 val g = it.groupValues[2].toFloat()
                 val b = it.groupValues[3].toFloat()
 
-//                    Log.d(TAG, "rgb($r, $g, $b)")
-                output.writeByte((cube.scale(r, 0) * 255).toInt())
-                output.writeByte((cube.scale(g, 1) * 255).toInt())
-                output.writeByte((cube.scale(b, 2) * 255).toInt())
+                val rs = (cube.scale(r, 0) * 255).toInt()
+                val gs = (cube.scale(g, 1) * 255).toInt()
+                val bs = (cube.scale(b, 2) * 255).toInt()
+//                println("rgb($rs, $gs, $bs)")
+                output.write(rs)
+                output.write(gs)
+                output.write(bs)
             }
             line matches DOMAIN_MIN -> DOMAIN_MIN.find(line)?.let {
                 cube.min[0] = it.groupValues[1].toFloat()
@@ -60,14 +65,24 @@ fun convert(cubeFile: String) {
             }
         }
     }
+    println("lineCount $lineCount bytes written: ${output.size()}")
     stream.close()
     output.close()
 }
 
-val dir = File("../assets/cube")
-dir.list().forEach {
-    println(it)
-    convert("../assets/cube/$it")
-//    File(it).r
-//    convert("../app/src/main/assets/cube/$it")
-}
+convert("../assets/cube/fuji3513.cube")
+//convert("../assets/cube/vibrant.cube")
+//convert("../assets/cube/teal_2.cube")
+//convert("../assets/cube/teal_1.cube")
+//convert("../assets/cube/drama.cube")
+//convert("../assets/cube/cold.cube")
+//convert("../assets/cube/bright.cube")
+//convert("../assets/cube/basic.cube")
+
+//val dir = File("../assets/cube")
+//dir.list().forEach {
+//    println(it)
+//    convert("../assets/cube/$it")
+////    File(it).r
+////    convert("../app/src/main/assets/cube/$it")
+//}

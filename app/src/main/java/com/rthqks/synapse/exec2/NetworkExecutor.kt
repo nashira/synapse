@@ -14,9 +14,9 @@ import java.util.concurrent.ConcurrentHashMap
 
 open class NetworkExecutor(context: ExecutionContext) : Executor(context) {
     private val nodes = ConcurrentHashMap<Int, NodeExecutor>()
-    var network: Network? = null
+    protected var network: Network? = null
 
-    suspend fun setup() = await {
+    open suspend fun setup() = await {
         context.setup()
     }
 

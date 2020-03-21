@@ -104,6 +104,7 @@ class Lut3dNode(
         val sizeChanged = outputSize.width != inputEvent.data.width
                 || outputSize.height != inputEvent.data.height
 
+
         if (eosChanged) {
             inputConfig = inputEvent.data
             glesManager.glContext {
@@ -262,6 +263,11 @@ class Lut3dNode(
         System.arraycopy(inputTexture.matrix, 0, uniform.data!!, 0, 16)
         uniform.dirty = true
 
+        lutEvent?.let {
+            program.getUniform(Uniform.Type.Float, "lut_offset").set(0.5f / it.data.width)
+            program.getUniform(Uniform.Type.Float, "lut_scale").set((it.data.width - 1f) / it.data.width)
+        }
+
         matrixEvent?.let {
             program.getUniform(Uniform.Type.Mat4, LUT_MATRIX.id).set(it.data)
         }
@@ -283,7 +289,7 @@ class Lut3dNode(
     }
 
     suspend fun resetLutMatrix() {
-        program.getUniform(Uniform.Type.Mat4, LUT_MATRIX.id)?.let {
+        program.getUniformOrNull(Uniform.Type.Mat4, LUT_MATRIX.id)?.let {
             Matrix.setIdentityM(it.data, 0)
             it.dirty = true
         }

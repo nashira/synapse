@@ -70,6 +70,19 @@ class SurfaceViewNode(
 
             if (windowSurface != null) {
 //                    Log.d(TAG, "loop pre render")
+
+
+                val uniform = program.getUniform(Uniform.Type.Mat4, "texture_matrix0")
+                val matrix = uniform.data!!
+                System.arraycopy(msg.data.matrix, 0, matrix, 0, 16)
+                uniform.dirty = true
+                // center crop
+//            if (cropCenter) {
+//                Matrix.translateM(matrix, 0, 0.5f, 0.5f, 0f)
+//                Matrix.scaleM(matrix, 0, outScaleX, outScaleY, 1f)
+//                Matrix.translateM(matrix, 0, -0.5f, -0.5f, 0f)
+//            }
+
                 glesManager.glContext {
                     //                        Log.d(TAG, "loop render")
                     windowSurface?.makeCurrent()
@@ -161,19 +174,6 @@ class SurfaceViewNode(
         if (recreateProgram) {
             recreateProgram(texture2d)
         }
-
-        val uniform = program.getUniform(Uniform.Type.Mat4, "texture_matrix0")
-        val matrix = uniform.data!!
-
-        System.arraycopy(texture2d.matrix, 0, matrix, 0, 16)
-        // center crop
-//            if (cropCenter) {
-//                Matrix.translateM(matrix, 0, 0.5f, 0.5f, 0f)
-//                Matrix.scaleM(matrix, 0, outScaleX, outScaleY, 1f)
-//                Matrix.translateM(matrix, 0, -0.5f, -0.5f, 0f)
-//            }
-
-        uniform.dirty = true
 
         previousTexture = texture2d
     }

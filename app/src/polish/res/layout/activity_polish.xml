@@ -103,10 +103,9 @@
     <androidx.constraintlayout.widget.ConstraintLayout
         android:id="@+id/layout_colors"
         android:layout_width="match_parent"
-        android:layout_height="480dp"
+        android:layout_height="360dp"
         android:background="#aa000000"
         app:behavior_hideable="true"
-        app:behavior_peekHeight="180dp"
         app:behavior_skipCollapsed="true"
         app:layout_behavior="@string/bottom_sheet_behavior">
 

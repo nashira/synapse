@@ -155,6 +155,7 @@ class PolishViewModel @Inject constructor(
                 it.properties += properties
             }
         }
+
         viewModelScope.launch {
 //            executor.initialize(false)
 //            executor.await()
