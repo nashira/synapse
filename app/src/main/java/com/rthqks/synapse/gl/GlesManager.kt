@@ -1,5 +1,6 @@
 package com.rthqks.synapse.gl
 
+import android.graphics.SurfaceTexture
 import android.opengl.GLES30
 import android.opengl.Matrix
 import android.os.Handler
@@ -68,6 +69,9 @@ class GlesManager {
 
     fun createWindowSurface(surface: Surface): WindowSurface =
         WindowSurface(eglCore, surface, false)
+
+    fun createWindowSurface(surface: SurfaceTexture): WindowSurface =
+        WindowSurface(eglCore, surface)
 
     companion object {
         val TAG = "GlesManager"

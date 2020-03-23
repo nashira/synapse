@@ -8,8 +8,9 @@ import com.rthqks.synapse.logic.Link
 import com.rthqks.synapse.logic.Network
 import com.rthqks.synapse.logic.Node
 import com.rthqks.synapse.logic.NodeType
-import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.ReceiveChannel
+import kotlinx.coroutines.joinAll
+import kotlinx.coroutines.launch
 import java.util.concurrent.ConcurrentHashMap
 
 open class NetworkExecutor(context: ExecutionContext) : Executor(context) {
@@ -118,6 +119,7 @@ open class NetworkExecutor(context: ExecutionContext) : Executor(context) {
             NodeType.Camera -> CameraNode(context, properties)
             NodeType.Microphone -> AudioSourceNode(context, properties)
             NodeType.Screen -> SurfaceViewNode(context, properties)
+            NodeType.TextureView -> TextureViewNode(context, properties)
             NodeType.GrayscaleFilter -> GrayscaleNode(context, properties)
             NodeType.MediaEncoder -> EncoderNode(context, properties)
             NodeType.RingBuffer -> RingBufferNode(context, properties)

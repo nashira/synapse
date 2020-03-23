@@ -6,6 +6,7 @@ import android.content.Intent
 import android.content.SharedPreferences
 import android.content.pm.PackageManager
 import android.graphics.Rect
+import android.graphics.SurfaceTexture
 import android.os.Build
 import android.os.Bundle
 import android.util.Log
@@ -142,7 +143,7 @@ class PolishActivity : DaggerAppCompatActivity() {
         lut_list.adapter = LutAdapter(Effect.LUTS, viewModel)
 
         lut_list.addItemDecoration(object : RecyclerView.ItemDecoration(){
-            private val spans = 4
+            private val spans = 3
             private val margin = resources.getDimension(R.dimen.connector_margin).roundToInt()
             override fun getItemOffsets(
                 outRect: Rect,
@@ -167,8 +168,9 @@ class PolishActivity : DaggerAppCompatActivity() {
                 Log.d(TAG, "state changed $newState")
                 when (newState) {
                     BottomSheetBehavior.STATE_HIDDEN -> {
-                        started = false
                         Log.d(TAG, "stop lut previews")
+                        started = false
+                        viewModel.stopLutPreview()
                     }
                     else -> {
                         if (!started) {
@@ -440,41 +442,42 @@ private class LutAdapter(
 
 private class LutViewHolder(
     itemView: View,
-    viewModel: PolishViewModel
-) : RecyclerView.ViewHolder(itemView) {
+    private val viewModel: PolishViewModel
+) : RecyclerView.ViewHolder(itemView), TextureView.SurfaceTextureListener {
     private var lut: String? = null
+    private var registeredLut: String? = null
 
     init {
         Log.d("Lut", "onCreateViewHolder $this")
-        itemView.surface_view.setZOrderOnTop(true)
-        itemView.surface_view.holder.addCallback(object: SurfaceHolder.Callback{
-            override fun surfaceChanged(
-                holder: SurfaceHolder?,
-                format: Int,
-                width: Int,
-                height: Int
-            ) {
-                Log.d("Lut", "changed $lut")
-            }
-
-            override fun surfaceDestroyed(holder: SurfaceHolder?) {
-                Log.d("Lut", "destroyed $lut")
-            }
-
-            override fun surfaceCreated(holder: SurfaceHolder?) {
-//                Log.d("Lut", "created $lut")
-            }
-
-        })
+        itemView.texture_view.surfaceTextureListener = this
         itemView.setOnClickListener {
             lut?.let { it1 -> viewModel.setLut(it1) }
         }
     }
 
     fun bind(lut: String) {
-        Log.d("Lut", "onBindViewHolder $lut")
+//        Log.d("Lut", "onBindViewHolder $lut ${this.lut} ${itemView.texture_view.surfaceTexture} ${itemView.texture_view.isAvailable}")
         this.lut = lut
         itemView.title_view.text = lut
+    }
+
+    override fun onSurfaceTextureSizeChanged(surface: SurfaceTexture?, width: Int, height: Int) {
+        Log.d("Lut", "surface size: $lut")
+    }
+
+    override fun onSurfaceTextureUpdated(surface: SurfaceTexture?) {}
+
+    override fun onSurfaceTextureDestroyed(surface: SurfaceTexture?): Boolean {
+//        Log.d("Lut", "surface destroyed $lut $surface")
+        surface?.let { viewModel.unregisterLutPreview(it) }
+        return true
+    }
+
+    override fun onSurfaceTextureAvailable(surface: SurfaceTexture?, width: Int, height: Int) {
+//        Log.d("Lut", "surface available $lut $surface")
+
+//        if (adapterPosition % 3 == 0)
+        lut?.let { viewModel.registerLutPreview(itemView.texture_view, it) }
     }
 }
 

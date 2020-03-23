@@ -185,4 +185,9 @@ sealed class NodeType(
         R.string.name_node_type_matrix_rotate,
         R.drawable.ic_3d_rotation
     )
+
+    object TextureView: NodeType(
+        "texture_view",
+        R.string.name_node_type_texture_view,
+        R.drawable.ic_display)
 }

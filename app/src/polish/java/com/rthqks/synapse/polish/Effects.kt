@@ -17,7 +17,7 @@ object Effects {
     }
 
     val timeWarp = Network(ID_TIME_WARP).let {
-        val ringBuffer = it.addNode(NewNode(NodeType.RingBuffer, 1000))
+        val ringBuffer = it.addNode(NewNode(NodeType.RingBuffer))
         val slice = it.addNode(NewNode(NodeType.Slice3d))
 
         it.addLinkNoCompute(Link(Effect.ID_CAMERA, CameraNode.OUTPUT.id, ringBuffer.id, RingBufferNode.INPUT.id))
@@ -30,7 +30,7 @@ object Effects {
     }
 
     val rotoHue = Network(ID_ROTO_HUE).let {
-        val rotate = it.addNode(NewNode(NodeType.RotateMatrix, 1000))
+        val rotate = it.addNode(NewNode(NodeType.RotateMatrix))
         it.addLinkNoCompute(Link(rotate.id, RotateMatrixNode.OUTPUT.id, Effect.ID_LUT, Lut3dNode.LUT_MATRIX.id))
         it.addLinkNoCompute(Link(Effect.ID_CAMERA, CameraNode.OUTPUT.id, Effect.ID_LUT, Lut3dNode.INPUT.id))
         Effect(it)

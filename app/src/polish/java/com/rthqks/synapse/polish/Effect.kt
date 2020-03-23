@@ -21,13 +21,16 @@ class Effect(
     val title: String get() = properties[Title]
 
     companion object {
-        const val ID_CAMERA = 1
-        const val ID_MIC = 2
-        const val ID_SURFACE_VIEW = 3
-        const val ID_ENCODER = 4
-        const val ID_LUT_IMPORT = 5
-        const val ID_LUT = 6
-        const val ID_THUMBNAIL = 7
+        // node id allocations
+        // 0 - 10,000 : effect specific nodes
+        // 10000+ : effect context nodes
+        const val ID_CAMERA = 10_001
+        const val ID_MIC = 10_002
+        const val ID_SURFACE_VIEW = 10_003
+        const val ID_ENCODER = 10_004
+        const val ID_LUT_IMPORT = 10_005
+        const val ID_LUT = 10_006
+        const val ID_THUMBNAIL = 10_007
         val Title = Property.Key<String>("name")
 
         val LUTS = listOf(

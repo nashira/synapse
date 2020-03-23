@@ -118,7 +118,7 @@
             android:paddingTop="48dp"
             android:paddingBottom="48dp"
             app:layoutManager="androidx.recyclerview.widget.GridLayoutManager"
-            app:spanCount="4"
+            app:spanCount="3"
             tools:itemCount="37"
             tools:listitem="@layout/layout_lut" />
 

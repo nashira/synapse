@@ -6,8 +6,8 @@
     android:layout_width="wrap_content"
     android:layout_height="wrap_content">
 
-    <SurfaceView
-        android:id="@+id/surface_view"
+    <TextureView
+        android:id="@+id/texture_view"
         android:layout_width="match_parent"
         android:layout_height="0dp"
         app:layout_constraintDimensionRatio="1:1"
@@ -22,6 +22,6 @@
         android:textAppearance="?android:attr/textAppearanceListItem"
         android:textColor="@color/white"
         app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/surface_view"
+        app:layout_constraintTop_toBottomOf="@id/texture_view"
         tools:text="lut 25" />
 </androidx.constraintlayout.widget.ConstraintLayout>

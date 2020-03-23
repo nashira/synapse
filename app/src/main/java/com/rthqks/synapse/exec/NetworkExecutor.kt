@@ -111,6 +111,7 @@ class NetworkExecutor(
             NodeType.Properties,
             NodeType.Creation,
             NodeType.BCubeImport,
+            NodeType.TextureView,
             NodeType.Connection -> error("not an executable node type: ${node.type}")
         }
     }

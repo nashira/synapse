@@ -16,6 +16,7 @@ val AudioChannel = Property.Key<Int>("audio_channel")
 val AudioSource = Property.Key<Int>("audio_source")
 val CameraFacing = Property.Key<Int>("camera_facing")
 val VideoSize = Property.Key<Size>("video_size")
+val CropSize = Property.Key<Size>("crop_size")
 val HistorySize = Property.Key<Int>("history_size")
 val FrameRate = Property.Key<Int>("frame_rate")
 val Stabilize = Property.Key<Boolean>("stabilize")
@@ -368,7 +369,7 @@ val Nodes = listOf(
         add(Port(Port.Type.Video, CropResizeNode.OUTPUT.id, "Output", true))
         add(
             Property(
-                VideoSize,
+                CropSize,
                 ChoiceType(
                     R.string.property_name_environment_video_size,
                     R.drawable.ic_photo_size_select,
@@ -383,6 +384,20 @@ val Nodes = listOf(
         )
     },
     Node(NodeType.Screen).apply {
+        add(Port(Port.Type.Video, "video_1", "Source", false))
+        add(
+            Property(
+                CropToFit,
+                ChoiceType(
+                    R.string.property_title_crop_to_fit,
+                    R.drawable.ic_crop,
+                    Choice(true, R.string.property_subtitle_crop_to_fit_enabled),
+                    Choice(false, R.string.property_subtitle_crop_to_fit_disabled)
+                ), false
+            ), BooleanConverter
+        )
+    },
+    Node(NodeType.TextureView).apply {
         add(Port(Port.Type.Video, "video_1", "Source", false))
         add(
             Property(
@@ -716,6 +731,7 @@ val NodeTypes = listOf(
     NodeType.ShaderFilter,
     NodeType.Speakers,
     NodeType.Screen,
+    NodeType.TextureView,
     NodeType.SlimeMold,
     NodeType.ImageBlend,
     NodeType.CropResize,

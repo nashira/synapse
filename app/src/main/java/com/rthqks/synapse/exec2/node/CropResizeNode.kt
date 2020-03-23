@@ -8,8 +8,8 @@ import com.rthqks.synapse.exec.ExecutionContext
 import com.rthqks.synapse.exec2.Connection
 import com.rthqks.synapse.exec2.NodeExecutor
 import com.rthqks.synapse.gl.*
+import com.rthqks.synapse.logic.CropSize
 import com.rthqks.synapse.logic.Properties
-import com.rthqks.synapse.logic.VideoSize
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 
@@ -22,7 +22,7 @@ class CropResizeNode(
     private var outScaleX: Float = 1f
     private var outScaleY: Float = 1f
     private var startJob: Job? = null
-    private val outputSize = properties[VideoSize]
+    private val outputSize = properties[CropSize]
     private var inputSize = Size(0, 0)
     private var outputConfig: Texture2d? = null
     private val texture1 = Texture2d()
@@ -36,12 +36,11 @@ class CropResizeNode(
     private var needsPriming = true
 
     override suspend fun onSetup() {
+        Log.d(TAG, "onSetup")
         glesManager.glContext {
             quadMesh.initialize()
             texture1.initialize()
-            framebuffer1.initialize(texture1)
             texture2.initialize()
-            framebuffer2.initialize(texture2)
         }
     }
 
@@ -76,6 +75,9 @@ class CropResizeNode(
     private suspend fun checkConfig(texture2d: Texture2d) {
         val inputSizeChanged = inputSize.width != texture2d.width
                 || inputSize.height != texture2d.height
+
+        val outputSizeChanged = texture1.width != outputSize.width
+                || texture1.height != outputSize.height
 
         val oesChanged = outputConfig?.oes != texture2d.oes
 
@@ -115,10 +117,17 @@ class CropResizeNode(
 
             outScaleX = if (inAspect > outAspect) outAspect / inAspect else 1f
             outScaleY = if (inAspect < outAspect) inAspect / outAspect else 1f
+        }
 
+        if (outputSizeChanged) {
             glesManager.glContext {
                 initTextureData(texture1, texture2d)
                 initTextureData(texture2, texture2d)
+
+                framebuffer1.release()
+                framebuffer1.initialize(texture1)
+                framebuffer2.release()
+                framebuffer2.initialize(texture2)
             }
         }
     }
@@ -139,6 +148,7 @@ class CropResizeNode(
     }
 
     private suspend fun onStart() {
+        Log.d(TAG, "onStart")
         val inputIn = channel(INPUT) ?: error("missing input")
         var copyMatrix = true
 
@@ -160,6 +170,8 @@ class CropResizeNode(
     }
 
     private suspend fun onStop() {
+        Log.d(TAG, "onStop")
+
         startJob?.join()
         startJob = null
     }

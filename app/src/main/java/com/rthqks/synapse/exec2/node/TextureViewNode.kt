@@ -1,11 +1,10 @@
 package com.rthqks.synapse.exec2.node
 
+import android.graphics.SurfaceTexture
 import android.opengl.GLES30
 import android.util.Log
 import android.util.Size
-import android.view.Surface
-import android.view.SurfaceHolder
-import android.view.SurfaceView
+import android.view.TextureView
 import com.rthqks.synapse.exec.ExecutionContext
 import com.rthqks.synapse.exec2.Connection
 import com.rthqks.synapse.exec2.NodeExecutor
@@ -13,21 +12,22 @@ import com.rthqks.synapse.gl.*
 import com.rthqks.synapse.logic.Properties
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.runBlocking
 
-class SurfaceViewNode(
+class TextureViewNode(
     context: ExecutionContext,
     properties: Properties
-) : NodeExecutor(context), SurfaceHolder.Callback {
+) : NodeExecutor(context) {
     private val glesManager = context.glesManager
     private val assetManager = context.assetManager
-    private var surfaceView: SurfaceView? = null
+    private var textureView: TextureView? = null
     private val mesh = Quad()
     private var program = Program()
     private var surfaceSize = Size(0, 0)
     private var windowSurface: WindowSurface? = null
     private var startJob: Job? = null
     private var previousTexture: Texture2d? = null
+    private val string = toString()
+    val TAG = "TVN ${string.substring(string.length - 8, string.length)}"
 
     override suspend fun onSetup() {
         glesManager.glContext {
@@ -52,7 +52,7 @@ class SurfaceViewNode(
 
     override suspend fun onRelease() {
         glesManager.glContext {
-            surfaceView?.holder?.removeCallback(this@SurfaceViewNode)
+//            textureView?.surfaceTextureListener = null
             windowSurface?.release()
             mesh.release()
             program.release()
@@ -66,25 +66,13 @@ class SurfaceViewNode(
         for (msg in channel) {
             checkInit(msg.data)
 
-//                Log.d(TAG, "loop surfaceState $surfaceState")
+            val uniform = program.getUniform(Uniform.Type.Mat4, "texture_matrix0")
+            val matrix = uniform.data!!
+            System.arraycopy(msg.data.matrix, 0, matrix, 0, 16)
+            uniform.dirty = true
 
-            if (windowSurface != null) {
-//                    Log.d(TAG, "loop pre render")
-
-
-                val uniform = program.getUniform(Uniform.Type.Mat4, "texture_matrix0")
-                val matrix = uniform.data!!
-                System.arraycopy(msg.data.matrix, 0, matrix, 0, 16)
-                uniform.dirty = true
-                // center crop
-//            if (cropCenter) {
-//                Matrix.translateM(matrix, 0, 0.5f, 0.5f, 0f)
-//                Matrix.scaleM(matrix, 0, outScaleX, outScaleY, 1f)
-//                Matrix.translateM(matrix, 0, -0.5f, -0.5f, 0f)
-//            }
-
-                glesManager.glContext {
-                    //                        Log.d(TAG, "loop render")
+            glesManager.glContext {
+                if (windowSurface != null) {
                     windowSurface?.makeCurrent()
                     GLES30.glBindFramebuffer(GLES30.GL_FRAMEBUFFER, 0)
 
@@ -101,66 +89,38 @@ class SurfaceViewNode(
             }
             msg.release()
         }
+        Log.d(TAG, "no more messages")
     }
 
-    private suspend fun updateWindowSurface(surface: Surface?) {
-        Log.d(TAG, "updating input surface")
+    private suspend fun updateWindowSurface(surfaceTexture: SurfaceTexture?) {
+//        Log.d(TAG, "updating input surface")
         glesManager.glContext {
-            windowSurface?.release()
-            if (surface?.isValid == true) {
-                windowSurface = it.createWindowSurface(surface)
-            } else {
-                windowSurface = null
+            val ws = windowSurface
+            windowSurface = null
+            ws?.release()
+            if (surfaceTexture != null) {
+//                Log.d(TAG, "creating input surface")
+                windowSurface = it.createWindowSurface(surfaceTexture)
             }
         }
     }
 
-    suspend fun setSurfaceView(surfaceView: SurfaceView) = await {
-        val valid = surfaceView.holder.surface?.isValid ?: false
+    suspend fun setTextureView(textureView: TextureView) = await {
+        val surfaceTexture = textureView.surfaceTexture
+//        Log.d(TAG, "setTextureView $surfaceTexture")
 
-        Log.d(TAG, "setSurfaceView $valid")
-
-        this.surfaceView?.holder?.removeCallback(this)
-        this.surfaceView = surfaceView
-        surfaceView.holder.addCallback(this)
-        if (valid) {
-            surfaceSize = Size(surfaceView.width, surfaceView.height)
-            updateWindowSurface(surfaceView.holder.surface)
+        this.textureView = textureView
+        surfaceTexture?.let {
+            surfaceSize = Size(textureView.width, textureView.height)
+//            Log.d(TAG, "st size $surfaceSize")
+            updateWindowSurface(it)
         }
     }
 
-    suspend fun removeSurfaceView() = await {
-        surfaceView?.holder?.removeCallback(this)
-        surfaceView = null
+    suspend fun removeTextureView() = await {
+//        textureView?.surfaceTextureListener = null
+        textureView = null
         updateWindowSurface(null)
-    }
-
-    override fun surfaceChanged(
-        holder: SurfaceHolder?,
-        format: Int,
-        width: Int,
-        height: Int
-    ) {
-        runBlocking {
-            exec {
-                Log.d(TAG, "surfaceChanged: $holder $format $width $height")
-                surfaceSize = Size(width, height)
-                updateWindowSurface(holder?.surface)
-            }
-        }
-    }
-
-    override fun surfaceDestroyed(holder: SurfaceHolder?) {
-        runBlocking {
-            exec {
-                Log.d(TAG, "surfaceDestroyed: $holder")
-                updateWindowSurface(null)
-            }
-        }
-    }
-
-    override fun surfaceCreated(holder: SurfaceHolder?) {
-        Log.d(TAG, "surfaceCreated: $holder")
     }
 
     private suspend fun checkInit(texture2d: Texture2d) {
@@ -222,7 +182,7 @@ class SurfaceViewNode(
     }
 
     companion object {
-        const val TAG = "SVN2"
+
         val INPUT = Connection.Key<Texture2d>("video_1")
     }
 }

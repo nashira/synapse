@@ -1,17 +1,18 @@
 package com.rthqks.synapse.polish
 
+import android.graphics.SurfaceTexture
 import android.hardware.camera2.CameraCharacteristics
 import android.net.Uri
 import android.os.SystemClock
 import android.util.Log
 import android.util.Size
 import android.view.SurfaceView
+import android.view.TextureView
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.rthqks.synapse.R
 import com.rthqks.synapse.exec.ExecutionContext
-import com.rthqks.synapse.exec2.node.BCubeImportNode
 import com.rthqks.synapse.exec2.node.CameraNode
 import com.rthqks.synapse.logic.*
 import com.rthqks.synapse.ops.Analytics
@@ -30,7 +31,6 @@ class PolishViewModel @Inject constructor(
     private var svSetup = false
     private var stopped = false
     private val effectExecutor = EffectExecutor(context)
-    private var lutIndex = 0
 
     val properties = context.properties
 
@@ -267,18 +267,32 @@ class PolishViewModel @Inject constructor(
 
     fun setLut(lut: String) {
         viewModelScope.launch {
-            val uri = Uri.parse("assets:///cube/$lut.bcube")
-            properties[LutUri] = uri
-//            network?.getNode(Effect.ID_LUT_IMPORT)?.properties?.set(LutUri, uri)
-            (effectExecutor.getNode(Effect.ID_LUT_IMPORT) as? BCubeImportNode)?.let {
-                it.loadCubeFile()
-                it.sendMessage()
-            }
+            effectExecutor.setLut(lut)
         }
     }
 
     fun startLutPreview() {
-//        effectExecutor.setSurfaceView()
+        viewModelScope.launch {
+            effectExecutor.startLutPreview()
+        }
+    }
+
+    fun stopLutPreview() {
+        viewModelScope.launch {
+            effectExecutor.stopLutPreview()
+        }
+    }
+
+    fun registerLutPreview(textureView: TextureView, lut: String) {
+        viewModelScope.launch {
+            effectExecutor.registerLutPreview(textureView, lut)
+        }
+    }
+
+    fun unregisterLutPreview(surfaceTexture: SurfaceTexture) {
+        viewModelScope.launch {
+            effectExecutor.unregisterLutPreview(surfaceTexture)
+        }
     }
 
 

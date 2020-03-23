@@ -2,7 +2,6 @@ package com.rthqks.synapse.exec2.node
 
 import android.net.Uri
 import android.opengl.GLES30
-import android.util.Log
 import com.rthqks.synapse.exec.ExecutionContext
 import com.rthqks.synapse.exec2.Connection
 import com.rthqks.synapse.exec2.NodeExecutor
@@ -59,7 +58,7 @@ class BCubeImportNode(
             }
         }
 
-        Log.d(TAG, "options $size ${buffer.position()}")
+//        Log.d(TAG, "options $size ${buffer.position()}")
 
         buffer.position(0)
 
@@ -98,10 +97,10 @@ class BCubeImportNode(
     }
 
     suspend fun sendMessage() {
-        Log.d(TAG, "onStart")
+//        Log.d(TAG, "onStart")
         val channel = channel(OUTPUT) ?: error("missing output")
         channel.receive().also {
-            Log.d(TAG, "sending event $it")
+//            Log.d(TAG, "sending event $it")
             it.queue()
         }
     }
