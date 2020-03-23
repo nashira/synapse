@@ -2,6 +2,7 @@ package com.rthqks.synapse.exec2.node
 
 import android.net.Uri
 import android.opengl.GLES30
+import android.util.Log
 import com.rthqks.synapse.exec.ExecutionContext
 import com.rthqks.synapse.exec2.Connection
 import com.rthqks.synapse.exec2.NodeExecutor
@@ -15,6 +16,7 @@ import kotlinx.coroutines.withContext
 import java.io.DataInputStream
 import java.io.InputStream
 import java.nio.ByteBuffer
+import java.util.concurrent.ConcurrentHashMap
 
 class BCubeImportNode(
     context: ExecutionContext,
@@ -43,25 +45,32 @@ class BCubeImportNode(
         loadCubeFile()
     }
 
-    suspend fun loadCubeFile() {
-        val stream = getInputStream() ?: return
-        val reader = DataInputStream(stream)
-
-        val buffer = withContext(Dispatchers.IO) {
-            val dimen = reader.readInt()
-            size = Triple(dimen, dimen, dimen)
-            val bytes = ByteArray(dimen * dimen * dimen * 3)
-            reader.readFully(bytes)
-            reader.close()
-            ByteBuffer.allocateDirect(bytes.size).apply {
-                put(bytes)
+    private suspend fun getBuffer(): ByteBuffer? {
+        val buffer = cache.getOrPut(cubeUri) {
+            val stream = getInputStream() ?: return null
+            val reader = DataInputStream(stream)
+            withContext(Dispatchers.IO) {
+                val dimen = reader.readInt()
+                size = Triple(dimen, dimen, dimen)
+                val bytes = ByteArray(dimen * dimen * dimen * 3)
+                reader.readFully(bytes)
+                reader.close()
+                val buffer = ByteBuffer.allocateDirect(bytes.size).apply {
+                    put(bytes)
+                }
+                Pair(dimen, buffer)
             }
         }
 
-//        Log.d(TAG, "options $size ${buffer.position()}")
+        size = Triple(buffer.first, buffer.first, buffer.first)
 
-        buffer.position(0)
+//        Log.d(TAG, "options $size ${buffer.second.capacity()}")
+        buffer.second.position(0)
+        return buffer.second
+    }
 
+    suspend fun loadCubeFile() {
+        val buffer = getBuffer() ?: return
         glesManager.glContext {
             texture.initData(
                 0,
@@ -118,6 +127,7 @@ class BCubeImportNode(
 
     companion object {
         const val TAG = "BCubeImportNode"
+        private val cache = ConcurrentHashMap<Uri, Pair<Int, ByteBuffer>>()
         val OUTPUT = Connection.Key<Texture3d>("output_lut")
     }
 }

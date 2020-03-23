@@ -27,6 +27,7 @@ class EffectExecutor(context: ExecutionContext) : NetworkExecutor(context) {
     private var cropLink: Link? = null
     private val lutPreviewPool = LinkedList<LutPreview>()
     private val lutPreviews = mutableMapOf<SurfaceTexture, LutPreview>()
+    private var runState = NOT_RUNNING
 
     init {
         microphone.properties[AudioSource] = MediaRecorder.AudioSource.CAMCORDER
@@ -152,6 +153,8 @@ class EffectExecutor(context: ExecutionContext) : NetworkExecutor(context) {
 
     companion object {
         const val TAG = "EffectExecutor"
+        const val NOT_RUNNING = 0
+        const val RUNNING = 1
     }
 
     private inner class LutPreview {

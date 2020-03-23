@@ -470,7 +470,7 @@ private class LutViewHolder(
     override fun onSurfaceTextureDestroyed(surface: SurfaceTexture?): Boolean {
 //        Log.d("Lut", "surface destroyed $lut $surface")
         surface?.let { viewModel.unregisterLutPreview(it) }
-        return true
+        return false
     }
 
     override fun onSurfaceTextureAvailable(surface: SurfaceTexture?, width: Int, height: Int) {

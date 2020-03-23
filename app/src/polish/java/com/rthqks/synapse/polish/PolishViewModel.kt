@@ -196,9 +196,11 @@ class PolishViewModel @Inject constructor(
     }
 
     fun stopExecution() = viewModelScope.launch {
-        stopped = true
-        effectExecutor.removeAllLinks()
-        (effectExecutor.getNode(Effect.ID_CAMERA) as? CameraNode)?.stopCamera()
+        if (!stopped) {
+            stopped = true
+            effectExecutor.removeAllLinks()
+            (effectExecutor.getNode(Effect.ID_CAMERA) as? CameraNode)?.stopCamera()
+        }
     }
 
     fun startRecording() {
