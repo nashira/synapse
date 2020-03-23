@@ -29,7 +29,7 @@ class PolishViewModel @Inject constructor(
     private var currentEffect: Effect? = null
     private var recordingStart = 0L
     private var svSetup = false
-    private var stopped = false
+    private var stopped = true
     private val effectExecutor = EffectExecutor(context)
 
     val properties = context.properties
@@ -188,17 +188,19 @@ class PolishViewModel @Inject constructor(
     }
 
     fun startExecution() = viewModelScope.launch {
-        if (stopped) {
+        if (stopped && currentEffect != null) {
             stopped = false
+            Log.d(TAG, "starting producers")
             (effectExecutor.getNode(Effect.ID_CAMERA) as CameraNode).resumeCamera()
-            effectExecutor.addAllLinks()
+            effectExecutor.startProducers()
         }
     }
 
     fun stopExecution() = viewModelScope.launch {
-        if (!stopped) {
+        if (!stopped && currentEffect != null) {
             stopped = true
-            effectExecutor.removeAllLinks()
+            Log.d(TAG, "stopping producers")
+            effectExecutor.stopProducers()
             (effectExecutor.getNode(Effect.ID_CAMERA) as? CameraNode)?.stopCamera()
         }
     }
@@ -235,6 +237,7 @@ class PolishViewModel @Inject constructor(
     fun setEffect(effect: Effect): Boolean {
         currentEffect = effect
         network = effect.network
+        stopped = false
 
         analytics.logEvent(Analytics.Event.SetEffect(effect.title))
         viewModelScope.launch {

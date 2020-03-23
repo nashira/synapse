@@ -35,6 +35,10 @@ fun convert(cubeFile: String) {
                 val g = it.groupValues[2].toFloat()
                 val b = it.groupValues[3].toFloat()
 
+                if (r > 1f || g > 1f || b > 1f) {
+                    println("rgb($r, $g, $b)")
+                }
+
                 val rs = (cube.scale(r, 0) * 255).toInt()
                 val gs = (cube.scale(g, 1) * 255).toInt()
                 val bs = (cube.scale(b, 2) * 255).toInt()
@@ -70,19 +74,11 @@ fun convert(cubeFile: String) {
     output.close()
 }
 
-convert("../assets/cube/fuji3513.cube")
-//convert("../assets/cube/vibrant.cube")
-//convert("../assets/cube/teal_2.cube")
-//convert("../assets/cube/teal_1.cube")
-//convert("../assets/cube/drama.cube")
-//convert("../assets/cube/cold.cube")
-//convert("../assets/cube/bright.cube")
-//convert("../assets/cube/basic.cube")
 
-//val dir = File("../assets/cube")
-//dir.list().forEach {
-//    println(it)
-//    convert("../assets/cube/$it")
-////    File(it).r
-////    convert("../app/src/main/assets/cube/$it")
-//}
+val dir = File("../assets/cube")
+dir.list().forEach {
+    if (it.endsWith(".cube")) {
+        println(it)
+        convert("../assets/cube/$it")
+    }
+}

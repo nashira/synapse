@@ -17,6 +17,7 @@ import java.io.DataInputStream
 import java.io.InputStream
 import java.nio.ByteBuffer
 import java.util.concurrent.ConcurrentHashMap
+import kotlin.math.min
 
 class BCubeImportNode(
     context: ExecutionContext,
@@ -72,6 +73,7 @@ class BCubeImportNode(
     suspend fun loadCubeFile() {
         val buffer = getBuffer() ?: return
         glesManager.glContext {
+
             texture.initData(
                 0,
                 GLES30.GL_RGB8,

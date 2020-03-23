@@ -458,7 +458,7 @@ private class LutViewHolder(
     fun bind(lut: String) {
 //        Log.d("Lut", "onBindViewHolder $lut ${this.lut} ${itemView.texture_view.surfaceTexture} ${itemView.texture_view.isAvailable}")
         this.lut = lut
-        itemView.title_view.text = lut
+        itemView.title_view.text = lut.replace("_", " ")
     }
 
     override fun onSurfaceTextureSizeChanged(surface: SurfaceTexture?, width: Int, height: Int) {

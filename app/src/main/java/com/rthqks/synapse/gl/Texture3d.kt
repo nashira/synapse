@@ -1,5 +1,6 @@
 package com.rthqks.synapse.gl
 
+import android.opengl.GLES30
 import android.opengl.GLES30.*
 import android.util.Log
 

@@ -35,33 +35,62 @@ class EffectExecutor(context: ExecutionContext) : NetworkExecutor(context) {
         crop.properties[CropSize] = Size(320, 320)
 
         n.addLinkNoCompute(Link(lut.id, Lut3dNode.OUTPUT.id, screen.id, SurfaceViewNode.INPUT.id))
-        n.addLinkNoCompute(Link(lut.id, Lut3dNode.OUTPUT.id, encoder.id, EncoderNode.INPUT_VIDEO.id))
+        n.addLinkNoCompute(
+            Link(
+                lut.id,
+                Lut3dNode.OUTPUT.id,
+                encoder.id,
+                EncoderNode.INPUT_VIDEO.id
+            )
+        )
         n.addLinkNoCompute(Link(cube.id, BCubeImportNode.OUTPUT.id, lut.id, Lut3dNode.INPUT_LUT.id))
-        n.addLinkNoCompute(Link(microphone.id, AudioSourceNode.OUTPUT.id, encoder.id, EncoderNode.INPUT_AUDIO.id))
+        n.addLinkNoCompute(
+            Link(
+                microphone.id,
+                AudioSourceNode.OUTPUT.id,
+                encoder.id,
+                EncoderNode.INPUT_AUDIO.id
+            )
+        )
     }
 
     override suspend fun setup() {
         super.setup()
 
-        n.nodes.values.forEach {
-            it.properties += context.properties
-        }
+        await {
 
-        network = n
-        addAllNodes()
-        addAllLinks()
+            n.nodes.values.forEach {
+                it.properties += context.properties
+            }
+
+            network = n
+            addAllNodes()
+            addAllLinks()
+        }
+    }
+
+    suspend fun stopProducers() = await {
+        n.nodes.filter { it.value.producer }.map { n.getLinks(it.key) }.flatten().map {
+            scope.launch { removeLink(it) }
+        }.joinAll()
+    }
+
+    suspend fun startProducers() = await {
+        n.nodes.filter { it.value.producer }.map { n.getLinks(it.key) }.flatten().map {
+            scope.launch { addLink(it) }
+        }.joinAll()
     }
 
     suspend fun swapEffect(effect: Effect) = async {
 
         this.effect?.network?.let { old ->
-//            val cl = cropLink
+            //            val cl = cropLink
 //            val links = if (cl != null ) old.getLinks() + cl else old.getLinks()
             val links = old.getLinks()
 
             links.map { scope.launch { removeLink(it) } }.joinAll()
             old.nodes.map { scope.launch { removeNode(it.value) } }.joinAll()
-            links.forEach {n.removeLink(it) }
+            links.forEach { n.removeLink(it) }
             old.nodes.forEach { n.removeNode(it.key) }
         }
 
@@ -92,7 +121,8 @@ class EffectExecutor(context: ExecutionContext) : NetworkExecutor(context) {
         n.getLinks(Effect.ID_LUT).firstOrNull {
             it.toNodeId == Effect.ID_LUT && it.toPortId == Lut3dNode.INPUT.id
         }?.let {
-            val cl = Link(it.fromNodeId, it.fromPortId, Effect.ID_THUMBNAIL, CropResizeNode.INPUT.id)
+            val cl =
+                Link(it.fromNodeId, it.fromPortId, Effect.ID_THUMBNAIL, CropResizeNode.INPUT.id)
             addLink(cl)
             cropLink = cl
         }
@@ -106,13 +136,13 @@ class EffectExecutor(context: ExecutionContext) : NetworkExecutor(context) {
     }
 
     suspend fun registerLutPreview(textureView: TextureView, lut: String) = await {
-//        Log.d(TAG, "register $lut ${textureView.surfaceTexture}")
+        //        Log.d(TAG, "register $lut ${textureView.surfaceTexture}")
         if (textureView.surfaceTexture in lutPreviews) {
 //            Log.e(TAG, "lut already being previewed")
             return@await
         }
         val preview = lutPreviewPool.poll() ?: run {
-//        val preview = null ?: run {
+            //        val preview = null ?: run {
 //            Log.d(TAG, "creating new lut preview")
             val p = LutPreview()
             p.setup()
@@ -125,9 +155,9 @@ class EffectExecutor(context: ExecutionContext) : NetworkExecutor(context) {
     }
 
     suspend fun unregisterLutPreview(surfaceTexture: SurfaceTexture) = await {
-//        Log.d(TAG, "unregister $surfaceTexture")
+        //        Log.d(TAG, "unregister $surfaceTexture")
         lutPreviews.remove(surfaceTexture)?.let {
-//            Log.d(TAG, "removed $surfaceTexture")
+            //            Log.d(TAG, "removed $surfaceTexture")
 //            it.release()
             (getNode(it.screen.id) as TextureViewNode).removeTextureView()
             lutPreviewPool += it

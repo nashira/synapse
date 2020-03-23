@@ -56,6 +56,7 @@ class GlesManager {
 
         GLES30.glDisable(GLES30.GL_DEPTH_TEST)
         GLES30.glDisable(GLES30.GL_CULL_FACE)
+        GLES30.glPixelStorei(GLES30.GL_UNPACK_ALIGNMENT, 1)
     }
 
     fun release() {

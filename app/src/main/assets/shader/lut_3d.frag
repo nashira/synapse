@@ -11,6 +11,7 @@ precision mediump sampler3D;
 precision mediump sampler2D;
 
 #ifdef EXT_INPUT
+precision mediump samplerExternalOES;
 uniform samplerExternalOES input_texture;
 #else
 uniform sampler2D input_texture;
