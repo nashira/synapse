@@ -326,7 +326,7 @@ class PolishViewModel @Inject constructor(
     }
 
     fun setLutStrength(strength: Float) {
-        editProperty(LutStrength, strength)
+        properties[LutStrength] = strength
     }
 
 

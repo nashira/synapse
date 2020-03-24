@@ -203,8 +203,9 @@ class PolishActivity : DaggerAppCompatActivity() {
 
             override fun onStartTrackingTouch(seekBar: SeekBar?) {}
 
-            override fun onStopTrackingTouch(seekBar: SeekBar?) {}
-
+            override fun onStopTrackingTouch(seekBar: SeekBar?) {
+                viewModel.editProperty(LutStrength, lut_strength.progress / 1000f)
+            }
         })
 
         button_camera.setOnClickListener(throttleClick {
@@ -279,6 +280,7 @@ class PolishActivity : DaggerAppCompatActivity() {
         listOf(
             button_camera,
             button_settings,
+            button_color,
             button_gallery
         ).forEach {
             it.animate()
