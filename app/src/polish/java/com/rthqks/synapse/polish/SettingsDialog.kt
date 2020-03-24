@@ -65,12 +65,12 @@ class SettingsDialog() : DialogFragment() {
 
     private fun onClick(view: View) {
         when (view) {
-            customView.size_720p -> viewModel.editProperty(VideoSize, Size(1280, 720), recreate = true)
-            customView.size_1080p -> viewModel.editProperty(VideoSize, Size(1920, 1080), recreate = true)
-            customView.fps_30 -> viewModel.editProperty(FrameRate, 30, restart = true)
-            customView.fps_60 -> viewModel.editProperty(FrameRate, 60, restart = true)
-            customView.stabilize_on -> viewModel.editProperty(Stabilize, true, restart = true)
-            customView.stabilize_off -> viewModel.editProperty(Stabilize, false, restart = true)
+            customView.size_720p -> viewModel.editProperty(VideoSize, Size(1280, 720))
+            customView.size_1080p -> viewModel.editProperty(VideoSize, Size(1920, 1080))
+            customView.fps_30 -> viewModel.editProperty(FrameRate, 30)
+            customView.fps_60 -> viewModel.editProperty(FrameRate, 60)
+            customView.stabilize_on -> viewModel.editProperty(Stabilize, true)
+            customView.stabilize_off -> viewModel.editProperty(Stabilize, false)
         }
     }
 

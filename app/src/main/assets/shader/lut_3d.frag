@@ -21,6 +21,7 @@ uniform mat4 lut_matrix;
 uniform sampler3D lut_texture;
 uniform float lut_offset;
 uniform float lut_scale;
+uniform float lut_strength;
 
 in vec2 uv;
 
@@ -29,5 +30,6 @@ out vec4 color;
 void main() {
     vec4 from = texture(input_texture, uv);
     vec3 lookup = (lut_matrix * vec4(from.xyz * lut_scale + lut_offset, 1.0)).xyz;
-    color = texture(lut_texture, lookup);
+    vec4 to = texture(lut_texture, lookup);
+    color = mix(from, to, lut_strength);
 }

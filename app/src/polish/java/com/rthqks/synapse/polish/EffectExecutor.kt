@@ -34,7 +34,6 @@ class EffectExecutor(context: ExecutionContext) : NetworkExecutor(context) {
 
     init {
         microphone.properties[AudioSource] = MediaRecorder.AudioSource.CAMCORDER
-        cube.properties[LutUri] = Uri.parse("assets:///cube/identity.bcube")
         crop.properties[CropSize] = Size(320, 320)
 
         n.addLinkNoCompute(Link(lut.id, Lut3dNode.OUTPUT.id, screen.id, SurfaceViewNode.INPUT.id))
@@ -61,7 +60,6 @@ class EffectExecutor(context: ExecutionContext) : NetworkExecutor(context) {
         super.setup()
 
         await {
-
             n.nodes.values.forEach {
                 it.properties += context.properties
             }

@@ -12,6 +12,7 @@ import android.os.Bundle
 import android.util.Log
 import android.view.*
 import android.view.animation.AccelerateDecelerateInterpolator
+import android.widget.SeekBar
 import android.widget.TextView
 import android.widget.Toast
 import androidx.core.content.edit
@@ -25,6 +26,7 @@ import androidx.recyclerview.widget.LinearSnapHelper
 import androidx.recyclerview.widget.RecyclerView
 import com.google.android.material.bottomsheet.BottomSheetBehavior
 import com.rthqks.synapse.R
+import com.rthqks.synapse.logic.LutStrength
 import com.rthqks.synapse.ops.Analytics
 import com.rthqks.synapse.util.throttleClick
 import dagger.android.support.DaggerAppCompatActivity
@@ -191,6 +193,19 @@ class PolishActivity : DaggerAppCompatActivity() {
         button_lut_close.setOnClickListener {
             behavior.state = BottomSheetBehavior.STATE_HIDDEN
         }
+
+        lut_strength.max = 1000
+        lut_strength.progress = (viewModel.properties[LutStrength] * 1000).toInt()
+        lut_strength.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
+            override fun onProgressChanged(seekBar: SeekBar?, progress: Int, fromUser: Boolean) {
+                viewModel.setLutStrength(progress / 1000f)
+            }
+
+            override fun onStartTrackingTouch(seekBar: SeekBar?) {}
+
+            override fun onStopTrackingTouch(seekBar: SeekBar?) {}
+
+        })
 
         button_camera.setOnClickListener(throttleClick {
             Log.d(TAG, "flip camera")

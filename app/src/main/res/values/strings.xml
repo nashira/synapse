@@ -192,4 +192,5 @@
     <string name="name_node_type_matrix_rotate">Matrix Rotate</string>
     <string name="name_node_type_bcube_importer">BCube Importer</string>
     <string name="name_node_type_texture_view">Texture View</string>
+    <string name="property_name_lut_strength">LUT Strength</string>
 </resources>

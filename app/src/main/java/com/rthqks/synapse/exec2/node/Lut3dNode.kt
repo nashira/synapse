@@ -10,6 +10,7 @@ import com.rthqks.synapse.exec2.Message
 import com.rthqks.synapse.exec2.NodeExecutor
 import com.rthqks.synapse.gl.*
 import com.rthqks.synapse.logic.FrameRate
+import com.rthqks.synapse.logic.LutStrength
 import com.rthqks.synapse.logic.Properties
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
@@ -25,6 +26,7 @@ class Lut3dNode(
     private var lutJob: Job? = null
     private var matrixJob: Job? = null
     private val frameDuration: Long get() = 1000L / properties[FrameRate]
+    private val lutStrength: Float get() = properties[LutStrength]
     private var outputSize = Size(0, 0)
     private var inputConfig: Texture2d? = null
     private var needsPriming = true
@@ -150,6 +152,11 @@ class Lut3dNode(
                         "lut_scale",
                         (lutEvent.data.width - 1f) / lutEvent.data.width
                     )
+                    addUniform(
+                        Uniform.Type.Float,
+                        U_LUT_STRENGTH,
+                        lutStrength
+                    )
                 }
             }
         }
@@ -263,6 +270,8 @@ class Lut3dNode(
         System.arraycopy(inputTexture.matrix, 0, uniform.data!!, 0, 16)
         uniform.dirty = true
 
+        program.getUniform(Uniform.Type.Float, U_LUT_STRENGTH).set(lutStrength)
+
         lutEvent?.let {
             program.getUniform(Uniform.Type.Float, "lut_offset").set(0.5f / it.data.width)
             program.getUniform(Uniform.Type.Float, "lut_scale").set((it.data.width - 1f) / it.data.width)
@@ -300,6 +309,7 @@ class Lut3dNode(
         const val INPUT_TEXTURE_LOCATION = 0
         const val LUT_TEXTURE_LOCATION = 1
         const val INPUT_MATRIX = "input_matrix"
+        const val U_LUT_STRENGTH = "lut_strength"
         val INPUT = Connection.Key<Texture2d>("input")
         val INPUT_LUT = Connection.Key<Texture3d>("input_lut")
         val LUT_MATRIX = Connection.Key<FloatArray>("lut_matrix")

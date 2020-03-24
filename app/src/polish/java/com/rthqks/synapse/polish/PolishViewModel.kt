@@ -12,6 +12,8 @@ import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.rthqks.synapse.R
+import com.rthqks.synapse.data.PropertyData
+import com.rthqks.synapse.data.SynapseDao
 import com.rthqks.synapse.exec.ExecutionContext
 import com.rthqks.synapse.exec2.node.CameraNode
 import com.rthqks.synapse.logic.*
@@ -19,12 +21,13 @@ import com.rthqks.synapse.ops.Analytics
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withContext
 import javax.inject.Inject
 
 class PolishViewModel @Inject constructor(
 //    private val executor: ExecutorLegacy,
     private val context: ExecutionContext,
+    private val dao: SynapseDao,
     private val analytics: Analytics
 ) : ViewModel() {
     val deviceSupported = MutableLiveData<Boolean>()
@@ -150,17 +153,27 @@ class PolishViewModel @Inject constructor(
                     Uri.parse("assets:///cube/identity.bcube"), true
                 ), UriConverter
             )
-        }
-
-        listOf(Effects.none, Effects.timeWarp, Effects.rotoHue).forEach { e ->
-            e.network.getNodes().forEach {
-                it.properties += properties
-            }
+            put(
+                Property(
+                    LutStrength,
+                    PropertyType.RangeType(
+                        R.string.property_name_lut_strength,
+                        R.drawable.ic_rotate_left,
+                        0f..1f
+                    ),
+                    1f
+                ), FloatConverter
+            )
         }
 
         viewModelScope.launch {
 //            executor.initialize(false)
 //            executor.await()
+            val p = withContext(Dispatchers.IO) {
+                dao.getProperties(0)
+            }
+
+            p.forEach { properties[it.key] = it.value }
             effectExecutor.setup()
             deviceSupported.value = context.glesManager.supportedDevice
         }
@@ -227,13 +240,20 @@ class PolishViewModel @Inject constructor(
 
     fun <T> editProperty(
         key: Property.Key<T>,
-        value: T,
-        restart: Boolean = false,
-        recreate: Boolean = false
+        value: T
     ) {
         analytics.logEvent(Analytics.Event.EditSetting(key.name, value.toString()))
         properties[key] = value
-        Log.d(TAG, "${key.name} = $value")
+
+        viewModelScope.launch(Dispatchers.IO) {
+            dao.insertProperty(
+                PropertyData(
+                    0, 0,
+                    key.name,
+                    properties.toString(key)
+                )
+            )
+        }
     }
 
     fun setEffect(effect: Effect): Boolean {
@@ -275,6 +295,8 @@ class PolishViewModel @Inject constructor(
 
     fun setLut(lut: String) {
         viewModelScope.launch {
+            val uri = Uri.parse("assets:///cube/$lut.bcube")
+            editProperty(LutUri, uri)
             effectExecutor.setLut(lut)
         }
     }
@@ -301,6 +323,10 @@ class PolishViewModel @Inject constructor(
         viewModelScope.launch {
             effectExecutor.unregisterLutPreview(surfaceTexture)
         }
+    }
+
+    fun setLutStrength(strength: Float) {
+        editProperty(LutStrength, strength)
     }
 
 

@@ -24,6 +24,7 @@ val Rotation = Property.Key<Int>("rotation")
 val BlurSize = Property.Key<Int>("blur_size")
 val NumPasses = Property.Key<Int>("num_passes")
 val ScaleFactor = Property.Key<Int>("scale_factor")
+val LutStrength = Property.Key<Float>("lut_strength")
 val AccumulateFactor = Property.Key<Float>("accumulate_factor")
 val MultiplyFactor = Property.Key<Float>("multiply_factor")
 val MediaUri = Property.Key<Uri>("media_uri")
@@ -362,6 +363,13 @@ val Nodes = listOf(
                     Choice(Size(480, 640), R.string.property_label_camera_capture_size_480)
                 ), Size(720, 1280), true
             ), SizeConverter
+        )
+        add(
+            Property(
+                LutStrength,
+                RangeType(R.string.property_name_lut_strength, R.drawable.ic_rotate_left, 0f..1f),
+                1f
+            ), FloatConverter
         )
     },
     Node(NodeType.CropResize).apply {
