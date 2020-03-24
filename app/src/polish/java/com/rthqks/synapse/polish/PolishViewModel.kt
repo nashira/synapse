@@ -16,6 +16,8 @@ import com.rthqks.synapse.exec.ExecutionContext
 import com.rthqks.synapse.exec2.node.CameraNode
 import com.rthqks.synapse.logic.*
 import com.rthqks.synapse.ops.Analytics
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import javax.inject.Inject
@@ -29,7 +31,7 @@ class PolishViewModel @Inject constructor(
     private var currentEffect: Effect? = null
     private var recordingStart = 0L
     private var svSetup = false
-    private var stopped = true
+    private var stopped = false
     private val effectExecutor = EffectExecutor(context)
 
     val properties = context.properties
@@ -253,7 +255,8 @@ class PolishViewModel @Inject constructor(
     override fun onCleared() {
         Log.d(TAG, "onCleared")
 
-        runBlocking {
+        // viewModelScope is already cancelled here
+        CoroutineScope(Dispatchers.IO).launch {
             effectExecutor.removeAllLinks()
             effectExecutor.removeAllNodes()
             effectExecutor.release()
