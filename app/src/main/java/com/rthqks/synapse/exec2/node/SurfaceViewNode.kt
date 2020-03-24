@@ -96,10 +96,12 @@ class SurfaceViewNode(
                     program.bindUniforms()
 
                     mesh.execute()
+                    msg.release()
                     windowSurface?.swapBuffers()
                 }
+            } else {
+                msg.release()
             }
-            msg.release()
         }
     }
 

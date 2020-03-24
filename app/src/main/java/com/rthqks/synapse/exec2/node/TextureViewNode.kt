@@ -72,8 +72,10 @@ class TextureViewNode(
             System.arraycopy(msg.data.matrix, 0, matrix, 0, 16)
             uniform.dirty = true
 
+            var rel = false
             glesManager.glContext {
                 if (windowSurface != null) {
+                    rel = true
                     windowSurface?.makeCurrent()
                     GLES30.glBindFramebuffer(GLES30.GL_FRAMEBUFFER, 0)
 
@@ -83,12 +85,14 @@ class TextureViewNode(
                     msg.data.bind(GLES30.GL_TEXTURE0)
 
                     program.bindUniforms()
-
                     mesh.execute()
+                    msg.release()
                     windowSurface?.swapBuffers()
                 }
             }
-            msg.release()
+            if (!rel) {
+                msg.release()
+            }
         }
         Log.d(TAG, "no more messages")
     }

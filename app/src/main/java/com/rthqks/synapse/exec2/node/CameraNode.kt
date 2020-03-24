@@ -39,7 +39,9 @@ class CameraNode(
         GL_LINEAR
     )
 
-    private var cameraConfig: CameraManager.Conf? = null
+    var cameraConfig: CameraManager.Conf? = null
+        private set
+
     private val camera = cameraManager.getCamera()
 
     private val facing: Int get() = properties[CameraFacing]

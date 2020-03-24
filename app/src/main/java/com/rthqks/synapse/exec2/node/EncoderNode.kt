@@ -195,9 +195,24 @@ class EncoderNode(
                 if (startTimeVideo == -1L) {
                     startTimeVideo = msg.timestamp
                 }
-                executeGl(data, msg.timestamp - startTimeVideo)
+                glesManager.glContext {
+                    windowSurface?.makeCurrent()
+                    GLES30.glBindFramebuffer(GLES30.GL_FRAMEBUFFER, 0)
+                    GLES30.glUseProgram(program.programId)
+                    GLES30.glViewport(0, 0, inputSize.width, inputSize.height)
+
+                    data.bind(GLES30.GL_TEXTURE0)
+
+                    program.bindUniforms()
+
+                    mesh.execute()
+                    msg.release()
+                    windowSurface?.setPresentationTime(msg.timestamp - startTimeVideo)
+                    windowSurface?.swapBuffers()
+                }
+            } else {
+                msg.release()
             }
-            msg.release()
         }
     }
 
@@ -217,23 +232,6 @@ class EncoderNode(
                 encoder.writeAudio(data.buffer, msg.timestamp - startTimeAudio)
             }
             msg.release()
-        }
-    }
-
-    private suspend fun executeGl(texture: Texture2d, timestamp: Long) {
-        glesManager.glContext {
-            windowSurface?.makeCurrent()
-            GLES30.glBindFramebuffer(GLES30.GL_FRAMEBUFFER, 0)
-            GLES30.glUseProgram(program.programId)
-            GLES30.glViewport(0, 0, inputSize.width, inputSize.height)
-
-            texture.bind(GLES30.GL_TEXTURE0)
-
-            program.bindUniforms()
-
-            mesh.execute()
-            windowSurface?.setPresentationTime(timestamp)
-            windowSurface?.swapBuffers()
         }
     }
 

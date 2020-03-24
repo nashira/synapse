@@ -13,7 +13,6 @@ import com.rthqks.synapse.exec2.node.*
 import com.rthqks.synapse.logic.*
 import kotlinx.coroutines.joinAll
 import kotlinx.coroutines.launch
-import java.util.*
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.ConcurrentLinkedQueue
 
@@ -115,7 +114,7 @@ class EffectExecutor(context: ExecutionContext) : NetworkExecutor(context) {
 //    }
 
     suspend fun setSurfaceView(surfaceView: SurfaceView) = await {
-        setSurfaceView(Effect.ID_SURFACE_VIEW, surfaceView)
+        (getNode(Effect.ID_SURFACE_VIEW) as? SurfaceViewNode)?.setSurfaceView(surfaceView)
     }
 
     suspend fun startLutPreview() = await {
@@ -176,10 +175,6 @@ class EffectExecutor(context: ExecutionContext) : NetworkExecutor(context) {
             it.loadCubeFile()
             it.sendMessage()
         }
-    }
-
-    private suspend fun setSurfaceView(nodeId: Int, surfaceView: SurfaceView) {
-        (getNode(nodeId) as? SurfaceViewNode)?.setSurfaceView(surfaceView)
     }
 
     suspend fun setLut(lut: String) = await {

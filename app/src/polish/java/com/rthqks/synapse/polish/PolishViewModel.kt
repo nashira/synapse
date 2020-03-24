@@ -329,7 +329,6 @@ class PolishViewModel @Inject constructor(
         properties[LutStrength] = strength
     }
 
-
     companion object {
         const val TAG = "PolishViewModel"
     }

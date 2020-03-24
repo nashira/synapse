@@ -27,6 +27,7 @@ import androidx.recyclerview.widget.RecyclerView
 import com.google.android.material.bottomsheet.BottomSheetBehavior
 import com.rthqks.synapse.R
 import com.rthqks.synapse.logic.LutStrength
+import com.rthqks.synapse.logic.VideoSize
 import com.rthqks.synapse.ops.Analytics
 import com.rthqks.synapse.util.throttleClick
 import dagger.android.support.DaggerAppCompatActivity
@@ -35,6 +36,7 @@ import kotlinx.android.synthetic.polish.activity_polish.*
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.launch
 import javax.inject.Inject
+import kotlin.math.min
 import kotlin.math.roundToInt
 
 
@@ -493,6 +495,10 @@ private class LutViewHolder(
     override fun onSurfaceTextureAvailable(surface: SurfaceTexture?, width: Int, height: Int) {
 //        Log.d("Lut", "surface available $lut $surface")
 
+        surface?.let {
+            val s = min(width, 320)
+            it.setDefaultBufferSize(s, s)
+        }
 //        if (adapterPosition % 3 == 0)
         lut?.let { viewModel.registerLutPreview(itemView.texture_view, it) }
     }
