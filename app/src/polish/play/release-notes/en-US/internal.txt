@@ -1,6 +1,2 @@
-This is the first Beta version -- congratulations you get to find the bugs and crashes!
-Seriously, there will be bugs, this is a very early release, please let me know how it goes for you.
-
-Stick around for weekly releases with lots and lots of good stuff to come.
-
-Thank you for checking out Synapse.
+* Add a LUT (color filter) to any Effect
+* Change Effects and LUTs while recording
