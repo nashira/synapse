@@ -3,6 +3,7 @@ package com.rthqks.synapse.polish
 import android.graphics.SurfaceTexture
 import android.media.MediaRecorder
 import android.net.Uri
+import android.util.Log
 import android.util.Size
 import android.view.SurfaceView
 import android.view.TextureView
@@ -13,6 +14,8 @@ import com.rthqks.synapse.logic.*
 import kotlinx.coroutines.joinAll
 import kotlinx.coroutines.launch
 import java.util.*
+import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.ConcurrentLinkedQueue
 
 class EffectExecutor(context: ExecutionContext) : NetworkExecutor(context) {
     private var effect: Effect? = null
@@ -25,8 +28,8 @@ class EffectExecutor(context: ExecutionContext) : NetworkExecutor(context) {
     private val lut = n.addNode(NewNode(NodeType.Lut3d, Effect.ID_LUT))
     private val crop = n.addNode(NewNode(NodeType.CropResize, Effect.ID_THUMBNAIL))
     private var cropLink: Link? = null
-    private val lutPreviewPool = LinkedList<LutPreview>()
-    private val lutPreviews = mutableMapOf<SurfaceTexture, LutPreview>()
+    private val lutPreviewPool = ConcurrentLinkedQueue<LutPreview>()
+    private val lutPreviews = ConcurrentHashMap<SurfaceTexture, LutPreview>()
     private var runState = NOT_RUNNING
 
     init {
@@ -135,12 +138,16 @@ class EffectExecutor(context: ExecutionContext) : NetworkExecutor(context) {
         }
     }
 
-    suspend fun registerLutPreview(textureView: TextureView, lut: String) = await {
-        //        Log.d(TAG, "register $lut ${textureView.surfaceTexture}")
-        if (textureView.surfaceTexture in lutPreviews) {
-//            Log.e(TAG, "lut already being previewed")
-            return@await
+    suspend fun registerLutPreview(textureView: TextureView, lut: String) {
+//        Log.d(TAG, "register $lut ${textureView.surfaceTexture}")
+        if (lutPreviews.containsKey(textureView.surfaceTexture)) {
+            Log.e(TAG, "lut already being previewed")
+            return
+        } else if (textureView.surfaceTexture == null) {
+            Log.e(TAG, "surfaceTexture is null")
         }
+
+
         val preview = lutPreviewPool.poll() ?: run {
             //        val preview = null ?: run {
 //            Log.d(TAG, "creating new lut preview")
@@ -154,8 +161,8 @@ class EffectExecutor(context: ExecutionContext) : NetworkExecutor(context) {
         (getNode(preview.screen.id) as TextureViewNode).setTextureView(textureView)
     }
 
-    suspend fun unregisterLutPreview(surfaceTexture: SurfaceTexture) = await {
-        //        Log.d(TAG, "unregister $surfaceTexture")
+    suspend fun unregisterLutPreview(surfaceTexture: SurfaceTexture) {
+//        Log.d(TAG, "unregister $surfaceTexture")
         lutPreviews.remove(surfaceTexture)?.let {
             //            Log.d(TAG, "removed $surfaceTexture")
 //            it.release()

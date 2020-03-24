@@ -12,6 +12,7 @@ import com.rthqks.synapse.gl.*
 import com.rthqks.synapse.logic.Properties
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
+import java.lang.Exception
 
 class TextureViewNode(
     context: ExecutionContext,
