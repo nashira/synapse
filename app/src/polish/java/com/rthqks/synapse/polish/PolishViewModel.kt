@@ -205,7 +205,6 @@ class PolishViewModel @Inject constructor(
         if (stopped) {
             stopped = false
             Log.d(TAG, "resume")
-//            (effectExecutor.getNode(Effect.ID_CAMERA) as CameraNode).resumeCamera()
             effectExecutor.resume()
         }
     }
@@ -214,8 +213,9 @@ class PolishViewModel @Inject constructor(
         if (!stopped) {
             stopped = true
             Log.d(TAG, "pause")
+
+            properties[Recording] = false
             effectExecutor.pause()
-//            (effectExecutor.getNode(Effect.ID_CAMERA) as? CameraNode)?.stopCamera()
         }
     }
 
