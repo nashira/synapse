@@ -15,14 +15,14 @@ import java.util.concurrent.Executors
 class GlesManager {
     private val dispatcher = Executors.newSingleThreadExecutor().asCoroutineDispatcher()
     private val thread = HandlerThread("BackgroundHandler")
-    private lateinit var handler: Handler
-    private lateinit var eglCore: EglCore
-    private lateinit var eglSurface: OffscreenSurface
-    lateinit var emptyTexture2d: Texture2d
-    lateinit var emptyTexture3d: Texture3d
+    private var handler: Handler? = null
+    private var eglCore: EglCore? = null
+    private var eglSurface: OffscreenSurface? = null
+    var emptyTexture2d = Texture2d()
+    var emptyTexture3d = Texture3d()
     var supportedDevice = false
 
-    val backgroundHandler: Handler get() = handler
+    val backgroundHandler: Handler get() = handler ?: error("handler is null")
 
     // use to wrap calls that need an OpenGL context
     suspend fun <T> glContext(block: suspend CoroutineScope.(GlesManager) -> T): T =
@@ -32,18 +32,17 @@ class GlesManager {
 
         thread.start()
         handler = Handler(thread.looper)
-        eglCore = EglCore(null, EglCore.FLAG_TRY_GLES3 or EglCore.FLAG_RECORDABLE)
-        eglSurface = OffscreenSurface(eglCore, 1, 1)
-        eglSurface.makeCurrent()
+        eglCore = EglCore(null, EglCore.FLAG_TRY_GLES3 or EglCore.FLAG_RECORDABLE).also {
+            eglSurface = OffscreenSurface(it, 1, 1)
+            eglSurface?.makeCurrent()
+        }
 
-        emptyTexture2d = Texture2d()
         emptyTexture2d.initialize()
         emptyTexture2d.initData(
             0,
             GLES30.GL_R8, 1, 1, GLES30.GL_RED, GLES30.GL_UNSIGNED_BYTE
         )
 
-        emptyTexture3d = Texture3d()
         emptyTexture3d.initialize()
         emptyTexture3d.initData(
             0,
@@ -62,17 +61,17 @@ class GlesManager {
     fun release() {
         emptyTexture2d.release()
         emptyTexture3d.release()
-        eglSurface.release()
-        eglCore.release()
+        eglSurface?.release()
+        eglCore?.release()
         dispatcher.close()
         thread.quitSafely()
     }
 
     fun createWindowSurface(surface: Surface): WindowSurface =
-        WindowSurface(eglCore, surface, false)
+        WindowSurface(eglCore!!, surface, false)
 
     fun createWindowSurface(surface: SurfaceTexture): WindowSurface =
-        WindowSurface(eglCore, surface)
+        WindowSurface(eglCore!!, surface)
 
     companion object {
         val TAG = "GlesManager"

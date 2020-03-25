@@ -173,8 +173,15 @@ class PolishViewModel @Inject constructor(
             }
 
             p.forEach { properties[it.key] = it.value }
+
             effectExecutor.setup()
             deviceSupported.value = context.glesManager.supportedDevice
+        }
+    }
+
+    fun initializeEffect() {
+        viewModelScope.launch {
+            effectExecutor.initializeEffect()
         }
     }
 

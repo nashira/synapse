@@ -138,6 +138,7 @@ class PolishActivity : DaggerAppCompatActivity() {
     }
 
     private fun onReady() {
+        viewModel.initializeEffect()
         val behavior = BottomSheetBehavior.from(layout_colors)
         var recording = false
 

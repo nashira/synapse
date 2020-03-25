@@ -62,23 +62,13 @@ class EffectExecutor(context: ExecutionContext) : NetworkExecutor(context) {
             n.nodes.values.forEach {
                 it.properties += context.properties
             }
-
-            network = n
-            addAllNodes()
-            addAllLinks()
         }
     }
 
-    suspend fun stopProducers() = await {
-        n.nodes.filter { it.value.producer }.map { n.getLinks(it.key) }.flatten().map {
-            scope.launch { removeLink(it) }
-        }.joinAll()
-    }
-
-    suspend fun startProducers() = await {
-        n.nodes.filter { it.value.producer }.map { n.getLinks(it.key) }.flatten().map {
-            scope.launch { addLink(it) }
-        }.joinAll()
+    suspend fun initializeEffect() = await {
+        network = n
+        addAllNodes()
+        addAllLinks()
     }
 
     suspend fun swapEffect(effect: Effect) = async {
