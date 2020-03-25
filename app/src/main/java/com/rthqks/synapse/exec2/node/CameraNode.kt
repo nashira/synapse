@@ -54,25 +54,36 @@ class CameraNode(
         updateCameraConfig()
     }
 
-    override suspend fun <T> onConnect(key: Connection.Key<T>, producer: Boolean) {
-        when (key) {
-            OUTPUT -> if (startJob == null) {
-                startJob = scope.launch {
-                    updateCameraConfig()
-                    outputSurface ?: run { initialize() }
-                    startTexture()
-                }
+    override suspend fun onPause() {
+        camera.closeSession()
+        camera.close()
+        outputSurfaceTexture?.setOnFrameAvailableListener(null)
+        startJob?.join()
+        startJob = null
+    }
+
+    override suspend fun onResume() {
+        maybeStart()
+    }
+
+    private suspend fun maybeStart() {
+        if (isResumed && startJob == null && connected(OUTPUT)) {
+            startJob = scope.launch {
+                updateCameraConfig()
+                outputSurface ?: run { initialize() }
+                startTexture()
             }
         }
     }
 
-    override suspend fun <T> onDisconnect(key: Connection.Key<T>, producer: Boolean) {
-        if (key == OUTPUT && !linked(OUTPUT)) {
-            camera.stopRequest()
-            outputSurfaceTexture?.setOnFrameAvailableListener(null)
-            startJob?.join()
-            startJob = null
+    override suspend fun <T> onConnect(key: Connection.Key<T>, producer: Boolean) {
+        when (key) {
+            OUTPUT -> maybeStart()
         }
+    }
+
+    override suspend fun <T> onDisconnect(key: Connection.Key<T>, producer: Boolean) {
+
     }
 
     private suspend fun initialize() {
@@ -89,9 +100,6 @@ class CameraNode(
         outputSurface = Surface(outputSurfaceTexture)
 
         connection(OUTPUT)?.prime(outputTexture, outputTexture)
-
-        camera.open(cameraId)
-        outputSurface?.let { camera.openSession(it) }
     }
 
     private fun updateCameraConfig() {
@@ -115,6 +123,8 @@ class CameraNode(
             }
         }
 
+        camera.open(cameraId)
+        outputSurface?.let { camera.openSession(it) }
         cameraConfig?.let { camera.startRequest(it) }
     }
 
@@ -234,16 +244,16 @@ class CameraNode(
             outputTexture.release()
         }
     }
-
-    suspend fun stopCamera() = await {
-        camera.closeSession()
-        camera.close()
-    }
-
-    suspend fun resumeCamera() = await {
-        camera.open(cameraId)
-        outputSurface?.let { camera.openSession(it) }
-    }
+//
+//    suspend fun stopCamera() = await {
+//        camera.closeSession()
+//        camera.close()
+//    }
+//
+//    suspend fun resumeCamera() = await {
+//        camera.open(cameraId)
+//        outputSurface?.let { camera.openSession(it) }
+//    }
 
     companion object {
         const val TAG = "CameraNode2"

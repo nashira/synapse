@@ -15,7 +15,6 @@ import com.rthqks.synapse.R
 import com.rthqks.synapse.data.PropertyData
 import com.rthqks.synapse.data.SynapseDao
 import com.rthqks.synapse.exec.ExecutionContext
-import com.rthqks.synapse.exec2.node.CameraNode
 import com.rthqks.synapse.logic.*
 import com.rthqks.synapse.ops.Analytics
 import kotlinx.coroutines.CoroutineScope
@@ -34,7 +33,7 @@ class PolishViewModel @Inject constructor(
     private var currentEffect: Effect? = null
     private var recordingStart = 0L
     private var svSetup = false
-    private var stopped = false
+    private var stopped = true
     private val effectExecutor = EffectExecutor(context)
 
     val properties = context.properties
@@ -203,20 +202,20 @@ class PolishViewModel @Inject constructor(
     }
 
     fun startExecution() = viewModelScope.launch {
-        if (stopped && currentEffect != null) {
+        if (stopped) {
             stopped = false
-            Log.d(TAG, "starting producers")
-            (effectExecutor.getNode(Effect.ID_CAMERA) as CameraNode).resumeCamera()
-            effectExecutor.startProducers()
+            Log.d(TAG, "resume")
+//            (effectExecutor.getNode(Effect.ID_CAMERA) as CameraNode).resumeCamera()
+            effectExecutor.resume()
         }
     }
 
     fun stopExecution() = viewModelScope.launch {
-        if (!stopped && currentEffect != null) {
+        if (!stopped) {
             stopped = true
-            Log.d(TAG, "stopping producers")
-            effectExecutor.stopProducers()
-            (effectExecutor.getNode(Effect.ID_CAMERA) as? CameraNode)?.stopCamera()
+            Log.d(TAG, "pause")
+            effectExecutor.pause()
+//            (effectExecutor.getNode(Effect.ID_CAMERA) as? CameraNode)?.stopCamera()
         }
     }
 
@@ -259,7 +258,6 @@ class PolishViewModel @Inject constructor(
     fun setEffect(effect: Effect): Boolean {
         currentEffect = effect
         network = effect.network
-        stopped = false
 
         analytics.logEvent(Analytics.Event.SetEffect(effect.title))
         viewModelScope.launch {

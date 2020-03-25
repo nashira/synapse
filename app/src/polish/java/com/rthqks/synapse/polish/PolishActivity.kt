@@ -27,7 +27,6 @@ import androidx.recyclerview.widget.RecyclerView
 import com.google.android.material.bottomsheet.BottomSheetBehavior
 import com.rthqks.synapse.R
 import com.rthqks.synapse.logic.LutStrength
-import com.rthqks.synapse.logic.VideoSize
 import com.rthqks.synapse.ops.Analytics
 import com.rthqks.synapse.util.throttleClick
 import dagger.android.support.DaggerAppCompatActivity
@@ -377,9 +376,7 @@ class PolishActivity : DaggerAppCompatActivity() {
     override fun onPause() {
         super.onPause()
         orientationEventListener.disable()
-        if (!isFinishing) {
-            viewModel.stopExecution()
-        }
+        viewModel.stopExecution()
     }
 
     private fun hideSystemUI() {

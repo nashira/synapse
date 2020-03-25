@@ -4,10 +4,7 @@ import com.nhaarman.mockitokotlin2.doReturn
 import com.nhaarman.mockitokotlin2.mock
 import com.rthqks.synapse.exec.ExecutionContext
 import com.rthqks.synapse.exec2.NetworkExecutor
-import com.rthqks.synapse.polish.Effects
 import kotlinx.coroutines.asCoroutineDispatcher
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.runBlocking
 import org.junit.Test
 import java.util.concurrent.Executors
 

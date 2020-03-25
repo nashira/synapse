@@ -16,9 +16,25 @@ import java.util.concurrent.ConcurrentHashMap
 open class NetworkExecutor(context: ExecutionContext) : Executor(context) {
     private val nodes = ConcurrentHashMap<Int, NodeExecutor>()
     protected var network: Network? = null
+    var isResumed = false
+        private set
 
     open suspend fun setup() = await {
         context.setup()
+    }
+
+    open suspend fun pause() = await {
+        isResumed = false
+        nodes.map {
+            scope.launch { it.value.pause() }
+        }.joinAll()
+    }
+
+    open suspend fun resume() = await {
+        isResumed = true
+        nodes.map {
+            scope.launch { it.value.resume() }
+        }.joinAll()
     }
 
     fun getNode(id: Int) = nodes[id]
@@ -39,11 +55,17 @@ open class NetworkExecutor(context: ExecutionContext) : Executor(context) {
             }
         }
         executor.setup().await()
+        if (isResumed) {
+            executor.resume()
+        }
     }
 
     suspend fun removeNode(node: Node) {
         Log.d(TAG, "remove node ${node.id}")
-        nodes.remove(node.id)?.release()
+        nodes.remove(node.id)?.let {
+            it.pause()
+            it.release()
+        }
     }
 
     suspend fun addLink(link: Link) {

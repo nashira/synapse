@@ -12,13 +12,27 @@ abstract class NodeExecutor(
     private val cycleSet = mutableSetOf<Connection.Key<*>>()
     private val connections = mutableMapOf<Connection.Key<*>, Connection<*>>()
     private val channels = mutableMapOf<Connection.Key<*>, ReceiveChannel<Message<*>>>()
+    private var state: Int = STATE_PAUSED
+    val isResumed: Boolean get() = state == STATE_RESUMED
 
     abstract suspend fun onSetup()
     abstract suspend fun <T> onConnect(key: Connection.Key<T>, producer: Boolean)
     abstract suspend fun <T> onDisconnect(key: Connection.Key<T>, producer: Boolean)
     abstract suspend fun onRelease()
+    open suspend fun onPause() {}
+    open suspend fun onResume() {}
 
     suspend fun setup() = async(this::onSetup)
+
+    suspend fun pause() = await {
+        state = STATE_PAUSED
+        onPause()
+    }
+
+    suspend fun resume() = await {
+        state = STATE_RESUMED
+        onResume()
+    }
 
     suspend fun <T> stopConsumer(key: Connection.Key<T>, channel: ReceiveChannel<Message<T>>) =
         async {
@@ -75,6 +89,8 @@ abstract class NodeExecutor(
         return channels[key] as ReceiveChannel<Message<T>>?
     }
 
+    fun connected(key: Connection.Key<*>) = key in channels
+
     fun setLinked(key: Connection.Key<*>, linked: Boolean = true) {
         if (linked) {
             linkedSet += key
@@ -96,6 +112,8 @@ abstract class NodeExecutor(
     fun cycle(key: Connection.Key<*>): Boolean = key in cycleSet
 
     companion object {
+        const val STATE_PAUSED = 0
+        const val STATE_RESUMED = 1
         const val TAG = "NodeExecutor"
     }
 }

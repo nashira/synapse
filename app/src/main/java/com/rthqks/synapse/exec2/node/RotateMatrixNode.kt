@@ -26,17 +26,30 @@ class RotateMatrixNode(
 
     }
 
+    override suspend fun onPause() {
+        onStop()
+    }
+
+    override suspend fun onResume() {
+        maybeStart()
+    }
+
+    private fun maybeStart() {
+        if (startJob == null && isResumed && connected(OUTPUT)) {
+            startJob = scope.launch {
+                onStart()
+            }
+        }
+    }
+
     override suspend fun <T> onConnect(key: Connection.Key<T>, producer: Boolean) {
         when (key) {
-            OUTPUT -> if (startJob == null) {
+            OUTPUT -> {
                 if (needsPriming) {
                     needsPriming = false
                     connection(OUTPUT)?.prime(GlesManager.identityMat(), GlesManager.identityMat())
                 }
-
-                startJob = scope.launch {
-                    onStart()
-                }
+                maybeStart()
             }
         }
     }

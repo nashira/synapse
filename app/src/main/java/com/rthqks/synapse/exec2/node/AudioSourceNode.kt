@@ -58,6 +58,14 @@ class AudioSourceNode(
         bytesPerFrame = channelCount * bytesPerSample
     }
 
+    override suspend fun onPause() {
+        onStop()
+    }
+
+    override suspend fun onResume() {
+        maybeStart()
+    }
+
     override suspend fun <T> onConnect(key: Connection.Key<T>, producer: Boolean) {
         if (!primed) {
             primed = true
@@ -71,7 +79,11 @@ class AudioSourceNode(
             }
         }
 
-        if (recordJob == null) {
+        maybeStart()
+    }
+
+    private fun maybeStart() {
+        if (isResumed && recordJob == null && connected(OUTPUT)) {
             recordJob = scope.launch {
                 onStart()
             }
@@ -79,9 +91,7 @@ class AudioSourceNode(
     }
 
     override suspend fun <T> onDisconnect(key: Connection.Key<T>, producer: Boolean) {
-        if (!linked(OUTPUT)) {
-            onStop()
-        }
+
     }
 
     private suspend fun onStart() {

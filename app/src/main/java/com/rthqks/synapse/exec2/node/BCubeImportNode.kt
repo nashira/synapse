@@ -2,7 +2,6 @@ package com.rthqks.synapse.exec2.node
 
 import android.net.Uri
 import android.opengl.GLES30
-import android.util.Log
 import com.rthqks.synapse.exec.ExecutionContext
 import com.rthqks.synapse.exec2.Connection
 import com.rthqks.synapse.exec2.NodeExecutor
@@ -17,7 +16,6 @@ import java.io.DataInputStream
 import java.io.InputStream
 import java.nio.ByteBuffer
 import java.util.concurrent.ConcurrentHashMap
-import kotlin.math.min
 
 class BCubeImportNode(
     context: ExecutionContext,
@@ -44,6 +42,12 @@ class BCubeImportNode(
             texture.initialize()
         }
         loadCubeFile()
+    }
+
+    override suspend fun onResume() {
+        if (connected(OUTPUT)) {
+            sendMessage()
+        }
     }
 
     private suspend fun getBuffer(): ByteBuffer? {
@@ -89,13 +93,15 @@ class BCubeImportNode(
 
     override suspend fun <T> onConnect(key: Connection.Key<T>, producer: Boolean) {
         when (key) {
-            OUTPUT -> if (startJob == null) {
+            OUTPUT -> {
                 if (needsPriming) {
                     needsPriming = false
                     connection(OUTPUT)?.prime(texture, texture)
                 }
-                startJob = scope.launch {
-                    sendMessage()
+                if (startJob == null) {
+                    startJob = scope.launch {
+                        sendMessage()
+                    }
                 }
             }
         }
