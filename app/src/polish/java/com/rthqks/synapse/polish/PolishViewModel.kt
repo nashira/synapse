@@ -11,7 +11,6 @@ import android.view.TextureView
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.rthqks.synapse.R
 import com.rthqks.synapse.data.PropertyData
 import com.rthqks.synapse.data.SynapseDao
 import com.rthqks.synapse.exec.ExecutionContext
@@ -39,131 +38,14 @@ class PolishViewModel @Inject constructor(
     val properties = context.properties
 
     init {
-        context.properties.apply {
-            put(
-                Property(
-                    CameraFacing,
-                    ChoiceType(
-                        R.string.property_name_camera_device,
-                        R.drawable.ic_switch_camera,
-                        Choice(
-                            CameraCharacteristics.LENS_FACING_BACK,
-                            R.string.property_label_camera_lens_facing_back
-                        ),
-                        Choice(
-                            CameraCharacteristics.LENS_FACING_FRONT,
-                            R.string.property_label_camera_lens_facing_front
-                        )
-                    ), CameraCharacteristics.LENS_FACING_BACK, true
-                ), IntConverter
-            )
-            put(
-                Property(
-                    FrameRate,
-                    ChoiceType(
-                        R.string.property_name_frame_rate,
-                        R.drawable.ic_speed,
-                        Choice(
-                            10,
-                            R.string.property_label_camera_fps_10
-                        ),
-                        Choice(
-                            15,
-                            R.string.property_label_camera_fps_15
-                        ),
-                        Choice(
-                            20,
-                            R.string.property_label_camera_fps_20
-                        ),
-                        Choice(
-                            30,
-                            R.string.property_label_camera_fps_30
-                        ),
-                        Choice(
-                            60,
-                            R.string.property_label_camera_fps_60
-                        )
-                    ), 30, true
-                ), IntConverter
-            )
-            put(
-                Property(
-                    VideoSize,
-                    ChoiceType(
-                        R.string.property_name_camera_capture_size,
-                        R.drawable.ic_photo_size_select,
-                        Choice(
-                            Size(3840, 2160),
-                            R.string.property_label_camera_capture_size_2160
-                        ),
-                        Choice(
-                            Size(1920, 1080),
-                            R.string.property_label_camera_capture_size_1080
-                        ),
-                        Choice(
-                            Size(1280, 720),
-                            R.string.property_label_camera_capture_size_720
-                        ),
-                        Choice(
-                            Size(640, 480),
-                            R.string.property_label_camera_capture_size_480
-                        )
-                    ), Size(1280, 720), true
-                ), SizeConverter
-            )
-            put(
-                Property(
-                    Stabilize,
-                    ToggleType(
-                        R.string.property_name_camera_stabilize, R.drawable.ic_texture,
-                        R.string.property_label_on,
-                        R.string.property_label_off
-                    ), value = true, requiresRestart = true
-                ), BooleanConverter
-            )
-            put(
-                Property(
-                    Recording,
-                    ToggleType(
-                        R.string.property_name_recording,
-                        R.drawable.ic_movie,
-                        R.string.property_name_recording,
-                        R.string.property_name_recording
-                    ), false
-                ), BooleanConverter
-            )
-            put(
-                Property(
-                    Rotation,
-                    ChoiceType(
-                        R.string.property_name_rotation,
-                        R.drawable.ic_rotate_left,
-                        Choice(0, R.string.property_label_rotation_0),
-                        Choice(90, R.string.property_label_rotation_90),
-                        Choice(270, R.string.property_label_rotation_270),
-                        Choice(180, R.string.property_label_rotation_180)
-                    ), 0
-                ), IntConverter
-            )
-            put(
-                Property(
-                    LutUri,
-                    UriType(R.string.property_name_uri, R.drawable.ic_image, "*/*"),
-                    Uri.parse("assets:///cube/identity.bcube"), true
-                ), UriConverter
-            )
-            put(
-                Property(
-                    LutStrength,
-                    PropertyType.RangeType(
-                        R.string.property_name_lut_strength,
-                        R.drawable.ic_rotate_left,
-                        0f..1f
-                    ),
-                    1f
-                ), FloatConverter
-            )
-        }
+        properties[CameraFacing] = CameraCharacteristics.LENS_FACING_BACK
+        properties[FrameRate] = 30
+        properties[VideoSize] = Size(1280, 720)
+        properties[Stabilize] = true
+        properties[Recording] = false
+        properties[Rotation] = 0
+        properties[LutUri] = Uri.parse("assets:///cube/identity.bcube")
+        properties[LutStrength] = 1f
 
         viewModelScope.launch {
 //            executor.initialize(false)
@@ -248,15 +130,16 @@ class PolishViewModel @Inject constructor(
         key: Property.Key<T>,
         value: T
     ) {
-        analytics.logEvent(Analytics.Event.EditSetting(key.name, value.toString()))
         properties[key] = value
+        val string = properties.getString(key)
+        analytics.logEvent(Analytics.Event.EditSetting(key.name, string))
 
         viewModelScope.launch(Dispatchers.IO) {
             dao.insertProperty(
                 PropertyData(
                     0, 0,
                     key.name,
-                    properties.toString(key)
+                    string
                 )
             )
         }

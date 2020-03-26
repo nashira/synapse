@@ -1,75 +1,71 @@
 package com.rthqks.synapse.logic
 
+import android.net.Uri
+import android.util.Size
+import kotlinx.coroutines.channels.BroadcastChannel
+import kotlinx.coroutines.runBlocking
+import java.util.*
+
 class Properties {
-    private val map = mutableMapOf<Property.Key<*>, Property<*>>()
-    private val converters = mutableMapOf<Property.Key<*>, Converter<*>>()
-    val size: Int = map.size
-    val keys = map.keys
+    private val properties = mutableMapOf<Property.Key<*>, Property<Any?>>()
+    private val channel = BroadcastChannel<Property<*>>(10)
+    val size: Int = properties.size
 
-    fun <T> put(property: Property<T>, converter: Converter<T>) {
-        val key = property.key
-        map[key] = property
-        converters[key] = converter
+    fun channel() = channel.openSubscription()
+
+    fun <T> put(property: Property<T>) {
+        properties[property.key] = property as Property<Any?>
     }
 
-    @Suppress("UNCHECKED_CAST")
+    fun getAll(): List<Property<*>> = properties.entries.fold(ArrayList(size)) { list, entry ->
+        list.add(entry.value)
+        list
+    }
+
+    fun <T> getOrNull(key: Property.Key<T>): Property<T>? = properties[key] as? Property<T>
+
+    operator fun <T> get(key: Property.Key<T>): T = properties[key]?.value as T
+
     operator fun <T> set(key: Property.Key<T>, value: T) {
-        (map[key] as? Property<T>)?.value = value
+        val property = properties.getOrPut(key) { Property(key, value) as Property<Any?> }
+        property.value = value
+        runBlocking { channel.send(property) }
     }
 
-    @Suppress("UNCHECKED_CAST")
-    operator fun <T> get(key: Property.Key<T>): T {
-        return map[key]?.value as T
-    }
-
-    @Suppress("UNCHECKED_CAST")
-    operator fun set(keyName: String, value: String?) {
-        value ?: return
-
-//        val key = keys.first { it.name == keyName }
-        val key = Property.Key<Any?>(keyName)
-        val converter = converters[key]
-
-        (map[key] as? Property<Any?>)?.let { property ->
-            converter?.let {
-                property.value = it.fromString(value)
+    fun <T> getString(key: Property.Key<T>): String {
+//        if (key !in properties) return ""
+        return when (key.klass) {
+            Size::class.java -> {
+                val p = properties[key]?.value as Size
+                "${p.width}x${p.height}"
             }
+            else -> properties[key]?.value.toString()
         }
     }
 
-    @Suppress("UNCHECKED_CAST")
-    fun <T> toString(key: Property.Key<T>): String? {
-        return (converters[key] as? Converter<T>)?.toString(this[key])
-    }
-
-    @Suppress("UNCHECKED_CAST")
-    fun <T> find(key: Property.Key<T>): Property<T>? {
-        return map[key] as? Property<T>
-    }
-
-    operator fun plus(other: Properties): Properties = Properties().also {
-        it += this
-        it += other
+    fun <T> putString(key: Property.Key<T>, value: String) {
+        val cast = when (key.klass) {
+            Int::class.java -> value.toInt()
+            Float::class.java -> value.toFloat()
+            Boolean::class.java -> value.toBoolean()
+            Size::class.java -> Size.parseSize(value)
+            Uri::class.java -> Uri.parse(value)
+            else -> error("unhandled property type: ${key.klass}")
+        } as T
+        set(key, cast)
     }
 
     operator fun plusAssign(properties: Properties) {
-        map.putAll(properties.map)
-        converters.putAll(properties.converters)
+        this.properties += properties.properties
     }
 
-    fun copyTo(properties: Properties): Properties = properties.also {
-        map.mapValuesTo(it.map) { entry ->
-            entry.value.copy()
+    operator fun set(keyName: String, value: String?) {
+        if (value != null) {
+            putString(KeyMap[keyName] as Property.Key<Any?>, value)
         }
-        properties.converters.putAll(converters)
     }
 }
 
-data class Property<T>(
-    val key: Key<T>,
-    val type: PropertyType<T>,
-    var value: T,
-    val requiresRestart: Boolean = false
-) {
-    data class Key<T>(val name: String)
+data class Property<T>(val key: Key<T>, var value: T) {
+    data class Key<T>(val name: String, val klass: Class<T>)
 }

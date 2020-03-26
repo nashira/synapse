@@ -1,7 +1,6 @@
 package com.rthqks.synapse.logic
 
 import android.util.Log
-import com.rthqks.synapse.R
 import java.util.*
 
 class Network(
@@ -16,25 +15,8 @@ class Network(
     val name: String get() = properties[NetworkName]
 
     init {
-        properties.put(
-            Property(
-                NetworkName,
-                TextType(
-                    R.string.property_name_network_name,
-                    R.drawable.ic_text_fields
-                ), "Network"
-            ), TextConverter
-        )
-        properties.put(
-            Property(
-                CropToFit,
-                ToggleType(
-                    R.string.property_title_crop_to_fit, R.drawable.ic_crop,
-                    R.string.property_subtitle_crop_to_fit_enabled,
-                    R.string.property_subtitle_crop_to_fit_disabled
-                ), value = true, requiresRestart = true
-            ), BooleanConverter
-        )
+        properties[NetworkName] = "Network"
+        properties[CropToFit] = true
     }
 
     fun addNode(node: Node): Node {

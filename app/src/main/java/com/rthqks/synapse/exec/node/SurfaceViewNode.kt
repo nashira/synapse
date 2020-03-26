@@ -39,7 +39,7 @@ class SurfaceViewNode(
     private var windowSurface: WindowSurface? = null
 
     private val cropCenter: Boolean = properties[CropToFit]
-    private val fixedWidth: Boolean = properties.find(FixedWidth)?.value ?: false
+    private val fixedWidth: Boolean = properties.getOrNull(FixedWidth)?.value ?: false
 
     private var surfaceState = SurfaceState.Unavailable
     private var previousTexture: Texture2d? = null

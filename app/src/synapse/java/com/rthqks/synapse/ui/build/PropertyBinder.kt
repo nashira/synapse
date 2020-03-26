@@ -171,6 +171,7 @@ private class PropertyAdapter(
             is ToggleType -> R.layout.property_type_toggle
             is UriType -> R.layout.property_type_uri
             is TextType -> R.layout.property_type_text
+            is EmptyType -> TODO()
             null -> error("null type")
         }
     }

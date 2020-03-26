@@ -5,220 +5,72 @@ import android.media.AudioFormat
 import android.media.MediaRecorder
 import android.net.Uri
 import android.util.Size
-import com.rthqks.synapse.R
 import com.rthqks.synapse.exec.node.*
 import com.rthqks.synapse.exec2.node.BCubeImportNode
-import com.rthqks.synapse.logic.PropertyType.Companion.RangeType
 
-val AudioSampleRate = Property.Key<Int>("audio_sample_rate")
-val AudioEncoding = Property.Key<Int>("audio_encoding")
-val AudioChannel = Property.Key<Int>("audio_channel")
-val AudioSource = Property.Key<Int>("audio_source")
-val CameraFacing = Property.Key<Int>("camera_facing")
-val VideoSize = Property.Key<Size>("video_size")
-val CropSize = Property.Key<Size>("crop_size")
-val HistorySize = Property.Key<Int>("history_size")
-val FrameRate = Property.Key<Int>("frame_rate")
-val Stabilize = Property.Key<Boolean>("stabilize")
-val Rotation = Property.Key<Int>("rotation")
-val BlurSize = Property.Key<Int>("blur_size")
-val NumPasses = Property.Key<Int>("num_passes")
-val ScaleFactor = Property.Key<Int>("scale_factor")
-val LutStrength = Property.Key<Float>("lut_strength")
-val AccumulateFactor = Property.Key<Float>("accumulate_factor")
-val MultiplyFactor = Property.Key<Float>("multiply_factor")
-val MediaUri = Property.Key<Uri>("media_uri")
-val LutUri = Property.Key<Uri>("lut_uri")
-val CropToFit = Property.Key<Boolean>("crop_to_fit")
-val NetworkName = Property.Key<String>("network_name")
-val NumAgents = Property.Key<Int>("num_agents")
-val FixedWidth = Property.Key<Boolean>("fixed_width")
-val BlendMode = Property.Key<Int>("blend_mode")
-val Opacity = Property.Key<Float>("opacity")
-val SensorAngle = Property.Key<Float>("sensor_angle")
-val SensorDistance = Property.Key<Float>("sensor_distance")
-val TravelAngle = Property.Key<Float>("travel_angle")
-val TravelDistance = Property.Key<Float>("travel_distance")
-val SliceDepth = Property.Key<Float>("slice_depth")
-val Recording = Property.Key<Boolean>("recording")
+val AudioSampleRate = Property.Key("audio_sample_rate", Int::class.java)
+val AudioEncoding = Property.Key("audio_encoding", Int::class.java)
+val AudioChannel = Property.Key("audio_channel", Int::class.java)
+val AudioSource = Property.Key("audio_source", Int::class.java)
+val CameraFacing = Property.Key("camera_facing", Int::class.java)
+val VideoSize = Property.Key("video_size", Size::class.java)
+val CropSize = Property.Key("crop_size", Size::class.java)
+val HistorySize = Property.Key("history_size", Int::class.java)
+val FrameRate = Property.Key("frame_rate", Int::class.java)
+val Stabilize = Property.Key("stabilize", Boolean::class.java)
+val Rotation = Property.Key("rotation", Int::class.java)
+val BlurSize = Property.Key("blur_size", Int::class.java)
+val NumPasses = Property.Key("num_passes", Int::class.java)
+val ScaleFactor = Property.Key("scale_factor", Int::class.java)
+val LutStrength = Property.Key("lut_strength", Float::class.java)
+val AccumulateFactor = Property.Key("accumulate_factor", Float::class.java)
+val MultiplyFactor = Property.Key("multiply_factor", Float::class.java)
+val MediaUri = Property.Key("media_uri", Uri::class.java)
+val LutUri = Property.Key("lut_uri", Uri::class.java)
+val CropToFit = Property.Key("crop_to_fit", Boolean::class.java)
+val NetworkName = Property.Key("network_name", String::class.java)
+val NumAgents = Property.Key("num_agents", Int::class.java)
+val FixedWidth = Property.Key("fixed_width", Boolean::class.java)
+val BlendMode = Property.Key("blend_mode", Int::class.java)
+val Opacity = Property.Key("opacity", Float::class.java)
+val SensorAngle = Property.Key("sensor_angle", Float::class.java)
+val SensorDistance = Property.Key("sensor_distance", Float::class.java)
+val TravelAngle = Property.Key("travel_angle", Float::class.java)
+val TravelDistance = Property.Key("travel_distance", Float::class.java)
+val SliceDepth = Property.Key("slice_depth", Float::class.java)
+val Recording = Property.Key("recording", Boolean::class.java)
 
 val Nodes = listOf(
     Node(NodeType.Camera).apply {
         add(Port(Port.Type.Video, "video_1", "Video", true))
-        add(
-            Property(
-                CameraFacing,
-                ChoiceType(
-                    R.string.property_name_camera_device,
-                    R.drawable.ic_switch_camera,
-                    Choice(
-                        CameraCharacteristics.LENS_FACING_BACK,
-                        R.string.property_label_camera_lens_facing_back
-                    ),
-                    Choice(
-                        CameraCharacteristics.LENS_FACING_FRONT,
-                        R.string.property_label_camera_lens_facing_front
-                    )
-                ), CameraCharacteristics.LENS_FACING_BACK, true
-            ), IntConverter
-        )
-        add(
-            Property(
-                FrameRate,
-                ChoiceType(
-                    R.string.property_name_frame_rate,
-                    R.drawable.ic_speed,
-                    Choice(10, R.string.property_label_camera_fps_10),
-                    Choice(15, R.string.property_label_camera_fps_15),
-                    Choice(20, R.string.property_label_camera_fps_20),
-                    Choice(30, R.string.property_label_camera_fps_30),
-                    Choice(60, R.string.property_label_camera_fps_60)
-                ), 30, true
-            ), IntConverter
-        )
-        add(
-            Property(
-                VideoSize,
-                ChoiceType(
-                    R.string.property_name_camera_capture_size,
-                    R.drawable.ic_photo_size_select,
-                    Choice(Size(3840, 2160), R.string.property_label_camera_capture_size_2160),
-                    Choice(Size(1920, 1080), R.string.property_label_camera_capture_size_1080),
-                    Choice(Size(1280, 720), R.string.property_label_camera_capture_size_720),
-                    Choice(Size(640, 480), R.string.property_label_camera_capture_size_480)
-                ), Size(1280, 720), true
-            ), SizeConverter
-        )
-        add(
-            Property(
-                Stabilize,
-                ToggleType(
-                    R.string.property_name_camera_stabilize, R.drawable.ic_texture,
-                    R.string.property_label_on,
-                    R.string.property_label_off
-                ), value = true, requiresRestart = true
-            ), BooleanConverter
-        )
+        add(CameraFacing, CameraCharacteristics.LENS_FACING_BACK)
+        add(FrameRate, 30)
+        add(VideoSize, Size(1280, 720))
+        add(Stabilize, value = true)
     },
     Node(NodeType.Microphone).apply {
         add(Port(Port.Type.Audio, "audio_1", "Audio", true))
-        add(
-            Property(
-                AudioSampleRate, ChoiceType(
-                    R.string.property_name_sample_rate,
-                    R.drawable.ic_audio,
-                    Choice(16000, R.string.property_label_sample_rate_16000),
-                    Choice(22050, R.string.property_label_sample_rate_22050),
-                    Choice(32000, R.string.property_label_sample_rate_32000),
-                    Choice(44100, R.string.property_label_sample_rate_44100),
-                    Choice(48000, R.string.property_label_sample_rate_48000)
-                ), 44100
-            ),
-            IntConverter
-        )
-        add(
-            Property(
-                AudioEncoding, ChoiceType(
-                    R.string.property_name_audio_encoding,
-                    R.drawable.ic_audio,
-                    Choice(
-                        AudioFormat.ENCODING_PCM_8BIT,
-                        R.string.property_label_encoding_PCM_8BIT
-                    ),
-                    Choice(
-                        AudioFormat.ENCODING_PCM_16BIT,
-                        R.string.property_label_encoding_PCM_16BIT
-                    ),
-                    Choice(
-                        AudioFormat.ENCODING_PCM_FLOAT,
-                        R.string.property_label_encoding_PCM_FLOAT
-                    )
-                ),
-                AudioFormat.ENCODING_PCM_16BIT
-            ),
-            IntConverter
-        )
-        add(
-            Property(
-                AudioChannel, ChoiceType(
-                    R.string.property_name_audio_channels,
-                    R.drawable.ic_audio,
-                    Choice(AudioFormat.CHANNEL_IN_DEFAULT, R.string.property_label_channel_default),
-                    Choice(AudioFormat.CHANNEL_IN_MONO, R.string.property_label_channel_mono),
-                    Choice(AudioFormat.CHANNEL_IN_STEREO, R.string.property_label_channel_stereo)
-                ),
-                AudioFormat.CHANNEL_IN_DEFAULT
-            ),
-            IntConverter
-        )
-        add(
-            Property(
-                AudioSource, ChoiceType(
-                    R.string.property_name_audio_source,
-                    R.drawable.ic_audio,
-                    Choice(MediaRecorder.AudioSource.MIC, R.string.property_label_audio_source_mic),
-                    Choice(
-                        MediaRecorder.AudioSource.CAMCORDER,
-                        R.string.property_label_audio_source_camcorder
-                    ),
-                    Choice(
-                        MediaRecorder.AudioSource.DEFAULT,
-                        R.string.property_label_audio_source_default
-                    ),
-                    Choice(
-                        MediaRecorder.AudioSource.VOICE_COMMUNICATION,
-                        R.string.property_label_audio_source_voice_communication
-                    ),
-                    Choice(
-                        MediaRecorder.AudioSource.VOICE_RECOGNITION,
-                        R.string.property_label_audio_source_voice_recognition
-                    )
-                ), MediaRecorder.AudioSource.DEFAULT
-            ),
-            IntConverter
-        )
+        add(AudioSampleRate, 44100)
+        add(AudioEncoding, AudioFormat.ENCODING_PCM_16BIT)
+        add(AudioChannel, AudioFormat.CHANNEL_IN_DEFAULT)
+        add(AudioSource, MediaRecorder.AudioSource.DEFAULT)
     },
     Node(NodeType.MediaFile).apply {
         add(Port(Port.Type.Video, "video_1", "Video", true))
         add(Port(Port.Type.Audio, "audio_1", "Audio", true))
-        add(
-            Property(
-                MediaUri,
-                UriType(R.string.property_name_uri, R.drawable.ic_movie, "video/*"),
-                Uri.parse("none://"),
-                true
-            ), UriConverter
-        )
+        add(MediaUri, Uri.parse("none://"))
     },
     Node(NodeType.Image).apply {
         add(Port(Port.Type.Video, "image_1", "Image", true))
-        add(
-            Property(
-                MediaUri,
-                UriType(R.string.property_name_uri, R.drawable.ic_image, "image/*"),
-                Uri.parse("assets:///img/ic_launcher_web.png"), true
-            ), UriConverter
-        )
+        add(MediaUri, Uri.parse("assets:///img/ic_launcher_web.png"))
     },
     Node(NodeType.CubeImport).apply {
         add(Port(Port.Type.Texture3D, CubeImportNode.OUTPUT.id, "LUT", true))
-        add(
-            Property(
-                LutUri,
-                UriType(R.string.property_name_uri, R.drawable.ic_image, "*/*"),
-                Uri.parse("assets:///cube/invert.cube"), true
-            ), UriConverter
-        )
+        add(LutUri, Uri.parse("assets:///cube/invert.cube"))
     },
     Node(NodeType.BCubeImport).apply {
         add(Port(Port.Type.Texture3D, BCubeImportNode.OUTPUT.id, "BLUT", true))
-        add(
-            Property(
-                LutUri,
-                UriType(R.string.property_name_uri, R.drawable.ic_image, "*/*"),
-                Uri.parse("assets:///cube/invert.bcube"), true
-            ), UriConverter
-        )
+        add(LutUri, Uri.parse("assets:///cube/invert.bcube"))
     },
     Node(NodeType.FrameDifference).apply {
         add(Port(Port.Type.Video, "video_1", "Source", false))
@@ -227,197 +79,49 @@ val Nodes = listOf(
     Node(NodeType.GrayscaleFilter).apply {
         add(Port(Port.Type.Video, "video_1", "Source", false))
         add(Port(Port.Type.Video, "video_2", "Grayscale", true))
-        add(
-            Property(
-                ScaleFactor,
-                RangeType(
-                    R.string.property_name_downsample_factor,
-                    R.drawable.ic_photo_size_select,
-                    (1..10)
-                ), 1, true
-            ), IntConverter
-        )
+        add(ScaleFactor, 1)
     },
     Node(NodeType.MultiplyAccumulate).apply {
         add(Port(Port.Type.Video, "video_1", "Source", false))
         add(Port(Port.Type.Video, "video_2", "Accumulated", true))
-        add(
-            Property(
-                MultiplyFactor,
-                RangeType(
-                    R.string.property_name_multiply_factor,
-                    R.drawable.ic_clear,
-                    (0f..1f)
-                ), 0.9f
-            ), FloatConverter
-        )
-        add(
-            Property(
-                AccumulateFactor,
-                RangeType(
-                    R.string.property_name_accumulate_factor,
-                    R.drawable.ic_add,
-                    (0f..2f)
-                ), 0.9f
-            ), FloatConverter
-        )
+        add(MultiplyFactor, 0.9f)
+        add(AccumulateFactor, 0.9f)
     },
     Node(NodeType.BlurFilter).apply {
         add(Port(Port.Type.Video, "video_1", "Source", false))
         add(Port(Port.Type.Video, "video_2", "Blurred", true))
-        add(
-            Property(
-                ScaleFactor,
-                RangeType(
-                    R.string.property_name_scale_factor,
-                    R.drawable.ic_photo_size_select,
-                    (1..10)
-                ), 1, true
-            ), IntConverter
-        )
-        add(
-            Property(
-                NumPasses,
-                RangeType(
-                    R.string.property_name_num_passes,
-                    R.drawable.ic_repeat,
-                    (1..10)
-                ), 1
-            ), IntConverter
-        )
-        add(
-            Property(
-                BlurSize,
-                ChoiceType(
-                    R.string.property_name_blur_size,
-                    R.drawable.ic_blur,
-                    Choice(5, R.string.property_label_blur_size_5),
-                    Choice(9, R.string.property_label_blur_size_9),
-                    Choice(13, R.string.property_label_blur_size_13)
-                ), 9, true
-            ), IntConverter
-        )
+        add(ScaleFactor, 1)
+        add(NumPasses, 1)
+        add(BlurSize, 9)
     },
     Node(NodeType.Lut2d).apply {
         add(Port(Port.Type.Video, Lut2dNode.INPUT.id, "Input", false))
         add(Port(Port.Type.Video, Lut2dNode.INPUT_LUT.id, "LUT", false))
         add(Port(Port.Type.Video, Lut2dNode.OUTPUT.id, "Output", true))
-        add(
-            Property(
-                FrameRate,
-                ChoiceType(
-                    R.string.property_name_frame_rate,
-                    R.drawable.ic_speed,
-                    Choice(10, R.string.property_label_camera_fps_10),
-                    Choice(15, R.string.property_label_camera_fps_15),
-                    Choice(20, R.string.property_label_camera_fps_20),
-                    Choice(30, R.string.property_label_camera_fps_30),
-                    Choice(60, R.string.property_label_camera_fps_60)
-                ), 30, false
-            ), IntConverter
-        )
-        add(
-            Property(
-                VideoSize,
-                ChoiceType(
-                    R.string.property_name_environment_video_size,
-                    R.drawable.ic_photo_size_select,
-                    Choice(Size(2160, 3840), R.string.property_label_camera_capture_size_2160),
-                    Choice(Size(1080, 1920), R.string.property_label_camera_capture_size_1080),
-                    Choice(Size(720, 1280), R.string.property_label_camera_capture_size_720),
-                    Choice(Size(1024, 1024), R.string.property_label_camera_capture_size_1024sq),
-                    Choice(Size(480, 640), R.string.property_label_camera_capture_size_480)
-                ), Size(720, 1280), true
-            ), SizeConverter
-        )
+        add(FrameRate, 30)
+        add(VideoSize, Size(720, 1280))
     },
     Node(NodeType.Lut3d).apply {
         add(Port(Port.Type.Video, Lut3dNode.INPUT.id, "Input", false))
         add(Port(Port.Type.Texture3D, Lut3dNode.INPUT_LUT.id, "LUT", false))
         add(Port(Port.Type.Matrix, Lut3dNode.LUT_MATRIX.id, "LUT Matrix", false))
         add(Port(Port.Type.Video, Lut3dNode.OUTPUT.id, "Output", true))
-        add(
-            Property(
-                FrameRate,
-                ChoiceType(
-                    R.string.property_name_frame_rate,
-                    R.drawable.ic_speed,
-                    Choice(10, R.string.property_label_camera_fps_10),
-                    Choice(15, R.string.property_label_camera_fps_15),
-                    Choice(20, R.string.property_label_camera_fps_20),
-                    Choice(30, R.string.property_label_camera_fps_30),
-                    Choice(60, R.string.property_label_camera_fps_60)
-                ), 30, false
-            ), IntConverter
-        )
-        add(
-            Property(
-                VideoSize,
-                ChoiceType(
-                    R.string.property_name_environment_video_size,
-                    R.drawable.ic_photo_size_select,
-                    Choice(Size(2160, 3840), R.string.property_label_camera_capture_size_2160),
-                    Choice(Size(1080, 1920), R.string.property_label_camera_capture_size_1080),
-                    Choice(Size(720, 1280), R.string.property_label_camera_capture_size_720),
-                    Choice(Size(1024, 1024), R.string.property_label_camera_capture_size_1024sq),
-                    Choice(Size(480, 640), R.string.property_label_camera_capture_size_480)
-                ), Size(720, 1280), true
-            ), SizeConverter
-        )
-        add(
-            Property(
-                LutStrength,
-                RangeType(R.string.property_name_lut_strength, R.drawable.ic_rotate_left, 0f..1f),
-                1f
-            ), FloatConverter
-        )
+        add(FrameRate, 30)
+        add(VideoSize, Size(720, 1280))
+        add(LutStrength, 1f)
     },
     Node(NodeType.CropResize).apply {
         add(Port(Port.Type.Video, CropResizeNode.INPUT.id, "Input", false))
         add(Port(Port.Type.Video, CropResizeNode.OUTPUT.id, "Output", true))
-        add(
-            Property(
-                CropSize,
-                ChoiceType(
-                    R.string.property_name_environment_video_size,
-                    R.drawable.ic_photo_size_select,
-                    Choice(Size(2160, 3840), R.string.property_label_camera_capture_size_2160),
-                    Choice(Size(1080, 1920), R.string.property_label_camera_capture_size_1080),
-                    Choice(Size(720, 1280), R.string.property_label_camera_capture_size_720),
-                    Choice(Size(1024, 1024), R.string.property_label_camera_capture_size_1024sq),
-                    Choice(Size(480, 640), R.string.property_label_camera_capture_size_480),
-                    Choice(Size(320, 320), R.string.property_label_camera_capture_size_320)
-                ), Size(320, 320), true
-            ), SizeConverter
-        )
+        add(CropSize, Size(320, 320))
     },
     Node(NodeType.Screen).apply {
         add(Port(Port.Type.Video, "video_1", "Source", false))
-        add(
-            Property(
-                CropToFit,
-                ChoiceType(
-                    R.string.property_title_crop_to_fit,
-                    R.drawable.ic_crop,
-                    Choice(true, R.string.property_subtitle_crop_to_fit_enabled),
-                    Choice(false, R.string.property_subtitle_crop_to_fit_disabled)
-                ), false
-            ), BooleanConverter
-        )
+        add(CropToFit, false)
     },
     Node(NodeType.TextureView).apply {
         add(Port(Port.Type.Video, "video_1", "Source", false))
-        add(
-            Property(
-                CropToFit,
-                ChoiceType(
-                    R.string.property_title_crop_to_fit,
-                    R.drawable.ic_crop,
-                    Choice(true, R.string.property_subtitle_crop_to_fit_enabled),
-                    Choice(false, R.string.property_subtitle_crop_to_fit_disabled)
-                ), false
-            ), BooleanConverter
-        )
+        add(CropToFit, false)
     },
     Node(NodeType.Speakers).apply {
         add(Port(Port.Type.Audio, "audio_1", "Audio", false))
@@ -427,298 +131,90 @@ val Nodes = listOf(
         add(Port(Port.Type.Video, PhysarumNode.INPUT_AGENT.id, "Agent", false))
         add(Port(Port.Type.Video, PhysarumNode.OUTPUT_ENV.id, "Environment", true))
         add(Port(Port.Type.Video, PhysarumNode.OUTPUT_AGENT.id, "Agent", true))
-        add(
-            Property(
-                NumAgents,
-                RangeType(
-                    R.string.property_name_num_agents,
-                    R.drawable.ic_scatter_plot,
-                    1000..100_000
-                ), 10_000, true
-            ), IntConverter
-        )
-        add(
-            Property(
-                FrameRate,
-                ChoiceType(
-                    R.string.property_name_frame_rate,
-                    R.drawable.ic_speed,
-                    Choice(10, R.string.property_label_camera_fps_10),
-                    Choice(15, R.string.property_label_camera_fps_15),
-                    Choice(20, R.string.property_label_camera_fps_20),
-                    Choice(30, R.string.property_label_camera_fps_30),
-                    Choice(60, R.string.property_label_camera_fps_60)
-                ), 30, false
-            ), IntConverter
-        )
-        add(
-            Property(
-                VideoSize,
-                ChoiceType(
-                    R.string.property_name_environment_video_size,
-                    R.drawable.ic_photo_size_select,
-                    Choice(Size(2160, 3840), R.string.property_label_camera_capture_size_2160),
-                    Choice(Size(1080, 1920), R.string.property_label_camera_capture_size_1080),
-                    Choice(Size(720, 1280), R.string.property_label_camera_capture_size_720),
-                    Choice(Size(1024, 1024), R.string.property_label_camera_capture_size_1024sq),
-                    Choice(Size(480, 640), R.string.property_label_camera_capture_size_480)
-                ), Size(720, 1280), true
-            ), SizeConverter
-        )
-        add(
-            Property(
-                SensorAngle,
-                RangeType(R.string.property_name_sensor_angle, R.drawable.ic_rotate_left, 0f..90f),
-                2f
-            ), FloatConverter
-        )
-        add(
-            Property(
-                SensorDistance,
-                RangeType(R.string.property_name_sensor_distance, R.drawable.ic_height, 1f..50f),
-                11f
-            ), FloatConverter
-        )
-        add(
-            Property(
-                TravelAngle,
-                RangeType(
-                    R.string.property_name_travel_angle,
-                    R.drawable.ic_rotate_left,
-                    -90f..90f
-                ),
-                4f
-            ), FloatConverter
-        )
-        add(
-            Property(
-                TravelDistance,
-                RangeType(R.string.property_name_travel_distance, R.drawable.ic_height, 1f..10f),
-                1.1f
-            ), FloatConverter
-        )
+        add(NumAgents, 10_000)
+        add(FrameRate, 30)
+        add(VideoSize, Size(720, 1280))
+        add(SensorAngle, 2f)
+        add(SensorDistance, 11f)
+        add(TravelAngle, 4f)
+        add(TravelDistance, 1.1f)
     },
     Node(NodeType.ImageBlend).apply {
         add(Port(Port.Type.Video, ImageBlendNode.INPUT_BASE.id, "Base", false))
         add(Port(Port.Type.Video, ImageBlendNode.INPUT_BLEND.id, "Blend", false))
         add(Port(Port.Type.Video, ImageBlendNode.OUTPUT.id, "Output", true))
-        add(
-            Property(
-                BlendMode,
-                ChoiceType(
-                    R.string.property_name_blend_mode,
-                    R.drawable.ic_filter_b_and_w,
-                    Choice(1, R.string.property_label_blend_mode_add),
-                    Choice(2, R.string.property_label_blend_mode_average),
-                    Choice(3, R.string.property_label_blend_mode_color_burn),
-                    Choice(4, R.string.property_label_blend_mode_color_dodge),
-                    Choice(5, R.string.property_label_blend_mode_darken),
-                    Choice(6, R.string.property_label_blend_mode_difference),
-                    Choice(7, R.string.property_label_blend_mode_exclusion),
-                    Choice(8, R.string.property_label_blend_mode_glow),
-                    Choice(9, R.string.property_label_blend_mode_hard_light),
-                    Choice(10, R.string.property_label_blend_mode_hard_mix),
-                    Choice(11, R.string.property_label_blend_mode_lighten),
-                    Choice(12, R.string.property_label_blend_mode_linear_burn),
-                    Choice(13, R.string.property_label_blend_mode_linear_dodge),
-                    Choice(14, R.string.property_label_blend_mode_linear_light),
-                    Choice(15, R.string.property_label_blend_mode_multiply),
-                    Choice(16, R.string.property_label_blend_mode_negation),
-                    Choice(17, R.string.property_label_blend_mode_normal),
-                    Choice(18, R.string.property_label_blend_mode_overlay),
-                    Choice(19, R.string.property_label_blend_mode_phoenix),
-                    Choice(20, R.string.property_label_blend_mode_pin_light),
-                    Choice(21, R.string.property_label_blend_mode_reflect),
-                    Choice(22, R.string.property_label_blend_mode_screen),
-                    Choice(23, R.string.property_label_blend_mode_soft_light),
-                    Choice(24, R.string.property_label_blend_mode_subtract),
-                    Choice(25, R.string.property_label_blend_mode_vivid_light)
-                ), 1
-            ), IntConverter
-        )
-        add(
-            Property(
-                FrameRate,
-                ChoiceType(
-                    R.string.property_name_frame_rate,
-                    R.drawable.ic_speed,
-                    Choice(10, R.string.property_label_camera_fps_10),
-                    Choice(15, R.string.property_label_camera_fps_15),
-                    Choice(20, R.string.property_label_camera_fps_20),
-                    Choice(30, R.string.property_label_camera_fps_30),
-                    Choice(60, R.string.property_label_camera_fps_60)
-                ), 30, false
-            ), IntConverter
-        )
-        add(
-            Property(
-                VideoSize,
-                ChoiceType(
-                    R.string.property_name_environment_video_size,
-                    R.drawable.ic_photo_size_select,
-                    Choice(Size(2160, 3840), R.string.property_label_camera_capture_size_2160),
-                    Choice(Size(1080, 1920), R.string.property_label_camera_capture_size_1080),
-                    Choice(Size(720, 1280), R.string.property_label_camera_capture_size_720),
-                    Choice(Size(1024, 1024), R.string.property_label_camera_capture_size_1024sq),
-                    Choice(Size(480, 640), R.string.property_label_camera_capture_size_480)
-                ), Size(720, 1280), true
-            ), SizeConverter
-        )
-        add(
-            Property(
-                Opacity,
-                RangeType(R.string.property_name_opacity, R.drawable.ic_gradient, 0f..1f),
-                1f
-            ), FloatConverter
-        )
+        add(BlendMode, 1)
+        add(FrameRate, 30)
+        add(VideoSize, Size(720, 1280))
+        add(Opacity, 1f)
     },
     Node(NodeType.Shape).apply {
         //        add(Port(Port.Type.Video, ShapeNode.INPUT_POS.id, "Positions", false))
         add(Port(Port.Type.Video, ShapeNode.OUTPUT.id, "Output", true))
-        add(
-            Property(
-                FrameRate,
-                ChoiceType(
-                    R.string.property_name_frame_rate,
-                    R.drawable.ic_speed,
-                    Choice(10, R.string.property_label_camera_fps_10),
-                    Choice(15, R.string.property_label_camera_fps_15),
-                    Choice(20, R.string.property_label_camera_fps_20),
-                    Choice(30, R.string.property_label_camera_fps_30),
-                    Choice(60, R.string.property_label_camera_fps_60)
-                ), 30, false
-            ), IntConverter
-        )
-        add(
-            Property(
-                VideoSize,
-                ChoiceType(
-                    R.string.property_name_output_video_size,
-                    R.drawable.ic_photo_size_select,
-                    Choice(Size(2160, 3840), R.string.property_label_camera_capture_size_2160),
-                    Choice(Size(1080, 1920), R.string.property_label_camera_capture_size_1080),
-                    Choice(Size(720, 1280), R.string.property_label_camera_capture_size_720),
-                    Choice(Size(1024, 1024), R.string.property_label_camera_capture_size_1024sq),
-                    Choice(Size(480, 640), R.string.property_label_camera_capture_size_480)
-                ), Size(720, 1280), true
-            ), SizeConverter
-        )
+        add(FrameRate, 30)
+        add(VideoSize, Size(720, 1280))
     },
     Node(NodeType.RingBuffer).apply {
         add(Port(Port.Type.Video, RingBufferNode.INPUT.id, "Input", false))
         add(Port(Port.Type.Texture3D, RingBufferNode.OUTPUT.id, "Output", true))
-        add(
-            Property(
-                HistorySize,
-                RangeType(
-                    R.string.property_name_history_size,
-                    R.drawable.ic_layers,
-                    1..60
-                ), 10, true
-            ), IntConverter
-        )
-        add(
-            Property(
-                VideoSize,
-                ChoiceType(
-                    R.string.property_name_output_video_size,
-                    R.drawable.ic_photo_size_select,
-                    Choice(Size(2160, 3840), R.string.property_label_camera_capture_size_2160),
-                    Choice(Size(1080, 1920), R.string.property_label_camera_capture_size_1080),
-                    Choice(Size(720, 1280), R.string.property_label_camera_capture_size_720),
-                    Choice(Size(1024, 1024), R.string.property_label_camera_capture_size_1024sq),
-                    Choice(Size(480, 640), R.string.property_label_camera_capture_size_480)
-                ), Size(720, 1280), true
-            ), SizeConverter
-        )
+        add(HistorySize, 10)
+        add(VideoSize, Size(720, 1280))
     },
     Node(NodeType.Slice3d).apply {
         add(Port(Port.Type.Texture3D, Slice3dNode.INPUT_3D.id, "Input", false))
         add(Port(Port.Type.Video, Slice3dNode.OUTPUT.id, "Output", true))
-        add(
-            Property(
-                SliceDepth,
-                RangeType(
-                    R.string.property_name_slice_depth,
-                    R.drawable.ic_layers,
-                    0f..1f
-                ), 0f, false
-            ), FloatConverter
-        )
-        add(
-            Property(
-                FrameRate,
-                RangeType(
-                    R.string.property_name_frame_rate,
-                    R.drawable.ic_speed,
-                    10..60
-                ), 30, false
-            ), IntConverter
-        )
+        add(SliceDepth, 0f)
+        add(FrameRate, 30)
     },
     Node(NodeType.MediaEncoder).apply {
         add(Port(Port.Type.Video, EncoderNode.INPUT_VIDEO.id, "Video", false))
         add(Port(Port.Type.Audio, EncoderNode.INPUT_AUDIO.id, "Audio", false))
-        add(
-            Property(
-                FrameRate,
-                ChoiceType(
-                    R.string.property_name_frame_rate,
-                    R.drawable.ic_speed,
-                    Choice(10, R.string.property_label_camera_fps_10),
-                    Choice(15, R.string.property_label_camera_fps_15),
-                    Choice(20, R.string.property_label_camera_fps_20),
-                    Choice(30, R.string.property_label_camera_fps_30),
-                    Choice(60, R.string.property_label_camera_fps_60)
-                ), 30, false
-            ), IntConverter
-        )
-        add(
-            Property(
-                Recording,
-                ToggleType(
-                    R.string.property_name_recording,
-                    R.drawable.ic_movie,
-                    R.string.property_name_recording,
-                    R.string.property_name_recording
-                ), false
-            ), BooleanConverter
-        )
-        add(
-            Property(
-                Rotation,
-                ChoiceType(
-                    R.string.property_name_rotation,
-                    R.drawable.ic_rotate_left,
-                    Choice(0, R.string.property_label_rotation_0),
-                    Choice(90, R.string.property_label_rotation_90),
-                    Choice(270, R.string.property_label_rotation_270),
-                    Choice(180, R.string.property_label_rotation_180)
-                ), 0
-            ), IntConverter
-        )
+        add(FrameRate, 30)
+        add(Recording, false)
+        add(Rotation, 0)
     },
     Node(NodeType.RotateMatrix).apply {
         add(Port(Port.Type.Matrix, RotateMatrixNode.OUTPUT.id, "Matrix", true))
-        add(
-            Property(
-                FrameRate,
-                ChoiceType(
-                    R.string.property_name_frame_rate,
-                    R.drawable.ic_speed,
-                    Choice(10, R.string.property_label_camera_fps_10),
-                    Choice(15, R.string.property_label_camera_fps_15),
-                    Choice(20, R.string.property_label_camera_fps_20),
-                    Choice(30, R.string.property_label_camera_fps_30),
-                    Choice(60, R.string.property_label_camera_fps_60)
-                ), 30, false
-            ), IntConverter
-        )
+        add(FrameRate, 30)
     },
     Node(NodeType.Properties).also { it.id = -2 },
     Node(NodeType.Connection).also { it.id = -3 },
     Node(NodeType.Creation).also { it.id = -4 }
 )
+
+val KeyMap: Map<String, Property.Key<*>> = listOf(
+    AudioSampleRate,
+    AudioEncoding,
+    AudioChannel,
+    AudioSource,
+    CameraFacing,
+    VideoSize,
+    CropSize,
+    HistorySize,
+    FrameRate,
+    Stabilize,
+    Rotation,
+    BlurSize,
+    NumPasses,
+    ScaleFactor,
+    LutStrength,
+    AccumulateFactor,
+    MultiplyFactor,
+    MediaUri,
+    LutUri,
+    CropToFit,
+    NetworkName,
+    NumAgents,
+    FixedWidth,
+    BlendMode,
+    Opacity,
+    SensorAngle,
+    SensorDistance,
+    TravelAngle,
+    TravelDistance,
+    SliceDepth,
+    Recording
+).map { it.name to it }.toMap()
 
 val NodeMap = Nodes.map { it.type to it }.toMap()
 

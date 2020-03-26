@@ -24,9 +24,6 @@ sealed class PropertyType<T>(
     }
 }
 
-// because properties are a pain to deal with right now
-class EmptyType<T> : PropertyType<T>()
-
 class ChoiceType<T>(
     @StringRes title: Int,
     @DrawableRes icon: Int,
@@ -64,38 +61,3 @@ class TextType(
     @StringRes title: Int,
     @DrawableRes icon: Int
 ) : PropertyType<String>(title, icon)
-
-interface Converter<T> {
-    fun toString(value: T): String
-    fun fromString(value: String): T
-}
-
-object IntConverter: Converter<Int> {
-    override fun toString(value: Int): String = value.toString()
-    override fun fromString(value: String): Int = value.toInt()
-}
-
-object SizeConverter: Converter<Size> {
-    override fun toString(value: Size): String = "${value.width}x${value.height}"
-    override fun fromString(value: String): Size = Size.parseSize(value)
-}
-
-object FloatConverter: Converter<Float> {
-    override fun toString(value: Float): String  = value.toString()
-    override fun fromString(value: String): Float  = value.toFloat()
-}
-
-object BooleanConverter: Converter<Boolean> {
-    override fun toString(value: Boolean): String = value.toString()
-    override fun fromString(value: String): Boolean = value.toBoolean()
-}
-
-object UriConverter: Converter<Uri> {
-    override fun toString(value: Uri): String = value.toString()
-    override fun fromString(value: String): Uri = Uri.parse(value)
-}
-
-object TextConverter: Converter<String> {
-    override fun toString(value: String): String = value
-    override fun fromString(value: String): String  = value
-}

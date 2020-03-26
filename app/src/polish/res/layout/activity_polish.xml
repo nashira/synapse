@@ -3,7 +3,8 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
-    android:layout_height="match_parent">
+    android:layout_height="match_parent"
+    android:background="@color/black">
 
     <androidx.constraintlayout.widget.ConstraintLayout
         android:layout_width="match_parent"
@@ -98,6 +99,21 @@
             app:layout_constraintBottom_toTopOf="@id/button_record"
             tools:listitem="@layout/layout_effect" />
 
+
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/settings_list"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="8dp"
+            android:clipToPadding="false"
+            android:orientation="horizontal"
+            app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager"
+            app:layout_constraintBottom_toTopOf="@id/effect_list"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            tools:itemCount="1"
+            tools:listitem="@layout/layout_" />
+
     </androidx.constraintlayout.widget.ConstraintLayout>
 
     <androidx.constraintlayout.widget.ConstraintLayout
@@ -106,7 +122,8 @@
         android:layout_height="400dp"
         app:behavior_hideable="true"
         app:behavior_skipCollapsed="true"
-        app:layout_behavior="@string/bottom_sheet_behavior">
+        app:layout_behavior="@string/bottom_sheet_behavior"
+        tools:visibility="gone">
 
         <ImageButton
             android:id="@+id/button_lut_close"

@@ -1,24 +1,13 @@
 package com.rthqks.synapse.polish
 
-import com.rthqks.synapse.R
-import com.rthqks.synapse.logic.*
+import com.rthqks.synapse.logic.Network
+import com.rthqks.synapse.logic.Properties
 
 class Effect(
-    val network: Network
+    val network: Network,
+    val title: String
 ) {
-    val properties = Properties().apply {
-        put(
-            Property(
-                Title,
-                TextType(
-                    R.string.property_name_network_name,
-                    R.drawable.ic_text_fields
-                ), "Synapse Effect"
-            ), TextConverter
-        )
-    }
-
-    val title: String get() = properties[Title]
+    val properties = Properties()
 
     companion object {
         // node id allocations
@@ -31,7 +20,6 @@ class Effect(
         const val ID_LUT_IMPORT = 10_005
         const val ID_LUT = 10_006
         const val ID_THUMBNAIL = 10_007
-        val Title = Property.Key<String>("name")
 
         val LUTS = listOf(
             "identity",

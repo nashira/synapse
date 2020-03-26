@@ -99,7 +99,7 @@ class NetworkExecutor(
             NodeType.Lut3d -> Lut3dNode(context, node.properties)
             NodeType.ShaderFilter -> TODO()
             NodeType.Speakers -> AudioPlayerNode(context)
-            NodeType.Screen -> SurfaceViewNode(context, node.properties + network.properties)
+            NodeType.Screen -> SurfaceViewNode(context, node.properties)
             NodeType.SlimeMold -> PhysarumNode(context, node.properties)
             NodeType.ImageBlend -> ImageBlendNode(context, node.properties)
             NodeType.CropResize -> CropResizeNode(context, node.properties)
