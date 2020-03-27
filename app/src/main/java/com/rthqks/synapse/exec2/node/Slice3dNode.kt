@@ -1,7 +1,6 @@
 package com.rthqks.synapse.exec2.node
 
 import android.opengl.GLES30
-import android.os.SystemClock
 import android.util.Log
 import android.util.Size
 import com.rthqks.synapse.exec.ExecutionContext
@@ -9,15 +8,9 @@ import com.rthqks.synapse.exec2.Connection
 import com.rthqks.synapse.exec2.Message
 import com.rthqks.synapse.exec2.NodeExecutor
 import com.rthqks.synapse.gl.*
-import com.rthqks.synapse.logic.FrameRate
-import com.rthqks.synapse.logic.Properties
-import com.rthqks.synapse.logic.SliceDepth
-import com.rthqks.synapse.logic.VideoSize
+import com.rthqks.synapse.logic.*
 import kotlinx.coroutines.Job
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
-import java.util.concurrent.atomic.AtomicBoolean
-import kotlin.math.max
 
 class Slice3dNode(
     context: ExecutionContext,
@@ -28,7 +21,8 @@ class Slice3dNode(
     private var startJob: Job? = null
     private val frameDuration: Long get() = 1000L / properties[FrameRate]
     private val sliceDepth: Float get() = properties[SliceDepth]
-    private var outputSize = properties[VideoSize]
+    private val sliceDirection: Int get() = properties[SliceDirection]
+    private var outputSize = Size(0, 0)
 
     private val texture1 = Texture2d()
     private val texture2 = Texture2d()
@@ -40,11 +34,13 @@ class Slice3dNode(
 
     private var t3dEvent: Message<Texture3d>? = null
 
-    private val debounce = AtomicBoolean()
-    private var lastExecutionTime = 0L
     private var needsPriming: Boolean = true
 
     override suspend fun onSetup() {
+        glesManager.glContext {
+            texture1.initialize()
+            texture2.initialize()
+        }
     }
 
     override suspend fun <T> onConnect(key: Connection.Key<T>, producer: Boolean) {
@@ -75,47 +71,59 @@ class Slice3dNode(
     }
 
     private suspend fun checkConfig(texture3d: Texture3d) {
-        if (program.programId != 0) {
-            return
-        }
-        outputSize = Size(texture3d.width, texture3d.height)
+        val createProgram = program.programId == 0
+        val sizeChanged = outputSize.width != texture3d.width
+                || outputSize.height != texture3d.height
 
-        glesManager.glContext {
-            initRenderTarget(framebuffer1, texture1, texture3d)
-            initRenderTarget(framebuffer2, texture2, texture3d)
+        if (createProgram) {
+            glesManager.glContext {
 
-            val vertex = assetManager.readTextAsset("shader/slice_3d.vert")
-            val frag = assetManager.readTextAsset("shader/slice_3d.frag")
+                val vertex = assetManager.readTextAsset("shader/slice_3d.vert")
+                val frag = assetManager.readTextAsset("shader/slice_3d.frag")
 
-            quadMesh.initialize()
+                quadMesh.initialize()
 
-            program.apply {
-                initialize(vertex, frag)
-                addUniform(
-                    Uniform.Type.Mat4,
-                    MATRIX,
-                    GlesManager.identityMat()
-                )
+                program.apply {
+                    initialize(vertex, frag)
+                    addUniform(
+                        Uniform.Type.Mat4,
+                        MATRIX,
+                        GlesManager.identityMat()
+                    )
 //                addUniform(
 //                    Uniform.Type.Int,
 //                    "input_texture",
 //                    INPUT_TEXTURE_LOCATION
 //                )
-                addUniform(
-                    Uniform.Type.Int,
-                    T3D_TEXTURE,
-                    LUT_TEXTURE_LOCATION
-                )
-                addUniform(
-                    Uniform.Type.Float,
-                    T3D_LAYER,
-                    0f
-                )
-                addUniform(
-                    Uniform.Type.Float,
-                    T3D_DEPTH,
-                    (texture3d.depth - 1f) / texture3d.depth
-                )
+                    addUniform(
+                        Uniform.Type.Int,
+                        T3D_TEXTURE,
+                        LUT_TEXTURE_LOCATION
+                    )
+                    addUniform(
+                        Uniform.Type.Float,
+                        T3D_LAYER,
+                        0f
+                    )
+                    addUniform(
+                        Uniform.Type.Float,
+                        T3D_DEPTH,
+                        (texture3d.depth - 1f) / texture3d.depth
+                    )
+                    addUniform(
+                        Uniform.Type.Int,
+                        SliceDirection.name,
+                        sliceDirection
+                    )
+                }
+            }
+        }
+
+        if (sizeChanged) {
+            outputSize = Size(texture3d.width, texture3d.height)
+            glesManager.glContext {
+                initRenderTarget(framebuffer1, texture1, texture3d)
+                initRenderTarget(framebuffer2, texture2, texture3d)
             }
         }
     }
@@ -125,7 +133,6 @@ class Slice3dNode(
         texture: Texture2d,
         config: Texture3d
     ) {
-        texture.initialize()
         texture.initData(
             0,
             config.internalFormat,
@@ -135,6 +142,7 @@ class Slice3dNode(
             config.type
         )
         Log.d(TAG, "glGetError() ${GLES30.glGetError()}")
+        framebuffer.release()
         framebuffer.initialize(texture)
     }
 
@@ -186,6 +194,7 @@ class Slice3dNode(
         val slice = t3dLayer + 0.5f / depth
 //        Log.d(TAG, "slice $t3dLayer $sliceDepth $slice")
         program.getUniform(Uniform.Type.Float, T3D_LAYER).set(slice)
+        program.getUniform(Uniform.Type.Int, SliceDirection.name).set(sliceDirection)
 
         glesManager.glContext {
             GLES30.glUseProgram(program.programId)
@@ -200,22 +209,6 @@ class Slice3dNode(
         outEvent.let {
             it.timestamp = t3dEvent?.timestamp ?: 0
             it.queue()
-        }
-    }
-
-    private suspend fun debounceExecute() {
-        if (!debounce.getAndSet(true)) {
-            scope.launch {
-                while (debounce.getAndSet(false)) {
-                    val delay = max(
-                        0,
-                        frameDuration - (SystemClock.elapsedRealtime() - lastExecutionTime)
-                    )
-                    delay(delay)
-                    lastExecutionTime = SystemClock.elapsedRealtime()
-                    execute()
-                }
-            }
         }
     }
 

@@ -48,14 +48,24 @@ object Effects {
         ringBuffer.properties[HistorySize] = 30
         Effect(it, "Time Warp").apply {
             ringBuffer.properties.getProperty(HistorySize)?.let {
-                addProperty(
-                    it, RangeType(
-                        R.string.property_name_history_size,
-                        R.drawable.ic_layers,
-                        1..60
-                    )
-                )
+//                addProperty(
+//                    it, RangeType(
+//                        R.string.property_name_history_size,
+//                        R.drawable.ic_layers,
+//                        1..60
+//                    )
+//                )
             }
+
+            val sd = slice.properties.getProperty(SliceDirection)!!
+            addProperty(sd, ChoiceType(
+                R.string.property_name_slice_direction,
+                R.drawable.ic_arrow_forward,
+                Choice(0, R.string.property_label_top, R.drawable.ic_arrow_upward),
+                Choice(1, R.string.property_label_bottom, R.drawable.ic_arrow_downward),
+                Choice(2, R.string.property_label_left, R.drawable.ic_arrow_back),
+                Choice(3, R.string.property_label_right, R.drawable.ic_arrow_forward)
+            ))
         }
     }
 

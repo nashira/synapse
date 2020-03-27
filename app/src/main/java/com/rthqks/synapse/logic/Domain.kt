@@ -5,8 +5,11 @@ import android.media.AudioFormat
 import android.media.MediaRecorder
 import android.net.Uri
 import android.util.Size
-import com.rthqks.synapse.exec.node.*
-import com.rthqks.synapse.exec2.node.BCubeImportNode
+import com.rthqks.synapse.exec.node.ImageBlendNode
+import com.rthqks.synapse.exec.node.Lut2dNode
+import com.rthqks.synapse.exec.node.PhysarumNode
+import com.rthqks.synapse.exec.node.ShapeNode
+import com.rthqks.synapse.exec2.node.*
 
 val AudioSampleRate = Property.Key("audio_sample_rate", Int::class.java)
 val AudioEncoding = Property.Key("audio_encoding", Int::class.java)
@@ -16,6 +19,7 @@ val CameraFacing = Property.Key("camera_facing", Int::class.java)
 val VideoSize = Property.Key("video_size", Size::class.java)
 val CropSize = Property.Key("crop_size", Size::class.java)
 val HistorySize = Property.Key("history_size", Int::class.java)
+val SliceDirection = Property.Key("slice_direction", Int::class.java)
 val FrameRate = Property.Key("frame_rate", Int::class.java)
 val Stabilize = Property.Key("stabilize", Boolean::class.java)
 val Rotation = Property.Key("rotation", Int::class.java)
@@ -164,6 +168,7 @@ val Nodes = listOf(
         add(Port(Port.Type.Texture3D, Slice3dNode.INPUT_3D.id, "Input", false))
         add(Port(Port.Type.Video, Slice3dNode.OUTPUT.id, "Output", true))
         add(SliceDepth, 0f)
+        add(SliceDirection, 0)
         add(FrameRate, 30)
     },
     Node(NodeType.MediaEncoder).apply {
@@ -213,6 +218,7 @@ val KeyMap: Map<String, Property.Key<*>> = listOf(
     TravelAngle,
     TravelDistance,
     SliceDepth,
+    SliceDirection,
     Recording
 ).map { it.name to it }.toMap()
 

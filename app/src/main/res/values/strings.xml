@@ -193,4 +193,9 @@
     <string name="name_node_type_bcube_importer">BCube Importer</string>
     <string name="name_node_type_texture_view">Texture View</string>
     <string name="property_name_lut_strength">LUT Strength</string>
+    <string name="property_label_top">Top</string>
+    <string name="property_label_bottom">Bottom</string>
+    <string name="property_label_left">Left</string>
+    <string name="property_label_right">Right</string>
+    <string name="property_name_slice_direction">Direction</string>
 </resources>

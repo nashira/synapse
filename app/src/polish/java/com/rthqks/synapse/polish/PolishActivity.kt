@@ -15,21 +15,16 @@ import android.view.animation.AccelerateDecelerateInterpolator
 import android.widget.SeekBar
 import android.widget.TextView
 import android.widget.Toast
+import androidx.annotation.DrawableRes
 import androidx.core.content.edit
 import androidx.core.view.doOnLayout
 import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
-import androidx.recyclerview.widget.GridLayoutManager
-import androidx.recyclerview.widget.LinearLayoutManager
-import androidx.recyclerview.widget.LinearSnapHelper
-import androidx.recyclerview.widget.RecyclerView
+import androidx.recyclerview.widget.*
 import com.google.android.material.bottomsheet.BottomSheetBehavior
 import com.rthqks.synapse.R
-import com.rthqks.synapse.logic.LutStrength
-import com.rthqks.synapse.logic.Properties
-import com.rthqks.synapse.logic.Property
-import com.rthqks.synapse.logic.PropertyType
+import com.rthqks.synapse.logic.*
 import com.rthqks.synapse.ops.Analytics
 import com.rthqks.synapse.util.throttleClick
 import dagger.android.support.DaggerAppCompatActivity
@@ -148,8 +143,9 @@ class PolishActivity : DaggerAppCompatActivity() {
         viewModel.setSurfaceView(surface_view)
 
 
-        val propertiesAdapter = PropertiesAdapter { p, b, v ->
-
+        val propertiesAdapter = PropertiesAdapter { p, v ->
+            p.property.value = p.value
+            viewModel.setEffectProperty(p.property)
         }
         settings_list.adapter = propertiesAdapter
 
@@ -472,7 +468,6 @@ private class LutViewHolder(
     private val viewModel: PolishViewModel
 ) : RecyclerView.ViewHolder(itemView), TextureView.SurfaceTextureListener {
     private var lut: String? = null
-    private var registeredLut: String? = null
 
     init {
         Log.d("Lut", "onCreateViewHolder $this")
@@ -514,17 +509,15 @@ private class LutViewHolder(
 
 
 private class PropertiesAdapter(
-    private val onSelected: (Property<*>, Boolean, View) -> Unit
+    private val onSelected: (PropertyItem, View) -> Unit
 ) : RecyclerView.Adapter<PropertiesViewHolder>() {
-    private val list = mutableListOf<Pair<Property<*>, PropertyType<*>>>()
+    private var list = emptyList<PropertyItem>()
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): PropertiesViewHolder {
         val inflater = LayoutInflater.from(parent.context)
         val view = inflater.inflate(R.layout.layout_property, parent, false)
         return PropertiesViewHolder(view) { position ->
-            val selected = !view.isSelected
-            onSelected(list[position].first, selected, view)
-            view.isSelected = selected
+            onSelected(list[position], view)
         }
     }
 
@@ -532,14 +525,36 @@ private class PropertiesAdapter(
 
     override fun onBindViewHolder(holder: PropertiesViewHolder, position: Int) {
         val property = list[position]
-        holder.bind(property.first, property.second)
+        holder.bind(property)
         Log.d(TAG, "onBind $position $property")
     }
 
     fun setProperties(properties: List<Pair<Property<*>, PropertyType<*>>>) {
-        list.clear()
-        list.addAll(properties)
-        notifyDataSetChanged()
+        val new = mutableListOf<PropertyItem>()
+        properties.forEach {
+            when (it.second) {
+                is ChoiceType<*> -> {
+                    (it.second as ChoiceType).choices.forEach { choice ->
+                        new.add(PropertyItem(it.first as Property<Any?>, choice.item, choice.icon))
+                    }
+                }
+            }
+        }
+        val result = DiffUtil.calculateDiff(object : DiffUtil.Callback() {
+            override fun areItemsTheSame(oldItemPosition: Int, newItemPosition: Int): Boolean {
+                return list[oldItemPosition] == new[newItemPosition]
+            }
+
+            override fun getOldListSize(): Int = list.size
+
+            override fun getNewListSize(): Int = properties.size
+
+            override fun areContentsTheSame(oldItemPosition: Int, newItemPosition: Int): Boolean {
+                return list[oldItemPosition] == new[newItemPosition]
+            }
+        })
+        list = new
+        result.dispatchUpdatesTo(this)
     }
 
     companion object {
@@ -558,8 +573,13 @@ private class PropertiesViewHolder(
         }
     }
 
-    fun bind(property: Property<*>, propertyType: PropertyType<*>) {
-        itemView.isSelected = false
-        iconView.setImageResource(propertyType.icon)
+    fun bind(propertyItem: PropertyItem) {
+        iconView.setImageResource(propertyItem.icon)
     }
 }
+
+private data class PropertyItem(
+    val property: Property<Any?>,
+    val value: Any?,
+    @DrawableRes val icon: Int
+)

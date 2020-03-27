@@ -24,13 +24,18 @@ sealed class PropertyType<T>(
     }
 }
 
+class ValueType<T>(
+    @StringRes title: Int,
+    @DrawableRes icon: Int
+) : PropertyType<T>(title, icon)
+
 class ChoiceType<T>(
     @StringRes title: Int,
     @DrawableRes icon: Int,
     vararg val choices: Choice<T>
 ) : PropertyType<T>(title, icon)
 
-data class Choice<T>(val item: T, @StringRes val label: Int)
+data class Choice<T>(val item: T, @StringRes val label: Int, @DrawableRes val icon: Int)
 
 class FloatRangeType(
     @StringRes title: Int,

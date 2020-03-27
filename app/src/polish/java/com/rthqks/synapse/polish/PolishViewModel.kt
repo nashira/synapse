@@ -18,6 +18,7 @@ import com.rthqks.synapse.logic.*
 import com.rthqks.synapse.ops.Analytics
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.channels.ReceiveChannel
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import javax.inject.Inject
@@ -55,6 +56,12 @@ class PolishViewModel @Inject constructor(
             }
 
             p.forEach { properties[it.key] = it.value }
+
+            listOf(Effects.timeWarp).forEach { effect ->
+                withContext(Dispatchers.IO) {
+                    dao.getProperties(effect.network.id)
+                }.forEach { effect.properties[it.key] = it.value }
+            }
 
             effectExecutor.setup()
             deviceSupported.value = context.glesManager.supportedDevice
@@ -215,6 +222,20 @@ class PolishViewModel @Inject constructor(
 
     fun setLutStrength(strength: Float) {
         properties[LutStrength] = strength
+    }
+
+    fun setEffectProperty(property: Property<*>) {
+        currentEffect?.let {
+            viewModelScope.launch(Dispatchers.IO) {
+                dao.insertProperty(
+                    PropertyData(
+                        it.network.id, 0,
+                        property.key.name,
+                        it.properties.getString(property.key)
+                    )
+                )
+            }
+        }
     }
 
     companion object {

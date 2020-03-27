@@ -64,6 +64,12 @@ class Properties {
             putString(KeyMap[keyName] as Property.Key<Any?>, value)
         }
     }
+
+//    operator fun set(key: Property.Key<*>, value: String?) {
+//        if (value != null) {
+//            putString(key, value)
+//        }
+//    }
 }
 
 data class Property<T>(val key: Key<T>, var value: T) {
