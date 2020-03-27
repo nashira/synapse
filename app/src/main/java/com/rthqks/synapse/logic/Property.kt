@@ -22,7 +22,7 @@ class Properties {
         list
     }
 
-    fun <T> getOrNull(key: Property.Key<T>): Property<T>? = properties[key] as? Property<T>
+    fun <T> getProperty(key: Property.Key<T>): Property<T>? = properties[key] as? Property<T>
 
     operator fun <T> get(key: Property.Key<T>): T = properties[key]?.value as T
 

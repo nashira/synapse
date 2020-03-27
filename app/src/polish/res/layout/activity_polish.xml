@@ -111,8 +111,8 @@
             app:layout_constraintBottom_toTopOf="@id/effect_list"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
-            tools:itemCount="1"
-            tools:listitem="@layout/layout_" />
+            tools:listitem="@layout/layout_property"
+            tools:itemCount="5" />
 
     </androidx.constraintlayout.widget.ConstraintLayout>
 

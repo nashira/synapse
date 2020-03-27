@@ -2,12 +2,22 @@ package com.rthqks.synapse.polish
 
 import com.rthqks.synapse.logic.Network
 import com.rthqks.synapse.logic.Properties
+import com.rthqks.synapse.logic.Property
+import com.rthqks.synapse.logic.PropertyType
 
 class Effect(
     val network: Network,
     val title: String
 ) {
+    private val propertyTypes = mutableMapOf<Property.Key<*>, PropertyType<Any?>>()
     val properties = Properties()
+
+    fun <T> addProperty(property: Property<T>, type: PropertyType<T>) {
+        properties.put(property)
+        propertyTypes[property.key] = type as PropertyType<Any?>
+    }
+
+    fun getProperties() = properties.getAll().map { Pair(it, propertyTypes[it.key]!!) }
 
     companion object {
         // node id allocations

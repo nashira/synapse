@@ -27,11 +27,15 @@ import androidx.recyclerview.widget.RecyclerView
 import com.google.android.material.bottomsheet.BottomSheetBehavior
 import com.rthqks.synapse.R
 import com.rthqks.synapse.logic.LutStrength
+import com.rthqks.synapse.logic.Properties
+import com.rthqks.synapse.logic.Property
+import com.rthqks.synapse.logic.PropertyType
 import com.rthqks.synapse.ops.Analytics
 import com.rthqks.synapse.util.throttleClick
 import dagger.android.support.DaggerAppCompatActivity
 import kotlinx.android.synthetic.main.layout_lut.view.*
 import kotlinx.android.synthetic.polish.activity_polish.*
+import kotlinx.android.synthetic.polish.layout_property.view.*
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.launch
 import javax.inject.Inject
@@ -141,8 +145,13 @@ class PolishActivity : DaggerAppCompatActivity() {
         viewModel.initializeEffect()
         val behavior = BottomSheetBehavior.from(layout_colors)
         var recording = false
-
         viewModel.setSurfaceView(surface_view)
+
+
+        val propertiesAdapter = PropertiesAdapter { p, b, v ->
+
+        }
+        settings_list.adapter = propertiesAdapter
 
         lut_list.adapter = LutAdapter(Effect.LUTS, viewModel)
 
@@ -268,6 +277,7 @@ class PolishActivity : DaggerAppCompatActivity() {
                     if (oldPos != pos) {
                         val effect = effects[pos]
                         val changed = viewModel.setEffect(effect)
+                        propertiesAdapter.setProperties(effect.getProperties())
                         if (changed) {
                             oldPos = pos
                         }
@@ -502,3 +512,54 @@ private class LutViewHolder(
     }
 }
 
+
+private class PropertiesAdapter(
+    private val onSelected: (Property<*>, Boolean, View) -> Unit
+) : RecyclerView.Adapter<PropertiesViewHolder>() {
+    private val list = mutableListOf<Pair<Property<*>, PropertyType<*>>>()
+
+    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): PropertiesViewHolder {
+        val inflater = LayoutInflater.from(parent.context)
+        val view = inflater.inflate(R.layout.layout_property, parent, false)
+        return PropertiesViewHolder(view) { position ->
+            val selected = !view.isSelected
+            onSelected(list[position].first, selected, view)
+            view.isSelected = selected
+        }
+    }
+
+    override fun getItemCount(): Int = list.size
+
+    override fun onBindViewHolder(holder: PropertiesViewHolder, position: Int) {
+        val property = list[position]
+        holder.bind(property.first, property.second)
+        Log.d(TAG, "onBind $position $property")
+    }
+
+    fun setProperties(properties: List<Pair<Property<*>, PropertyType<*>>>) {
+        list.clear()
+        list.addAll(properties)
+        notifyDataSetChanged()
+    }
+
+    companion object {
+        const val TAG = "PropertiesAdapter"
+    }
+}
+
+private class PropertiesViewHolder(
+    itemView: View, clickListener: (position: Int) -> Unit
+) : RecyclerView.ViewHolder(itemView) {
+    private val iconView = itemView.icon
+
+    init {
+        itemView.setOnClickListener {
+            clickListener(adapterPosition)
+        }
+    }
+
+    fun bind(property: Property<*>, propertyType: PropertyType<*>) {
+        itemView.isSelected = false
+        iconView.setImageResource(propertyType.icon)
+    }
+}

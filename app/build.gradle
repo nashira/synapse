@@ -51,8 +51,10 @@ android {
             versionNameSuffix "-synapse"
         }
         polish {
+            // increments 1 per hour, wraps every ~417 days
+            def num = (dateCode / 360).toInteger() % 10_000
             dimension "product"
-            versionNameSuffix "-polish"
+            versionNameSuffix ".$num"
         }
     }
     compileOptions {
