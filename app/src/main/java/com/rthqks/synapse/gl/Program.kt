@@ -30,12 +30,12 @@ class Program {
             }
         }
 
-        Log.d(TAG, "created program: $programId")
+//        Log.d(TAG, "created program: $programId")
     }
 
     fun <T> addUniform(type: Uniform.Type<T>, name: String, data: T) {
         val location = GLES30.glGetUniformLocation(programId, name)
-        Log.d(TAG, "add uniform $name $location")
+//        Log.d(TAG, "add uniform $name $location")
         val uniform = Uniform(type, name, location, data)
         uniforms[name] = uniform
         uniformList.add(uniform)
@@ -88,12 +88,12 @@ class Program {
         GLES30.glDeleteProgram(programId)
         uniforms.clear()
         uniformList.clear()
-        Log.d(TAG, "release program: $programId")
+//        Log.d(TAG, "release program: $programId")
     }
 
     private fun createShader(type: Int, source: String): Int =
         GLES30.glCreateShader(type).also { shader ->
-            Log.d(TAG, "created shader $shader")
+//            Log.d(TAG, "created shader $shader")
             GLES30.glShaderSource(shader, source)
             GLES30.glCompileShader(shader)
             Log.d(TAG, GLES30.glGetShaderInfoLog(shader))

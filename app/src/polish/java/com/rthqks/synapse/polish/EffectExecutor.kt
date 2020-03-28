@@ -135,7 +135,7 @@ class EffectExecutor(context: ExecutionContext) : NetworkExecutor(context) {
         }
 
 
-        val preview = lutPreviewPool.poll() ?: run {
+        val preview = lutPreviewPool.poll() ?: await {
             //        val preview = null ?: run {
 //            Log.d(TAG, "creating new lut preview")
             val p = LutPreview()
@@ -143,9 +143,13 @@ class EffectExecutor(context: ExecutionContext) : NetworkExecutor(context) {
             p
         }
 
-        lutPreviews[textureView.surfaceTexture] = preview
-        updateCubeUri(preview.cube, lut)
-        (getNode(preview.screen.id) as TextureViewNode).setTextureView(textureView)
+        textureView.surfaceTexture?.let {
+            lutPreviews[it] = preview
+            updateCubeUri(preview.cube, lut)
+            (getNode(preview.screen.id) as TextureViewNode).setTextureView(textureView)
+        } ?: run {
+            lutPreviewPool += preview
+        }
     }
 
     suspend fun unregisterLutPreview(surfaceTexture: SurfaceTexture) {

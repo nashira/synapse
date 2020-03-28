@@ -42,7 +42,7 @@ class Texture3d(
         }
 
         id = textureHandle[0]
-        Log.d(TAG, "gen $id")
+//        Log.d(TAG, "gen $id")
     }
 
     fun bind(unit: Int) {
@@ -52,7 +52,7 @@ class Texture3d(
 
     fun release() {
         glDeleteTextures(1, intArrayOf(id), 0)
-        Log.d(TAG, "rel $id")
+//        Log.d(TAG, "rel $id")
     }
 
     fun initData(

@@ -469,6 +469,7 @@ private class LutViewHolder(
     private val viewModel: PolishViewModel
 ) : RecyclerView.ViewHolder(itemView), TextureView.SurfaceTextureListener {
     private var lut: String? = null
+    private var created = false
 
     init {
         Log.d("Lut", "onCreateViewHolder $this")
@@ -480,6 +481,9 @@ private class LutViewHolder(
 
     fun bind(lut: String) {
 //        Log.d("Lut", "onBindViewHolder $lut ${this.lut} ${itemView.texture_view.surfaceTexture} ${itemView.texture_view.isAvailable}")
+        if (created) {
+            Log.w("Lut", "destroy not called")
+        }
         this.lut = lut
         itemView.title_view.text = lut.replace("_", " ")
     }
@@ -492,12 +496,14 @@ private class LutViewHolder(
 
     override fun onSurfaceTextureDestroyed(surface: SurfaceTexture?): Boolean {
 //        Log.d("Lut", "surface destroyed $lut $surface")
+        created = false
         surface?.let { viewModel.unregisterLutPreview(it) }
         return false
     }
 
     override fun onSurfaceTextureAvailable(surface: SurfaceTexture?, width: Int, height: Int) {
 //        Log.d("Lut", "surface available $lut $surface")
+        created = true
 
         surface?.let {
             val s = min(width, 320)

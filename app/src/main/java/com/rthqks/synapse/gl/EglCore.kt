@@ -334,7 +334,8 @@ class EglCore
     private fun checkEglError(msg: String) {
         val error: Int = EGL14.eglGetError()
         if (error != EGL14.EGL_SUCCESS) {
-            throw RuntimeException(msg + ": EGL error: 0x" + Integer.toHexString(error))
+            Log.e(TAG, msg + ": EGL error: 0x" + Integer.toHexString(error))
+//            throw RuntimeException(msg + ": EGL error: 0x" + Integer.toHexString(error))
         }
     }
 

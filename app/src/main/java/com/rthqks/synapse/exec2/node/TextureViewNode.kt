@@ -86,7 +86,9 @@ class TextureViewNode(
                     program.bindUniforms()
                     mesh.execute()
                     msg.release()
-                    windowSurface?.swapBuffers()
+                    windowSurface?.swapBuffers()?.let {
+                        if (!it) removeTextureView()
+                    }
                 }
             }
             if (!rel) {
