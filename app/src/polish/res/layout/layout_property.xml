@@ -3,18 +3,23 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="wrap_content"
     android:layout_height="wrap_content"
-    android:background="@drawable/property_item"
-    android:paddingStart="16dp"
-    android:paddingTop="8dp"
-    android:paddingEnd="16dp"
-    android:paddingBottom="8dp">
+    android:background="?android:selectableItemBackground">
 
     <ImageView
         android:id="@+id/icon"
-        android:layout_width="32dp"
-        android:layout_height="32dp"
+        android:padding="6dp"
+        android:layout_width="48dp"
+        android:layout_height="48dp"
         android:tint="?android:attr/textColorPrimary"
-        tools:src="@drawable/ic_blur" />
+        tools:src="@drawable/square" />
 
+    <TextView
+        android:id="@+id/text"
+        tools:text="30"
+        android:textColor="@color/white"
+        android:layout_marginTop="-2dp"
+        android:gravity="center"
+        android:layout_width="48dp"
+        android:layout_height="48dp" />
 
 </FrameLayout>

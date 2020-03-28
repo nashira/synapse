@@ -48,24 +48,29 @@ object Effects {
         ringBuffer.properties[HistorySize] = 30
         Effect(it, "Time Warp").apply {
             ringBuffer.properties.getProperty(HistorySize)?.let {
-//                addProperty(
-//                    it, RangeType(
-//                        R.string.property_name_history_size,
-//                        R.drawable.ic_layers,
-//                        1..60
-//                    )
-//                )
+                addProperty(
+                    it, ToggleType(
+                        R.string.property_name_history_size,
+                        R.drawable.ic_layers,
+                        Choice(20, R.string.property_label_20, R.drawable.square),
+                        Choice(30, R.string.property_label_30, R.drawable.square),
+                        Choice(45, R.string.property_label_45, R.drawable.square),
+                        Choice(60, R.string.property_label_60, R.drawable.square)
+                    )
+                )
             }
 
             val sd = slice.properties.getProperty(SliceDirection)!!
-            addProperty(sd, ChoiceType(
-                R.string.property_name_slice_direction,
-                R.drawable.ic_arrow_forward,
-                Choice(0, R.string.property_label_top, R.drawable.ic_arrow_upward),
-                Choice(1, R.string.property_label_bottom, R.drawable.ic_arrow_downward),
-                Choice(2, R.string.property_label_left, R.drawable.ic_arrow_back),
-                Choice(3, R.string.property_label_right, R.drawable.ic_arrow_forward)
-            ))
+            addProperty(
+                sd, ExpandedType(
+                    R.string.property_name_slice_direction,
+                    R.drawable.ic_arrow_forward,
+                    Choice(0, R.string.property_label_top, R.drawable.ic_arrow_upward),
+                    Choice(1, R.string.property_label_bottom, R.drawable.ic_arrow_downward),
+                    Choice(2, R.string.property_label_left, R.drawable.ic_arrow_back),
+                    Choice(3, R.string.property_label_right, R.drawable.ic_arrow_forward)
+                )
+            )
         }
     }
 
@@ -87,7 +92,19 @@ object Effects {
                 Lut3dNode.INPUT.id
             )
         )
-        Effect(it, "Roto-Hue")
+        Effect(it, "Roto-Hue").apply {
+            val rotateSpeed = rotate.properties.getProperty(RotationSpeed)!!
+            addProperty(
+                rotateSpeed, ToggleType(
+                    R.string.property_name_rotation,
+                    R.drawable.ic_speed,
+                    Choice(5f, R.string.property_label_5, R.drawable.circle),
+                    Choice(10f, R.string.property_label_10, R.drawable.circle),
+                    Choice(30f, R.string.property_label_30, R.drawable.circle),
+                    Choice(60f, R.string.property_label_60, R.drawable.circle)
+                )
+            )
+        }
     }
 
     val squares = Network(ID_SQUARES).let {

@@ -34,6 +34,7 @@ import kotlinx.android.synthetic.polish.layout_property.view.*
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.launch
 import javax.inject.Inject
+import kotlin.math.max
 import kotlin.math.min
 import kotlin.math.roundToInt
 
@@ -117,6 +118,7 @@ class PolishActivity : DaggerAppCompatActivity() {
                 }
                 !permissions -> {
                     Toast.makeText(this@PolishActivity, "Permissions Required", Toast.LENGTH_LONG).show()
+                    finish()
                 }
                 else -> {
                     if (finishedIntro) {
@@ -143,8 +145,7 @@ class PolishActivity : DaggerAppCompatActivity() {
         viewModel.setSurfaceView(surface_view)
 
 
-        val propertiesAdapter = PropertiesAdapter { p, v ->
-            p.property.value = p.value
+        val propertiesAdapter = PropertiesAdapter { p ->
             viewModel.setEffectProperty(p.property)
         }
         settings_list.adapter = propertiesAdapter
@@ -509,21 +510,35 @@ private class LutViewHolder(
 
 
 private class PropertiesAdapter(
-    private val onSelected: (PropertyItem, View) -> Unit
-) : RecyclerView.Adapter<PropertiesViewHolder>() {
+    private val onSelected: (PropertyItem) -> Unit
+) : RecyclerView.Adapter<PropertyViewHolder>() {
     private var list = emptyList<PropertyItem>()
+    private val clickListener: (position: Int) -> Unit = { position ->
+        val p = list[position]
+        onSelected(p)
+    }
 
-    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): PropertiesViewHolder {
+    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): PropertyViewHolder {
         val inflater = LayoutInflater.from(parent.context)
         val view = inflater.inflate(R.layout.layout_property, parent, false)
-        return PropertiesViewHolder(view) { position ->
-            onSelected(list[position], view)
+
+        return when (viewType) {
+            2 -> ToggleViewHolder(view, clickListener)
+            else -> SingleValueViewHolder(view, clickListener)
         }
     }
 
     override fun getItemCount(): Int = list.size
 
-    override fun onBindViewHolder(holder: PropertiesViewHolder, position: Int) {
+    override fun getItemViewType(position: Int): Int {
+        return when (list[position].type) {
+            is ExpandedType<*> -> 1
+            is ToggleType<*> -> 2
+            else -> 0
+        }
+    }
+
+    override fun onBindViewHolder(holder: PropertyViewHolder, position: Int) {
         val property = list[position]
         holder.bind(property)
         Log.d(TAG, "onBind $position $property")
@@ -533,13 +548,20 @@ private class PropertiesAdapter(
         val new = mutableListOf<PropertyItem>()
         properties.forEach {
             when (it.second) {
-                is ChoiceType<*> -> {
-                    (it.second as ChoiceType).choices.forEach { choice ->
-                        new.add(PropertyItem(it.first as Property<Any?>, choice.item, choice.icon))
+                is ExpandedType<*> -> {
+                    (it.second as ExpandedType).choices.forEach { choice ->
+                        new.add(PropertyItem(it.first as Property<Any?>, it.second, choice.icon, choice.item))
                     }
+                }
+                is ToggleType<*> -> {
+                    new.add(PropertyItem(it.first as Property<Any?>, it.second, it.second.icon))
+                }
+                else -> {
+                    new.add(PropertyItem(it.first as Property<Any?>, it.second, it.second.icon))
                 }
             }
         }
+
         val result = DiffUtil.calculateDiff(object : DiffUtil.Callback() {
             override fun areItemsTheSame(oldItemPosition: Int, newItemPosition: Int): Boolean {
                 return list[oldItemPosition] == new[newItemPosition]
@@ -562,24 +584,73 @@ private class PropertiesAdapter(
     }
 }
 
-private class PropertiesViewHolder(
+private abstract class PropertyViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
+    abstract fun bind(propertyItem: PropertyItem)
+}
+
+private class SingleValueViewHolder(
     itemView: View, clickListener: (position: Int) -> Unit
-) : RecyclerView.ViewHolder(itemView) {
+) : PropertyViewHolder(itemView) {
     private val iconView = itemView.icon
+    private var propertyItem: PropertyItem? = null
 
     init {
         itemView.setOnClickListener {
+            propertyItem?.let { p ->
+                p.property.value = p.value
+            }
             clickListener(adapterPosition)
         }
     }
 
-    fun bind(propertyItem: PropertyItem) {
+    override fun bind(propertyItem: PropertyItem) {
+        this.propertyItem = propertyItem
         iconView.setImageResource(propertyItem.icon)
+    }
+}
+
+private class ToggleViewHolder(
+    itemView: View, clickListener: (position: Int) -> Unit
+) : PropertyViewHolder(itemView) {
+    private val iconView = itemView.icon
+    private val textView = itemView.text
+    private var propertyItem: PropertyItem? = null
+    private var index = 0
+    private var toggleType: ToggleType<*>? = null
+
+    init {
+        itemView.setOnClickListener {
+            toggleType?.let {
+                index = (index + 1) % it.choices.size
+                update()
+            }
+            clickListener(adapterPosition)
+        }
+    }
+
+    override fun bind(propertyItem: PropertyItem) {
+        this.propertyItem = propertyItem
+        val type = propertyItem.type as ToggleType<*>
+        toggleType = type
+        index = max(0, type.choices.indexOfFirst { it.item == propertyItem.property.value })
+        update()
+    }
+
+    private fun update() {
+        toggleType?.let {
+            val choice = it.choices[index]
+            propertyItem?.let { p ->
+                p.property.value = choice.item
+            }
+            textView.setText(choice.label)
+            iconView.setImageResource(choice.icon)
+        }
     }
 }
 
 private data class PropertyItem(
     val property: Property<Any?>,
-    val value: Any?,
-    @DrawableRes val icon: Int
+    val type: PropertyType<*>,
+    @DrawableRes val icon: Int,
+    var value: Any? = null
 )

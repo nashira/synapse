@@ -8,6 +8,7 @@ import com.rthqks.synapse.exec2.NodeExecutor
 import com.rthqks.synapse.gl.GlesManager
 import com.rthqks.synapse.logic.FrameRate
 import com.rthqks.synapse.logic.Properties
+import com.rthqks.synapse.logic.RotationSpeed
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -18,6 +19,7 @@ class RotateMatrixNode(
     private val properties: Properties
 ) : NodeExecutor(context) {
     private val frameDuration: Long get() = 1000L / properties[FrameRate]
+    private val rotationSpeed: Float get() = properties[RotationSpeed]
     private var startJob: Job? = null
     private var running = false
     private var needsPriming = true
@@ -75,7 +77,7 @@ class RotateMatrixNode(
 
             val msg = output.receive()
             Matrix.translateM(msg.data, 0, lastMatrix.data, 0, 0.5f, 0.5f, 0.5f)
-            Matrix.rotateM(msg.data, 0, 4f, 1f, 1f, 1f)
+            Matrix.rotateM(msg.data, 0, rotationSpeed, 1f, 1f, 1f)
             Matrix.translateM(msg.data, 0, -0.5f, -0.5f, -0.5f)
             msg.timestamp = SystemClock.elapsedRealtime()
             msg.queue()

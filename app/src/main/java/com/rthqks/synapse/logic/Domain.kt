@@ -23,6 +23,7 @@ val SliceDirection = Property.Key("slice_direction", Int::class.java)
 val FrameRate = Property.Key("frame_rate", Int::class.java)
 val Stabilize = Property.Key("stabilize", Boolean::class.java)
 val Rotation = Property.Key("rotation", Int::class.java)
+val RotationSpeed = Property.Key("rotation_speed", Float::class.java)
 val BlurSize = Property.Key("blur_size", Int::class.java)
 val NumPasses = Property.Key("num_passes", Int::class.java)
 val ScaleFactor = Property.Key("scale_factor", Int::class.java)
@@ -181,6 +182,7 @@ val Nodes = listOf(
     Node(NodeType.RotateMatrix).apply {
         add(Port(Port.Type.Matrix, RotateMatrixNode.OUTPUT.id, "Matrix", true))
         add(FrameRate, 30)
+        add(RotationSpeed, 1f)
     },
     Node(NodeType.Properties).also { it.id = -2 },
     Node(NodeType.Connection).also { it.id = -3 },

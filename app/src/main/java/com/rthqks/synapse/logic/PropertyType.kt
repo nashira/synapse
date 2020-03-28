@@ -29,7 +29,13 @@ class ValueType<T>(
     @DrawableRes icon: Int
 ) : PropertyType<T>(title, icon)
 
-class ChoiceType<T>(
+class ExpandedType<T>(
+    @StringRes title: Int,
+    @DrawableRes icon: Int,
+    vararg val choices: Choice<T>
+) : PropertyType<T>(title, icon)
+
+class ToggleType<T>(
     @StringRes title: Int,
     @DrawableRes icon: Int,
     vararg val choices: Choice<T>
@@ -49,12 +55,12 @@ class IntRangeType(
     val range: IntRange
 ) : PropertyType<Int>(title, icon)
 
-class ToggleType(
-    @StringRes title: Int,
-    @DrawableRes icon: Int,
-    @StringRes val enabled: Int,
-    @StringRes val disabled: Int
-) : PropertyType<Boolean>(title, icon)
+//class ToggleType(
+//    @StringRes title: Int,
+//    @DrawableRes icon: Int,
+//    @StringRes val enabled: Int,
+//    @StringRes val disabled: Int
+//) : PropertyType<Boolean>(title, icon)
 
 class UriType(
     @StringRes title: Int,

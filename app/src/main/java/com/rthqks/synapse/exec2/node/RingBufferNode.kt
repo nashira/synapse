@@ -29,7 +29,7 @@ class RingBufferNode(
 
     private val texture = Texture3d()
     private var currentLevel = 0
-    private val framebuffers = List(depth) { Framebuffer() }
+    private var framebuffers = emptyList<Framebuffer>()
 
     private val program = Program()
     private val quadMesh = Quad()
@@ -75,6 +75,8 @@ class RingBufferNode(
         val sizeChanged = inputSize.width != texture2d.width
                 || inputSize.height != texture2d.height
 
+        val depthChanged = texture.depth != depth
+
         if (programChanged) {
             prevConfig = texture2d
             glesManager.glContext {
@@ -104,7 +106,7 @@ class RingBufferNode(
             }
         }
 
-        if (sizeChanged) {
+        if (sizeChanged || depthChanged) {
             inputSize = Size(texture2d.width, texture2d.height)
             outputSize = inputSize
 
@@ -128,9 +130,13 @@ class RingBufferNode(
                 )
                 framebuffers.forEachIndexed { index, framebuffer ->
                     framebuffer.release()
+                }
+                framebuffers = List(depth) { Framebuffer() }
+                framebuffers.forEachIndexed { index, framebuffer ->
                     framebuffer.initialize(texture, index)
                     Log.d(TAG, "glGetError() ${GLES30.glGetError()}")
                 }
+                currentLevel = 0
             }
         }
     }
