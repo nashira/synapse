@@ -54,10 +54,10 @@ class PolishViewModel @Inject constructor(
                     dao.getProperties(effect.network.id)
                         .forEach { effect.properties[it.key] = it.value }
                 }
-
-                effectExecutor.setup()
-                deviceSupported.value = context.glesManager.supportedDevice
             }
+
+            effectExecutor.setup()
+            deviceSupported.value = context.glesManager.supportedDevice
         }
     }
 
