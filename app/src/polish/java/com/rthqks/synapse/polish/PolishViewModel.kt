@@ -18,13 +18,11 @@ import com.rthqks.synapse.logic.*
 import com.rthqks.synapse.ops.Analytics
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.channels.ReceiveChannel
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import javax.inject.Inject
 
 class PolishViewModel @Inject constructor(
-//    private val executor: ExecutorLegacy,
     private val context: ExecutionContext,
     private val dao: SynapseDao,
     private val analytics: Analytics
@@ -49,22 +47,17 @@ class PolishViewModel @Inject constructor(
         properties[LutStrength] = 1f
 
         viewModelScope.launch {
-//            executor.initialize(false)
-//            executor.await()
-            val p = withContext(Dispatchers.IO) {
-                dao.getProperties(0)
-            }
+            withContext(Dispatchers.IO) {
+                dao.getProperties(0).forEach { properties[it.key] = it.value }
 
-            p.forEach { properties[it.key] = it.value }
-
-            listOf(Effects.timeWarp).forEach { effect ->
-                withContext(Dispatchers.IO) {
+                listOf(Effects.timeWarp).forEach { effect ->
                     dao.getProperties(effect.network.id)
-                }.forEach { effect.properties[it.key] = it.value }
-            }
+                        .forEach { effect.properties[it.key] = it.value }
+                }
 
-            effectExecutor.setup()
-            deviceSupported.value = context.glesManager.supportedDevice
+                effectExecutor.setup()
+                deviceSupported.value = context.glesManager.supportedDevice
+            }
         }
     }
 
@@ -172,15 +165,11 @@ class PolishViewModel @Inject constructor(
 
         // viewModelScope is already cancelled here
         CoroutineScope(Dispatchers.IO).launch {
-            effectExecutor.removeAllLinks()
-            effectExecutor.removeAllNodes()
+            effectExecutor.removeAll()
             effectExecutor.release()
+            Log.d(TAG, "released")
         }
 
-//        executor.releaseNetwork()
-//        executor.release()
-
-        Log.d(TAG, "released")
         super.onCleared()
     }
 
@@ -209,15 +198,11 @@ class PolishViewModel @Inject constructor(
     }
 
     fun registerLutPreview(textureView: TextureView, lut: String) {
-        viewModelScope.launch {
-            effectExecutor.registerLutPreview(textureView, lut)
-        }
+        effectExecutor.registerLutPreview(textureView, lut)
     }
 
     fun unregisterLutPreview(surfaceTexture: SurfaceTexture) {
-        viewModelScope.launch {
-            effectExecutor.unregisterLutPreview(surfaceTexture)
-        }
+        effectExecutor.unregisterLutPreview(surfaceTexture)
     }
 
     fun setLutStrength(strength: Float) {

@@ -11,8 +11,7 @@ import com.rthqks.synapse.exec.ExecutionContext
 import com.rthqks.synapse.exec2.NetworkExecutor
 import com.rthqks.synapse.exec2.node.*
 import com.rthqks.synapse.logic.*
-import kotlinx.coroutines.joinAll
-import kotlinx.coroutines.launch
+import kotlinx.coroutines.*
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.ConcurrentLinkedQueue
 
@@ -29,6 +28,7 @@ class EffectExecutor(context: ExecutionContext) : NetworkExecutor(context) {
     private var cropLink: Link? = null
     private val lutPreviewPool = ConcurrentLinkedQueue<LutPreview>()
     private val lutPreviews = ConcurrentHashMap<SurfaceTexture, LutPreview>()
+    private val lutJobs = ConcurrentHashMap<SurfaceTexture, Job>()
     private var runState = NOT_RUNNING
 
     init {
@@ -125,40 +125,45 @@ class EffectExecutor(context: ExecutionContext) : NetworkExecutor(context) {
         }
     }
 
-    suspend fun registerLutPreview(textureView: TextureView, lut: String) {
+    fun registerLutPreview(textureView: TextureView, lut: String) {
 //        Log.d(TAG, "register $lut ${textureView.surfaceTexture}")
-        if (lutPreviews.containsKey(textureView.surfaceTexture)) {
-            Log.e(TAG, "lut already being previewed")
-            return
-        } else if (textureView.surfaceTexture == null) {
-            Log.e(TAG, "surfaceTexture is null")
-        }
-
-
-        val preview = lutPreviewPool.poll() ?: await {
-            //        val preview = null ?: run {
+        val surfaceTexture = textureView.surfaceTexture
+        lutJobs[surfaceTexture] = scope.launch() {
+            val preview = lutPreviewPool.poll() ?: await {
+                //        val preview = null ?: run {
 //            Log.d(TAG, "creating new lut preview")
-            val p = LutPreview()
-            p.setup()
-            p
-        }
+                val p = LutPreview()
+                p.setup()
+                p
+            }
 
-        textureView.surfaceTexture?.let {
-            lutPreviews[it] = preview
-            updateCubeUri(preview.cube, lut)
-            (getNode(preview.screen.id) as TextureViewNode).setTextureView(textureView)
-        } ?: run {
-            lutPreviewPool += preview
+            if (isActive) {
+                lutPreviews[surfaceTexture] = preview
+                updateCubeUri(preview.cube, lut)
+                (getNode(preview.screen.id) as TextureViewNode).setTextureView(textureView)
+            } else {
+                lutPreviewPool += preview
+            }
+
+            this.coroutineContext[Job]?.invokeOnCompletion {
+                if (it != null && it !is CancellationException) {
+                    Log.w(TAG, "job was interrupted")
+                }
+            }
         }
     }
 
-    suspend fun unregisterLutPreview(surfaceTexture: SurfaceTexture) {
+    fun unregisterLutPreview(surfaceTexture: SurfaceTexture) {
 //        Log.d(TAG, "unregister $surfaceTexture")
-        lutPreviews.remove(surfaceTexture)?.let {
-            //            Log.d(TAG, "removed $surfaceTexture")
+        scope.launch {
+            lutJobs.remove(surfaceTexture)?.cancelAndJoin()
+            lutPreviews.remove(surfaceTexture)?.let {
+                //            Log.d(TAG, "removed $surfaceTexture")
 //            it.release()
-            (getNode(it.screen.id) as TextureViewNode).removeTextureView()
-            lutPreviewPool += it
+                (getNode(it.screen.id) as TextureViewNode).removeTextureView()
+                surfaceTexture.release()
+                lutPreviewPool += it
+            }
         }
     }
 
@@ -173,6 +178,11 @@ class EffectExecutor(context: ExecutionContext) : NetworkExecutor(context) {
 
     suspend fun setLut(lut: String) = await {
         updateCubeUri(cube, lut)
+    }
+
+    suspend fun removeAll() = await {
+        removeAllLinks()
+        removeAllNodes()
     }
 
     companion object {

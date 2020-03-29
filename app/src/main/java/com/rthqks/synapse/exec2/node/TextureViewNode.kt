@@ -126,10 +126,8 @@ class TextureViewNode(
 
     suspend fun removeTextureView() = await {
 //        textureView?.surfaceTextureListener = null
-        val st = textureView?.surfaceTexture
         textureView = null
         updateWindowSurface(null)
-        st?.release()
     }
 
     private suspend fun checkInit(texture2d: Texture2d) {
