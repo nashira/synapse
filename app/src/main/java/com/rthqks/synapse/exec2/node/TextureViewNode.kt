@@ -52,7 +52,6 @@ class TextureViewNode(
 
     override suspend fun onRelease() {
         glesManager.glContext {
-//            textureView?.surfaceTextureListener = null
             windowSurface?.release()
             mesh.release()
             program.release()

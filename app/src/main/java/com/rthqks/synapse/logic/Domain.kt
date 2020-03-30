@@ -184,6 +184,11 @@ val Nodes = listOf(
         add(FrameRate, 30)
         add(RotationSpeed, 1f)
     },
+    Node(NodeType.CellAuto).apply {
+        add(Port(Port.Type.Video, CellularAutoNode.OUTPUT.id, "Grid", true))
+        add(FrameRate, 30)
+        add(CellularAutoNode.GridSize, Size(180, 320))
+    },
     Node(NodeType.Properties).also { it.id = -2 },
     Node(NodeType.Connection).also { it.id = -3 },
     Node(NodeType.Creation).also { it.id = -4 }
@@ -201,6 +206,7 @@ val KeyMap: Map<String, Property.Key<*>> = listOf(
     FrameRate,
     Stabilize,
     Rotation,
+    RotationSpeed,
     BlurSize,
     NumPasses,
     ScaleFactor,

@@ -8,6 +8,7 @@ import com.rthqks.synapse.logic.Link
 import com.rthqks.synapse.logic.Network
 import com.rthqks.synapse.logic.Node
 import com.rthqks.synapse.logic.NodeType
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.channels.ReceiveChannel
 import kotlinx.coroutines.joinAll
 import kotlinx.coroutines.launch
@@ -119,11 +120,15 @@ open class NetworkExecutor(context: ExecutionContext) : Executor(context) {
     }
 
     suspend fun removeAllNodes() {
-        nodes.map {
-            Log.d(TAG, "remove node ${it.key}")
-            scope.launch { it.value.release() }
-        }.joinAll()
-        nodes.clear()
+        val jobs = mutableListOf<Job>()
+        val iter = nodes.iterator()
+        while (iter.hasNext()) {
+            val entry = iter.next()
+            iter.remove()
+            Log.d(TAG, "remove node ${entry.key}")
+            jobs += scope.launch { entry.value.release() }
+        }
+        jobs.joinAll()
     }
 
     override suspend fun release() {
@@ -151,6 +156,7 @@ open class NetworkExecutor(context: ExecutionContext) : Executor(context) {
             NodeType.Lut3d -> Lut3dNode(context, properties)
             NodeType.RotateMatrix -> RotateMatrixNode(context, properties)
             NodeType.CropResize -> CropResizeNode(context, properties)
+            NodeType.CellAuto -> CellularAutoNode(context, properties)
             else -> error("check yo nodes")
         }
     }

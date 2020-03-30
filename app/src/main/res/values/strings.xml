@@ -202,4 +202,10 @@
     <string name="property_label_20">20</string>
     <string name="property_label_45">45</string>
     <string name="property_label_60">60</string>
+    <string name="name_node_type_cell_auto">Cellular Automaton</string>
+    <string name="property_name_grid_size">Grid Size</string>
+    <string name="property_label_s">S</string>
+    <string name="property_label_m">M</string>
+    <string name="property_label_l">L</string>
+    <string name="property_label_xl">XL</string>
 </resources>

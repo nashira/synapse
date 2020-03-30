@@ -8,7 +8,8 @@ import com.rthqks.synapse.exec2.Connection
 import com.rthqks.synapse.exec2.Message
 import com.rthqks.synapse.exec2.NodeExecutor
 import com.rthqks.synapse.gl.*
-import com.rthqks.synapse.logic.*
+import com.rthqks.synapse.logic.Properties
+import com.rthqks.synapse.logic.SliceDirection
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 
@@ -19,8 +20,6 @@ class Slice3dNode(
     private val assetManager = context.assetManager
     private val glesManager = context.glesManager
     private var startJob: Job? = null
-    private val frameDuration: Long get() = 1000L / properties[FrameRate]
-    private val sliceDepth: Float get() = properties[SliceDepth]
     private val sliceDirection: Int get() = properties[SliceDirection]
     private var outputSize = Size(0, 0)
 

@@ -150,7 +150,7 @@ class PhysarumNode(
 
             // seed agent texture with random data
             Program().apply {
-                val frag = assetManager.readTextAsset("shader/physarum_random.frag")
+                val frag = assetManager.readTextAsset("shader/random.frag")
                 initialize(agentVertex, frag)
                 GLES30.glUseProgram(programId)
                 GLES30.glBindFramebuffer(GLES30.GL_FRAMEBUFFER, agentFramebuffer1.id)

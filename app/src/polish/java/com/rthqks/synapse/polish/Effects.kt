@@ -1,9 +1,9 @@
 package com.rthqks.synapse.polish
 
+import android.util.Size
 import com.rthqks.synapse.R
 import com.rthqks.synapse.exec2.node.*
 import com.rthqks.synapse.logic.*
-import com.rthqks.synapse.logic.PropertyType.Companion.RangeType
 
 
 object Effects {
@@ -108,16 +108,28 @@ object Effects {
     }
 
     val squares = Network(ID_SQUARES).let {
-        val shape = it.addNode(NewNode(NodeType.Shape))
+        val cell = it.addNode(NewNode(NodeType.CellAuto))
         it.addLinkNoCompute(
             Link(
-                shape.id,
-                RotateMatrixNode.OUTPUT.id,
+                cell.id,
+                CellularAutoNode.OUTPUT.id,
                 Effect.ID_LUT,
-                Lut3dNode.LUT_MATRIX.id
+                Lut3dNode.INPUT.id
             )
         )
-        it.addLinkNoCompute(Link(shape.id, CameraNode.OUTPUT.id, Effect.ID_LUT, Lut3dNode.INPUT.id))
-        Effect(it, "Squares")
+        Effect(it, "Squares").apply {
+
+            val prop = cell.properties.getProperty(CellularAutoNode.GridSize)!!
+            addProperty(
+                prop, ToggleType(
+                    R.string.property_name_grid_size,
+                    R.drawable.ic_add,
+                    Choice(Size(180, 320), R.string.property_label_s, R.drawable.circle),
+                    Choice(Size(270, 480), R.string.property_label_m, R.drawable.circle),
+                    Choice(Size(540, 960), R.string.property_label_l, R.drawable.circle),
+                    Choice(Size(1080, 1920), R.string.property_label_xl, R.drawable.circle)
+                )
+            )
+        }
     }
 }

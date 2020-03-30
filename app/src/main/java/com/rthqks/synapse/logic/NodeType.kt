@@ -190,4 +190,10 @@ sealed class NodeType(
         "texture_view",
         R.string.name_node_type_texture_view,
         R.drawable.ic_display)
+
+    object CellAuto : NodeType(
+        "cellular_automaton",
+        R.string.name_node_type_cell_auto,
+        R.drawable.ic_add
+    )
 }

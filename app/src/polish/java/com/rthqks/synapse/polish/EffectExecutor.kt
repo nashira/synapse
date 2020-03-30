@@ -160,7 +160,7 @@ class EffectExecutor(context: ExecutionContext) : NetworkExecutor(context) {
             lutPreviews.remove(surfaceTexture)?.let {
                 //            Log.d(TAG, "removed $surfaceTexture")
 //            it.release()
-                (getNode(it.screen.id) as TextureViewNode).removeTextureView()
+                (getNode(it.screen.id) as? TextureViewNode)?.removeTextureView()
                 surfaceTexture.release()
                 lutPreviewPool += it
             }
