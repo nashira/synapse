@@ -1,13 +1,13 @@
 #version 300 es
 
-precision mediump float;
+precision highp float;
 
 in vec2 uv;
 
 out vec4 color;
 
 uniform sampler2D grid;
-uniform vec2 res;
+uniform vec2 grid_size;
 
 #define HASHSCALE1 .1031
 float hash13(vec3 p3)
@@ -18,14 +18,14 @@ float hash13(vec3 p3)
 }
 
 void main() {
-    vec4 l = texture(grid, uv + vec2(-res.x, 0.0));
-    vec4 lt = texture(grid, uv + vec2(-res.x, res.y));
-    vec4 lb = texture(grid, uv + vec2(-res.x, -res.y));
-    vec4 r = texture(grid, uv + vec2(res.x, 0.0));
-    vec4 rt = texture(grid, uv + vec2(res.x, res.y));
-    vec4 rb = texture(grid, uv + vec2(res.x, -res.y));
-    vec4 u = texture(grid, uv + vec2(0.0, res.y));
-    vec4 d = texture(grid, uv + vec2(0.0, -res.y));
+    vec4 l = texture(grid, uv + vec2(-grid_size.x, 0.0));
+    vec4 lt = texture(grid, uv + vec2(-grid_size.x, grid_size.y));
+    vec4 lb = texture(grid, uv + vec2(-grid_size.x, -grid_size.y));
+    vec4 r = texture(grid, uv + vec2(grid_size.x, 0.0));
+    vec4 rt = texture(grid, uv + vec2(grid_size.x, grid_size.y));
+    vec4 rb = texture(grid, uv + vec2(grid_size.x, -grid_size.y));
+    vec4 u = texture(grid, uv + vec2(0.0, grid_size.y));
+    vec4 d = texture(grid, uv + vec2(0.0, -grid_size.y));
     float c = texture(grid, uv).r;
     float sum = l.r + r.r + u.r + d.r + lt.r + lb.r + rt.r + rb.r;
 

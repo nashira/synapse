@@ -51,7 +51,7 @@ class ExecutionModule {
     fun provideDispatcher() = Executors.newFixedThreadPool(4).asCoroutineDispatcher()
 
     @Provides
-    fun provideGlesManager() = GlesManager()
+    fun provideGlesManager(assetManager: AssetManager) = GlesManager(assetManager)
 
     @Provides
     fun provideCameraManager(context: Context) = CameraManager(context)

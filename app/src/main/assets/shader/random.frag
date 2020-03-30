@@ -11,5 +11,5 @@ float rand(vec2 co) {
 }
 
 void main() {
-    random = vec4(rand(uv) > 0.5, rand(uv.yx), rand(uv * uv), 1.0);
+    random = vec4(rand(uv) * 2.0 - 1.0, rand(uv.yx) * 2.0 - 1.0, rand(uv * uv) * 2.0 - 1.0, 1.0);
 }

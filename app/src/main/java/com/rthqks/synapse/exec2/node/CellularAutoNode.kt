@@ -32,6 +32,7 @@ class CellularAutoNode(
     private val framebuffer2 = Framebuffer()
     private val program = Program()
     private val geo = Quad()
+    private val RD = true
 
     override suspend fun onSetup() {
         gl.glContext {
@@ -98,6 +99,12 @@ class CellularAutoNode(
             val fb = if (msg.data == texture1) framebuffer1 else framebuffer2
             val tx = if (msg.data == texture1) texture2 else texture1
 
+            program.getUniform(Uniform.Type.Vec2, GridSize.name).let {
+                it.data?.set(0, 1f / gridSize.width)
+                it.data?.set(1, 1f / gridSize.height)
+                it.dirty = true
+            }
+
             gl.glContext {
                 GLES30.glUseProgram(program.programId)
                 GLES30.glBindFramebuffer(GLES30.GL_FRAMEBUFFER, fb.id)
@@ -128,46 +135,43 @@ class CellularAutoNode(
             gl.glContext {
                 texture1.initData(
                     0,
-                    GLES30.GL_RGB8,
+                    GLES30.GL_RGB16F,
                     gridSize.width,
                     gridSize.height,
                     GLES30.GL_RGB,
-                    GLES30.GL_UNSIGNED_BYTE
+                    GLES30.GL_FLOAT
                 )
                 texture2.initData(
                     0,
-                    GLES30.GL_RGB8,
+                    GLES30.GL_RGB16F,
                     gridSize.width,
                     gridSize.height,
                     GLES30.GL_RGB,
-                    GLES30.GL_UNSIGNED_BYTE
+                    GLES30.GL_FLOAT
                 )
                 framebuffer1.release()
                 framebuffer1.initialize(texture1)
                 framebuffer2.release()
                 framebuffer2.initialize(texture2)
-                Program().apply {
-                    val vertex = am.readTextAsset("shader/cellular_auto.vert")
-                    val frag = am.readTextAsset("shader/random.frag")
-                    initialize(vertex, frag)
-                    GLES30.glUseProgram(programId)
-                    GLES30.glBindFramebuffer(GLES30.GL_FRAMEBUFFER, framebuffer2.id)
-                    GLES30.glViewport(0, 0, gridSize.width, gridSize.height)
-                    geo.execute()
-                    release()
-                }
+                gl.fillRandom(framebuffer1, gridSize.width, gridSize.height)
+                gl.fillRandom(framebuffer2, gridSize.width, gridSize.height)
             }
         }
 
         if (program.programId == 0) {
-            val vertex = am.readTextAsset("shader/cellular_auto.vert")
-            val frag = am.readTextAsset("shader/cellular_auto.frag")
+            val (vertex, frag) = if (RD) {
+                 Pair(am.readTextAsset("shader/reaction_diffusion.vert"),
+                     am.readTextAsset("shader/reaction_diffusion.frag"))
+            } else {
+                Pair(am.readTextAsset("shader/cellular_auto.vert"),
+                    am.readTextAsset("shader/cellular_auto.frag"))
+            }
             gl.glContext {
                 program.apply {
                     initialize(vertex, frag)
                     addUniform(
                         Uniform.Type.Vec2,
-                        "res",
+                        GridSize.name,
                         floatArrayOf(1f / gridSize.width, 1f / gridSize.height)
                     )
 
