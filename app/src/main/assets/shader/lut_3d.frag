@@ -29,9 +29,6 @@ out vec4 color;
 
 void main() {
     vec4 from = texture(input_texture, uv);
-    vec3 norm = normalize(from.rgb);
-    from = vec4(0.5 + norm.z);
-
     vec3 lookup = (lut_matrix * vec4(from.xyz * lut_scale + lut_offset, 1.0)).xyz;
     vec4 to = texture(lut_texture, lookup);
     color = mix(from, to, lut_strength);

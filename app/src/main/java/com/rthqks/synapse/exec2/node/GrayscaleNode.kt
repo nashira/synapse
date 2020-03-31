@@ -100,7 +100,6 @@ class GrayscaleNode(
                 size = Size(texture.width, texture.height)
             }
         }
-
     }
 
     private suspend fun createProgram(texture: Texture2d) {
@@ -201,7 +200,6 @@ class GrayscaleNode(
     companion object {
         const val TAG = "GrayscaleNode"
         val INPUT = Connection.Key<Texture2d>("video_1")
-        val OUTPUT =
-            Connection.Key<Texture2d>("video_2")
+        val OUTPUT = Connection.Key<Texture2d>("video_2")
     }
 }

@@ -44,6 +44,7 @@ val TravelAngle = Property.Key("travel_angle", Float::class.java)
 val TravelDistance = Property.Key("travel_distance", Float::class.java)
 val SliceDepth = Property.Key("slice_depth", Float::class.java)
 val Recording = Property.Key("recording", Boolean::class.java)
+val NumElements = Property.Key("num_elements", FloatArray::class.java)
 
 val Nodes = listOf(
     Node(NodeType.Camera).apply {
@@ -93,9 +94,9 @@ val Nodes = listOf(
         add(AccumulateFactor, 0.9f)
     },
     Node(NodeType.BlurFilter).apply {
-        add(Port(Port.Type.Video, "video_1", "Source", false))
-        add(Port(Port.Type.Video, "video_2", "Blurred", true))
-        add(ScaleFactor, 1)
+        add(Port(Port.Type.Video, BlurNode.INPUT.id, "Source", false))
+        add(Port(Port.Type.Video, BlurNode.OUTPUT.id, "Blurred", true))
+        add(ScaleFactor, 2)
         add(NumPasses, 1)
         add(BlurSize, 9)
     },
@@ -189,6 +190,12 @@ val Nodes = listOf(
         add(FrameRate, 30)
         add(CellularAutoNode.GridSize, Size(180, 320))
     },
+    Node(NodeType.Quantizer).apply {
+        add(Port(Port.Type.Video, QuantizerNode.INPUT.id, "Input", false))
+        add(Port(Port.Type.Video, QuantizerNode.OUTPUT.id, "Output", true))
+        add(CropSize, Size(180, 320))
+        add(NumElements, floatArrayOf(6f, 6f, 6f))
+    },
     Node(NodeType.Properties).also { it.id = -2 },
     Node(NodeType.Connection).also { it.id = -3 },
     Node(NodeType.Creation).also { it.id = -4 }
@@ -227,6 +234,7 @@ val KeyMap: Map<String, Property.Key<*>> = listOf(
     TravelDistance,
     SliceDepth,
     SliceDirection,
+    NumElements,
     Recording
 ).map { it.name to it }.toMap()
 

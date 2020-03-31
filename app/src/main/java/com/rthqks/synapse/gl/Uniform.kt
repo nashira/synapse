@@ -18,5 +18,6 @@ class Uniform<T>(
         object Float: Type<kotlin.Float>()
         object Mat4 : Type<FloatArray>()
         object Vec2 : Type<FloatArray>()
+        object Vec3 : Type<FloatArray>()
     }
 }

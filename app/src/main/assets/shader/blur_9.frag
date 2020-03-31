@@ -32,7 +32,7 @@ vec4 blur9(vec2 uv, vec2 off1, vec2 off2) {
 }
 
 void main() {
-    vec2 off1 = vec2(1.3846153846) * direction + 1.0;
-    vec2 off2 = vec2(3.2307692308) * direction + 1.0;
+    vec2 off1 = vec2(1.3846153846) * direction;
+    vec2 off2 = vec2(3.2307692308) * direction;
     color = blur9(texture_coords0, off1 / resolution, off2 / resolution);
 }

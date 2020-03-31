@@ -118,7 +118,6 @@ object Effects {
             )
         )
         Effect(it, "Squares").apply {
-
             val prop = cell.properties.getProperty(CellularAutoNode.GridSize)!!
             addProperty(
                 prop, ToggleType(
@@ -128,6 +127,76 @@ object Effects {
                     Choice(Size(270, 480), R.string.property_label_m, R.drawable.circle),
                     Choice(Size(540, 960), R.string.property_label_l, R.drawable.circle),
                     Choice(Size(1080, 1920), R.string.property_label_xl, R.drawable.circle)
+                )
+            )
+        }
+    }
+
+    val quantizer = Network(5).let {
+        val crop = it.addNode(NewNode(NodeType.CropResize))
+        val blur = it.addNode(NewNode(NodeType.BlurFilter))
+        val quantizer = it.addNode(NewNode(NodeType.Quantizer))
+        it.addLinkNoCompute(
+            Link(
+                Effect.ID_CAMERA,
+                CameraNode.OUTPUT.id,
+                crop.id,
+                CropResizeNode.INPUT.id
+            )
+        )
+        it.addLinkNoCompute(
+            Link(
+                crop.id,
+                CropResizeNode.OUTPUT.id,
+                blur.id,
+                BlurNode.INPUT.id
+            )
+        )
+//        it.addLinkNoCompute(
+//            Link(
+//                blur.id,
+//                BlurNode.OUTPUT.id,
+//                Effect.ID_LUT,
+//                Lut3dNode.INPUT.id
+//            )
+//        )
+        it.addLinkNoCompute(
+            Link(
+                blur.id,
+                BlurNode.OUTPUT.id,
+                quantizer.id,
+                QuantizerNode.INPUT.id
+            )
+        )
+        it.addLinkNoCompute(
+            Link(
+                quantizer.id,
+                QuantizerNode.OUTPUT.id,
+                Effect.ID_LUT,
+                Lut3dNode.INPUT.id
+            )
+        )
+        Effect(it, "Squares").apply {
+            val prop = crop.properties.getProperty(CropSize)!!
+            prop.value = Size(540, 960)
+            addProperty(
+                prop, ToggleType(
+                    R.string.property_name_grid_size,
+                    R.drawable.ic_add,
+                    Choice(Size(180, 320), R.string.property_label_s, R.drawable.circle),
+                    Choice(Size(270, 480), R.string.property_label_m, R.drawable.circle),
+                    Choice(Size(540, 960), R.string.property_label_l, R.drawable.circle),
+                    Choice(Size(1080, 1920), R.string.property_label_xl, R.drawable.circle)
+                )
+            )
+            addProperty(
+                blur.properties.getProperty(NumPasses)!!, ToggleType(
+                    R.string.property_name_num_passes,
+                    R.drawable.ic_layers,
+                    Choice(1, R.string.property_label_1, R.drawable.circle),
+                    Choice(2, R.string.property_label_2, R.drawable.circle),
+                    Choice(4, R.string.property_label_4, R.drawable.circle),
+                    Choice(8, R.string.property_label_8, R.drawable.circle)
                 )
             )
         }

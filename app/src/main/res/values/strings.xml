@@ -208,4 +208,5 @@
     <string name="property_label_m">M</string>
     <string name="property_label_l">L</string>
     <string name="property_label_xl">XL</string>
+    <string name="name_node_type_quantizer">Quantizer</string>
 </resources>

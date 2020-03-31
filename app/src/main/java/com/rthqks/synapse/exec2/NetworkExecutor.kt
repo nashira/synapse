@@ -157,6 +157,8 @@ open class NetworkExecutor(context: ExecutionContext) : Executor(context) {
             NodeType.RotateMatrix -> RotateMatrixNode(context, properties)
             NodeType.CropResize -> CropResizeNode(context, properties)
             NodeType.CellAuto -> CellularAutoNode(context, properties)
+            NodeType.Quantizer -> QuantizerNode(context, properties)
+            NodeType.BlurFilter -> BlurNode(context, properties)
             else -> error("check yo nodes")
         }
     }

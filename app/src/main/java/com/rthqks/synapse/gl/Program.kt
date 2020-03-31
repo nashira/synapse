@@ -78,6 +78,12 @@ class Program {
                         uniform.data as FloatArray,
                         0
                     )
+                    Uniform.Type.Vec3 -> GLES30.glUniform3fv(
+                        uniform.location,
+                        1,
+                        uniform.data as FloatArray,
+                        0
+                    )
                 }
 
             }

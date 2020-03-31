@@ -10,35 +10,36 @@ import com.rthqks.synapse.exec2.Message
 import com.rthqks.synapse.exec2.NodeExecutor
 import com.rthqks.synapse.gl.*
 import com.rthqks.synapse.logic.CropSize
+import com.rthqks.synapse.logic.NumElements
 import com.rthqks.synapse.logic.Properties
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 
-class CropResizeNode(
+class QuantizerNode(
     context: ExecutionContext,
     private val properties: Properties
 ) : NodeExecutor(context) {
-    private val assetManager = context.assetManager
-    private val glesManager = context.glesManager
+    private val am = context.assetManager
+    private val gl = context.glesManager
     private var outScaleX: Float = 1f
     private var outScaleY: Float = 1f
     private var startJob: Job? = null
     private val outputSize: Size get() = properties[CropSize]
+    private val numElements: FloatArray get() = properties[NumElements]
     private var inputSize = Size(0, 0)
     private var outputConfig: Texture2d? = null
-    private val texture1 = Texture2d()
 
+    private val texture1 = Texture2d()
     private val texture2 = Texture2d()
     private val framebuffer1 = Framebuffer()
     private val framebuffer2 = Framebuffer()
     private val program = Program()
-
     private val quadMesh = Quad()
     private var needsPriming = true
 
     override suspend fun onSetup() {
         Log.d(TAG, "onSetup")
-        glesManager.glContext {
+        gl.glContext {
             quadMesh.initialize()
             texture1.initialize()
             texture2.initialize()
@@ -84,9 +85,9 @@ class CropResizeNode(
 
         if (oesChanged) {
             outputConfig = texture2d
-            glesManager.glContext {
-                val vertex = assetManager.readTextAsset("shader/crop_resize.vert")
-                val frag = assetManager.readTextAsset("shader/crop_resize.frag").let {
+            gl.glContext {
+                val vertex = am.readTextAsset("shader/quantizer.vert")
+                val frag = am.readTextAsset("shader/quantizer.frag").let {
                     if (texture2d.oes) {
                         it.replace("//{EXT}", "#define EXT")
                     } else {
@@ -107,6 +108,11 @@ class CropResizeNode(
                         "input_texture",
                         INPUT_TEXTURE_LOCATION
                     )
+                    addUniform(
+                        Uniform.Type.Vec3,
+                        NumElements.name,
+                        numElements
+                    )
                 }
             }
         }
@@ -121,7 +127,7 @@ class CropResizeNode(
         }
 
         if (outputSizeChanged) {
-            glesManager.glContext {
+            gl.glContext {
                 initTextureData(texture1, texture2d)
                 initTextureData(texture2, texture2d)
 
@@ -151,9 +157,20 @@ class CropResizeNode(
     private suspend fun onStart() {
         Log.d(TAG, "onStart")
         val inputIn = channel(INPUT) ?: error("missing input")
+        var copyMatrix = true
 
         for (msg in inputIn) {
             checkConfig(msg.data)
+            if (copyMatrix) {
+                copyMatrix = false
+                val uniform = program.getUniform(Uniform.Type.Mat4, "input_matrix")
+                val matrix = uniform.data!!
+                System.arraycopy(msg.data.matrix, 0, matrix, 0, 16)
+                Matrix.translateM(matrix, 0, 0.5f, 0.5f, 0f)
+                Matrix.scaleM(matrix, 0, outScaleX, outScaleY, 1f)
+                Matrix.translateM(matrix, 0, -0.5f, -0.5f, 0f)
+                uniform.dirty = true
+            }
             execute(msg)
             msg.release()
         }
@@ -167,7 +184,7 @@ class CropResizeNode(
     }
 
     override suspend fun onRelease() {
-        glesManager.glContext {
+        gl.glContext {
             texture1.release()
             texture2.release()
             framebuffer1.release()
@@ -187,15 +204,7 @@ class CropResizeNode(
             framebuffer2
         }
 
-        val uniform = program.getUniform(Uniform.Type.Mat4, "input_matrix")
-        val matrix = uniform.data!!
-        System.arraycopy(msg.data.matrix, 0, matrix, 0, 16)
-        Matrix.translateM(matrix, 0, 0.5f, 0.5f, 0f)
-        Matrix.scaleM(matrix, 0, outScaleX, outScaleY, 1f)
-        Matrix.translateM(matrix, 0, -0.5f, -0.5f, 0f)
-        uniform.dirty = true
-
-        glesManager.glContext {
+        gl.glContext {
             GLES30.glUseProgram(program.programId)
             GLES30.glBindFramebuffer(GLES30.GL_FRAMEBUFFER, framebuffer.id)
             GLES30.glViewport(0, 0, outputSize.width, outputSize.height)
@@ -209,7 +218,7 @@ class CropResizeNode(
     }
 
     companion object {
-        const val TAG = "CropResizeNode"
+        const val TAG = "Quantizer"
         const val INPUT_TEXTURE_LOCATION = 0
         val INPUT = Connection.Key<Texture2d>("input")
         val OUTPUT = Connection.Key<Texture2d>("output")

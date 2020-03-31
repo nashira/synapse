@@ -194,6 +194,12 @@ sealed class NodeType(
     object CellAuto : NodeType(
         "cellular_automaton",
         R.string.name_node_type_cell_auto,
-        R.drawable.ic_add
+        R.drawable.ic_view_module
+    )
+
+    object Quantizer : NodeType(
+        "quantizer",
+        R.string.name_node_type_quantizer,
+        R.drawable.ic_view_module
     )
 }
