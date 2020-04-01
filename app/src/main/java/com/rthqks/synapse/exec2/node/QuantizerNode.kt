@@ -136,7 +136,7 @@ class QuantizerNode(
             }
         }
 
-        if (inputSizeChanged) {
+        if (inputSizeChanged || outputSizeChanged) {
             inputSize = Size(texture2d.width, texture2d.height)
             val inAspect = inputSize.width / inputSize.height.toFloat()
             val outAspect = outputSize.width / outputSize.height.toFloat()
@@ -164,20 +164,20 @@ class QuantizerNode(
     private suspend fun onStart() {
         Log.d(TAG, "onStart")
         val inputIn = channel(INPUT) ?: error("missing input")
-        var copyMatrix = true
+//        var copyMatrix = true
 
         for (msg in inputIn) {
             checkConfig(msg.data)
-            if (copyMatrix) {
-                copyMatrix = false
+//            if (copyMatrix) {
+//                copyMatrix = false
                 val uniform = program.getUniform(Uniform.Type.Mat4, "input_matrix")
                 val matrix = uniform.data!!
                 System.arraycopy(msg.data.matrix, 0, matrix, 0, 16)
-                Matrix.translateM(matrix, 0, 0.5f, 0.5f, 0f)
-                Matrix.scaleM(matrix, 0, outScaleX, outScaleY, 1f)
-                Matrix.translateM(matrix, 0, -0.5f, -0.5f, 0f)
+//                Matrix.translateM(matrix, 0, 0.5f, 0.5f, 0f)
+//                Matrix.scaleM(matrix, 0, outScaleX, outScaleY, 1f)
+//                Matrix.translateM(matrix, 0, -0.5f, -0.5f, 0f)
                 uniform.dirty = true
-            }
+//            }
             program.getUniform(Uniform.Type.Vec3, NumElements.name).set(numElements)
 //            program.getUniform(Uniform.Type.Int, "frame_count").set(msg.count)
             execute(msg)

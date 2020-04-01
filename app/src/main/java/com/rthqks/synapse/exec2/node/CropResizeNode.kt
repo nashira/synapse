@@ -37,7 +37,7 @@ class CropResizeNode(
     private var needsPriming = true
 
     override suspend fun onSetup() {
-        Log.d(TAG, "onSetup")
+        Log.d(TAG, "onSetup $outputSize")
         glesManager.glContext {
             quadMesh.initialize()
             texture1.initialize()
@@ -111,7 +111,7 @@ class CropResizeNode(
             }
         }
 
-        if (inputSizeChanged) {
+        if (inputSizeChanged || outputSizeChanged) {
             inputSize = Size(texture2d.width, texture2d.height)
             val inAspect = inputSize.width / inputSize.height.toFloat()
             val outAspect = outputSize.width / outputSize.height.toFloat()

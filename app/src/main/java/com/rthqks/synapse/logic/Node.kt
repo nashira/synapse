@@ -24,7 +24,7 @@ class Node(
         it.id = id
         it.ports.putAll(ports)
         properties.getAll().forEach { p ->
-            it.properties.put(p)
+            it.properties[p.key as Property.Key<Any?>] = p.value
         }
     }
 
