@@ -171,6 +171,7 @@ class QuantizerNode(
                 Matrix.translateM(matrix, 0, -0.5f, -0.5f, 0f)
                 uniform.dirty = true
             }
+            program.getUniform(Uniform.Type.Vec3, NumElements.name).set(numElements)
             execute(msg)
             msg.release()
         }

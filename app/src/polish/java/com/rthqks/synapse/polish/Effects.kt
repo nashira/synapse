@@ -178,25 +178,38 @@ object Effects {
         )
         Effect(it, "Squares").apply {
             val prop = crop.properties.getProperty(CropSize)!!
-            prop.value = Size(540, 960)
+            prop.value = Size(180, 320)
             addProperty(
                 prop, ToggleType(
                     R.string.property_name_grid_size,
                     R.drawable.ic_add,
-                    Choice(Size(180, 320), R.string.property_label_s, R.drawable.circle),
-                    Choice(Size(270, 480), R.string.property_label_m, R.drawable.circle),
-                    Choice(Size(540, 960), R.string.property_label_l, R.drawable.circle),
-                    Choice(Size(1080, 1920), R.string.property_label_xl, R.drawable.circle)
+                    Choice(Size(180, 320), R.string.property_label_s, R.drawable.square),
+                    Choice(Size(270, 480), R.string.property_label_m, R.drawable.square),
+                    Choice(Size(540, 960), R.string.property_label_l, R.drawable.square),
+                    Choice(Size(1080, 1920), R.string.property_label_xl, R.drawable.square)
                 )
             )
+            val np = blur.properties.getProperty(NumPasses)!!
+            np.value = 2
             addProperty(
-                blur.properties.getProperty(NumPasses)!!, ToggleType(
+                np, ToggleType(
                     R.string.property_name_num_passes,
                     R.drawable.ic_layers,
                     Choice(1, R.string.property_label_1, R.drawable.circle),
                     Choice(2, R.string.property_label_2, R.drawable.circle),
                     Choice(4, R.string.property_label_4, R.drawable.circle),
                     Choice(8, R.string.property_label_8, R.drawable.circle)
+                )
+            )
+            val dp = quantizer.properties.getProperty(NumElements)!!
+            addProperty(
+                dp, ToggleType(
+                    R.string.property_name_num_passes,
+                    R.drawable.ic_layers,
+                    Choice(floatArrayOf(4f, 4f, 4f), R.string.property_label_4, R.drawable.circle),
+                    Choice(floatArrayOf(6f, 6f, 6f), R.string.property_label_6, R.drawable.circle),
+                    Choice(floatArrayOf(8f, 8f, 8f), R.string.property_label_8, R.drawable.circle),
+                    Choice(floatArrayOf(10f, 10f, 10f), R.string.property_label_10, R.drawable.circle)
                 )
             )
         }

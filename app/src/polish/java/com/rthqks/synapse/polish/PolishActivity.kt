@@ -42,15 +42,16 @@ import kotlin.math.roundToInt
 class PolishActivity : DaggerAppCompatActivity() {
     @Inject
     lateinit var viewModelFactory: ViewModelProvider.Factory
+
     @Inject
     lateinit var analytics: Analytics
     lateinit var viewModel: PolishViewModel
-    private lateinit var orientationEventListener:  OrientationEventListener
+    private lateinit var orientationEventListener: OrientationEventListener
     private lateinit var preferences: SharedPreferences
     private val deviceSupported = CompletableDeferred<Boolean>()
     private val permissionsGranted = CompletableDeferred<Boolean>()
     private var uiAngle = 0
-    private val interpolator =  AccelerateDecelerateInterpolator()
+    private val interpolator = AccelerateDecelerateInterpolator()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -113,11 +114,13 @@ class PolishActivity : DaggerAppCompatActivity() {
 
             when {
                 !supported -> {
-                    Toast.makeText(this@PolishActivity, "device not supported", Toast.LENGTH_LONG).show()
+                    Toast.makeText(this@PolishActivity, "device not supported", Toast.LENGTH_LONG)
+                        .show()
                     finish()
                 }
                 !permissions -> {
-                    Toast.makeText(this@PolishActivity, "Permissions Required", Toast.LENGTH_LONG).show()
+                    Toast.makeText(this@PolishActivity, "Permissions Required", Toast.LENGTH_LONG)
+                        .show()
                     finish()
                 }
                 else -> {
@@ -152,7 +155,7 @@ class PolishActivity : DaggerAppCompatActivity() {
 
         lut_list.adapter = LutAdapter(Effect.LUTS, viewModel)
 
-        lut_list.addItemDecoration(object : RecyclerView.ItemDecoration(){
+        lut_list.addItemDecoration(object : RecyclerView.ItemDecoration() {
             private val spans = 3
             private val margin = resources.getDimension(R.dimen.connector_margin).roundToInt()
             override fun getItemOffsets(
@@ -404,7 +407,7 @@ class PolishActivity : DaggerAppCompatActivity() {
             Manifest.permission.CAMERA,
             Manifest.permission.RECORD_AUDIO,
             Manifest.permission.WRITE_EXTERNAL_STORAGE
-        ) else  listOf(
+        ) else listOf(
             Manifest.permission.CAMERA,
             Manifest.permission.RECORD_AUDIO
         )
@@ -556,7 +559,14 @@ private class PropertiesAdapter(
             when (it.second) {
                 is ExpandedType<*> -> {
                     (it.second as ExpandedType).choices.forEach { choice ->
-                        new.add(PropertyItem(it.first as Property<Any?>, it.second, choice.icon, choice.item))
+                        new.add(
+                            PropertyItem(
+                                it.first as Property<Any?>,
+                                it.second,
+                                choice.icon,
+                                choice.item
+                            )
+                        )
                     }
                 }
                 is ToggleType<*> -> {
@@ -638,7 +648,12 @@ private class ToggleViewHolder(
         this.propertyItem = propertyItem
         val type = propertyItem.type as ToggleType<*>
         toggleType = type
-        index = max(0, type.choices.indexOfFirst { it.item == propertyItem.property.value })
+        index = max(0, type.choices.indexOfFirst {
+            when (it.item) {
+                is FloatArray -> it.item.contentEquals(propertyItem.property.value as FloatArray)
+                else -> it.item == propertyItem.property.value
+            }
+        })
         update()
     }
 

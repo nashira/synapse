@@ -210,6 +210,7 @@ val KeyMap: Map<String, Property.Key<*>> = listOf(
     VideoSize,
     CropSize,
     HistorySize,
+    SliceDirection,
     FrameRate,
     Stabilize,
     Rotation,
@@ -233,9 +234,9 @@ val KeyMap: Map<String, Property.Key<*>> = listOf(
     TravelAngle,
     TravelDistance,
     SliceDepth,
-    SliceDirection,
+    Recording,
     NumElements,
-    Recording
+    CellularAutoNode.GridSize
 ).map { it.name to it }.toMap()
 
 val NodeMap = Nodes.map { it.type to it }.toMap()

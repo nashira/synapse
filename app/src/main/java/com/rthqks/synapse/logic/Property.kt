@@ -39,6 +39,10 @@ class Properties {
                 val p = properties[key]?.value as Size
                 "${p.width}x${p.height}"
             }
+            FloatArray::class.java -> {
+                val p = properties[key]?.value as FloatArray
+                p.joinToString()
+            }
             else -> properties[key]?.value.toString()
         }
     }
@@ -50,6 +54,7 @@ class Properties {
             Boolean::class.java -> value.toBoolean()
             Size::class.java -> Size.parseSize(value)
             Uri::class.java -> Uri.parse(value)
+            FloatArray::class.java -> value.split(",").map { it.toFloat() }.toTypedArray()
             else -> error("unhandled property type: ${key.klass}")
         } as T
         set(key, cast)

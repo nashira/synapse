@@ -50,7 +50,7 @@ class PolishViewModel @Inject constructor(
             withContext(Dispatchers.IO) {
                 dao.getProperties(0).forEach { properties[it.key] = it.value }
 
-                listOf(Effects.timeWarp, Effects.rotoHue).forEach { effect ->
+                listOf(Effects.timeWarp, Effects.rotoHue, Effects.squares).forEach { effect ->
                     dao.getProperties(effect.network.id)
                         .forEach { effect.properties[it.key] = it.value }
                 }
