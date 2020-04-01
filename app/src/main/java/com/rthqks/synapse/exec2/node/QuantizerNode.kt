@@ -24,7 +24,8 @@ class QuantizerNode(
     private var outScaleX: Float = 1f
     private var outScaleY: Float = 1f
     private var startJob: Job? = null
-    private val outputSize: Size get() = properties[CropSize]
+//    private val outputSize: Size get() = properties[CropSize]
+    private var outputSize: Size = Size(0, 0)
     private val numElements: FloatArray get() = properties[NumElements]
     private var inputSize = Size(0, 0)
     private var outputConfig: Texture2d? = null
@@ -78,8 +79,8 @@ class QuantizerNode(
         val inputSizeChanged = inputSize.width != texture2d.width
                 || inputSize.height != texture2d.height
 
-        val outputSizeChanged = texture1.width != outputSize.width
-                || texture1.height != outputSize.height
+        val outputSizeChanged = texture2d.width != outputSize.width
+                || texture2d.height != outputSize.height
 
         val oesChanged = outputConfig?.oes != texture2d.oes
 
@@ -117,16 +118,8 @@ class QuantizerNode(
             }
         }
 
-        if (inputSizeChanged) {
-            inputSize = Size(texture2d.width, texture2d.height)
-            val inAspect = inputSize.width / inputSize.height.toFloat()
-            val outAspect = outputSize.width / outputSize.height.toFloat()
-
-            outScaleX = if (inAspect > outAspect) outAspect / inAspect else 1f
-            outScaleY = if (inAspect < outAspect) inAspect / outAspect else 1f
-        }
-
         if (outputSizeChanged) {
+            outputSize = Size(texture2d.width, texture2d.height)
             gl.glContext {
                 initTextureData(texture1, texture2d)
                 initTextureData(texture2, texture2d)
@@ -136,6 +129,15 @@ class QuantizerNode(
                 framebuffer2.release()
                 framebuffer2.initialize(texture2)
             }
+        }
+
+        if (inputSizeChanged) {
+            inputSize = Size(texture2d.width, texture2d.height)
+            val inAspect = inputSize.width / inputSize.height.toFloat()
+            val outAspect = outputSize.width / outputSize.height.toFloat()
+
+            outScaleX = if (inAspect > outAspect) outAspect / inAspect else 1f
+            outScaleY = if (inAspect < outAspect) inAspect / outAspect else 1f
         }
     }
 

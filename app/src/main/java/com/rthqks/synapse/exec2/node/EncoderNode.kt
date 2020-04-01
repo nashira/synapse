@@ -67,9 +67,11 @@ class EncoderNode(
         when (key) {
             INPUT_AUDIO -> {
                 audioJob?.join()
+                audioJob = null
             }
             INPUT_VIDEO -> {
                 videoJob?.join()
+                videoJob == null
             }
         }
     }
@@ -118,8 +120,9 @@ class EncoderNode(
             }
         }
 
-        if (sizeChanged) {
+        if (sizeChanged && recording.get() == NOT_RECORDING) {
             val size = Size(texture.width, texture.height)
+            Log.d(TAG, "size changed $inputSize $size")
 
             surface = encoder.setVideo(size, frameRate)
             updateWindowSurface()
