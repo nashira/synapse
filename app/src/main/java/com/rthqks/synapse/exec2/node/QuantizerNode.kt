@@ -114,6 +114,11 @@ class QuantizerNode(
                         NumElements.name,
                         numElements
                     )
+                    addUniform(
+                        Uniform.Type.Int,
+                        "frame_count",
+                        0
+                    )
                 }
             }
         }
@@ -174,6 +179,7 @@ class QuantizerNode(
                 uniform.dirty = true
             }
             program.getUniform(Uniform.Type.Vec3, NumElements.name).set(numElements)
+//            program.getUniform(Uniform.Type.Int, "frame_count").set(msg.count)
             execute(msg)
             msg.release()
         }

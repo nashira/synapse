@@ -49,6 +49,7 @@ class Encoder(
     private var currentFile: String? = null
     private var audioInputBuffers = Channel<Int>(20)
     private val inputSurface = MediaCodec.createPersistentInputSurface()
+    private var stopDeferred: CompletableDeferred<Unit>? = null
 
     fun setVideo(size: Size, fps: Int): Surface {
         hasVideo = true
@@ -135,6 +136,7 @@ class Encoder(
 
     suspend fun stopEncoding() {
         Log.d(TAG, "stopEncoding")
+        stopDeferred = CompletableDeferred()
         videoEncoder?.signalEndOfInputStream()
         audioEncoder?.let {
             val index = audioInputBuffers.receive()
@@ -142,6 +144,7 @@ class Encoder(
             it.queueInputBuffer(index, 0, 0, 0, MediaCodec.BUFFER_FLAG_END_OF_STREAM)
 //            while (audioInputBuffers.poll() != null);
         }
+        stopDeferred?.await()
     }
 
     override fun onOutputBufferAvailable(
@@ -215,6 +218,7 @@ class Encoder(
 
             currentFile?.let { videoStorage.setVideoFileReady(it) }
             currentFile = null
+            stopDeferred?.complete(Unit)
         }
     }
 
