@@ -159,6 +159,7 @@ open class NetworkExecutor(context: ExecutionContext) : Executor(context) {
             NodeType.CellAuto -> CellularAutoNode(context, properties)
             NodeType.Quantizer -> QuantizerNode(context, properties)
             NodeType.BlurFilter -> BlurNode(context, properties)
+            NodeType.Sobel -> SobelNode(context, properties)
             else -> error("check yo nodes")
         }
     }

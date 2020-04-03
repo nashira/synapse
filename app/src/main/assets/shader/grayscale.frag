@@ -18,10 +18,10 @@ uniform samplerExternalOES input_texture0;
 uniform sampler2D input_texture0;
 #endif
 
-const vec3 TRANSFORM = vec3(0.2126, 0.7152, 0.0722);
+const vec3 TRANSFORM = vec3(0.299, 0.587, 0.114);
 
 void main() {
     vec4 original = texture(input_texture0, texture_coords0);
-    vec3 transformed = original.rgb * TRANSFORM;
-    color = vec4(vec3(transformed.r + transformed.b + transformed.g), 1.0);
+    float transformed = dot(original.rgb, TRANSFORM);
+    color = vec4(vec3(transformed), 1.0);
 }

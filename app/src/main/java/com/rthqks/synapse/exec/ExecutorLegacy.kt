@@ -3,7 +3,6 @@ package com.rthqks.synapse.exec
 import android.os.SystemClock
 import android.util.Log
 import android.view.SurfaceView
-import com.rthqks.synapse.exec.node.CropResizeNode
 import com.rthqks.synapse.exec.node.SurfaceViewNode
 import com.rthqks.synapse.logic.*
 import kotlinx.coroutines.*
@@ -208,46 +207,46 @@ class ExecutorLegacy @Inject constructor(
     }
 
     private suspend fun doAddConnectionPreviews(source: Connector, targets: List<Connector>) {
-        val network = network ?: return
-        Log.d(TAG, "source node ${source.node.type} ${source.node.id} ${source.port.id}")
-        if (!source.port.output) {
-            return
-        }
-        val data = mutableListOf<Pair<Node, Link>>()
-        var sourceNode = source.node
-
-        if (source.port.type == Port.Type.Video) {
-            val cropNode = NewNode(NodeType.CropResize)
-            sourceNode = cropNode
-            network.addNode(cropNode)
-            val se = Link(source.node.id, source.port.id, cropNode.id, CropResizeNode.INPUT.id)
-            network.addLinkNoCompute(se)
-            data += Pair(cropNode, se)
-        }
-
-        targets.forEach {
-            val target = it.node
-            Log.d(TAG, "adding node ${target.type} ${target.id} ${it.port.id}")
-            network.addNode(target)
-            Log.d(TAG, "added node ${target.type} ${target.id} ${it.port.id}")
-            val link = Link(sourceNode.id, CropResizeNode.OUTPUT.id, target.id, it.port.id)
-            network.addLinkNoCompute(link)
-            data.add(target to link)
-
-            target.ports.values.firstOrNull {
-                it.output && it.type == Port.Type.Video
-            }?.id?.let {
-                val screen = NewNode(NodeType.Screen)
-                network.addNode(screen)
-                val se = Link(target.id, it, screen.id, SurfaceViewNode.INPUT.id)
-                network.addLinkNoCompute(se)
-                data.add(screen to se)
-            }
-        }
-        network.computeComponents()
-
-        val (nodes, links) = data.unzip()
-        networkExecutor?.add(nodes, links)
+//        val network = network ?: return
+//        Log.d(TAG, "source node ${source.node.type} ${source.node.id} ${source.port.id}")
+//        if (!source.port.output) {
+//            return
+//        }
+//        val data = mutableListOf<Pair<Node, Link>>()
+//        var sourceNode = source.node
+//
+//        if (source.port.type == Port.Type.Video) {
+//            val cropNode = NewNode(NodeType.CropResize)
+//            sourceNode = cropNode
+//            network.addNode(cropNode)
+//            val se = Link(source.node.id, source.port.id, cropNode.id, CropResizeNode.INPUT.id)
+//            network.addLinkNoCompute(se)
+//            data += Pair(cropNode, se)
+//        }
+//
+//        targets.forEach {
+//            val target = it.node
+//            Log.d(TAG, "adding node ${target.type} ${target.id} ${it.port.id}")
+//            network.addNode(target)
+//            Log.d(TAG, "added node ${target.type} ${target.id} ${it.port.id}")
+//            val link = Link(sourceNode.id, CropResizeNode.OUTPUT.id, target.id, it.port.id)
+//            network.addLinkNoCompute(link)
+//            data.add(target to link)
+//
+//            target.ports.values.firstOrNull {
+//                it.output && it.type == Port.Type.Video
+//            }?.id?.let {
+//                val screen = NewNode(NodeType.Screen)
+//                network.addNode(screen)
+//                val se = Link(target.id, it, screen.id, SurfaceViewNode.INPUT.id)
+//                network.addLinkNoCompute(se)
+//                data.add(screen to se)
+//            }
+//        }
+//        network.computeComponents()
+//
+//        val (nodes, links) = data.unzip()
+//        networkExecutor?.add(nodes, links)
     }
 
     companion object {

@@ -202,4 +202,10 @@ sealed class NodeType(
         R.string.name_node_type_quantizer,
         R.drawable.ic_view_module
     )
+
+    object Sobel : NodeType(
+        "sobel",
+        R.string.name_node_type_sobel,
+        R.drawable.ic_difference
+    )
 }

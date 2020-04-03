@@ -85,34 +85,34 @@ class NetworkExecutor(
 
     private fun nodeExecutor(node: Node): NodeExecutor {
         return when (node.type) {
-            NodeType.Camera -> CameraNode(context, node.properties)
-            NodeType.FrameDifference -> FrameDifferenceNode(context, node.properties)
-            NodeType.GrayscaleFilter -> GrayscaleNode(context, node.properties)
-            NodeType.BlurFilter -> BlurNode(context, node.properties)
-            NodeType.MultiplyAccumulate -> MacNode(context, node.properties)
-            NodeType.Microphone -> AudioSourceNode(context, node.properties)
-            NodeType.Image -> ImageSourceNode(context, node.properties)
-            NodeType.CubeImport -> CubeImportNode(context, node.properties)
-            NodeType.AudioFile -> TODO()
-            NodeType.MediaFile -> DecoderNode(context, node.properties)
-            NodeType.Lut2d -> Lut2dNode(context, node.properties)
-            NodeType.Lut3d -> Lut3dNode(context, node.properties)
-            NodeType.ShaderFilter -> TODO()
-            NodeType.Speakers -> AudioPlayerNode(context)
-            NodeType.Screen -> SurfaceViewNode(context, node.properties)
-            NodeType.SlimeMold -> PhysarumNode(context, node.properties)
-            NodeType.ImageBlend -> ImageBlendNode(context, node.properties)
-            NodeType.CropResize -> CropResizeNode(context, node.properties)
-            NodeType.Shape -> ShapeNode(context, node.properties)
-            NodeType.RingBuffer -> RingBufferNode(context, node.properties)
-            NodeType.Slice3d -> Slice3dNode(context, node.properties)
-            NodeType.MediaEncoder -> EncoderNode(context, node.properties)
-            NodeType.RotateMatrix -> RotateMatrixNode(context, node.properties)
-            NodeType.Properties,
-            NodeType.Creation,
-            NodeType.BCubeImport,
-            NodeType.TextureView,
-            NodeType.Connection -> error("not an executable node type: ${node.type}")
+//            NodeType.Camera -> CameraNode(context, node.properties)
+//            NodeType.FrameDifference -> FrameDifferenceNode(context, node.properties)
+//            NodeType.GrayscaleFilter -> GrayscaleNode(context, node.properties)
+//            NodeType.BlurFilter -> BlurNode(context, node.properties)
+//            NodeType.MultiplyAccumulate -> MacNode(context, node.properties)
+//            NodeType.Microphone -> AudioSourceNode(context, node.properties)
+//            NodeType.Image -> ImageSourceNode(context, node.properties)
+//            NodeType.CubeImport -> CubeImportNode(context, node.properties)
+//            NodeType.AudioFile -> TODO()
+//            NodeType.MediaFile -> DecoderNode(context, node.properties)
+//            NodeType.Lut2d -> Lut2dNode(context, node.properties)
+//            NodeType.Lut3d -> Lut3dNode(context, node.properties)
+//            NodeType.ShaderFilter -> TODO()
+//            NodeType.Speakers -> AudioPlayerNode(context)
+//            NodeType.Screen -> SurfaceViewNode(context, node.properties)
+//            NodeType.SlimeMold -> PhysarumNode(context, node.properties)
+//            NodeType.ImageBlend -> ImageBlendNode(context, node.properties)
+//            NodeType.CropResize -> CropResizeNode(context, node.properties)
+//            NodeType.Shape -> ShapeNode(context, node.properties)
+//            NodeType.RingBuffer -> RingBufferNode(context, node.properties)
+//            NodeType.Slice3d -> Slice3dNode(context, node.properties)
+//            NodeType.MediaEncoder -> EncoderNode(context, node.properties)
+//            NodeType.RotateMatrix -> RotateMatrixNode(context, node.properties)
+//            NodeType.Properties,
+//            NodeType.Creation,
+//            NodeType.BCubeImport,
+//            NodeType.TextureView,
+//            NodeType.Connection -> error("not an executable node type: ${node.type}")
             else -> error("not an executable node type: ${node.type}")
         }
     }
@@ -202,7 +202,7 @@ class NetworkExecutor(
         this.surfaceView = surfaceView
         nodes.values.forEach {
             when (it) {
-                is SurfaceViewNode -> it.setSurfaceView(surfaceView)
+//                is SurfaceViewNode -> it.setSurfaceView(surfaceView)
             }
         }
     }

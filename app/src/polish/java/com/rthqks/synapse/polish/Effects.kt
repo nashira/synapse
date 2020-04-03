@@ -135,6 +135,7 @@ object Effects {
     val quantizer = Network(5).let {
         val crop = it.addNode(NewNode(NodeType.CropResize))
         val blur = it.addNode(NewNode(NodeType.BlurFilter))
+        val sobel = it.addNode(NewNode(NodeType.Sobel))
         val quantizer = it.addNode(NewNode(NodeType.Quantizer))
         it.addLinkNoCompute(
             Link(
@@ -152,18 +153,26 @@ object Effects {
                 BlurNode.INPUT.id
             )
         )
+        it.addLinkNoCompute(
+            Link(
+                blur.id,
+                BlurNode.OUTPUT.id,
+                sobel.id,
+                SobelNode.INPUT.id
+            )
+        )
 //        it.addLinkNoCompute(
 //            Link(
-//                blur.id,
-//                BlurNode.OUTPUT.id,
+//                sobel.id,
+//                SobelNode.OUTPUT.id,
 //                Effect.ID_LUT,
 //                Lut3dNode.INPUT.id
 //            )
 //        )
         it.addLinkNoCompute(
             Link(
-                blur.id,
-                BlurNode.OUTPUT.id,
+                sobel.id,
+                SobelNode.OUTPUT.id,
                 quantizer.id,
                 QuantizerNode.INPUT.id
             )

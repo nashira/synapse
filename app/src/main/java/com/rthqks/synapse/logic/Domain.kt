@@ -196,6 +196,10 @@ val Nodes = listOf(
         add(CropSize, Size(180, 320))
         add(NumElements, floatArrayOf(6f, 6f, 6f))
     },
+    Node(NodeType.Sobel).apply {
+        add(Port(Port.Type.Video, SobelNode.INPUT.id, "Input", false))
+        add(Port(Port.Type.Video, SobelNode.OUTPUT.id, "Output", true))
+    },
     Node(NodeType.Properties).also { it.id = -2 },
     Node(NodeType.Connection).also { it.id = -3 },
     Node(NodeType.Creation).also { it.id = -4 }

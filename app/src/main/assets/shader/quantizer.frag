@@ -35,7 +35,7 @@ float rand(vec2 co) {
 
 void main() {
     vec4 original = texture(input_texture, uv);
-    vec3 elements = round(original.rgb * original.rgb * original.rgb * num_elements);
+    vec3 elements = round(original.rgb * num_elements);
     vec3 ng = pow(vec3(2.0), elements.rgb);
     vec2 gridr = floor(uv * ng.r) / (ng.r - 1.0);
     vec2 gridg = floor(uv * ng.g) / (ng.g - 1.0);
@@ -45,8 +45,9 @@ void main() {
     hash13(vec3(gridr, time)),
     hash13(vec3(gridg, time)),
     hash13(vec3(gridb, time)));
-    //    float f = rand(grid);
+//    vec3 f = vec3(rand(gridr), rand(gridg), rand(gridb));
 //    color = vec4(mix(original.rgb, vec3(1.0), f), 1.0);
+//    color = vec4(1.0 / ng, 1.0);
+//    color = vec4(length(gridr), length(gridg), length(gridb), 1.0);
     color = vec4(f, 1.0);
-    //    color = vec4(vec3(f), 1.0);
 }

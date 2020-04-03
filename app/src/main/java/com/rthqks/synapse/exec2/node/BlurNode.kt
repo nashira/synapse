@@ -184,22 +184,31 @@ class BlurNode(
     private suspend fun onStart() {
         val input = channel(INPUT) ?: error("missing input")
 
-        var copyMatrix = true
-
         for (inEvent in input) {
             val outEvent = channel(OUTPUT)?.receive()
             outEvent?.timestamp = inEvent.timestamp
 
             checkConfig(inEvent.data)
 
-            if (copyMatrix) {
-                copyMatrix = false
+            if (outEvent != null) {
                 val uniform = program1.getUniform(Uniform.Type.Mat4, "texture_matrix0")
                 System.arraycopy(inEvent.data.matrix, 0, uniform.data!!, 0, 16)
                 uniform.dirty = true
-            }
 
-            if (outEvent != null) {
+                program1.getUniform(Uniform.Type.Vec2,
+                    "resolution0").let {
+                    it.dirty = true
+                    it.data!![0] = size.width.toFloat()
+                    it.data!![1] = size.height.toFloat()
+                }
+
+                program2.getUniform(Uniform.Type.Vec2,
+                    "resolution0").let {
+                    it.dirty = true
+                    it.data!![0] = size.width.toFloat()
+                    it.data!![1] = size.height.toFloat()
+                }
+
                 val targetTexture: Texture2d
                 val targetFB: Framebuffer
                 if (outEvent.data == texture2) {
