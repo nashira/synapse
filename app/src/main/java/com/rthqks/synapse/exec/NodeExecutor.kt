@@ -1,116 +1,117 @@
 package com.rthqks.synapse.exec
 
-import com.rthqks.synapse.exec.link.Config
-import com.rthqks.synapse.exec.link.Connection
-import com.rthqks.synapse.exec.link.Event
-import kotlinx.coroutines.CompletableDeferred
-import kotlinx.coroutines.Deferred
+import android.util.Log
 import kotlinx.coroutines.channels.ReceiveChannel
 
 abstract class NodeExecutor(
     context: ExecutionContext
 ) : Executor(context) {
-    abstract suspend fun onCreate()
-    abstract suspend fun onInitialize()
-    abstract suspend fun onStart()
-    abstract suspend fun onStop()
-    abstract suspend fun onRelease()
+    private val linkedSet = mutableSetOf<Connection.Key<*>>()
+    private val cycleSet = mutableSetOf<Connection.Key<*>>()
+    private val connections = mutableMapOf<Connection.Key<*>, Connection<*>>()
+    private val channels = mutableMapOf<Connection.Key<*>, ReceiveChannel<Message<*>>>()
+    private var state: Int = STATE_PAUSED
+    val isResumed: Boolean get() = state == STATE_RESUMED
 
-    suspend fun create() = async(this::onCreate)
-    suspend fun inititalize() = async(this::onInitialize)
-    suspend fun start() = async(this::onStart)
-    suspend fun stop() = async(this::onStop)
+    abstract suspend fun onSetup()
+    abstract suspend fun <T> onConnect(key: Connection.Key<T>, producer: Boolean)
+    abstract suspend fun <T> onDisconnect(key: Connection.Key<T>, producer: Boolean)
+    abstract suspend fun onRelease()
+    open suspend fun onPause() {}
+    open suspend fun onResume() {}
+
+    suspend fun setup() = async(this::onSetup)
+
+    suspend fun pause() = await {
+        state = STATE_PAUSED
+        onPause()
+    }
+
+    suspend fun resume() = await {
+        state = STATE_RESUMED
+        onResume()
+    }
+
+    suspend fun <T> stopConsumer(key: Connection.Key<T>, channel: ReceiveChannel<Message<T>>) =
+        async {
+            val con = connection(key)
+            val linked = con?.consumerCount ?: 0 > 1
+            setLinked(key, linked)
+            if (!linked) {
+                channels.remove(key)
+            }
+
+            Log.d(TAG, "onDisconnect ${key.id}")
+            onDisconnect(key, true)
+            con?.removeConsumer(channel)
+        }
+
+    suspend fun waitForConsumer(key: Connection.Key<*>) = async {
+        channels.remove(key)
+        Log.d(TAG, "onDisconnect ${key.id}")
+        onDisconnect(key, false)
+    }
+
     override suspend fun release() {
-        exec { onRelease() }
+        exec {
+            Log.d(TAG, "onRelease")
+            onRelease()
+        }
         super.release()
     }
 
-    private val connectionSet = mutableSetOf<Connection.Key<*, *>>()
-    private val cycleSet = mutableSetOf<Connection.Key<*, *>>()
-    private val connections = mutableMapOf<Connection.Key<*, *>, Connection<*, *>>()
-    private val channels = mutableMapOf<Connection.Key<*, *>, ReceiveChannel<*>>()
-    private val configs = mutableMapOf<Connection.Key<*, *>, Config>()
-    private val waitingConfigs =
-        mutableMapOf<Connection.Key<*, *>, MutableSet<CompletableDeferred<Config>>>()
+    suspend fun <T> startConsumer(key: Connection.Key<T>, channel: ReceiveChannel<Message<T>>) =
+        async {
+            channels[key] = channel
+            Log.d(TAG, "onConnect ${key.id}")
+            onConnect(key, false)
+        }
 
-    open suspend fun <C : Config, E : Event> makeConfig(key: Connection.Key<C, E>): C {
-        error("makeConfig not implemented")
+    suspend fun <T> getConsumer(key: Connection.Key<T>) = async {
+        val connection = connections.getOrPut(key) { Connection<T>() }
+
+        channels[key] = connection.producer()
+        val consumer = connection.consumer()
+        Log.d(TAG, "onConnect ${key.id}")
+        onConnect(key, true)
+        return@async consumer
     }
 
     @Suppress("UNCHECKED_CAST")
-    suspend fun <C : Config, E : Event> output(key: Connection.Key<C, E>): Connection<C, E> = await {
-        when (val existing = connections[key] as Connection<C, E>?) {
-            null -> {
-                val config = getConfig(key)
-                Connection<C, E>(config).also {
-                    connections[key] = it
-                    channels[key] = it.producer()
-                }
-            }
-            else -> existing
+    fun <T> connection(key: Connection.Key<T>): Connection<T>? {
+        return connections[key] as Connection<T>?
+    }
+
+    @Suppress("UNCHECKED_CAST")
+    fun <T> channel(key: Connection.Key<T>): ReceiveChannel<Message<T>>? {
+        return channels[key] as ReceiveChannel<Message<T>>?
+    }
+
+    fun connected(key: Connection.Key<*>) = key in channels
+
+    fun setLinked(key: Connection.Key<*>, linked: Boolean = true) {
+        if (linked) {
+            linkedSet += key
+        } else {
+            linkedSet -= key
         }
     }
 
-    suspend fun <C : Config, E : Event> input(key: Connection.Key<C, E>, connection: Connection<C, E>) = await {
-        connections[key] = connection
-        channels[key] = connection.consumer()
-    }
+    fun linked(key: Connection.Key<*>): Boolean = key in linkedSet
 
-    @Suppress("UNCHECKED_CAST")
-    suspend fun <C : Config, E : Event> getConfig(key: Connection.Key<C, E>): C {
-        return configs.getOrPut(key) {
-            makeConfig(key)
-        } as C
-    }
-
-    open suspend fun <C : Config, E : Event> setConfig(key: Connection.Key<C, E>, config: C) {
-        synchronized(configs) {
-            configs[key] = config
-            waitingConfigs.remove(key)?.forEach { it.complete(config) }
+    fun setCycle(key: Connection.Key<*>, inCycle: Boolean = true) {
+        if (inCycle) {
+            cycleSet += key
+        } else {
+            cycleSet -= key
         }
     }
 
-    @Suppress("UNCHECKED_CAST")
-    protected fun <C : Config, E : Event> connection(key: Connection.Key<C, E>): Connection<C, E>? {
-        return connections[key] as Connection<C, E>?
-    }
-
-    @Suppress("UNCHECKED_CAST")
-    protected fun <C : Config, E : Event> channel(key: Connection.Key<C, E>): ReceiveChannel<E>? {
-        return channels[key] as ReceiveChannel<E>?
-    }
-
-    @Suppress("UNCHECKED_CAST")
-    protected fun <C : Config, E : Event> config(key: Connection.Key<C, E>): C? {
-        return configs[key] as C?
-    }
-
-    @Suppress("UNCHECKED_CAST")
-    protected fun <C : Config, E : Event> configAsync(key: Connection.Key<C, E>): Deferred<C> {
-        synchronized(configs) {
-            configs[key]?.let { return@configAsync CompletableDeferred(it as C) }
-
-            val deferred = CompletableDeferred<C>()
-            waitingConfigs.getOrPut(key) { mutableSetOf() }
-                .add(deferred as CompletableDeferred<Config>)
-
-            return deferred
-        }
-    }
-
-    fun <C : Config, E : Event> setLinked(key: Connection.Key<C, E>) {
-        connectionSet += key
-    }
-
-    fun <C : Config, E : Event> linked(key: Connection.Key<C, E>): Boolean = key in connectionSet
-
-    fun <C : Config, E : Event> setCycle(key: Connection.Key<C, E>) {
-        cycleSet += key
-    }
-
-    fun <C : Config, E : Event> cycle(key: Connection.Key<C, E>): Boolean = key in cycleSet
+    fun cycle(key: Connection.Key<*>): Boolean = key in cycleSet
 
     companion object {
+        const val STATE_PAUSED = 0
+        const val STATE_RESUMED = 1
         const val TAG = "NodeExecutor"
     }
 }

@@ -2,7 +2,7 @@ package com.rthqks.synapse.polish
 
 import android.util.Size
 import com.rthqks.synapse.R
-import com.rthqks.synapse.exec2.node.*
+import com.rthqks.synapse.exec.node.*
 import com.rthqks.synapse.logic.*
 
 

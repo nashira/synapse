@@ -8,8 +8,8 @@ import android.util.Size
 import android.view.SurfaceView
 import android.view.TextureView
 import com.rthqks.synapse.exec.ExecutionContext
-import com.rthqks.synapse.exec2.NetworkExecutor
-import com.rthqks.synapse.exec2.node.*
+import com.rthqks.synapse.exec.NetworkExecutor
+import com.rthqks.synapse.exec.node.*
 import com.rthqks.synapse.logic.*
 import kotlinx.coroutines.*
 import java.util.concurrent.ConcurrentHashMap

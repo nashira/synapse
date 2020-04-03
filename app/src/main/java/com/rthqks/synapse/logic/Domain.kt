@@ -5,11 +5,11 @@ import android.media.AudioFormat
 import android.media.MediaRecorder
 import android.net.Uri
 import android.util.Size
-import com.rthqks.synapse.exec.node.ImageBlendNode
-import com.rthqks.synapse.exec.node.Lut2dNode
-import com.rthqks.synapse.exec.node.PhysarumNode
-import com.rthqks.synapse.exec.node.ShapeNode
-import com.rthqks.synapse.exec2.node.*
+import com.rthqks.synapse.exec.node.*
+import com.rthqks.synapse.exec_dep.node.ImageBlendNode
+import com.rthqks.synapse.exec_dep.node.Lut2dNode
+import com.rthqks.synapse.exec_dep.node.PhysarumNode
+import com.rthqks.synapse.exec_dep.node.ShapeNode
 
 val AudioSampleRate = Property.Key("audio_sample_rate", Int::class.java)
 val AudioEncoding = Property.Key("audio_encoding", Int::class.java)

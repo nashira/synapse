@@ -54,7 +54,8 @@ class ExecutionModule {
     fun provideGlesManager(assetManager: AssetManager) = GlesManager(assetManager)
 
     @Provides
-    fun provideCameraManager(context: Context) = CameraManager(context)
+    fun provideCameraManager(context: Context) =
+        CameraManager(context)
 
     @Provides
     @Named("video")

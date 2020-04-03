@@ -68,7 +68,14 @@ class CameraManager(
         val orientation = characteristics[CameraCharacteristics.SENSOR_ORIENTATION] ?: 0
         val surfaceRotation = ORIENTATIONS[displayRotation] ?: 0
         val rotation = (surfaceRotation + orientation + 270) % 360
-        return Conf(id, size, frameRate, rotation, stabilize, facing)
+        return Conf(
+            id,
+            size,
+            frameRate,
+            rotation,
+            stabilize,
+            facing
+        )
     }
 
     companion object {
