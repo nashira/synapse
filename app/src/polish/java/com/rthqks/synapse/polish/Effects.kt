@@ -133,10 +133,10 @@ object Effects {
     }
 
     val quantizer = Network(5).let {
-//        val crop = it.addNode(NewNode(NodeType.CropResize))
         val blur = it.addNode(NewNode(NodeType.BlurFilter))
         val sobel = it.addNode(NewNode(NodeType.Sobel))
         val quantizer = it.addNode(NewNode(NodeType.Quantizer))
+        val blend = it.addNode(NewNode(NodeType.ImageBlend))
         it.addLinkNoCompute(
             Link(
                 Effect.ID_CAMERA,
@@ -153,30 +153,47 @@ object Effects {
                 SobelNode.INPUT.id
             )
         )
-        it.addLinkNoCompute(
-            Link(
-                sobel.id,
-                SobelNode.OUTPUT.id,
-                Effect.ID_LUT,
-                Lut3dNode.INPUT.id
-            )
-        )
 //        it.addLinkNoCompute(
 //            Link(
 //                sobel.id,
 //                SobelNode.OUTPUT.id,
-//                quantizer.id,
-//                QuantizerNode.INPUT.id
-//            )
-//        )
-//        it.addLinkNoCompute(
-//            Link(
-//                quantizer.id,
-//                QuantizerNode.OUTPUT.id,
 //                Effect.ID_LUT,
 //                Lut3dNode.INPUT.id
 //            )
 //        )
+        it.addLinkNoCompute(
+            Link(
+                sobel.id,
+                SobelNode.OUTPUT.id,
+                quantizer.id,
+                QuantizerNode.INPUT.id
+            )
+        )
+        it.addLinkNoCompute(
+            Link(
+                quantizer.id,
+                QuantizerNode.OUTPUT.id,
+                blend.id,
+                ImageBlendNode.INPUT_BLEND.id
+            )
+        )
+
+        it.addLinkNoCompute(
+            Link(
+                Effect.ID_CAMERA,
+                CameraNode.OUTPUT.id,
+                blend.id,
+                ImageBlendNode.INPUT_BASE.id
+            )
+        )
+        it.addLinkNoCompute(
+            Link(
+                blend.id,
+                ImageBlendNode.OUTPUT.id,
+                Effect.ID_LUT,
+                Lut3dNode.INPUT.id
+            )
+        )
         blur.properties[BlurSize] = 0
         Effect(it, "Squares").apply {
             val prop = blur.properties.getProperty(CropSize)!!
@@ -208,6 +225,16 @@ object Effects {
                     R.drawable.ic_add,
                     Choice(false, R.string.property_label_off, R.drawable.circle),
                     Choice(true, R.string.property_label_on, R.drawable.circle)
+                )
+            )
+            addProperty(
+                blur.properties.getProperty(BlurSize)!!, ToggleType(
+                    R.string.property_name_num_passes,
+                    R.drawable.ic_layers,
+                    Choice(0, R.string.property_label_0, R.drawable.square),
+                    Choice(5, R.string.property_label_5, R.drawable.square),
+                    Choice(9, R.string.property_label_9, R.drawable.square),
+                    Choice(13, R.string.property_label_13, R.drawable.square)
                 )
             )
 

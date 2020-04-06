@@ -1,7 +1,6 @@
 package com.rthqks.synapse.logic
 
 import android.net.Uri
-import android.util.Size
 import androidx.annotation.DrawableRes
 import androidx.annotation.StringRes
 

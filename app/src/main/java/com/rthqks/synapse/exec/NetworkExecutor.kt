@@ -158,6 +158,7 @@ open class NetworkExecutor(context: ExecutionContext) : Executor(context) {
             NodeType.Quantizer -> QuantizerNode(context, properties)
             NodeType.BlurFilter -> BlurNode(context, properties)
             NodeType.Sobel -> SobelNode(context, properties)
+            NodeType.ImageBlend -> ImageBlendNode(context, properties)
             else -> error("check yo nodes")
         }
     }

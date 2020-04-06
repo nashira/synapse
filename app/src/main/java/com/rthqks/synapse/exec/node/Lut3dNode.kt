@@ -9,7 +9,6 @@ import com.rthqks.synapse.exec.ExecutionContext
 import com.rthqks.synapse.exec.Message
 import com.rthqks.synapse.exec.NodeExecutor
 import com.rthqks.synapse.gl.*
-import com.rthqks.synapse.logic.FrameRate
 import com.rthqks.synapse.logic.LutStrength
 import com.rthqks.synapse.logic.Properties
 import kotlinx.coroutines.Job
@@ -25,7 +24,6 @@ class Lut3dNode(
     private var inputJob: Job? = null
     private var lutJob: Job? = null
     private var matrixJob: Job? = null
-    private val frameDuration: Long get() = 1000L / properties[FrameRate]
     private val lutStrength: Float get() = properties[LutStrength]
     private var outputSize = Size(0, 0)
     private var inputConfig: Texture2d? = null
@@ -204,7 +202,6 @@ class Lut3dNode(
             inputEvent = msg
             checkConfig()
             execute()
-//            debounceExecute()
         }
         inputEvent?.let { Log.d(TAG, "got ${it.count} input events") }
         inputEvent?.release()
@@ -216,8 +213,6 @@ class Lut3dNode(
         for (msg in channel) {
             lutEvent?.release()
             lutEvent = msg
-            checkConfig()
-//            debounceExecute()
         }
         lutEvent?.let { Log.d(TAG, "got ${it.count} lut events") }
         lutEvent?.release()

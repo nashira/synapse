@@ -210,4 +210,6 @@
     <string name="property_label_xl">XL</string>
     <string name="name_node_type_quantizer">Quantizer</string>
     <string name="name_node_type_sobel">Sobel</string>
+    <string name="property_label_0">0</string>
+    <string name="property_label_13">13</string>
 </resources>

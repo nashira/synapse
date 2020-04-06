@@ -4,7 +4,8 @@ import android.os.SystemClock
 import android.util.Log
 import android.view.SurfaceView
 import com.rthqks.synapse.exec.ExecutionContext
-import com.rthqks.synapse.logic.*
+import com.rthqks.synapse.logic.Connector
+import com.rthqks.synapse.logic.Network
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.actor

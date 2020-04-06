@@ -258,6 +258,7 @@ class BlurNode(
                         )
                     }
                 }
+                outEvent.timestamp = inEvent.timestamp
                 outEvent.queue()
             }
 

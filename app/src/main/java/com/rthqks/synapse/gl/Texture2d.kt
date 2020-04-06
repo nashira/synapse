@@ -4,7 +4,6 @@ import android.graphics.Bitmap
 import android.opengl.GLES11Ext
 import android.opengl.GLES30.*
 import android.opengl.GLUtils
-import android.util.Log
 
 class Texture2d(
     val target: Int = GL_TEXTURE_2D,

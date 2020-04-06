@@ -1,7 +1,6 @@
 package com.rthqks.synapse.gl
 
 import android.opengl.GLES30.*
-import android.util.Log
 
 class Texture3d(
     val repeat: Int = GL_CLAMP_TO_EDGE,
