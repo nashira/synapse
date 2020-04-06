@@ -1,6 +1,7 @@
 package com.rthqks.synapse.exec.node
 
 import android.opengl.GLES30.*
+import android.opengl.Matrix
 import android.util.Log
 import android.util.Size
 import com.rthqks.synapse.exec.Connection
@@ -8,12 +9,10 @@ import com.rthqks.synapse.exec.ExecutionContext
 import com.rthqks.synapse.exec.Message
 import com.rthqks.synapse.exec.NodeExecutor
 import com.rthqks.synapse.gl.*
-import com.rthqks.synapse.logic.BlurSize
-import com.rthqks.synapse.logic.NumPasses
-import com.rthqks.synapse.logic.Properties
-import com.rthqks.synapse.logic.ScaleFactor
+import com.rthqks.synapse.logic.*
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
+import kotlin.math.abs
 
 class BlurNode(
     context: ExecutionContext,
@@ -24,8 +23,6 @@ class BlurNode(
     private val gl = context.glesManager
     private val am = context.assetManager
     private var startJob: Job? = null
-    private var inputSize = Size(0, 0)
-    private var size = Size(0, 0)
     private var config: Texture2d? = null
 
     private val texture1 = Texture2d()
@@ -39,9 +36,16 @@ class BlurNode(
     private val program1 = Program()
     private val program2 = Program()
 
-    private val blurSize: Int get() = properties[BlurSize]
     private val passes: Int get() = properties[NumPasses]
-    private val scale: Int get() = properties[ScaleFactor]
+    private val scale: Boolean get() = properties[CropEnabled]
+    private var grayscale = 0
+    private var blurSize: Int = 0
+    private var inputSize = Size(0, 0)
+    private var outputSize = Size(0, 0)
+    private var outScaleX: Float = 1f
+    private var outScaleY: Float = 1f
+    private var stepSize = FloatArray(4)
+    private var stepSizeRot = FloatArray(8)
 
     override suspend fun onSetup() {
         gl.glContext {
@@ -83,60 +87,88 @@ class BlurNode(
 
     private suspend fun checkConfig(texture: Texture2d) {
         val programChanged = config?.oes != texture.oes
-        val sizeChanged = inputSize.width != texture.width
+
+        val inputSizeChanged = inputSize.width != texture.width
                 || inputSize.height != texture.height
 
-        if (sizeChanged) {
-            inputSize = Size(texture.width, texture.height)
-            size = inputSize
-//            size = Size(inputSize.width / scale, inputSize.height / scale)
-            gl.glContext {
-                listOf(texture1, texture2, texture3).forEach {
-                    it.initData(
-                        0,
-                        texture.internalFormat,
-                        size.width,
-                        size.height,
-                        texture.format,
-                        texture.type
-                    )
-                    Log.d(TAG, "glGetError() ${glGetError()}")
-                }
-                framebuffer1.release()
-                framebuffer1.initialize(texture1)
-                framebuffer2.release()
-                framebuffer2.initialize(texture2)
-                framebuffer3.release()
-                framebuffer3.initialize(texture3)
+        val cropSize = properties[CropSize]
 
+        val outputSizeChanged = if (scale) texture2.width != cropSize.width
+                || texture2.height != cropSize.height
+        else texture2.width != texture.width
+                || texture2.height != texture.height
+
+        val grayEnabled = if (properties[GrayEnabled]) 1 else 0
+        val blurSizeChanged = blurSize != properties[BlurSize]
+        val grayscaleChanged = grayscale != grayEnabled
+
+        if (inputSizeChanged || outputSizeChanged) {
+            inputSize = Size(texture.width, texture.height)
+            outputSize = if (scale) cropSize else inputSize
+            // camera sends matrix to transform uv to correct space, need to transform offsets too
+            stepSize[0] = 1f / outputSize.width
+            stepSize[1] = 1f / outputSize.height
+            stepSizeRot[0] = 1f / outputSize.width
+            stepSizeRot[1] = 1f / outputSize.height
+
+            val inAspect = inputSize.width / inputSize.height.toFloat()
+            val outAspect = outputSize.width / outputSize.height.toFloat()
+
+            outScaleX = if (inAspect > outAspect) outAspect / inAspect else 1f
+            outScaleY = if (inAspect < outAspect) inAspect / outAspect else 1f
+        }
+
+        if (outputSizeChanged) {
+            gl.glContext {
+                initializeFramebuffer(texture1, framebuffer1, texture)
+                initializeFramebuffer(texture2, framebuffer2, texture)
+                initializeFramebuffer(texture3, framebuffer3, texture)
             }
         }
 
         if (programChanged) {
             initializeProgram(program1, texture.oes)
             initializeProgram(program2, false)
-
-            program2.getUniform(Uniform.Type.Vec2, "direction").let {
-                val data = it.data!!
-                data[0] = 0f
-                data[1] = 1f
-            }
             config = texture
         }
+
+        if (blurSizeChanged) {
+//            if (blurSize == 0) {
+//
+//            } else {
+//
+//            }
+            blurSize = properties[BlurSize]
+            program1.getUniform(Uniform.Type.Int, "mode").set(blurSize)
+            program2.getUniform(Uniform.Type.Int, "mode").set(blurSize)
+        }
+
+        if (grayscaleChanged) {
+            grayscale = grayEnabled
+            program1.getUniform(Uniform.Type.Int, "grayscale").set(grayscale)
+        }
+    }
+
+    private fun initializeFramebuffer(target: Texture2d, framebuffer: Framebuffer, config: Texture2d) {
+        target.initData(
+            0,
+            config.internalFormat,
+            outputSize.width,
+            outputSize.height,
+            config.format,
+            config.type
+        )
+        Log.d(TAG, "glGetError() ${glGetError()}")
+        framebuffer.release()
+        framebuffer.initialize(target)
     }
 
     private suspend fun initializeProgram(
         program: Program,
         oes: Boolean
     ) {
-        val fragName = when (blurSize) {
-            13 -> "shader/blur_13.frag"
-            5 -> "shader/blur_5.frag"
-            else -> "shader/blur_9.frag"
-        }
-
         val vertexSource = am.readTextAsset("shader/blur.vert")
-        val fragmentSource = am.readTextAsset(fragName).let {
+        val fragmentSource = am.readTextAsset("shader/blur.frag").let {
             if (oes) {
                 it.replace("//{EXT}", "#define EXT")
             } else {
@@ -158,25 +190,26 @@ class BlurNode(
                     "texture_matrix0",
                     GlesManager.identityMat()
                 )
-
                 addUniform(
                     Uniform.Type.Int,
                     "input_texture0",
                     0
                 )
-
                 addUniform(
                     Uniform.Type.Vec2,
-                    "resolution0",
-                    floatArrayOf(size.width.toFloat(), size.height.toFloat())
+                    "step_size",
+                    floatArrayOf(0f, 0f)
                 )
-
                 addUniform(
-                    Uniform.Type.Vec2,
-                    "direction",
-                    floatArrayOf(1f, 0f)
+                    Uniform.Type.Int,
+                    "mode",
+                    blurSize
                 )
-
+                addUniform(
+                    Uniform.Type.Int,
+                    "grayscale",
+                    0
+                )
             }
         }
     }
@@ -192,22 +225,14 @@ class BlurNode(
 
             if (outEvent != null) {
                 val uniform = program1.getUniform(Uniform.Type.Mat4, "texture_matrix0")
-                System.arraycopy(inEvent.data.matrix, 0, uniform.data!!, 0, 16)
+                val matrix = uniform.data!!
+                // multiply our coords by input matrix before we scale or do anything to it
+                Matrix.multiplyMV(stepSizeRot, 4, matrix, 0, stepSizeRot, 0)
+                System.arraycopy(inEvent.data.matrix, 0, matrix, 0, 16)
+                Matrix.translateM(matrix, 0, 0.5f, 0.5f, 0f)
+                Matrix.scaleM(matrix, 0, outScaleX, outScaleY, 1f)
+                Matrix.translateM(matrix, 0, -0.5f, -0.5f, 0f)
                 uniform.dirty = true
-
-                program1.getUniform(Uniform.Type.Vec2,
-                    "resolution0").let {
-                    it.dirty = true
-                    it.data!![0] = size.width.toFloat()
-                    it.data!![1] = size.height.toFloat()
-                }
-
-                program2.getUniform(Uniform.Type.Vec2,
-                    "resolution0").let {
-                    it.dirty = true
-                    it.data!![0] = size.width.toFloat()
-                    it.data!![1] = size.height.toFloat()
-                }
 
                 val targetTexture: Texture2d
                 val targetFB: Framebuffer
@@ -220,11 +245,18 @@ class BlurNode(
                 }
 
                 gl.glContext {
-                    executeGl(
-                        inEvent,
-                        framebuffer1, texture1,
-                        targetFB, targetTexture
-                    )
+                    if (blurSize > 0) {
+                        executeBlur(
+                            inEvent,
+                            framebuffer1, texture1,
+                            targetFB, targetTexture
+                        )
+                    } else {
+                        executeNonBlur(
+                            inEvent,
+                            targetFB
+                        )
+                    }
                 }
                 outEvent.queue()
             }
@@ -233,21 +265,45 @@ class BlurNode(
         }
     }
 
-    private fun executeGl(
+    private fun executeNonBlur(
+        msg: Message<Texture2d>,
+        framebuffer: Framebuffer
+    ) {
+        glViewport(0, 0, outputSize.width, outputSize.height)
+
+        framebuffer.bind()
+        glUseProgram(program1.programId)
+        msg.data.bind(GL_TEXTURE0)
+        program1.bindUniforms()
+        mesh.execute()
+    }
+
+    private fun executeBlur(
         msg: Message<Texture2d>,
         framebuffer1: Framebuffer, texture1: Texture2d,
         framebuffer2: Framebuffer, texture2: Texture2d
     ) {
         val passes = passes
 
-        glViewport(0, 0, size.width, size.height)
-
-        program2.getUniform(Uniform.Type.Vec2, "resolution0").let {
-            val data = it.data!!
-            data[0] = size.width.toFloat()
-            data[1] = size.height.toFloat()
+        program1.getUniform(
+            Uniform.Type.Vec2,
+            "step_size"
+        ).let {
             it.dirty = true
+            it.data!![0] = abs(stepSizeRot[4])
+            it.data!![1] = abs(stepSizeRot[5])
         }
+
+        program2.getUniform(
+            Uniform.Type.Vec2,
+            "step_size"
+        ).let {
+            it.dirty = true
+            it.data!![0] = -stepSize[0]
+            it.data!![1] = stepSize[1]
+        }
+
+        glViewport(0, 0, outputSize.width, outputSize.height)
 
         framebuffer1.bind()
         glUseProgram(program1.programId)
@@ -264,10 +320,10 @@ class BlurNode(
         for (i in 1 until passes) {
             framebuffer1.bind()
             texture2.bind(GL_TEXTURE0)
-            program2.getUniform(Uniform.Type.Vec2, "direction").let {
+            program2.getUniform(Uniform.Type.Vec2, "step_size").let {
                 val data = it.data!!
-                data[0] = 1f
-                data[1] = 0f
+                data[0] = stepSize[0]
+                data[1] = stepSize[1]
                 it.dirty = true
             }
             program2.bindUniforms()
@@ -276,10 +332,10 @@ class BlurNode(
             framebuffer2.bind()
             texture1.bind(GL_TEXTURE0)
 
-            program2.getUniform(Uniform.Type.Vec2, "direction").let {
+            program2.getUniform(Uniform.Type.Vec2, "step_size").let {
                 val data = it.data!!
-                data[0] = 0f
-                data[1] = 1f
+                data[0] = -stepSize[0]
+                data[1] = stepSize[1]
                 it.dirty = true
             }
             program2.bindUniforms()

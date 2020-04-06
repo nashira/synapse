@@ -27,6 +27,8 @@ val RotationSpeed = Property.Key("rotation_speed", Float::class.java)
 val BlurSize = Property.Key("blur_size", Int::class.java)
 val NumPasses = Property.Key("num_passes", Int::class.java)
 val ScaleFactor = Property.Key("scale_factor", Int::class.java)
+val CropEnabled = Property.Key("crop_enabled", Boolean::class.java)
+val GrayEnabled = Property.Key("gray_enabled", Boolean::class.java)
 val LutStrength = Property.Key("lut_strength", Float::class.java)
 val AccumulateFactor = Property.Key("accumulate_factor", Float::class.java)
 val MultiplyFactor = Property.Key("multiply_factor", Float::class.java)
@@ -99,6 +101,9 @@ val Nodes = listOf(
         add(ScaleFactor, 2)
         add(NumPasses, 1)
         add(BlurSize, 9)
+        add(CropEnabled, false)
+        add(GrayEnabled, true)
+        add(CropSize, Size(320, 320))
     },
     Node(NodeType.Lut2d).apply {
         add(Port(Port.Type.Video, Lut2dNode.INPUT.id, "Input", false))
@@ -204,44 +209,6 @@ val Nodes = listOf(
     Node(NodeType.Connection).also { it.id = -3 },
     Node(NodeType.Creation).also { it.id = -4 }
 )
-
-val KeyMap: Map<String, Property.Key<*>> = listOf(
-    AudioSampleRate,
-    AudioEncoding,
-    AudioChannel,
-    AudioSource,
-    CameraFacing,
-    VideoSize,
-    CropSize,
-    HistorySize,
-    SliceDirection,
-    FrameRate,
-    Stabilize,
-    Rotation,
-    RotationSpeed,
-    BlurSize,
-    NumPasses,
-    ScaleFactor,
-    LutStrength,
-    AccumulateFactor,
-    MultiplyFactor,
-    MediaUri,
-    LutUri,
-    CropToFit,
-    NetworkName,
-    NumAgents,
-    FixedWidth,
-    BlendMode,
-    Opacity,
-    SensorAngle,
-    SensorDistance,
-    TravelAngle,
-    TravelDistance,
-    SliceDepth,
-    Recording,
-    NumElements,
-    CellularAutoNode.GridSize
-).map { it.name to it }.toMap()
 
 val NodeMap = Nodes.map { it.type to it }.toMap()
 

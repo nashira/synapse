@@ -189,11 +189,13 @@ class CropResizeNode(
 
         val uniform = program.getUniform(Uniform.Type.Mat4, "input_matrix")
         val matrix = uniform.data!!
-        System.arraycopy(msg.data.matrix, 0, matrix, 0, 16)
-        Matrix.translateM(matrix, 0, 0.5f, 0.5f, 0f)
-        Matrix.scaleM(matrix, 0, outScaleX, outScaleY, 1f)
-        Matrix.translateM(matrix, 0, -0.5f, -0.5f, 0f)
-        uniform.dirty = true
+//        if (!msg.data.matrix.contentEquals(matrix)) {
+            System.arraycopy(msg.data.matrix, 0, matrix, 0, 16)
+            Matrix.translateM(matrix, 0, 0.5f, 0.5f, 0f)
+            Matrix.scaleM(matrix, 0, outScaleX, outScaleY, 1f)
+            Matrix.translateM(matrix, 0, -0.5f, -0.5f, 0f)
+            uniform.dirty = true
+//        }
 
         glesManager.glContext {
             GLES30.glUseProgram(program.programId)

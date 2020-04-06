@@ -13,6 +13,7 @@ import androidx.room.Index
 data class PropertyData(
     val networkId: Int,
     val nodeId: Int,
+    val type: Int,
     val key: String,
     var value: String?
 )

@@ -48,11 +48,11 @@ class PolishViewModel @Inject constructor(
 
         viewModelScope.launch {
             withContext(Dispatchers.IO) {
-                dao.getProperties(0).forEach { properties[it.key] = it.value }
+                dao.getProperties(0).forEach { properties.fromString(it.type, it.key, it.value) }
 
-                listOf(Effects.timeWarp, Effects.rotoHue, Effects.squares).forEach { effect ->
+                listOf(Effects.timeWarp, Effects.rotoHue).forEach { effect ->
                     dao.getProperties(effect.network.id)
-                        .forEach { effect.properties[it.key] = it.value }
+                        .forEach { effect.properties.fromString(it.type, it.key, it.value) }
                 }
             }
 
@@ -131,6 +131,7 @@ class PolishViewModel @Inject constructor(
         value: T
     ) {
         properties[key] = value
+        val type = properties.getType(key)
         val string = properties.getString(key)
         analytics.logEvent(Analytics.Event.EditSetting(key.name, string))
 
@@ -138,6 +139,7 @@ class PolishViewModel @Inject constructor(
             dao.insertProperty(
                 PropertyData(
                     0, 0,
+                    type,
                     key.name,
                     string
                 )
@@ -215,6 +217,7 @@ class PolishViewModel @Inject constructor(
                 dao.insertProperty(
                     PropertyData(
                         it.network.id, 0,
+                        it.properties.getType(property.key),
                         property.key.name,
                         it.properties.getString(property.key)
                     )

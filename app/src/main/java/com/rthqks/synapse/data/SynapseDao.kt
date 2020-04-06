@@ -82,7 +82,7 @@ abstract class SynapseDao {
             val properties = getProperties(it.id)
             Network(it.id).also { network ->
                 properties.filter { it.nodeId == -1 }.forEach {
-                    network.properties[it.key] = it.value
+                    network.properties.fromString(it.type, it.key, it.value)
                 }
             }
         }
@@ -103,10 +103,8 @@ abstract class SynapseDao {
         links.map { Link(it.fromNodeId, it.fromKey, it.toNodeId, it.toKey) }.let(network::addLinks)
 
         properties.forEach {
-            network.getNode(it.nodeId)?.let { node ->
-                node.properties[it.key] = it.value
-            } ?: run {
-                network.properties[it.key] = it.value
+            network.getNode(it.nodeId)?.properties?.fromString(it.type, it.key, it.value) ?: run {
+                network.properties.fromString(it.type, it.key, it.value)
             }
         }
 

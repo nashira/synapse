@@ -18,7 +18,8 @@ uniform samplerExternalOES input_texture;
 uniform sampler2D input_texture;
 #endif
 
-
 void main() {
+//    float c = dot(texture(input_texture, uv).rgb, TRANSFORM);
+//    color = vec4(vec3(c), 1.0);
     color = texture(input_texture, uv);
 }

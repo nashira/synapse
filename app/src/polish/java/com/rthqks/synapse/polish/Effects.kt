@@ -133,7 +133,7 @@ object Effects {
     }
 
     val quantizer = Network(5).let {
-        val crop = it.addNode(NewNode(NodeType.CropResize))
+//        val crop = it.addNode(NewNode(NodeType.CropResize))
         val blur = it.addNode(NewNode(NodeType.BlurFilter))
         val sobel = it.addNode(NewNode(NodeType.Sobel))
         val quantizer = it.addNode(NewNode(NodeType.Quantizer))
@@ -141,14 +141,6 @@ object Effects {
             Link(
                 Effect.ID_CAMERA,
                 CameraNode.OUTPUT.id,
-                crop.id,
-                CropResizeNode.INPUT.id
-            )
-        )
-        it.addLinkNoCompute(
-            Link(
-                crop.id,
-                CropResizeNode.OUTPUT.id,
                 blur.id,
                 BlurNode.INPUT.id
             )
@@ -161,33 +153,34 @@ object Effects {
                 SobelNode.INPUT.id
             )
         )
-//        it.addLinkNoCompute(
-//            Link(
-//                sobel.id,
-//                SobelNode.OUTPUT.id,
-//                Effect.ID_LUT,
-//                Lut3dNode.INPUT.id
-//            )
-//        )
         it.addLinkNoCompute(
             Link(
                 sobel.id,
                 SobelNode.OUTPUT.id,
-                quantizer.id,
-                QuantizerNode.INPUT.id
-            )
-        )
-        it.addLinkNoCompute(
-            Link(
-                quantizer.id,
-                QuantizerNode.OUTPUT.id,
                 Effect.ID_LUT,
                 Lut3dNode.INPUT.id
             )
         )
+//        it.addLinkNoCompute(
+//            Link(
+//                sobel.id,
+//                SobelNode.OUTPUT.id,
+//                quantizer.id,
+//                QuantizerNode.INPUT.id
+//            )
+//        )
+//        it.addLinkNoCompute(
+//            Link(
+//                quantizer.id,
+//                QuantizerNode.OUTPUT.id,
+//                Effect.ID_LUT,
+//                Lut3dNode.INPUT.id
+//            )
+//        )
+        blur.properties[BlurSize] = 0
         Effect(it, "Squares").apply {
-            val prop = crop.properties.getProperty(CropSize)!!
-            prop.value = Size(180, 320)
+            val prop = blur.properties.getProperty(CropSize)!!
+            prop.value = Size(1080, 1920)
             addProperty(
                 prop, ToggleType(
                     R.string.property_name_grid_size,
@@ -198,8 +191,28 @@ object Effects {
                     Choice(Size(1080, 1920), R.string.property_label_xl, R.drawable.square)
                 )
             )
+            val propCrop = blur.properties.getProperty(CropEnabled)!!
+            propCrop.value = false
+            addProperty(
+                propCrop, ToggleType(
+                    R.string.property_name_grid_size,
+                    R.drawable.ic_add,
+                    Choice(false, R.string.property_label_off, R.drawable.square),
+                    Choice(true, R.string.property_label_on, R.drawable.square)
+                )
+            )
+
+            addProperty(
+                blur.properties.getProperty(GrayEnabled)!!, ToggleType(
+                    R.string.property_name_grid_size,
+                    R.drawable.ic_add,
+                    Choice(false, R.string.property_label_off, R.drawable.circle),
+                    Choice(true, R.string.property_label_on, R.drawable.circle)
+                )
+            )
+
             val np = blur.properties.getProperty(NumPasses)!!
-            np.value = 2
+            np.value = 1
             addProperty(
                 np, ToggleType(
                     R.string.property_name_num_passes,

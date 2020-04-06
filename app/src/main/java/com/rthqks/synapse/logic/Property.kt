@@ -64,17 +64,40 @@ class Properties {
         this.properties += properties.properties
     }
 
-    operator fun set(keyName: String, value: String?) {
+    fun fromString(type: Int, keyName: String, value: String?) {
         if (value != null) {
-            putString(KeyMap[keyName] as Property.Key<Any?>, value)
+            putString(getKey(type, keyName), value)
         }
     }
 
-//    operator fun set(key: Property.Key<*>, value: String?) {
-//        if (value != null) {
-//            putString(key, value)
-//        }
-//    }
+    fun getKey(type: Int, name: String): Property.Key<Any?> = when(type) {
+        TYPE_INT -> Property.Key(name, Int::class.java)
+        TYPE_FLOAT -> Property.Key(name, Float::class.java)
+        TYPE_BOOL -> Property.Key(name, Boolean::class.java)
+        TYPE_SIZE -> Property.Key(name, Size::class.java)
+        TYPE_URI -> Property.Key(name, Uri::class.java)
+        TYPE_FLOAT_ARRAY -> Property.Key(name, FloatArray::class.java)
+        else -> error("unhandled property type: ${type}")
+    } as Property.Key<Any?>
+
+    fun <T> getType(key: Property.Key<T>): Int = when(key.klass) {
+        Int::class.java -> TYPE_INT
+        Float::class.java -> TYPE_FLOAT
+        Boolean::class.java -> TYPE_BOOL
+        Size::class.java -> TYPE_SIZE
+        Uri::class.java -> TYPE_URI
+        FloatArray::class.java -> TYPE_FLOAT_ARRAY
+        else -> error("unhandled property type: ${key.klass}")
+    }
+
+    companion object {
+        const val TYPE_INT = 0
+        const val TYPE_FLOAT = 1
+        const val TYPE_BOOL = 2
+        const val TYPE_SIZE = 3
+        const val TYPE_URI = 4
+        const val TYPE_FLOAT_ARRAY = 5
+    }
 }
 
 data class Property<T>(val key: Key<T>, var value: T) {
