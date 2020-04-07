@@ -11,11 +11,9 @@ import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModelProvider
 import androidx.viewpager2.adapter.FragmentStateAdapter
 import androidx.viewpager2.widget.ViewPager2
-import com.google.firebase.analytics.FirebaseAnalytics
 import com.rthqks.synapse.R
 import com.rthqks.synapse.logic.Node
 import com.rthqks.synapse.logic.NodeType
-import com.rthqks.synapse.ui.exec.NetworkActivity
 import dagger.android.support.DaggerAppCompatActivity
 import kotlinx.android.synthetic.synapse.activity_builder.*
 import javax.inject.Inject
@@ -83,9 +81,7 @@ class BuilderActivity : DaggerAppCompatActivity() {
                 R.id.jump_to_node -> onJumpToNode()
                 R.id.jump_to_network -> viewModel.jumpToNode(BuilderViewModel.PROPERTIES_NODE)
                 R.id.cancel -> viewModel.cancelConnection()
-                R.id.execute -> startActivity(
-                    NetworkActivity.getIntent(this, viewModel.network.id)
-                )
+                R.id.execute -> Log.d(TAG, "execute")
             }
             true
         }

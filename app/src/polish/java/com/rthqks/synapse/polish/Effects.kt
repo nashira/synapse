@@ -149,8 +149,8 @@ object Effects {
             Link(
                 blur.id,
                 BlurNode.OUTPUT.id,
-                sobel.id,
-                SobelNode.INPUT.id
+                quantizer.id,
+                QuantizerNode.INPUT.id
             )
         )
 //        it.addLinkNoCompute(
@@ -161,14 +161,14 @@ object Effects {
 //                Lut3dNode.INPUT.id
 //            )
 //        )
-        it.addLinkNoCompute(
-            Link(
-                sobel.id,
-                SobelNode.OUTPUT.id,
-                quantizer.id,
-                QuantizerNode.INPUT.id
-            )
-        )
+//        it.addLinkNoCompute(
+//            Link(
+//                sobel.id,
+//                SobelNode.OUTPUT.id,
+//                quantizer.id,
+//                QuantizerNode.INPUT.id
+//            )
+//        )
         it.addLinkNoCompute(
             Link(
                 quantizer.id,
@@ -195,6 +195,7 @@ object Effects {
             )
         )
         blur.properties[BlurSize] = 0
+        blend.properties[BlendMode] = 5
         Effect(it, "Squares").apply {
             val prop = blur.properties.getProperty(CropSize)!!
             prop.value = Size(1080, 1920)

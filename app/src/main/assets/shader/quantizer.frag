@@ -21,7 +21,7 @@ uniform sampler2D input_texture;
 uniform vec3 num_elements;
 uniform int frame_count;
 
-#define HASHSCALE1 10.1031
+#define HASHSCALE1 1.1031
 float hash13(vec3 p3)
 {
     p3  = fract(p3 * HASHSCALE1);
@@ -40,7 +40,7 @@ void main() {
     vec2 gridr = floor(uv * ng.r) / (ng.r - 1.0);
     vec2 gridg = floor(uv * ng.g) / (ng.g - 1.0);
     vec2 gridb = floor(uv * ng.b) / (ng.b - 1.0);
-    float time = 0.77;
+    float time = sin(float(frame_count) * 0.0001);
     vec3 f = vec3(
     hash13(vec3(gridr, time)),
     hash13(vec3(gridg, time)),

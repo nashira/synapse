@@ -177,7 +177,7 @@ class QuantizerNode(
                 uniform.dirty = true
 //            }
             program.getUniform(Uniform.Type.Vec3, NumElements.name).set(numElements)
-//            program.getUniform(Uniform.Type.Int, "frame_count").set(msg.count)
+            program.getUniform(Uniform.Type.Int, "frame_count").set(msg.count)
             execute(msg)
             msg.release()
         }

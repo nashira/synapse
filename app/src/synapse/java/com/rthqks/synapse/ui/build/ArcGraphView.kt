@@ -49,35 +49,35 @@ class ArcGraphView @JvmOverloads constructor(
         val scroll = computeVerticalScrollOffset()
         val x = width - dy
         val yOff = 0.5f * dy - scroll
-        links.forEach {
-            val from = nodes[it.fromNodeId]!!.position * dy
-            val to = nodes[it.toNodeId]!!.position * dy
-            val y = (from + to) / 2f
-            val radius = abs(y - from)
-
-//            if (from < to) {
+//        links.forEach {
+//            val from = nodes[it.fromNodeId]!!.position * dy
+//            val to = nodes[it.toNodeId]!!.position * dy
+//            val y = (from + to) / 2f
+//            val radius = abs(y - from)
+//
+////            if (from < to) {
+////                canvas.drawArc(
+////                    x - radius,
+////                    y - radius + yOff,
+////                    x + radius,
+////                    y + radius + yOff,
+////                    270f,
+////                    180f,
+////                    false,
+////                    paint
+////                )
+////            } else {
 //                canvas.drawArc(
 //                    x - radius,
 //                    y - radius + yOff,
 //                    x + radius,
 //                    y + radius + yOff,
-//                    270f,
+//                    90f,
 //                    180f,
 //                    false,
 //                    paint
 //                )
-//            } else {
-                canvas.drawArc(
-                    x - radius,
-                    y - radius + yOff,
-                    x + radius,
-                    y + radius + yOff,
-                    90f,
-                    180f,
-                    false,
-                    paint
-                )
-//            }
-        }
+////            }
+//        }
     }
 }

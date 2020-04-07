@@ -8,7 +8,7 @@ import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.rthqks.synapse.data.*
-import com.rthqks.synapse.exec.ExecutorLegacy
+import com.rthqks.synapse.exec_dep.ExecutorLegacy
 import com.rthqks.synapse.logic.*
 import com.rthqks.synapse.util.Consumable
 import kotlinx.coroutines.Dispatchers
@@ -325,18 +325,16 @@ class BuilderViewModel @Inject constructor(
     }
 
     fun onPropertyChange(nodeId: Int, property: Property<*>, properties: Properties) {
-        if (property.requiresRestart) {
-            restartNetwork()
-        }
         viewModelScope.launch(Dispatchers.IO) {
-            dao.insertProperty(
-                PropertyData(
-                    network.id,
-                    nodeId,
-                    property.key.name,
-                    properties.toString(property.key)
-                )
-            )
+//            dao.insertProperty(
+//                PropertyData(
+//                    network.id,
+//                    nodeId,
+//                    property.key.name,
+//                    properties.getType(property.key)
+//                    properties.toString(property.key)
+//                )
+//            )
         }
     }
 
@@ -344,27 +342,27 @@ class BuilderViewModel @Inject constructor(
         data class P(val node: Node, var average: Float)
 
         var nodes = network.getNodes().map { P(it, 0f) }
-
-        repeat(20) {
-            nodes.forEachIndexed { index, node -> node.node.position = index }
-
-            nodes.forEach {
-                val nodeId = it.node.id
-                var sum = it.node.position
-                val links = network.getLinks(nodeId)
-                links.forEach { link ->
-                    sum += if (link.fromNodeId == nodeId) {
-                        network.getNode(link.toNodeId)?.position
-                    } else {
-                        network.getNode(link.fromNodeId)?.position
-                    } ?: error("missing node $nodeId")
-                }
-                it.average = sum / (links.size.toFloat() + 1f)
-            }
-
-            nodes = nodes.sortedBy { it.average }
-        }
-        nodes.forEachIndexed { index, node -> node.node.position = index }
+//
+//        repeat(20) {
+//            nodes.forEachIndexed { index, node -> node.node.position = index }
+//
+//            nodes.forEach {
+//                val nodeId = it.node.id
+//                var sum = it.node.position
+//                val links = network.getLinks(nodeId)
+//                links.forEach { link ->
+//                    sum += if (link.fromNodeId == nodeId) {
+//                        network.getNode(link.toNodeId)?.position
+//                    } else {
+//                        network.getNode(link.fromNodeId)?.position
+//                    } ?: error("missing node $nodeId")
+//                }
+//                it.average = sum / (links.size.toFloat() + 1f)
+//            }
+//
+//            nodes = nodes.sortedBy { it.average }
+//        }
+//        nodes.forEachIndexed { index, node -> node.node.position = index }
 
         return nodes.map { it.node }
     }

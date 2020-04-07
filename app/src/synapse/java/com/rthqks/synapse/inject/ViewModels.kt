@@ -4,7 +4,6 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import com.rthqks.synapse.ui.browse.NetworkListViewModel
 import com.rthqks.synapse.ui.build.BuilderViewModel
-import com.rthqks.synapse.ui.exec.NetworkViewModel
 import dagger.Binds
 import dagger.MapKey
 import dagger.Module
@@ -43,11 +42,6 @@ abstract class ViewModels {
     @IntoMap
     @ViewModelKey(NetworkListViewModel::class)
     internal abstract fun provideNetworkListViewModel(networkListViewModel: NetworkListViewModel): ViewModel
-
-    @Binds
-    @IntoMap
-    @ViewModelKey(NetworkViewModel::class)
-    internal abstract fun provideExecNetworkViewModel(networkViewModel: NetworkViewModel): ViewModel
 
     @Binds
     @IntoMap
