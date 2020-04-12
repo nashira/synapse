@@ -54,7 +54,7 @@ class Properties {
             Boolean::class.java -> value.toBoolean()
             Size::class.java -> Size.parseSize(value)
             Uri::class.java -> Uri.parse(value)
-            FloatArray::class.java -> value.split(",").map { it.toFloat() }.toTypedArray()
+            FloatArray::class.java -> value.split(",").map { it.toFloat() }.toFloatArray()
             else -> error("unhandled property type: ${key.klass}")
         } as T
         set(key, cast)

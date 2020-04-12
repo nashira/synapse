@@ -40,7 +40,7 @@ void main() {
     vec2 gridr = floor(uv * ng.r) / (ng.r - 1.0);
     vec2 gridg = floor(uv * ng.g) / (ng.g - 1.0);
     vec2 gridb = floor(uv * ng.b) / (ng.b - 1.0);
-    float time = sin(float(frame_count) * 0.0001);
+    float time = sin(float(frame_count) * 0.00001);
     vec3 f = vec3(
     hash13(vec3(gridr, time)),
     hash13(vec3(gridg, time)),

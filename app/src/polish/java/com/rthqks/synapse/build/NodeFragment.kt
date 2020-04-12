@@ -1,5 +1,6 @@
-package com.rthqks.synapse.ui.build
+package com.rthqks.synapse.build
 
+import android.annotation.SuppressLint
 import android.app.Activity
 import android.content.Intent
 import android.os.Bundle
@@ -17,12 +18,13 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.RecyclerView
 import com.rthqks.synapse.R
+import com.rthqks.synapse.build.NetworkFragment.Companion.OPEN_DOC_REQUEST
 import com.rthqks.synapse.logic.Connector
 import com.rthqks.synapse.logic.Port
-import com.rthqks.synapse.ui.build.NetworkFragment.Companion.OPEN_DOC_REQUEST
+import com.rthqks.synapse.ui.build.PropertyBinder
 import dagger.android.support.DaggerFragment
-import kotlinx.android.synthetic.synapse.fragment_node.*
-import kotlinx.android.synthetic.synapse.layout_port_fragment_node.view.*
+import kotlinx.android.synthetic.polish.fragment_node.*
+import kotlinx.android.synthetic.polish.layout_port_fragment_node.view.*
 import javax.inject.Inject
 
 class NodeFragment : DaggerFragment() {
@@ -68,8 +70,8 @@ class NodeFragment : DaggerFragment() {
         uriProvider = UriProvider {
             startActivityForResult(it, OPEN_DOC_REQUEST)
         }
-        viewModel = ViewModelProvider(activity!!, viewModelFactory)[BuilderViewModel::class.java]
-        touchMediator = TouchMediator(context!!, viewModel::swipeEvent)
+        viewModel = ViewModelProvider(requireActivity(), viewModelFactory)[BuilderViewModel::class.java]
+        touchMediator = TouchMediator(requireContext(), viewModel::swipeEvent)
 
         viewModel.network.getNode(nodeId)?.let { node ->
             propertyBinder = PropertyBinder(node.properties, tool_list, tool_main, uriProvider) {
@@ -103,7 +105,7 @@ class NodeFragment : DaggerFragment() {
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         if (requestCode == OPEN_DOC_REQUEST && resultCode == Activity.RESULT_OK) {
-            data?.data?.let { uriProvider.onActivityResult(activity!!, it) }
+            data?.data?.let { uriProvider.onActivityResult(requireActivity(), it) }
         }
     }
 
@@ -152,9 +154,10 @@ class NodeFragment : DaggerFragment() {
 //        viewModel.setSurfaceView(nodeId, selectedPortId, surface_view)
     }
 
+    @SuppressLint("RestrictedApi")
     fun onConnectorLongClick(view: View, connector: Connector) {
         Log.d(TAG, "long click $connector")
-        val menu = PopupMenu(context!!, view)
+        val menu = PopupMenu(requireContext(), view)
         menu.inflate(R.menu.layout_connector)
 
         if (connector.link == null) {

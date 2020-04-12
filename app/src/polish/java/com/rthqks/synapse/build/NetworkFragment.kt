@@ -1,4 +1,4 @@
-package com.rthqks.synapse.ui.build
+package com.rthqks.synapse.build
 
 import android.app.Activity
 import android.content.Intent
@@ -14,9 +14,10 @@ import com.rthqks.synapse.R
 import com.rthqks.synapse.logic.GetNode
 import com.rthqks.synapse.logic.Node
 import com.rthqks.synapse.logic.NodeType
+import com.rthqks.synapse.ui.build.PropertyBinder
 import dagger.android.support.DaggerFragment
-import kotlinx.android.synthetic.synapse.fragment_network.*
-import kotlinx.android.synthetic.synapse.layout_node_item.view.*
+import kotlinx.android.synthetic.polish.fragment_network.*
+import kotlinx.android.synthetic.polish.layout_node_item.view.*
 import javax.inject.Inject
 import kotlin.math.max
 
@@ -45,7 +46,7 @@ class NetworkFragment : DaggerFragment() {
         uriProvider = UriProvider {
             startActivityForResult(it, OPEN_DOC_REQUEST)
         }
-        viewModel = ViewModelProvider(activity!!, viewModelFactory)[BuilderViewModel::class.java]
+        viewModel = ViewModelProvider(requireActivity(), viewModelFactory)[BuilderViewModel::class.java]
         viewModel.setTitle(R.string.name_node_type_properties)
         viewModel.setMenu(R.menu.fragment_network)
 
@@ -56,7 +57,7 @@ class NetworkFragment : DaggerFragment() {
             viewModel.onPropertyChange(-1, it, properties)
         }
 
-        val touchMediator = TouchMediator(context!!, viewModel::swipeEvent)
+        val touchMediator = TouchMediator(requireContext(), viewModel::swipeEvent)
 
         val connectorAdapter = NodeAdapter({ view: View, event: MotionEvent, node: Node ->
             if (event.actionMasked == MotionEvent.ACTION_DOWN) {
@@ -95,7 +96,7 @@ class NetworkFragment : DaggerFragment() {
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         if (requestCode == OPEN_DOC_REQUEST && resultCode == Activity.RESULT_OK) {
-            data?.data?.let { uriProvider.onActivityResult(activity!!, it) }
+            data?.data?.let { uriProvider.onActivityResult(requireActivity(), it) }
         }
     }
 

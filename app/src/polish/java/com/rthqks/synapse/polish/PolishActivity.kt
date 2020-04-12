@@ -32,6 +32,7 @@ import kotlinx.android.synthetic.main.layout_lut.view.*
 import kotlinx.android.synthetic.polish.activity_polish.*
 import kotlinx.android.synthetic.polish.layout_property.view.*
 import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 import kotlin.math.max
@@ -223,15 +224,19 @@ class PolishActivity : DaggerAppCompatActivity() {
             Log.d(TAG, "flip camera")
             viewModel.flipCamera()
         })
-
+        var updateRecordingTime: Job? = null
         button_record.setOnClickListener(throttleClick {
             recording = !recording
             if (recording) {
                 focusMode()
                 viewModel.startRecording()
+                video_duration.visibility = View.VISIBLE
+                updateRecordingTime = viewModel.updateRecordingTime(video_duration)
             } else {
                 exploreMode()
                 highlightGalleryButton()
+                video_duration.visibility = View.GONE
+                updateRecordingTime?.cancel()
                 viewModel.stopRecording()
             }
             Log.d(TAG, "recording $recording")

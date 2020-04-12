@@ -1,4 +1,4 @@
-package com.rthqks.synapse.ui.build
+package com.rthqks.synapse.build
 
 import android.content.Context
 import android.graphics.Rect
@@ -19,8 +19,8 @@ import com.rthqks.synapse.logic.Connector
 import com.rthqks.synapse.logic.Network
 import com.rthqks.synapse.logic.NodeType
 import dagger.android.support.DaggerFragment
-import kotlinx.android.synthetic.synapse.fragment_connection.*
-import kotlinx.android.synthetic.synapse.layout_connection.view.*
+import kotlinx.android.synthetic.polish.fragment_connection.*
+import kotlinx.android.synthetic.polish.layout_connection.view.*
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
@@ -42,8 +42,8 @@ class ConnectionFragment : DaggerFragment() {
     override fun onActivityCreated(savedInstanceState: Bundle?) {
         Log.d(TAG, "onActivityCreated")
         super.onActivityCreated(savedInstanceState)
-        viewModel = ViewModelProvider(activity!!, viewModelFactory)[BuilderViewModel::class.java]
-        connectionAdapter = ConnectionAdapter(viewModel, context!!, 3)
+        viewModel = ViewModelProvider(requireActivity(), viewModelFactory)[BuilderViewModel::class.java]
+        connectionAdapter = ConnectionAdapter(viewModel, requireContext(), 3)
         val layoutManager = GridLayoutManager(context, 3)
         layoutManager.spanSizeLookup = connectionAdapter.spanSizeLookup
         recycler_view.addItemDecoration(connectionAdapter.itemDecoration)

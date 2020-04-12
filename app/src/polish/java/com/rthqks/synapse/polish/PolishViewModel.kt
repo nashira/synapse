@@ -8,6 +8,7 @@ import android.util.Log
 import android.util.Size
 import android.view.SurfaceView
 import android.view.TextureView
+import android.widget.TextView
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -16,10 +17,7 @@ import com.rthqks.synapse.data.SynapseDao
 import com.rthqks.synapse.exec.ExecutionContext
 import com.rthqks.synapse.logic.*
 import com.rthqks.synapse.ops.Analytics
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
+import kotlinx.coroutines.*
 import javax.inject.Inject
 
 class PolishViewModel @Inject constructor(
@@ -30,6 +28,7 @@ class PolishViewModel @Inject constructor(
     val deviceSupported = MutableLiveData<Boolean>()
     private var currentEffect: Effect? = null
     private var recordingStart = 0L
+    private val recordingDuration: Long get() = SystemClock.elapsedRealtime() - recordingStart
     private var svSetup = false
     private var stopped = true
     private val effectExecutor = EffectExecutor(context)
@@ -50,7 +49,7 @@ class PolishViewModel @Inject constructor(
             withContext(Dispatchers.IO) {
                 dao.getProperties(0).forEach { properties.fromString(it.type, it.key, it.value) }
 
-                listOf(Effects.timeWarp, Effects.rotoHue).forEach { effect ->
+                listOf(Effects.timeWarp, Effects.rotoHue, Effects.quantizer).forEach { effect ->
                     dao.getProperties(effect.network.id)
                         .forEach { effect.properties.fromString(it.type, it.key, it.value) }
                 }
@@ -222,6 +221,29 @@ class PolishViewModel @Inject constructor(
                         it.properties.getString(property.key)
                     )
                 )
+            }
+        }
+    }
+
+    fun updateRecordingTime(textView: TextView): Job {
+        return viewModelScope.launch {
+            while (isActive) {
+                var d = recordingDuration
+
+                var minutes: Long = 0
+                var seconds: Long = 0
+                var hundreths: Long = 0
+                if (d >= 60000) {
+                    minutes = d / 60000
+                    d -= minutes * 60000
+                }
+                if (d >= 1000) {
+                    seconds = d / 1000
+                    d -= seconds * 1000
+                }
+                hundreths = d / 10
+                textView.text = String.format("%d:%02d.%02d", minutes, seconds, hundreths)
+                delay(16)
             }
         }
     }

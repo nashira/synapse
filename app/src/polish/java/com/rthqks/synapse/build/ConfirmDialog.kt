@@ -1,4 +1,4 @@
-package com.rthqks.synapse.ui.build
+package com.rthqks.synapse.build
 
 import android.app.Dialog
 import android.os.Bundle
@@ -34,7 +34,7 @@ class ConfirmDialog() : DialogFragment() {
     }
 
     override fun onCreateDialog(savedInstanceState: Bundle?): Dialog {
-        return AlertDialog.Builder(context!!).apply {
+        return AlertDialog.Builder(requireContext()).apply {
             setTitle(title)
             setNegativeButton(cancel) { d, w ->
                 listener?.invoke(false)

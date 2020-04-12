@@ -1,4 +1,4 @@
-package com.rthqks.synapse.ui.build
+package com.rthqks.synapse.build
 
 import android.app.Activity
 import android.content.Intent
@@ -15,7 +15,8 @@ import com.rthqks.synapse.R
 import com.rthqks.synapse.logic.Node
 import com.rthqks.synapse.logic.NodeType
 import dagger.android.support.DaggerAppCompatActivity
-import kotlinx.android.synthetic.synapse.activity_builder.*
+import kotlinx.android.synthetic.polish.activity_builder.*
+import kotlinx.android.synthetic.polish.activity_gallery.toolbar
 import javax.inject.Inject
 
 class BuilderActivity : DaggerAppCompatActivity() {

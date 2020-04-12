@@ -195,7 +195,7 @@ object Effects {
             )
         )
         blur.properties[BlurSize] = 0
-        blend.properties[BlendMode] = 5
+        blend.properties[BlendMode] = 23
         Effect(it, "Squares").apply {
             val prop = blur.properties.getProperty(CropSize)!!
             prop.value = Size(1080, 1920)

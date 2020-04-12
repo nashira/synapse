@@ -1,4 +1,4 @@
-package com.rthqks.synapse.ui.build
+package com.rthqks.synapse.build
 
 import android.app.Dialog
 import android.content.Context
@@ -15,7 +15,7 @@ import androidx.recyclerview.widget.RecyclerView
 import com.rthqks.synapse.R
 import com.rthqks.synapse.logic.Node
 import dagger.android.support.AndroidSupportInjection
-import kotlinx.android.synthetic.synapse.layout_node_list_item.view.*
+import kotlinx.android.synthetic.polish.layout_node_list_item.view.*
 import javax.inject.Inject
 
 class NodeListDialog : DialogFragment() {
@@ -32,7 +32,7 @@ class NodeListDialog : DialogFragment() {
 
     override fun onActivityCreated(savedInstanceState: Bundle?) {
         super.onActivityCreated(savedInstanceState)
-        viewModel = ViewModelProvider(activity!!, viewModelFactory)[BuilderViewModel::class.java]
+        viewModel = ViewModelProvider(requireActivity(), viewModelFactory)[BuilderViewModel::class.java]
         val nodes = viewModel.network.getNodes()
         adapter.setNodes(nodes)
         Log.d("NodeList", "nodes $nodes")
@@ -44,7 +44,7 @@ class NodeListDialog : DialogFragment() {
             LayoutInflater.from(context).inflate(R.layout.fragment_node_list, null) as RecyclerView
         view.layoutManager = LinearLayoutManager(context)
         view.adapter = adapter
-        return AlertDialog.Builder(context!!).apply {
+        return AlertDialog.Builder(requireContext()).apply {
             setTitle(R.string.menu_title_jump_to_node)
             setView(view)
 

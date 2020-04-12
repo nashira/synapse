@@ -1,4 +1,4 @@
-package com.rthqks.synapse.ui.build
+package com.rthqks.synapse.build
 
 import android.content.Context
 import android.graphics.Canvas
@@ -9,7 +9,6 @@ import androidx.recyclerview.widget.RecyclerView
 import com.rthqks.synapse.R
 import com.rthqks.synapse.logic.Link
 import com.rthqks.synapse.logic.Node
-import kotlin.math.abs
 
 
 class ArcGraphView @JvmOverloads constructor(

@@ -1,31 +1,16 @@
 package com.rthqks.synapse.ui.build
 
 
-import android.app.Activity
-import android.net.Uri
-import android.util.Log
-import android.view.KeyEvent
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.view.animation.AccelerateInterpolator
-import android.view.inputmethod.InputMethodManager
-import android.widget.AdapterView
-import android.widget.ArrayAdapter
-import android.widget.SeekBar
 import androidx.recyclerview.widget.RecyclerView
 import com.rthqks.synapse.R
-import com.rthqks.synapse.logic.*
-import com.rthqks.synapse.ui.build.PropertyBinder.Companion.TAG
-import kotlinx.android.synthetic.synapse.layout_property.view.icon
-import kotlinx.android.synthetic.synapse.property_type_choice.view.*
-import kotlinx.android.synthetic.synapse.property_type_choice.view.title
-import kotlinx.android.synthetic.synapse.property_type_range.view.*
-import kotlinx.android.synthetic.synapse.property_type_text.view.*
-import kotlinx.android.synthetic.synapse.property_type_toggle.view.*
-import kotlinx.android.synthetic.synapse.property_type_uri.view.*
-import kotlinx.android.synthetic.synapse.property_type_uri.view.button
-import kotlin.math.roundToInt
+import com.rthqks.synapse.build.UriProvider
+import com.rthqks.synapse.logic.Properties
+import com.rthqks.synapse.logic.Property
+import kotlinx.android.synthetic.polish.layout_property.view.*
 
 class PropertyBinder(
     private val properties: Properties,

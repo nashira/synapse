@@ -11,7 +11,7 @@
             android:screenOrientation="portrait" />
 
         <activity
-            android:name="com.rthqks.synapse.ui.build.BuilderActivity"
+            android:name="com.rthqks.synapse.build.BuilderActivity"
             android:screenOrientation="portrait" />
 
         <activity

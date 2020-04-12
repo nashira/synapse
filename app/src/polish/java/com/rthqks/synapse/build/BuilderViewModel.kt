@@ -1,4 +1,4 @@
-package com.rthqks.synapse.ui.build
+package com.rthqks.synapse.build
 
 import android.util.Log
 import android.view.SurfaceView
@@ -7,7 +7,10 @@ import androidx.annotation.StringRes
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.rthqks.synapse.data.*
+import com.rthqks.synapse.data.LinkData
+import com.rthqks.synapse.data.NetworkData
+import com.rthqks.synapse.data.NodeData
+import com.rthqks.synapse.data.SynapseDao
 import com.rthqks.synapse.exec_dep.ExecutorLegacy
 import com.rthqks.synapse.logic.*
 import com.rthqks.synapse.util.Consumable

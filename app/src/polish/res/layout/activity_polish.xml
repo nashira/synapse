@@ -21,6 +21,18 @@
             android:layout_width="match_parent"
             android:layout_height="match_parent" />
 
+        <TextView
+            android:id="@+id/video_duration"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:paddingTop="20dp"
+            android:textColor="@color/white"
+            android:visibility="gone"
+            tools:visibility="visible"
+            android:gravity="center"
+            app:layout_constraintTop_toTopOf="parent"
+            tools:text="1:23.84" />
+
         <ImageButton
             android:id="@+id/button_record"
             style="@style/Widget.AppCompat.Button.Borderless"
@@ -111,8 +123,8 @@
             app:layout_constraintBottom_toTopOf="@id/effect_list"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
-            tools:listitem="@layout/layout_property"
-            tools:itemCount="5" />
+            tools:itemCount="5"
+            tools:listitem="@layout/layout_property" />
 
     </androidx.constraintlayout.widget.ConstraintLayout>
 
