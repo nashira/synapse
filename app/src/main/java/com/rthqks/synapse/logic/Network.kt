@@ -2,14 +2,15 @@ package com.rthqks.synapse.logic
 
 import android.util.Log
 import java.util.*
+import kotlin.math.max
 
 class Network(
     val id: Int
 ) {
     val nodes = mutableMapOf<Int, Node>()
+    val properties = Properties()
     private val links = mutableSetOf<Link>()
     private val linkIndex = mutableMapOf<Int, MutableSet<Link>>()
-    val properties = Properties()
     private var maxNodeId = 0
 
     val name: String get() = properties[NetworkName]
@@ -171,7 +172,7 @@ class Network(
             val component = mutableListOf<Pair<Int, String>>()
             components.add(component)
 //            Log.d(TAG, "node ${it.first} ${nodes[it.first]} ${it.second}")
-            val output = nodes[it.first]!!.getPort(it.second).output
+            val output = nodes[it.first]?.getPort(it.second)?.output ?: true
             if (!output && it !in mark) {
                 mark.add(it)
                 component.add(it)
@@ -190,7 +191,7 @@ class Network(
             }
         }
 
-        Log.d(TAG, "links ${links.joinToString()}")
+//        Log.d(TAG, "links ${links.joinToString()}")
     }
 
     private fun dfs(
@@ -238,8 +239,6 @@ class Network(
             }
         }
     }
-
-    private fun max(i: Int, j: Int) = if (i > j) i else j
 
     companion object {
         const val TAG = "Network"

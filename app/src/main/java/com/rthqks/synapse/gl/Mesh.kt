@@ -22,7 +22,7 @@ open class Mesh(
         glGenVertexArrays(1, vao, 0)
         glBindVertexArray(vao[0])
         vaoId = vao[0]
-        Log.d(TAG, "created vao $vaoId")
+//        Log.d(TAG, "created vao $vaoId")
 
         attributes.forEach {
             val attribute = it.value
@@ -57,7 +57,7 @@ open class Mesh(
         val ids = buffersById.keys.toIntArray()
         glDeleteBuffers(ids.size, ids, 0)
         glDeleteVertexArrays(1, intArrayOf(vaoId), 0)
-        Log.d(TAG, "release vao $vaoId")
+//        Log.d(TAG, "release vao $vaoId")
     }
 
     fun addBuffer(name: String, data: java.nio.Buffer, target: Int, usage: Int): Buffer {
@@ -66,7 +66,7 @@ open class Mesh(
         val buffer = Buffer(data, target, usage, bufferId[0])
         buffers[name] = buffer
         buffersById[buffer.id] = buffer
-        Log.d(TAG, "addBuffer $buffer")
+//        Log.d(TAG, "addBuffer $buffer")
         initBufferData(buffer, data.capacity())
         return buffer
     }
@@ -106,7 +106,7 @@ open class Mesh(
     ): Attribute {
         val attribute = Attribute(bufferId, size, type, stride, offset, index, normalized, divisor)
         attributes[name] = attribute
-        Log.d(TAG, "addAttribute $attribute")
+//        Log.d(TAG, "addAttribute $attribute")
         return attribute
     }
 

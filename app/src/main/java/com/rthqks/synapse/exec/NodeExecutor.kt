@@ -41,20 +41,20 @@ abstract class NodeExecutor(
                 channels.remove(key)
             }
 
-            Log.d(TAG, "onDisconnect ${key.id}")
+//            Log.d(TAG, "onDisconnect ${key.id}")
             onDisconnect(key, true)
             con?.removeConsumer(channel)
         }
 
     suspend fun waitForConsumer(key: Connection.Key<*>) = async {
         channels.remove(key)
-        Log.d(TAG, "onDisconnect ${key.id}")
+//        Log.d(TAG, "onDisconnect ${key.id}")
         onDisconnect(key, false)
     }
 
     override suspend fun release() {
         exec {
-            Log.d(TAG, "onRelease")
+//            Log.d(TAG, "onRelease")
             onRelease()
         }
         super.release()
@@ -63,7 +63,7 @@ abstract class NodeExecutor(
     suspend fun <T> startConsumer(key: Connection.Key<T>, channel: ReceiveChannel<Message<T>>) =
         async {
             channels[key] = channel
-            Log.d(TAG, "onConnect ${key.id}")
+//            Log.d(TAG, "onConnect ${key.id}")
             onConnect(key, false)
         }
 
@@ -72,7 +72,7 @@ abstract class NodeExecutor(
 
         channels[key] = connection.producer()
         val consumer = connection.consumer()
-        Log.d(TAG, "onConnect ${key.id}")
+//        Log.d(TAG, "onConnect ${key.id}")
         onConnect(key, true)
         return@async consumer
     }

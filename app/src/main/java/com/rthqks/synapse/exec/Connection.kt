@@ -22,7 +22,6 @@ class Connection<T>(
     }
 
     fun removeConsumer(channel: ReceiveChannel<Message<T>>) {
-        Log.d(TAG, "remove cons")
         channel as Channel<Message<T>>
         consumers = consumers - channel
         channel.close()

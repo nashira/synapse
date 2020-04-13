@@ -12,7 +12,7 @@ abstract class Executor(
         for (cmd in channel) {
             cmd()
         }
-        Log.d(TAG, "actor closed")
+//        Log.d(TAG, "actor closed")
     }
 
     protected suspend fun <T> async(block: suspend () -> T): Deferred<T> {

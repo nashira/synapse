@@ -15,7 +15,6 @@ import javax.inject.Inject
 class ExecutorLegacy @Inject constructor(
     val context: ExecutionContext
 ) {
-    private var networkExecutor: NetworkExecutor? = null
     private var network: Network? = null
     private val dispatcher = context.dispatcher
     private val glesManager = context.glesManager
@@ -123,14 +122,13 @@ class ExecutorLegacy @Inject constructor(
     }
 
     private suspend fun doSetSurfaceViewNetwork(surfaceView: SurfaceView) {
-        networkExecutor?.tmpSetSurfaceView(surfaceView)
     }
 
     private suspend fun doSetSurfaceView(nodeId: Int, portId: String?, surfaceView: SurfaceView) {
-        val networkExecutor = networkExecutor ?: return
+//        val networkExecutor = networkExecutor ?: return
         var firstPortId = portId
         val nodes = LinkedList<Pair<Int, NodeExecutor>>()
-        nodes.add(nodeId to networkExecutor.getNode(nodeId))
+//        nodes.add(nodeId to networkExecutor.getNode(nodeId))
         do {
             val (id, node) = nodes.remove()
             Log.d(TAG, "looking for surfaceview at $id")
@@ -146,7 +144,7 @@ class ExecutorLegacy @Inject constructor(
                     && (firstPortId == null || it.fromPortId == firstPortId)
                     && it.toNodeId > Network.COPY_ID_SKIP
                 ) {
-                    nodes.add(it.toNodeId to networkExecutor.getNode(it.toNodeId))
+//                    nodes.add(it.toNodeId to networkExecutor.getNode(it.toNodeId))
                 }
             }
             firstPortId = null
@@ -168,11 +166,11 @@ class ExecutorLegacy @Inject constructor(
     }
 
     private suspend fun doStart() {
-        networkExecutor?.start()
+//        networkExecutor?.start()
     }
 
     private suspend fun doStop() {
-        networkExecutor?.stop()
+//        networkExecutor?.stop()
     }
 
     private suspend fun doInitializeNetwork(network: Network) {
@@ -198,13 +196,13 @@ class ExecutorLegacy @Inject constructor(
 
         this.network = networkNew
 
-        networkExecutor = NetworkExecutor(context, networkNew)
-        networkExecutor?.initialize()
+//        networkExecutor = NetworkExecutor(context, networkNew)
+//        networkExecutor?.initialize()
     }
 
     private suspend fun doReleaseNetwork() {
         Log.d(TAG, "release network ${network?.id}")
-        networkExecutor?.release()
+//        networkExecutor?.release()
     }
 
     private suspend fun doAddConnectionPreviews(source: Connector, targets: List<Connector>) {
