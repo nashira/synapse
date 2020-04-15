@@ -1,6 +1,5 @@
 package com.rthqks.synapse.exec
 
-import android.util.Log
 import kotlinx.coroutines.channels.ReceiveChannel
 
 abstract class NodeExecutor(
@@ -20,7 +19,7 @@ abstract class NodeExecutor(
     open suspend fun onPause() {}
     open suspend fun onResume() {}
 
-    suspend fun setup() = async(this::onSetup)
+    suspend fun setup() = await(this::onSetup)
 
     suspend fun pause() = await {
         state = STATE_PAUSED
@@ -33,7 +32,7 @@ abstract class NodeExecutor(
     }
 
     suspend fun <T> stopConsumer(key: Connection.Key<T>, channel: ReceiveChannel<Message<T>>) =
-        async {
+        await {
             val con = connection(key)
             val linked = con?.consumerCount ?: 0 > 1
             setLinked(key, linked)
@@ -46,7 +45,7 @@ abstract class NodeExecutor(
             con?.removeConsumer(channel)
         }
 
-    suspend fun waitForConsumer(key: Connection.Key<*>) = async {
+    suspend fun waitForConsumer(key: Connection.Key<*>) = await {
         channels.remove(key)
 //        Log.d(TAG, "onDisconnect ${key.id}")
         onDisconnect(key, false)
@@ -61,20 +60,19 @@ abstract class NodeExecutor(
     }
 
     suspend fun <T> startConsumer(key: Connection.Key<T>, channel: ReceiveChannel<Message<T>>) =
-        async {
+        await {
             channels[key] = channel
 //            Log.d(TAG, "onConnect ${key.id}")
             onConnect(key, false)
         }
 
-    suspend fun <T> getConsumer(key: Connection.Key<T>) = async {
+    suspend fun <T> getConsumer(key: Connection.Key<T>) = await {
         val connection = connections.getOrPut(key) { Connection<T>() }
-
         channels[key] = connection.producer()
         val consumer = connection.consumer()
 //        Log.d(TAG, "onConnect ${key.id}")
         onConnect(key, true)
-        return@async consumer
+        consumer
     }
 
     @Suppress("UNCHECKED_CAST")

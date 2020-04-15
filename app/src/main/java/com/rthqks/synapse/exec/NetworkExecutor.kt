@@ -53,7 +53,7 @@ open class NetworkExecutor(context: ExecutionContext) : Executor(context) {
                 executor.setCycle(key)
             }
         }
-        executor.setup().await()
+        executor.setup()
         if (isResumed) {
             executor.resume()
         }
@@ -75,10 +75,8 @@ open class NetworkExecutor(context: ExecutionContext) : Executor(context) {
 
         Log.d(TAG, "add link $link")
 
-        val channel = fromNode.getConsumer(fromKey).await()
-        val consume = toNode.startConsumer(toKey, channel as ReceiveChannel<Message<Any?>>)
-
-        consume.await()
+        val channel = fromNode.getConsumer(fromKey)
+        toNode.startConsumer(toKey, channel as ReceiveChannel<Message<Any?>>)
     }
 
     suspend fun removeLink(link: Link) {
@@ -92,11 +90,11 @@ open class NetworkExecutor(context: ExecutionContext) : Executor(context) {
         Log.d(TAG, "remove link $link")
 
         fromNode.setCycle(fromKey, link.inCycle)
-        fromNode.stopConsumer(fromKey, channel).await()
+        fromNode.stopConsumer(fromKey, channel)
 
         toNode.setLinked(toKey, false)
         toNode.setCycle(toKey, link.inCycle)
-        toNode.waitForConsumer(toKey).await()
+        toNode.waitForConsumer(toKey)
     }
 
     suspend fun addAllLinks() {

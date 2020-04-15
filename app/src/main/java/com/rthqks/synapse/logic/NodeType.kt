@@ -12,9 +12,6 @@ sealed class NodeType(
 ) {
 
     companion object {
-//        private val byKey = values().map { it.key to it }.toMap()
-//        operator fun get(key: String) = byKey[key]
-
         const val FLAG_PRODUCER = 1
         const val FLAG_CONSUMER = 1 shl 1
     }
