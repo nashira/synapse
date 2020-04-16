@@ -52,11 +52,6 @@ class Network(
     fun getLinks(nodeId: Int): Set<Link> = linkIndex[nodeId] ?: emptySet()
 
     fun addLink(link: Link) {
-        addLinkNoCompute(link)
-        computeComponents()
-    }
-
-    fun addLinkNoCompute(link: Link) {
         links.add(link)
         linkIndex.getOrPut(link.fromNodeId) { mutableSetOf() } += link
         linkIndex.getOrPut(link.toNodeId) { mutableSetOf() } += link
@@ -75,7 +70,7 @@ class Network(
     }
 
     fun addLinks(links: List<Link>) {
-        links.forEach(this::addLinkNoCompute)
+        links.forEach(this::addLink)
         computeComponents()
     }
 

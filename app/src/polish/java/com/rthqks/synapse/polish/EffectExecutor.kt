@@ -35,8 +35,8 @@ class EffectExecutor(context: ExecutionContext) : NetworkExecutor(context) {
         microphone.properties[AudioSource] = MediaRecorder.AudioSource.CAMCORDER
         crop.properties[CropSize] = Size(320, 320)
 
-        n.addLinkNoCompute(Link(lut.id, Lut3dNode.OUTPUT.id, screen.id, SurfaceViewNode.INPUT.id))
-        n.addLinkNoCompute(
+        n.addLink(Link(lut.id, Lut3dNode.OUTPUT.id, screen.id, SurfaceViewNode.INPUT.id))
+        n.addLink(
             Link(
                 lut.id,
                 Lut3dNode.OUTPUT.id,
@@ -44,8 +44,8 @@ class EffectExecutor(context: ExecutionContext) : NetworkExecutor(context) {
                 EncoderNode.INPUT_VIDEO.id
             )
         )
-        n.addLinkNoCompute(Link(cube.id, BCubeImportNode.OUTPUT.id, lut.id, Lut3dNode.INPUT_LUT.id))
-        n.addLinkNoCompute(
+        n.addLink(Link(cube.id, BCubeImportNode.OUTPUT.id, lut.id, Lut3dNode.INPUT_LUT.id))
+        n.addLink(
             Link(
                 microphone.id,
                 AudioSourceNode.OUTPUT.id,
@@ -86,7 +86,7 @@ class EffectExecutor(context: ExecutionContext) : NetworkExecutor(context) {
 
         val new = effect.network
         new.nodes.forEach { n.addNode(it.value) }
-        new.getLinks().forEach { n.addLinkNoCompute(it) }
+        new.getLinks().forEach { n.addLink(it) }
         n.computeComponents()
         new.nodes.map { scope.launch { addNode(it.value) } }.joinAll()
         new.getLinks().map { scope.launch { addLink(it) } }.joinAll()
@@ -201,9 +201,9 @@ class EffectExecutor(context: ExecutionContext) : NetworkExecutor(context) {
         val cr2l = Link(crop.id, CropResizeNode.OUTPUT.id, lut.id, Lut3dNode.INPUT.id)
 
         init {
-            n.addLinkNoCompute(l2s)
-            n.addLinkNoCompute(cu2l)
-            n.addLinkNoCompute(cr2l)
+            n.addLink(l2s)
+            n.addLink(cu2l)
+            n.addLink(cr2l)
         }
 
         suspend fun setup() {

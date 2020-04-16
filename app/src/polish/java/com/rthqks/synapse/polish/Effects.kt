@@ -21,29 +21,14 @@ object Effects {
         val ringBuffer = it.addNode(NewNode(NodeType.RingBuffer))
         val slice = it.addNode(NewNode(NodeType.Slice3d))
 
-        it.addLinkNoCompute(
-            Link(
-                Effect.ID_CAMERA,
-                CameraNode.OUTPUT.id,
-                ringBuffer.id,
-                RingBufferNode.INPUT.id
-            )
+        it.addLink(
+            Link(Effect.ID_CAMERA, CameraNode.OUTPUT.id, ringBuffer.id, RingBufferNode.INPUT.id)
         )
-        it.addLinkNoCompute(
-            Link(
-                ringBuffer.id,
-                RingBufferNode.OUTPUT.id,
-                slice.id,
-                Slice3dNode.INPUT_3D.id
-            )
+        it.addLink(
+            Link(ringBuffer.id, RingBufferNode.OUTPUT.id, slice.id, Slice3dNode.INPUT_3D.id)
         )
-        it.addLinkNoCompute(
-            Link(
-                slice.id,
-                Slice3dNode.OUTPUT.id,
-                Effect.ID_LUT,
-                Lut3dNode.INPUT.id
-            )
+        it.addLink(
+            Link(slice.id, Slice3dNode.OUTPUT.id, Effect.ID_LUT, Lut3dNode.INPUT.id)
         )
         ringBuffer.properties[HistorySize] = 30
         Effect(it, "Time Warp").apply {
@@ -76,21 +61,11 @@ object Effects {
 
     val rotoHue = Network(ID_ROTO_HUE).let {
         val rotate = it.addNode(NewNode(NodeType.RotateMatrix))
-        it.addLinkNoCompute(
-            Link(
-                rotate.id,
-                RotateMatrixNode.OUTPUT.id,
-                Effect.ID_LUT,
-                Lut3dNode.LUT_MATRIX.id
-            )
+        it.addLink(
+            Link(rotate.id, RotateMatrixNode.OUTPUT.id, Effect.ID_LUT, Lut3dNode.LUT_MATRIX.id)
         )
-        it.addLinkNoCompute(
-            Link(
-                Effect.ID_CAMERA,
-                CameraNode.OUTPUT.id,
-                Effect.ID_LUT,
-                Lut3dNode.INPUT.id
-            )
+        it.addLink(
+            Link(Effect.ID_CAMERA, CameraNode.OUTPUT.id, Effect.ID_LUT, Lut3dNode.INPUT.id)
         )
         Effect(it, "Roto-Hue").apply {
             val rotateSpeed = rotate.properties.getProperty(RotationSpeed)!!
@@ -109,7 +84,7 @@ object Effects {
 
     val squares = Network(ID_SQUARES).let {
         val cell = it.addNode(NewNode(NodeType.CellAuto))
-        it.addLinkNoCompute(
+        it.addLink(
             Link(
                 cell.id,
                 CellularAutoNode.OUTPUT.id,
@@ -137,21 +112,11 @@ object Effects {
         val sobel = it.addNode(NewNode(NodeType.Sobel))
         val quantizer = it.addNode(NewNode(NodeType.Quantizer))
         val blend = it.addNode(NewNode(NodeType.ImageBlend))
-        it.addLinkNoCompute(
-            Link(
-                Effect.ID_CAMERA,
-                CameraNode.OUTPUT.id,
-                blur.id,
-                BlurNode.INPUT.id
-            )
+        it.addLink(
+            Link(Effect.ID_CAMERA, CameraNode.OUTPUT.id, blur.id, BlurNode.INPUT.id)
         )
-        it.addLinkNoCompute(
-            Link(
-                blur.id,
-                BlurNode.OUTPUT.id,
-                quantizer.id,
-                QuantizerNode.INPUT.id
-            )
+        it.addLink(
+            Link(blur.id, BlurNode.OUTPUT.id, quantizer.id, QuantizerNode.INPUT.id)
         )
 //        it.addLinkNoCompute(
 //            Link(
@@ -169,30 +134,15 @@ object Effects {
 //                QuantizerNode.INPUT.id
 //            )
 //        )
-        it.addLinkNoCompute(
-            Link(
-                quantizer.id,
-                QuantizerNode.OUTPUT.id,
-                blend.id,
-                ImageBlendNode.INPUT_BLEND.id
-            )
+        it.addLink(
+            Link(quantizer.id, QuantizerNode.OUTPUT.id, blend.id, ImageBlendNode.INPUT_BLEND.id)
         )
 
-        it.addLinkNoCompute(
-            Link(
-                Effect.ID_CAMERA,
-                CameraNode.OUTPUT.id,
-                blend.id,
-                ImageBlendNode.INPUT_BASE.id
-            )
+        it.addLink(
+            Link(Effect.ID_CAMERA, CameraNode.OUTPUT.id, blend.id, ImageBlendNode.INPUT_BASE.id)
         )
-        it.addLinkNoCompute(
-            Link(
-                blend.id,
-                ImageBlendNode.OUTPUT.id,
-                Effect.ID_LUT,
-                Lut3dNode.INPUT.id
-            )
+        it.addLink(
+            Link(blend.id, ImageBlendNode.OUTPUT.id, Effect.ID_LUT, Lut3dNode.INPUT.id)
         )
         blur.properties[BlurSize] = 0
         blend.properties[BlendMode] = 23
