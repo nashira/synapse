@@ -13,15 +13,16 @@ import android.util.Log
 import android.view.*
 import android.view.animation.AccelerateDecelerateInterpolator
 import android.widget.SeekBar
-import android.widget.TextView
 import android.widget.Toast
 import androidx.annotation.DrawableRes
 import androidx.core.content.edit
-import androidx.core.view.doOnLayout
 import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
-import androidx.recyclerview.widget.*
+import androidx.recyclerview.widget.DiffUtil
+import androidx.recyclerview.widget.GridLayoutManager
+import androidx.recyclerview.widget.RecyclerView
+import androidx.viewpager2.widget.ViewPager2
 import com.google.android.material.bottomsheet.BottomSheetBehavior
 import com.rthqks.synapse.R
 import com.rthqks.synapse.logic.*
@@ -30,6 +31,7 @@ import com.rthqks.synapse.util.throttleClick
 import dagger.android.support.DaggerAppCompatActivity
 import kotlinx.android.synthetic.main.layout_lut.view.*
 import kotlinx.android.synthetic.polish.activity_polish.*
+import kotlinx.android.synthetic.polish.layout_effect.view.*
 import kotlinx.android.synthetic.polish.layout_property.view.*
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Job
@@ -148,12 +150,6 @@ class PolishActivity : DaggerAppCompatActivity() {
         var recording = false
         viewModel.setSurfaceView(surface_view)
 
-
-        val propertiesAdapter = PropertiesAdapter { p ->
-            viewModel.setEffectProperty(p.property)
-        }
-        settings_list.adapter = propertiesAdapter
-
         lut_list.adapter = LutAdapter(Effect.LUTS, viewModel)
 
         lut_list.addItemDecoration(object : RecyclerView.ItemDecoration() {
@@ -255,40 +251,23 @@ class PolishActivity : DaggerAppCompatActivity() {
             }
         }
 
-        val effects = listOf(Effects.none, Effects.quantizer, Effects.squares, Effects.timeWarp, Effects.rotoHue)
+        val effects = listOf(
+            Effects.none,
+            Effects.quantizer,
+            Effects.squares,
+            Effects.timeWarp,
+            Effects.rotoHue
+        )
 
-        val snapHelper = LinearSnapHelper()
-        val layoutManager = effect_list.layoutManager as LinearLayoutManager
         effect_list.adapter = EffectAdapter(effects) {
-            val view = layoutManager.findViewByPosition(it)!!
-            val snapDistance = snapHelper.calculateDistanceToFinalSnap(layoutManager, view)!!
-            if (snapDistance[0] != 0 || snapDistance[1] != 0) {
-                effect_list.smoothScrollBy(snapDistance[0], snapDistance[1])
-            }
+            viewModel.setEffectProperty(it.property)
         }
 
-        effect_list.doOnLayout {
-            Log.d(TAG, "onLayout")
-            it.setPadding(it.width / 2, 0, it.width / 2, 0)
-            snapHelper.attachToRecyclerView(effect_list)
-        }
-
-        effect_list.addOnScrollListener(object : RecyclerView.OnScrollListener() {
-            private var oldPos = -1
-            override fun onScrollStateChanged(recyclerView: RecyclerView, newState: Int) {
-                if (newState == RecyclerView.SCROLL_STATE_IDLE) {
-                    val view = snapHelper.findSnapView(layoutManager)
-                    val pos = view?.let { effect_list.getChildAdapterPosition(it) } ?: 0
-                    if (oldPos != pos) {
-                        val effect = effects[pos]
-                        val changed = viewModel.setEffect(effect)
-                        propertiesAdapter.setProperties(effect.getProperties())
-                        if (changed) {
-                            oldPos = pos
-                        }
-                        Log.d(TAG, "pos $pos $effect")
-                    }
-                }
+        effect_list.registerOnPageChangeCallback(object : ViewPager2.OnPageChangeCallback() {
+            override fun onPageSelected(position: Int) {
+                val effect = effects[position]
+                 viewModel.setEffect(effect)
+                Log.d(TAG, "pos $position $effect")
             }
         })
     }
@@ -419,7 +398,7 @@ private data class Permission(val name: String, val granted: Boolean, val showRa
 
 private class EffectAdapter(
     private val effects: List<Effect>,
-    private val onClick: (Int) -> Unit
+    private val onClick: (PropertyItem) -> Unit
 ) : RecyclerView.Adapter<EffectViewHolder>() {
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): EffectViewHolder {
@@ -433,18 +412,25 @@ private class EffectAdapter(
     }
 
     override fun onBindViewHolder(holder: EffectViewHolder, position: Int) {
-        (holder.itemView as TextView).text = effects[position].title
+        holder.bind(effects[position])
     }
 }
 
 private class EffectViewHolder(
     itemView: View,
-    onClick: (Int) -> Unit
+    onClick: (PropertyItem) -> Unit
 ) : RecyclerView.ViewHolder(itemView) {
+    private val nameView = itemView.name
+    private val settingsList = itemView.settings_list
+    private val adapter = PropertiesAdapter(onClick)
+
     init {
-        itemView.setOnClickListener {
-            onClick(adapterPosition)
-        }
+        settingsList.adapter = adapter
+    }
+
+    fun bind(effect: Effect) {
+        nameView.text = effect.title
+        adapter.setProperties(effect.getProperties())
     }
 }
 
