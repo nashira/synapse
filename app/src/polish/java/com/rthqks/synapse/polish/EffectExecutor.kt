@@ -18,7 +18,6 @@ import java.util.concurrent.ConcurrentLinkedQueue
 class EffectExecutor(context: ExecutionContext) : NetworkExecutor(context) {
     private var effect: Effect? = null
     private val n = Network(0)
-    private val camera = n.addNode(NewNode(NodeType.Camera, Effect.ID_CAMERA))
     private val microphone = n.addNode(NewNode(NodeType.Microphone, Effect.ID_MIC))
     private val screen = n.addNode(NewNode(NodeType.Screen, Effect.ID_SURFACE_VIEW))
     private val encoder = n.addNode(NewNode(NodeType.MediaEncoder, Effect.ID_ENCODER))
@@ -29,7 +28,6 @@ class EffectExecutor(context: ExecutionContext) : NetworkExecutor(context) {
     private val lutPreviewPool = ConcurrentLinkedQueue<LutPreview>()
     private val lutPreviews = ConcurrentHashMap<SurfaceTexture, LutPreview>()
     private val lutJobs = ConcurrentHashMap<SurfaceTexture, Job>()
-    private var runState = NOT_RUNNING
 
     init {
         microphone.properties[AudioSource] = MediaRecorder.AudioSource.CAMCORDER
@@ -58,10 +56,8 @@ class EffectExecutor(context: ExecutionContext) : NetworkExecutor(context) {
     override suspend fun setup() {
         super.setup()
 
-        await {
-            n.nodes.values.forEach {
-                it.properties += context.properties
-            }
+        n.nodes.values.forEach {
+            it.properties += context.properties
         }
     }
 
@@ -71,50 +67,74 @@ class EffectExecutor(context: ExecutionContext) : NetworkExecutor(context) {
         addAllLinks()
     }
 
-    suspend fun swapEffect(effect: Effect) = async {
+    suspend fun swapEffect(effect: Effect) = await {
+        val newCam = effect.network.nodes.values.firstOrNull { it.type == NodeType.Camera }
+        val oldCam = this.effect?.network?.nodes?.values?.firstOrNull { it.type == NodeType.Camera }
+        var camNode: CameraNode? = null
 
-        this.effect?.network?.let { old ->
-            //            val cl = cropLink
-//            val links = if (cl != null ) old.getLinks() + cl else old.getLinks()
-            val links = old.getLinks()
+        this.effect?.let { oldEff ->
+            val old = oldEff.network
+            val links = old.getLinks() + Link(
+                oldEff.videoOut.first, oldEff.videoOut.second,
+                Effect.ID_LUT, Lut3dNode.INPUT.id
+            )
 
             links.map { scope.launch { removeLink(it) } }.joinAll()
-            old.nodes.map { scope.launch { removeNode(it.value) } }.joinAll()
+            old.nodes.map {
+                scope.launch {
+                    // keep the old CameraNode if new effect also has CameraNode
+                    if (it.key == oldCam?.id && newCam != null) {
+                        camNode = nodes.remove(it.key) as CameraNode?
+                    } else {
+                        removeNode(it.value)
+                    }
+                }
+            }.joinAll()
             links.forEach { n.removeLink(it) }
             old.nodes.forEach { n.removeNode(it.key) }
         }
 
+        newCam?.properties?.plusAssign(context.properties)
+
         val new = effect.network
+        val newLinks = new.getLinks() + Link(
+            effect.videoOut.first, effect.videoOut.second,
+            Effect.ID_LUT, Lut3dNode.INPUT.id
+        )
         new.nodes.forEach { n.addNode(it.value) }
-        new.getLinks().forEach { n.addLink(it) }
+        newLinks.forEach { n.addLink(it) }
         n.computeComponents()
-        new.nodes.map { scope.launch { addNode(it.value) } }.joinAll()
-        new.getLinks().map { scope.launch { addLink(it) } }.joinAll()
+        new.nodes.map {
+            scope.launch {
+                // reuse the old CameraNode if available
+                if (it.key == newCam?.id && camNode != null) {
+                    camNode?.setProperties(it.value.properties)
+                    nodes[it.key] = camNode!!
+                } else {
+                    addNode(it.value)
+                }
+            }
+        }.joinAll()
+        newLinks.map { scope.launch { addLink(it) } }.joinAll()
 
         (getNode(Effect.ID_LUT) as? Lut3dNode)?.resetLutMatrix()
         this.effect = effect
     }
-
-//    override suspend fun release() {
-//        await {
-//            removeAllLinks()
-//            removeAllNodes()
-//        }
-//        super.release()
-//    }
 
     suspend fun setSurfaceView(surfaceView: SurfaceView) = await {
         (getNode(Effect.ID_SURFACE_VIEW) as? SurfaceViewNode)?.setSurfaceView(surfaceView)
     }
 
     suspend fun startLutPreview() = await {
-        n.getLinks(Effect.ID_LUT).firstOrNull {
-            it.toNodeId == Effect.ID_LUT && it.toPortId == Lut3dNode.INPUT.id
-        }?.let {
-            val cl =
-                Link(it.fromNodeId, it.fromPortId, Effect.ID_THUMBNAIL, CropResizeNode.INPUT.id)
-            addLink(cl)
-            cropLink = cl
+        effect?.let {
+            cropLink = Link(
+                it.videoOut.first,
+                it.videoOut.second,
+                Effect.ID_THUMBNAIL,
+                CropResizeNode.INPUT.id
+            ).also { link ->
+                addLink(link)
+            }
         }
     }
 
@@ -128,9 +148,8 @@ class EffectExecutor(context: ExecutionContext) : NetworkExecutor(context) {
     fun registerLutPreview(textureView: TextureView, lut: String) {
 //        Log.d(TAG, "register $lut ${textureView.surfaceTexture}")
         val surfaceTexture = textureView.surfaceTexture
-        lutJobs[surfaceTexture] = scope.launch() {
+        lutJobs[surfaceTexture] = scope.launch {
             val preview = lutPreviewPool.poll() ?: await {
-                //        val preview = null ?: run {
 //            Log.d(TAG, "creating new lut preview")
                 val p = LutPreview()
                 p.setup()
@@ -187,26 +206,28 @@ class EffectExecutor(context: ExecutionContext) : NetworkExecutor(context) {
 
     companion object {
         const val TAG = "EffectExecutor"
-        const val NOT_RUNNING = 0
-        const val RUNNING = 1
     }
 
     private inner class LutPreview {
-        val cube = n.addNode(NewNode(NodeType.BCubeImport))
-        val lut = n.addNode(NewNode(NodeType.Lut3d))
-        val screen = n.addNode(NewNode(NodeType.TextureView))
+        val cube = NewNode(NodeType.BCubeImport)
+        val lut = NewNode(NodeType.Lut3d)
+        val screen = NewNode(NodeType.TextureView)
 
-        val l2s = Link(lut.id, Lut3dNode.OUTPUT.id, screen.id, TextureViewNode.INPUT.id)
-        val cu2l = Link(cube.id, BCubeImportNode.OUTPUT.id, lut.id, Lut3dNode.INPUT_LUT.id)
-        val cr2l = Link(crop.id, CropResizeNode.OUTPUT.id, lut.id, Lut3dNode.INPUT.id)
+        lateinit var l2s: Link
+        lateinit var cu2l: Link
+        lateinit var cr2l: Link
 
-        init {
+        suspend fun setup() {
+            n.addNode(cube)
+            n.addNode(lut)
+            n.addNode(screen)
+            l2s = Link(lut.id, Lut3dNode.OUTPUT.id, screen.id, TextureViewNode.INPUT.id)
+            cu2l = Link(cube.id, BCubeImportNode.OUTPUT.id, lut.id, Lut3dNode.INPUT_LUT.id)
+            cr2l = Link(crop.id, CropResizeNode.OUTPUT.id, lut.id, Lut3dNode.INPUT.id)
             n.addLink(l2s)
             n.addLink(cu2l)
             n.addLink(cr2l)
-        }
 
-        suspend fun setup() {
             listOf(cube, lut, screen).map { scope.launch { addNode(it) } }.joinAll()
             listOf(l2s, cu2l, cr2l).map { scope.launch { addLink(it) } }.joinAll()
         }

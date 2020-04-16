@@ -152,7 +152,7 @@ class PolishViewModel @Inject constructor(
 
         analytics.logEvent(Analytics.Event.SetEffect(effect.title))
         viewModelScope.launch {
-            effectExecutor.swapEffect(effect).await()
+            effectExecutor.swapEffect(effect)
             if (!svSetup) {
                 svSetup = true
                 surfaceView?.let { effectExecutor.setSurfaceView(it) }

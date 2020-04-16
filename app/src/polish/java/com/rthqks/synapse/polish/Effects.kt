@@ -13,25 +13,24 @@ object Effects {
     const val ID_SQUARES = 4
 
     val none = Network(ID_NONE).let {
-        it.addLink(Link(Effect.ID_CAMERA, CameraNode.OUTPUT.id, Effect.ID_LUT, Lut3dNode.INPUT.id))
-        Effect(it, "none")
+        val camera = it.addNode(NewNode(NodeType.Camera))
+
+        Effect(it, "none", Pair(camera.id, CameraNode.OUTPUT.id))
     }
 
     val timeWarp = Network(ID_TIME_WARP).let {
+        val camera = it.addNode(NewNode(NodeType.Camera))
         val ringBuffer = it.addNode(NewNode(NodeType.RingBuffer))
         val slice = it.addNode(NewNode(NodeType.Slice3d))
 
         it.addLink(
-            Link(Effect.ID_CAMERA, CameraNode.OUTPUT.id, ringBuffer.id, RingBufferNode.INPUT.id)
+            Link(camera.id, CameraNode.OUTPUT.id, ringBuffer.id, RingBufferNode.INPUT.id)
         )
         it.addLink(
             Link(ringBuffer.id, RingBufferNode.OUTPUT.id, slice.id, Slice3dNode.INPUT_3D.id)
         )
-        it.addLink(
-            Link(slice.id, Slice3dNode.OUTPUT.id, Effect.ID_LUT, Lut3dNode.INPUT.id)
-        )
         ringBuffer.properties[HistorySize] = 30
-        Effect(it, "Time Warp").apply {
+        Effect(it, "Time Warp", Pair(slice.id, Slice3dNode.OUTPUT.id)).apply {
             ringBuffer.properties.getProperty(HistorySize)?.let {
                 addProperty(
                     it, ToggleType(
@@ -60,14 +59,12 @@ object Effects {
     }
 
     val rotoHue = Network(ID_ROTO_HUE).let {
+        val camera = it.addNode(NewNode(NodeType.Camera))
         val rotate = it.addNode(NewNode(NodeType.RotateMatrix))
         it.addLink(
             Link(rotate.id, RotateMatrixNode.OUTPUT.id, Effect.ID_LUT, Lut3dNode.LUT_MATRIX.id)
         )
-        it.addLink(
-            Link(Effect.ID_CAMERA, CameraNode.OUTPUT.id, Effect.ID_LUT, Lut3dNode.INPUT.id)
-        )
-        Effect(it, "Roto-Hue").apply {
+        Effect(it, "Roto-Hue", Pair(camera.id, CameraNode.OUTPUT.id)).apply {
             val rotateSpeed = rotate.properties.getProperty(RotationSpeed)!!
             addProperty(
                 rotateSpeed, ToggleType(
@@ -84,15 +81,8 @@ object Effects {
 
     val squares = Network(ID_SQUARES).let {
         val cell = it.addNode(NewNode(NodeType.CellAuto))
-        it.addLink(
-            Link(
-                cell.id,
-                CellularAutoNode.OUTPUT.id,
-                Effect.ID_LUT,
-                Lut3dNode.INPUT.id
-            )
-        )
-        Effect(it, "Squares").apply {
+
+        Effect(it, "Squares", Pair(cell.id, CellularAutoNode.OUTPUT.id)).apply {
             val prop = cell.properties.getProperty(CellularAutoNode.GridSize)!!
             addProperty(
                 prop, ToggleType(
@@ -108,12 +98,13 @@ object Effects {
     }
 
     val quantizer = Network(5).let {
+        val camera = it.addNode(NewNode(NodeType.Camera))
         val blur = it.addNode(NewNode(NodeType.BlurFilter))
         val sobel = it.addNode(NewNode(NodeType.Sobel))
         val quantizer = it.addNode(NewNode(NodeType.Quantizer))
         val blend = it.addNode(NewNode(NodeType.ImageBlend))
         it.addLink(
-            Link(Effect.ID_CAMERA, CameraNode.OUTPUT.id, blur.id, BlurNode.INPUT.id)
+            Link(camera.id, CameraNode.OUTPUT.id, blur.id, BlurNode.INPUT.id)
         )
         it.addLink(
             Link(blur.id, BlurNode.OUTPUT.id, quantizer.id, QuantizerNode.INPUT.id)
@@ -139,14 +130,11 @@ object Effects {
         )
 
         it.addLink(
-            Link(Effect.ID_CAMERA, CameraNode.OUTPUT.id, blend.id, ImageBlendNode.INPUT_BASE.id)
-        )
-        it.addLink(
-            Link(blend.id, ImageBlendNode.OUTPUT.id, Effect.ID_LUT, Lut3dNode.INPUT.id)
+            Link(camera.id, CameraNode.OUTPUT.id, blend.id, ImageBlendNode.INPUT_BASE.id)
         )
         blur.properties[BlurSize] = 0
         blend.properties[BlendMode] = 23
-        Effect(it, "Squares").apply {
+        Effect(it, "Squares", Pair(blend.id, ImageBlendNode.OUTPUT.id)).apply {
             val prop = blur.properties.getProperty(CropSize)!!
             prop.value = Size(1080, 1920)
             addProperty(

@@ -113,6 +113,14 @@ class BCubeImportNode(
         }
     }
 
+    private suspend fun onStart() {
+        for (change in properties.channel()) {
+            if (change.key == LutUri) {
+
+            }
+        }
+    }
+
     suspend fun sendMessage() {
 //        Log.d(TAG, "onStart")
         val channel = channel(OUTPUT) ?: error("missing output")

@@ -32,7 +32,7 @@ class CellularAutoNode(
     private val framebuffer2 = Framebuffer()
     private val program = Program()
     private val geo = Quad()
-    private val RD = true
+    private val RD = false
 
     override suspend fun onSetup() {
         gl.glContext {

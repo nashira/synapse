@@ -1,11 +1,14 @@
 package com.rthqks.synapse.polish
 
-import com.rthqks.synapse.logic.*
+import com.rthqks.synapse.logic.Network
+import com.rthqks.synapse.logic.Properties
+import com.rthqks.synapse.logic.Property
+import com.rthqks.synapse.logic.PropertyType
 
 class Effect(
     val network: Network,
     val title: String,
-    val videoOut: Connector
+    val videoOut: Pair<Int, String>
 ) {
     private val propertyTypes = mutableMapOf<Property.Key<*>, PropertyType<Any?>>()
     val properties = Properties()
@@ -21,7 +24,6 @@ class Effect(
         // node id allocations
         // 0 - 10,000 : effect specific nodes
         // 10000+ : effect context nodes
-        const val ID_CAMERA = 10_001
         const val ID_MIC = 10_002
         const val ID_SURFACE_VIEW = 10_003
         const val ID_ENCODER = 10_004

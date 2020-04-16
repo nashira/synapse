@@ -64,6 +64,11 @@ class Properties {
         this.properties += properties.properties
     }
 
+    operator fun plus(properties: Properties) = Properties().also {
+        it.properties += this.properties
+        it.properties += properties.properties
+    }
+
     fun fromString(type: Int, keyName: String, value: String?) {
         if (value != null) {
             putString(getKey(type, keyName), value)

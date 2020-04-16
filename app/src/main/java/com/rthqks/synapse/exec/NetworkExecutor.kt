@@ -13,7 +13,7 @@ import kotlinx.coroutines.launch
 import java.util.concurrent.ConcurrentHashMap
 
 open class NetworkExecutor(context: ExecutionContext) : Executor(context) {
-    private val nodes = ConcurrentHashMap<Int, NodeExecutor>()
+    protected val nodes = ConcurrentHashMap<Int, NodeExecutor>()
     protected var network: Network? = null
     var isResumed = false
         private set

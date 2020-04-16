@@ -19,7 +19,7 @@ import kotlinx.coroutines.runBlocking
 
 class CameraNode(
     context: ExecutionContext,
-    private val properties: Properties
+    private var properties: Properties
 ) : NodeExecutor(context) {
     private val cameraManager = context.cameraManager
     private val glesManager = context.glesManager
@@ -44,6 +44,10 @@ class CameraNode(
     private val requestedSize: Size get() = properties[VideoSize]
     private val frameRate: Int get() = properties[FrameRate]
     private val stabilize: Boolean get() = properties[Stabilize]
+
+    fun setProperties(properties: Properties) {
+        this.properties = properties
+    }
 
     override suspend fun onSetup() {
         Log.d(TAG, "onSetup")

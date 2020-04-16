@@ -255,7 +255,7 @@ class PolishActivity : DaggerAppCompatActivity() {
             }
         }
 
-        val effects = listOf(Effects.none, Effects.quantizer, Effects.timeWarp, Effects.rotoHue)
+        val effects = listOf(Effects.none, Effects.quantizer, Effects.squares, Effects.timeWarp, Effects.rotoHue)
 
         val snapHelper = LinearSnapHelper()
         val layoutManager = effect_list.layoutManager as LinearLayoutManager
