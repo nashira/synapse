@@ -67,58 +67,68 @@ class EffectExecutor(context: ExecutionContext) : NetworkExecutor(context) {
         addAllLinks()
     }
 
-    suspend fun swapEffect(effect: Effect) = await {
-        val newCam = effect.network.nodes.values.firstOrNull { it.type == NodeType.Camera }
-        val oldCam = this.effect?.network?.nodes?.values?.firstOrNull { it.type == NodeType.Camera }
-        var camNode: CameraNode? = null
+    suspend fun swapEffect(effect: Effect) {
+        val isLutPreview = cropLink != null
+        stopLutPreview()
+        await {
 
-        this.effect?.let { oldEff ->
-            val old = oldEff.network
-            val links = old.getLinks() + Link(
-                oldEff.videoOut.first, oldEff.videoOut.second,
+            val newCam = effect.network.nodes.values.firstOrNull { it.type == NodeType.Camera }
+            val oldCam =
+                this.effect?.network?.nodes?.values?.firstOrNull { it.type == NodeType.Camera }
+            var camNode: CameraNode? = null
+
+            this.effect?.let { oldEff ->
+                val old = oldEff.network
+                val links = old.getLinks() + Link(
+                    oldEff.videoOut.first, oldEff.videoOut.second,
+                    Effect.ID_LUT, Lut3dNode.INPUT.id
+                )
+
+                links.map { scope.launch { removeLink(it) } }.joinAll()
+                old.nodes.map {
+                    scope.launch {
+                        // keep the old CameraNode if new effect also has CameraNode
+                        if (it.key == oldCam?.id && newCam != null) {
+                            camNode = nodes.remove(it.key) as CameraNode?
+                        } else {
+                            removeNode(it.value)
+                        }
+                    }
+                }.joinAll()
+                links.forEach { n.removeLink(it) }
+                old.nodes.forEach { n.removeNode(it.key) }
+            }
+
+            newCam?.properties?.plusAssign(context.properties)
+
+            val new = effect.network
+            val newLinks = new.getLinks() + Link(
+                effect.videoOut.first, effect.videoOut.second,
                 Effect.ID_LUT, Lut3dNode.INPUT.id
             )
-
-            links.map { scope.launch { removeLink(it) } }.joinAll()
-            old.nodes.map {
+            new.nodes.forEach { n.addNode(it.value) }
+            newLinks.forEach { n.addLink(it) }
+            n.computeComponents()
+            new.nodes.map {
                 scope.launch {
-                    // keep the old CameraNode if new effect also has CameraNode
-                    if (it.key == oldCam?.id && newCam != null) {
-                        camNode = nodes.remove(it.key) as CameraNode?
+                    // reuse the old CameraNode if available
+                    if (it.key == newCam?.id && camNode != null) {
+                        camNode?.setProperties(it.value.properties)
+                        nodes[it.key] = camNode!!
                     } else {
-                        removeNode(it.value)
+                        addNode(it.value)
                     }
                 }
             }.joinAll()
-            links.forEach { n.removeLink(it) }
-            old.nodes.forEach { n.removeNode(it.key) }
+            newLinks.map { scope.launch { addLink(it) } }.joinAll()
+
+            (getNode(Effect.ID_LUT) as? Lut3dNode)?.resetLutMatrix()
+            this.effect = effect
         }
 
-        newCam?.properties?.plusAssign(context.properties)
-
-        val new = effect.network
-        val newLinks = new.getLinks() + Link(
-            effect.videoOut.first, effect.videoOut.second,
-            Effect.ID_LUT, Lut3dNode.INPUT.id
-        )
-        new.nodes.forEach { n.addNode(it.value) }
-        newLinks.forEach { n.addLink(it) }
-        n.computeComponents()
-        new.nodes.map {
-            scope.launch {
-                // reuse the old CameraNode if available
-                if (it.key == newCam?.id && camNode != null) {
-                    camNode?.setProperties(it.value.properties)
-                    nodes[it.key] = camNode!!
-                } else {
-                    addNode(it.value)
-                }
-            }
-        }.joinAll()
-        newLinks.map { scope.launch { addLink(it) } }.joinAll()
-
-        (getNode(Effect.ID_LUT) as? Lut3dNode)?.resetLutMatrix()
-        this.effect = effect
+        if (isLutPreview) {
+            startLutPreview()
+        }
     }
 
     suspend fun setSurfaceView(surfaceView: SurfaceView) = await {
