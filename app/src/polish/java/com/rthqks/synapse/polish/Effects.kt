@@ -4,6 +4,7 @@ import android.util.Size
 import com.rthqks.synapse.R
 import com.rthqks.synapse.exec.node.*
 import com.rthqks.synapse.logic.*
+import com.rthqks.synapse.logic.NodeDef.Camera
 import com.rthqks.synapse.logic.NodeDef.CellAuto
 import com.rthqks.synapse.logic.NodeDef.CellAuto.GridSize
 import com.rthqks.synapse.logic.NodeDef.CropGrayBlur.BlurSize
@@ -25,13 +26,13 @@ object Effects {
     const val ID_SQUARES = 4
 
     val none = Network(ID_NONE).let {
-        val camera = it.addNode(NodeDef.Camera.toNode())
+        val camera = it.addNode(Camera.toNode())
 
-        Effect(it, "none", Pair(camera.id, CameraNode.OUTPUT.id))
+        Effect(it, "none", Pair(camera.id, Camera.OUTPUT.key))
     }
 
     val timeWarp = Network(ID_TIME_WARP).let {
-        val camera = it.addNode(NodeDef.Camera.toNode())
+        val camera = it.addNode(Camera.toNode())
         val ringBuffer = it.addNode(NodeDef.RingBuffer.toNode())
         val slice = it.addNode(NodeDef.Slice3d.toNode())
 
@@ -71,10 +72,10 @@ object Effects {
     }
 
     val rotoHue = Network(ID_ROTO_HUE).let {
-        val camera = it.addNode(NodeDef.Camera.toNode())
+        val camera = it.addNode(Camera.toNode())
         val rotate = it.addNode(NodeDef.RotateMatrix.toNode())
         it.addLink(
-            Link(rotate.id, RotateMatrixNode.OUTPUT.id, Effect.ID_LUT, Lut3dNode.LUT_MATRIX.id)
+            Link(rotate.id, RotateMatrixNode.OUTPUT.id, Effect.ID_LUT, Lut3dNode.MATRIX_IN.id)
         )
         Effect(it, "Roto-Hue", Pair(camera.id, CameraNode.OUTPUT.id)).apply {
             val rotateSpeed = rotate.properties.getProperty(Speed)!!
@@ -110,7 +111,7 @@ object Effects {
     }
 
     val quantizer = Network(5).let {
-        val camera = it.addNode(NodeDef.Camera.toNode())
+        val camera = it.addNode(Camera.toNode())
         val blur = it.addNode(NodeDef.CropGrayBlur.toNode())
         val sobel = it.addNode(NodeDef.Sobel.toNode())
         val quantizer = it.addNode(NodeDef.Quantizer.toNode())

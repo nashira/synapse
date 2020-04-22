@@ -7,6 +7,7 @@ import com.rthqks.synapse.exec.ExecutionContext
 import com.rthqks.synapse.exec.NodeExecutor
 import com.rthqks.synapse.gl.GlesManager
 import com.rthqks.synapse.logic.NodeDef
+import com.rthqks.synapse.logic.NodeDef.RotateMatrix
 import com.rthqks.synapse.logic.NodeDef.RotateMatrix.FrameRate
 import com.rthqks.synapse.logic.NodeDef.RotateMatrix.Speed
 import com.rthqks.synapse.logic.Properties
@@ -98,6 +99,6 @@ class RotateMatrixNode(
     }
 
     companion object {
-        val OUTPUT = Connection.Key<FloatArray>(NodeDef.RotateMatrix.OUTPUT.key)
+        val OUTPUT = Connection.Key<FloatArray>(RotateMatrix.OUTPUT.key)
     }
 }

@@ -66,7 +66,7 @@ class Lut3dNode(
                     }
                 }
             }
-            LUT_MATRIX -> {
+            MATRIX_IN -> {
                 if (matrixJob == null) {
                     matrixJob = scope.launch {
                         startMatrix()
@@ -90,7 +90,7 @@ class Lut3dNode(
                 lutJob?.join()
                 lutJob = null
             }
-            LUT_MATRIX -> {
+            MATRIX_IN -> {
                 matrixJob?.join()
                 matrixJob = null
             }
@@ -128,7 +128,7 @@ class Lut3dNode(
                     )
                     addUniform(
                         Uniform.Type.Mat4,
-                        LUT_MATRIX.id,
+                        LUT_MATRIX,
                         GlesManager.identityMat()
                     )
                     addUniform(
@@ -221,7 +221,7 @@ class Lut3dNode(
     }
 
     private suspend fun startMatrix() {
-        val channel = channel(LUT_MATRIX) ?: error("missing input matrix")
+        val channel = channel(MATRIX_IN) ?: error("missing input matrix")
         for (msg in channel) {
             matrixEvent?.release()
             matrixEvent = msg
@@ -274,7 +274,7 @@ class Lut3dNode(
         }
 
         matrixEvent?.let {
-            program.getUniform(Uniform.Type.Mat4, LUT_MATRIX.id).set(it.data)
+            program.getUniform(Uniform.Type.Mat4, LUT_MATRIX).set(it.data)
         }
 
         glesManager.glContext {
@@ -294,7 +294,7 @@ class Lut3dNode(
     }
 
     suspend fun resetLutMatrix() {
-        program.getUniformOrNull(Uniform.Type.Mat4, LUT_MATRIX.id)?.let {
+        program.getUniformOrNull(Uniform.Type.Mat4, LUT_MATRIX)?.let {
             Matrix.setIdentityM(it.data, 0)
             it.dirty = true
         }
@@ -305,10 +305,11 @@ class Lut3dNode(
         const val INPUT_TEXTURE_LOCATION = 0
         const val LUT_TEXTURE_LOCATION = 1
         const val INPUT_MATRIX = "input_matrix"
+        const val LUT_MATRIX = "lut_matrix"
         const val U_LUT_STRENGTH = "lut_strength"
         val INPUT = Connection.Key<Texture2d>(Lut3d.SOURCE_IN.key)
         val INPUT_LUT = Connection.Key<Texture3d>(Lut3d.LUT_IN.key)
-        val LUT_MATRIX = Connection.Key<FloatArray>(Lut3d.MATRIX_IN.key)
+        val MATRIX_IN = Connection.Key<FloatArray>(Lut3d.MATRIX_IN.key)
         val OUTPUT = Connection.Key<Texture2d>(Lut3d.OUTPUT.key)
     }
 }

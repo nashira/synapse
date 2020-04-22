@@ -14,6 +14,7 @@ import com.rthqks.synapse.logic.Link
 import com.rthqks.synapse.logic.Network
 import com.rthqks.synapse.logic.Node
 import com.rthqks.synapse.logic.NodeDef
+import com.rthqks.synapse.logic.NodeDef.*
 import com.rthqks.synapse.logic.NodeDef.BCubeImport.LutUri
 import com.rthqks.synapse.logic.NodeDef.CropResize.CropSize
 import com.rthqks.synapse.logic.NodeDef.Microphone.AudioSource
@@ -24,12 +25,12 @@ import java.util.concurrent.ConcurrentLinkedQueue
 class EffectExecutor(context: ExecutionContext) : NetworkExecutor(context) {
     private var effect: Effect? = null
     private val n = Network(0)
-    private val microphone = n.addNode(NodeDef.Microphone.toNode(Effect.ID_MIC))
-    private val screen = n.addNode(NodeDef.Screen.toNode(Effect.ID_SURFACE_VIEW))
-    private val encoder = n.addNode(NodeDef.MediaEncoder.toNode(Effect.ID_ENCODER))
-    private val cube = n.addNode(NodeDef.BCubeImport.toNode(Effect.ID_LUT_IMPORT))
-    private val lut = n.addNode(NodeDef.Lut3d.toNode(Effect.ID_LUT))
-    private val crop = n.addNode(NodeDef.CropResize.toNode(Effect.ID_THUMBNAIL))
+    private val microphone = n.addNode(Microphone.toNode(Effect.ID_MIC))
+    private val screen = n.addNode(Screen.toNode(Effect.ID_SURFACE_VIEW))
+    private val encoder = n.addNode(MediaEncoder.toNode(Effect.ID_ENCODER))
+    private val cube = n.addNode(BCubeImport.toNode(Effect.ID_LUT_IMPORT))
+    private val lut = n.addNode(Lut3d.toNode(Effect.ID_LUT))
+    private val crop = n.addNode(CropResize.toNode(Effect.ID_THUMBNAIL))
     private var cropLink: Link? = null
     private val lutPreviewPool = ConcurrentLinkedQueue<LutPreview>()
     private val lutPreviews = ConcurrentHashMap<SurfaceTexture, LutPreview>()
@@ -39,22 +40,22 @@ class EffectExecutor(context: ExecutionContext) : NetworkExecutor(context) {
         microphone.properties[AudioSource] = MediaRecorder.AudioSource.CAMCORDER
         crop.properties[CropSize] = Size(320, 320)
 
-        n.addLink(Link(lut.id, Lut3dNode.OUTPUT.id, screen.id, SurfaceViewNode.INPUT.id))
+        n.addLink(Link(lut.id, Lut3d.OUTPUT.key, screen.id, Screen.INPUT.key))
         n.addLink(
             Link(
                 lut.id,
-                Lut3dNode.OUTPUT.id,
+                Lut3d.OUTPUT.key,
                 encoder.id,
-                EncoderNode.INPUT_VIDEO.id
+                MediaEncoder.VIDEO_IN.key
             )
         )
-        n.addLink(Link(cube.id, BCubeImportNode.OUTPUT.id, lut.id, Lut3dNode.INPUT_LUT.id))
+        n.addLink(Link(cube.id, BCubeImport.OUTPUT.key, lut.id, Lut3d.LUT_IN.key))
         n.addLink(
             Link(
                 microphone.id,
-                AudioSourceNode.OUTPUT.id,
+                Microphone.OUTPUT.key,
                 encoder.id,
-                EncoderNode.INPUT_AUDIO.id
+                MediaEncoder.AUDIO_IN.key
             )
         )
     }
@@ -78,16 +79,16 @@ class EffectExecutor(context: ExecutionContext) : NetworkExecutor(context) {
         stopLutPreview()
         await {
 
-            val newCam = effect.network.nodes.values.firstOrNull { it.type == NodeDef.Camera.key }
+            val newCam = effect.network.nodes.values.firstOrNull { it.type == Camera.key }
             val oldCam =
-                this.effect?.network?.nodes?.values?.firstOrNull { it.type == NodeDef.Camera.key }
+                this.effect?.network?.nodes?.values?.firstOrNull { it.type == Camera.key }
             var camNode: CameraNode? = null
 
             this.effect?.let { oldEff ->
                 val old = oldEff.network
                 val links = old.getLinks() + Link(
                     oldEff.videoOut.first, oldEff.videoOut.second,
-                    Effect.ID_LUT, Lut3dNode.INPUT.id
+                    Effect.ID_LUT, Lut3d.SOURCE_IN.key
                 )
 
                 links.map { scope.launch { removeLink(it) } }.joinAll()
@@ -110,7 +111,7 @@ class EffectExecutor(context: ExecutionContext) : NetworkExecutor(context) {
             val new = effect.network
             val newLinks = new.getLinks() + Link(
                 effect.videoOut.first, effect.videoOut.second,
-                Effect.ID_LUT, Lut3dNode.INPUT.id
+                Effect.ID_LUT, Lut3d.SOURCE_IN.key
             )
             new.nodes.forEach { n.addNode(it.value) }
             newLinks.forEach { n.addLink(it) }
@@ -147,7 +148,7 @@ class EffectExecutor(context: ExecutionContext) : NetworkExecutor(context) {
                 it.videoOut.first,
                 it.videoOut.second,
                 Effect.ID_THUMBNAIL,
-                CropResizeNode.INPUT.id
+                CropResize.INPUT.key
             ).also { link ->
                 addLink(link)
             }
@@ -226,7 +227,7 @@ class EffectExecutor(context: ExecutionContext) : NetworkExecutor(context) {
 
     private inner class LutPreview {
         val cube = NodeDef.BCubeImport.toNode()
-        val lut = NodeDef.Lut3d.toNode()
+        val lut = Lut3d.toNode()
         val screen = NodeDef.TextureView.toNode()
 
         lateinit var l2s: Link
@@ -237,9 +238,9 @@ class EffectExecutor(context: ExecutionContext) : NetworkExecutor(context) {
             n.addNode(cube)
             n.addNode(lut)
             n.addNode(screen)
-            l2s = Link(lut.id, Lut3dNode.OUTPUT.id, screen.id, TextureViewNode.INPUT.id)
-            cu2l = Link(cube.id, BCubeImportNode.OUTPUT.id, lut.id, Lut3dNode.INPUT_LUT.id)
-            cr2l = Link(crop.id, CropResizeNode.OUTPUT.id, lut.id, Lut3dNode.INPUT.id)
+            l2s = Link(lut.id, Lut3d.OUTPUT.key, screen.id, NodeDef.TextureView.INPUT.key)
+            cu2l = Link(cube.id, BCubeImport.OUTPUT.key, lut.id, Lut3d.LUT_IN.key)
+            cr2l = Link(crop.id, CropResize.OUTPUT.key, lut.id, Lut3d.SOURCE_IN.key)
             n.addLink(l2s)
             n.addLink(cu2l)
             n.addLink(cr2l)

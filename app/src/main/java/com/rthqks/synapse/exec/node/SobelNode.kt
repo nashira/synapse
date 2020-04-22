@@ -8,6 +8,8 @@ import com.rthqks.synapse.exec.ExecutionContext
 import com.rthqks.synapse.exec.Message
 import com.rthqks.synapse.exec.NodeExecutor
 import com.rthqks.synapse.gl.*
+import com.rthqks.synapse.logic.NodeDef
+import com.rthqks.synapse.logic.NodeDef.Sobel
 import com.rthqks.synapse.logic.Properties
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
@@ -199,9 +201,9 @@ class SobelNode(
     }
 
     companion object {
-        const val TAG = "Quantizer"
+        const val TAG = "SobelNode"
         const val INPUT_TEXTURE_LOCATION = 0
-        val INPUT = Connection.Key<Texture2d>("sobel_in")
-        val OUTPUT = Connection.Key<Texture2d>("sobel_out")
+        val INPUT = Connection.Key<Texture2d>(Sobel.INPUT.key)
+        val OUTPUT = Connection.Key<Texture2d>(Sobel.OUTPUT.key)
     }
 }
