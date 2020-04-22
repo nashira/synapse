@@ -7,7 +7,6 @@ import androidx.annotation.StringRes
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.rthqks.synapse.data.LinkData
 import com.rthqks.synapse.data.NetworkData
 import com.rthqks.synapse.data.NodeData
 import com.rthqks.synapse.data.SynapseDao
@@ -50,7 +49,7 @@ class BuilderViewModel @Inject constructor(
             }
             networkChannel.postValue(network)
 
-            nodesChannel.postValue(AdapterState(0, listOf(PROPERTIES_NODE)))
+//            nodesChannel.postValue(AdapterState(0, listOf(PROPERTIES_NODE)))
 
             executor.initializeNetwork(network)
         }
@@ -58,15 +57,15 @@ class BuilderViewModel @Inject constructor(
 
     fun showFirstNode() {
         val nextNode = network.getFirstNode() ?: run {
-            connectionChannel.postValue(Connector(CREATION_NODE, FAKE_PORT))
-            CREATION_NODE
+//            connectionChannel.postValue(Connector(CREATION_NODE, FAKE_PORT))
+//            CREATION_NODE
         }
-        nodesChannel.value = AdapterState(0, listOf(PROPERTIES_NODE, nextNode))
+//        nodesChannel.value = AdapterState(0, listOf(PROPERTIES_NODE, nextNode))
         updateStartState()
     }
 
     fun swipeToNode(node: Node) {
-        nodesChannel.value = AdapterState(0, listOf(PROPERTIES_NODE, node))
+//        nodesChannel.value = AdapterState(0, listOf(PROPERTIES_NODE, node))
         updateStartState()
     }
 
@@ -86,9 +85,9 @@ class BuilderViewModel @Inject constructor(
 
             connectionChannel.value = connector
             if (connector.port.output) {
-                nodesChannel.value = AdapterState(0, listOf(connector.node, CONNECTION_NODE))
+//                nodesChannel.value = AdapterState(0, listOf(connector.node, CONNECTION_NODE))
             } else {
-                nodesChannel.value = AdapterState(1, listOf(CONNECTION_NODE, connector.node))
+//                nodesChannel.value = AdapterState(1, listOf(CONNECTION_NODE, connector.node))
             }
         }
     }
@@ -96,9 +95,9 @@ class BuilderViewModel @Inject constructor(
     fun startConnection(connector: Connector) {
         connectionChannel.value = connector
         if (connector.port.output) {
-            nodesChannel.value = AdapterState(1, listOf(connector.node, CONNECTION_NODE), true)
+//            nodesChannel.value = AdapterState(1, listOf(connector.node, CONNECTION_NODE), true)
         } else {
-            nodesChannel.value = AdapterState(0, listOf(CONNECTION_NODE, connector.node), true)
+//            nodesChannel.value = AdapterState(0, listOf(CONNECTION_NODE, connector.node), true)
         }
     }
 
@@ -108,14 +107,14 @@ class BuilderViewModel @Inject constructor(
         nodesChannel.value?.let {
             val item = it.items[currentItem]
             val other = it.items.firstOrNull { it != item }
-            if (item.type != NodeType.Connection && item.type != NodeType.Creation) {
-                nodesChannel.value = AdapterState(0, listOf(item))
-            } else {
-                nodesChannel.value = AdapterState(currentItem, it.items)
-            }
-            if (other?.type == NodeType.Connection || other?.type == NodeType.Creation) {
-                restartNetwork()
-            }
+//            if (item.def != NodeDef.Connection && item.def != NodeDef.Creation) {
+//                nodesChannel.value = AdapterState(0, listOf(item))
+//            } else {
+//                nodesChannel.value = AdapterState(currentItem, it.items)
+//            }
+//            if (other?.def == NodeDef.Connection || other?.def == NodeDef.Creation) {
+//                restartNetwork()
+//            }
             updateStartState()
         }
     }
@@ -129,8 +128,8 @@ class BuilderViewModel @Inject constructor(
             return
         }
         nodesChannel.value?.let {
-            val index = it.items.indexOfFirst { it.type != NodeType.Connection }
-            nodesChannel.value = AdapterState(index, it.items, true)
+//            val index = it.items.indexOfFirst { it.def != NodeDef.Connection }
+//            nodesChannel.value = AdapterState(index, it.items, true)
         }
     }
 
@@ -158,30 +157,30 @@ class BuilderViewModel @Inject constructor(
                 }
             }
 
-            if (it.node.type != NodeType.Creation) {
-                // new edge
-                val from = if (connector.port.output) connector else it
-                val to = if (connector.port.output) it else connector
-
-                Log.d(
-                    TAG,
-                    "connecting ${from.node.type}:${from.port.id} to ${to.node.type}:${to.port.id}"
-                )
-
-                val link = Link(from.node.id, from.port.id, to.node.id, to.port.id)
-                network.addLink(link)
-                viewModelScope.launch(Dispatchers.IO) {
-                    dao.insertLink(
-                        LinkData(
-                            network.id,
-                            from.node.id,
-                            from.port.id,
-                            to.node.id,
-                            to.port.id
-                        )
-                    )
-                }
-            }
+//            if (it.node.def != NodeDef.Creation) {
+//                // new edge
+//                val from = if (connector.port.output) connector else it
+//                val to = if (connector.port.output) it else connector
+//
+//                Log.d(
+//                    TAG,
+//                    "connecting ${from.node.def}:${from.port.id} to ${to.node.def}:${to.port.id}"
+//                )
+//
+//                val link = Link(from.node.id, from.port.id, to.node.id, to.port.id)
+//                network.addLink(link)
+//                viewModelScope.launch(Dispatchers.IO) {
+//                    dao.insertLink(
+//                        LinkData(
+//                            network.id,
+//                            from.node.id,
+//                            from.port.id,
+//                            to.node.id,
+//                            to.port.id
+//                        )
+//                    )
+//                }
+//            }
 
 //            if (addNode) {
             restartNetwork()
@@ -210,11 +209,11 @@ class BuilderViewModel @Inject constructor(
     }
 
     fun onAddNode() {
-        connectionChannel.postValue(Connector(CREATION_NODE, FAKE_PORT))
-        nodesChannel.value?.let {
-            nodeAfterCancel = it.items[it.currentItem]
-        }
-        nodesChannel.postValue(AdapterState(0, listOf(CREATION_NODE)))
+//        connectionChannel.postValue(Connector(CREATION_NODE, FAKE_PORT))
+//        nodesChannel.value?.let {
+//            nodeAfterCancel = it.items[it.currentItem]
+//        }
+//        nodesChannel.postValue(AdapterState(0, listOf(CREATION_NODE)))
     }
 
     fun deleteLink(link: Link) {
@@ -237,12 +236,12 @@ class BuilderViewModel @Inject constructor(
 
             val firstNode = network.getFirstNode()
 
-            firstNode?.let {
-                nodesChannel.value = AdapterState(0, listOf(firstNode))
-            } ?: run {
-                connectionChannel.value = Connector(CREATION_NODE, FAKE_PORT)
-                nodesChannel.value = AdapterState(0, listOf(CREATION_NODE))
-            }
+//            firstNode?.let {
+//                nodesChannel.value = AdapterState(0, listOf(firstNode))
+//            } ?: run {
+//                connectionChannel.value = Connector(CREATION_NODE, FAKE_PORT)
+//                nodesChannel.value = AdapterState(0, listOf(CREATION_NODE))
+//            }
 
             restartNetwork()
 
@@ -274,14 +273,14 @@ class BuilderViewModel @Inject constructor(
     }
 
     fun updateStartState() {
-        nodesChannel.value?.also {
-            val current = it.items.any { it.id != NodeMap[NodeType.Properties]?.id }
-            if (current) {
-                executor.start()
-            } else {
-                executor.stop()
-            }
-        }
+//        nodesChannel.value?.also {
+//            val current = it.items.any { it.id != NodeMap[NodeDef.Properties]?.id }
+//            if (current) {
+//                executor.start()
+//            } else {
+//                executor.stop()
+//            }
+//        }
     }
 
     fun stopExecution() {
@@ -307,14 +306,7 @@ class BuilderViewModel @Inject constructor(
     fun onBackPressed(): Boolean {
         return nodesChannel.value?.let {
             when (it.items[it.currentItem].id) {
-                PROPERTIES_NODE.id -> false
-                CREATION_NODE.id,
-                CONNECTION_NODE.id -> {
-                    cancelConnection()
-                    true
-                }
                 else -> {
-                    jumpToNode(PROPERTIES_NODE)
                     true
                 }
             }
@@ -372,10 +364,6 @@ class BuilderViewModel @Inject constructor(
 
     companion object {
         const val TAG = "BuilderViewModel"
-        val PROPERTIES_NODE: Node by lazy { GetNode(NodeType.Properties) }
-        val CONNECTION_NODE: Node by lazy { GetNode(NodeType.Connection) }
-        val CREATION_NODE: Node by lazy { GetNode(NodeType.Creation) }
-        val FAKE_PORT = Port(Port.Type.Video, "", "", false)
     }
 }
 

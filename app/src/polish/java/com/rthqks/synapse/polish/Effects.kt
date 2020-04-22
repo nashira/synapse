@@ -4,6 +4,18 @@ import android.util.Size
 import com.rthqks.synapse.R
 import com.rthqks.synapse.exec.node.*
 import com.rthqks.synapse.logic.*
+import com.rthqks.synapse.logic.NodeDef.CellAuto
+import com.rthqks.synapse.logic.NodeDef.CellAuto.GridSize
+import com.rthqks.synapse.logic.NodeDef.CropGrayBlur.BlurSize
+import com.rthqks.synapse.logic.NodeDef.CropGrayBlur.CropEnabled
+import com.rthqks.synapse.logic.NodeDef.CropGrayBlur.CropSize
+import com.rthqks.synapse.logic.NodeDef.CropGrayBlur.GrayEnabled
+import com.rthqks.synapse.logic.NodeDef.CropGrayBlur.NumPasses
+import com.rthqks.synapse.logic.NodeDef.ImageBlend.BlendMode
+import com.rthqks.synapse.logic.NodeDef.Quantizer.NumElements
+import com.rthqks.synapse.logic.NodeDef.RingBuffer.Depth
+import com.rthqks.synapse.logic.NodeDef.RotateMatrix.Speed
+import com.rthqks.synapse.logic.NodeDef.Slice3d.SliceDirection
 
 
 object Effects {
@@ -13,15 +25,15 @@ object Effects {
     const val ID_SQUARES = 4
 
     val none = Network(ID_NONE).let {
-        val camera = it.addNode(NewNode(NodeType.Camera))
+        val camera = it.addNode(NodeDef.Camera.toNode())
 
         Effect(it, "none", Pair(camera.id, CameraNode.OUTPUT.id))
     }
 
     val timeWarp = Network(ID_TIME_WARP).let {
-        val camera = it.addNode(NewNode(NodeType.Camera))
-        val ringBuffer = it.addNode(NewNode(NodeType.RingBuffer))
-        val slice = it.addNode(NewNode(NodeType.Slice3d))
+        val camera = it.addNode(NodeDef.Camera.toNode())
+        val ringBuffer = it.addNode(NodeDef.RingBuffer.toNode())
+        val slice = it.addNode(NodeDef.Slice3d.toNode())
 
         it.addLink(
             Link(camera.id, CameraNode.OUTPUT.id, ringBuffer.id, RingBufferNode.INPUT.id)
@@ -29,11 +41,11 @@ object Effects {
         it.addLink(
             Link(ringBuffer.id, RingBufferNode.OUTPUT.id, slice.id, Slice3dNode.INPUT_3D.id)
         )
-        ringBuffer.properties[HistorySize] = 30
+        ringBuffer.properties[Depth] = 30
         Effect(it, "Time Warp", Pair(slice.id, Slice3dNode.OUTPUT.id)).apply {
-            ringBuffer.properties.getProperty(HistorySize)?.let {
+            ringBuffer.properties.getProperty(Depth)?.let {
                 addProperty(
-                    it, ToggleType(
+                    it, ToggleHolder(
                         R.string.property_name_history_size,
                         R.drawable.ic_layers,
                         Choice(20, R.string.property_label_20, R.drawable.square),
@@ -46,7 +58,7 @@ object Effects {
 
             val sd = slice.properties.getProperty(SliceDirection)!!
             addProperty(
-                sd, ExpandedType(
+                sd, ExpandedHolder(
                     R.string.property_name_slice_direction,
                     R.drawable.ic_arrow_forward,
                     Choice(0, R.string.property_label_top, R.drawable.ic_arrow_upward),
@@ -59,15 +71,15 @@ object Effects {
     }
 
     val rotoHue = Network(ID_ROTO_HUE).let {
-        val camera = it.addNode(NewNode(NodeType.Camera))
-        val rotate = it.addNode(NewNode(NodeType.RotateMatrix))
+        val camera = it.addNode(NodeDef.Camera.toNode())
+        val rotate = it.addNode(NodeDef.RotateMatrix.toNode())
         it.addLink(
             Link(rotate.id, RotateMatrixNode.OUTPUT.id, Effect.ID_LUT, Lut3dNode.LUT_MATRIX.id)
         )
         Effect(it, "Roto-Hue", Pair(camera.id, CameraNode.OUTPUT.id)).apply {
-            val rotateSpeed = rotate.properties.getProperty(RotationSpeed)!!
+            val rotateSpeed = rotate.properties.getProperty(Speed)!!
             addProperty(
-                rotateSpeed, ToggleType(
+                rotateSpeed, ToggleHolder(
                     R.string.property_name_rotation,
                     R.drawable.ic_speed,
                     Choice(5f, R.string.property_label_5, R.drawable.circle),
@@ -80,12 +92,12 @@ object Effects {
     }
 
     val squares = Network(ID_SQUARES).let {
-        val cell = it.addNode(NewNode(NodeType.CellAuto))
+        val cell = it.addNode(CellAuto.toNode())
 
-        Effect(it, "Squares", Pair(cell.id, CellularAutoNode.OUTPUT.id)).apply {
-            val prop = cell.properties.getProperty(CellularAutoNode.GridSize)!!
+        Effect(it, "Squares", Pair(cell.id, CellAuto.OUTPUT.key)).apply {
+            val prop = cell.properties.getProperty(GridSize)!!
             addProperty(
-                prop, ToggleType(
+                prop, ToggleHolder(
                     R.string.property_name_grid_size,
                     R.drawable.ic_add,
                     Choice(Size(180, 320), R.string.property_label_s, R.drawable.circle),
@@ -98,16 +110,16 @@ object Effects {
     }
 
     val quantizer = Network(5).let {
-        val camera = it.addNode(NewNode(NodeType.Camera))
-        val blur = it.addNode(NewNode(NodeType.BlurFilter))
-        val sobel = it.addNode(NewNode(NodeType.Sobel))
-        val quantizer = it.addNode(NewNode(NodeType.Quantizer))
-        val blend = it.addNode(NewNode(NodeType.ImageBlend))
+        val camera = it.addNode(NodeDef.Camera.toNode())
+        val blur = it.addNode(NodeDef.CropGrayBlur.toNode())
+        val sobel = it.addNode(NodeDef.Sobel.toNode())
+        val quantizer = it.addNode(NodeDef.Quantizer.toNode())
+        val blend = it.addNode(NodeDef.ImageBlend.toNode())
         it.addLink(
-            Link(camera.id, CameraNode.OUTPUT.id, blur.id, BlurNode.INPUT.id)
+            Link(camera.id, CameraNode.OUTPUT.id, blur.id, CropGrayBlurNode.INPUT.id)
         )
         it.addLink(
-            Link(blur.id, BlurNode.OUTPUT.id, quantizer.id, QuantizerNode.INPUT.id)
+            Link(blur.id, CropGrayBlurNode.OUTPUT.id, quantizer.id, QuantizerNode.INPUT.id)
         )
 //        it.addLinkNoCompute(
 //            Link(
@@ -138,7 +150,7 @@ object Effects {
             val prop = blur.properties.getProperty(CropSize)!!
             prop.value = Size(1080, 1920)
             addProperty(
-                prop, ToggleType(
+                prop, ToggleHolder(
                     R.string.property_name_grid_size,
                     R.drawable.ic_add,
                     Choice(Size(180, 320), R.string.property_label_s, R.drawable.square),
@@ -150,7 +162,7 @@ object Effects {
             val propCrop = blur.properties.getProperty(CropEnabled)!!
             propCrop.value = false
             addProperty(
-                propCrop, ToggleType(
+                propCrop, ToggleHolder(
                     R.string.property_name_grid_size,
                     R.drawable.ic_add,
                     Choice(false, R.string.property_label_off, R.drawable.square),
@@ -159,7 +171,7 @@ object Effects {
             )
 
             addProperty(
-                blur.properties.getProperty(GrayEnabled)!!, ToggleType(
+                blur.properties.getProperty(GrayEnabled)!!, ToggleHolder(
                     R.string.property_name_grid_size,
                     R.drawable.ic_add,
                     Choice(false, R.string.property_label_off, R.drawable.circle),
@@ -167,7 +179,7 @@ object Effects {
                 )
             )
             addProperty(
-                blur.properties.getProperty(BlurSize)!!, ToggleType(
+                blur.properties.getProperty(BlurSize)!!, ToggleHolder(
                     R.string.property_name_num_passes,
                     R.drawable.ic_layers,
                     Choice(0, R.string.property_label_0, R.drawable.square),
@@ -180,7 +192,7 @@ object Effects {
             val np = blur.properties.getProperty(NumPasses)!!
             np.value = 1
             addProperty(
-                np, ToggleType(
+                np, ToggleHolder(
                     R.string.property_name_num_passes,
                     R.drawable.ic_layers,
                     Choice(1, R.string.property_label_1, R.drawable.circle),
@@ -191,7 +203,7 @@ object Effects {
             )
             val dp = quantizer.properties.getProperty(NumElements)!!
             addProperty(
-                dp, ToggleType(
+                dp, ToggleHolder(
                     R.string.property_name_num_passes,
                     R.drawable.ic_layers,
                     Choice(floatArrayOf(4f, 4f, 4f), R.string.property_label_4, R.drawable.circle),

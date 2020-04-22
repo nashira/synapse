@@ -18,7 +18,7 @@ import com.rthqks.synapse.exec.ExecutionContext
 import com.rthqks.synapse.exec_dep.NodeExecutor
 import com.rthqks.synapse.exec_dep.link.*
 import com.rthqks.synapse.gl.Texture2d
-import com.rthqks.synapse.logic.MediaUri
+import com.rthqks.synapse.logic.NodeDef.MediaDecoder.MediaUri
 import com.rthqks.synapse.logic.Properties
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.channels.Channel

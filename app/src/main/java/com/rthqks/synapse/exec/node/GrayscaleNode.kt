@@ -8,7 +8,7 @@ import com.rthqks.synapse.exec.ExecutionContext
 import com.rthqks.synapse.exec.NodeExecutor
 import com.rthqks.synapse.gl.*
 import com.rthqks.synapse.logic.Properties
-import com.rthqks.synapse.logic.ScaleFactor
+//import com.rthqks.synapse.logic.ScaleFactor
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 
@@ -32,7 +32,7 @@ class GrayscaleNode(
 
     private var primed = false
 
-    private val scale: Int get() = properties[ScaleFactor]
+    private val scale = 1
 
     override suspend fun onSetup() {
     }

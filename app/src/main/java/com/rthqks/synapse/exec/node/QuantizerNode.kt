@@ -8,7 +8,8 @@ import com.rthqks.synapse.exec.ExecutionContext
 import com.rthqks.synapse.exec.Message
 import com.rthqks.synapse.exec.NodeExecutor
 import com.rthqks.synapse.gl.*
-import com.rthqks.synapse.logic.NumElements
+import com.rthqks.synapse.logic.NodeDef.Quantizer
+import com.rthqks.synapse.logic.NodeDef.Quantizer.NumElements
 import com.rthqks.synapse.logic.Properties
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
@@ -22,7 +23,6 @@ class QuantizerNode(
     private var outScaleX: Float = 1f
     private var outScaleY: Float = 1f
     private var startJob: Job? = null
-//    private val outputSize: Size get() = properties[CropSize]
     private var outputSize: Size = Size(0, 0)
     private val numElements: FloatArray get() = properties[NumElements]
     private var inputSize = Size(0, 0)
@@ -227,7 +227,7 @@ class QuantizerNode(
     companion object {
         const val TAG = "Quantizer"
         const val INPUT_TEXTURE_LOCATION = 0
-        val INPUT = Connection.Key<Texture2d>("input")
-        val OUTPUT = Connection.Key<Texture2d>("output")
+        val INPUT = Connection.Key<Texture2d>(Quantizer.INPUT.key)
+        val OUTPUT = Connection.Key<Texture2d>(Quantizer.OUTPUT.key)
     }
 }

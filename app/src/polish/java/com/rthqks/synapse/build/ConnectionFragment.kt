@@ -11,17 +11,14 @@ import android.widget.TextView
 import androidx.core.view.doOnLayout
 import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModelProvider
-import androidx.lifecycle.viewModelScope
 import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.rthqks.synapse.R
 import com.rthqks.synapse.logic.Connector
 import com.rthqks.synapse.logic.Network
-import com.rthqks.synapse.logic.NodeType
 import dagger.android.support.DaggerFragment
 import kotlinx.android.synthetic.polish.fragment_connection.*
 import kotlinx.android.synthetic.polish.layout_connection.view.*
-import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 class ConnectionFragment : DaggerFragment() {
@@ -51,21 +48,21 @@ class ConnectionFragment : DaggerFragment() {
         recycler_view.adapter = connectionAdapter
 
         viewModel.connectionChannel.observe(viewLifecycleOwner, Observer {
-            Log.d(TAG, "changed ${it.node.type} ${it.port.name}")
+//            Log.d(TAG, "changed ${it.node.def} ${it.port.name}")
 
-            if (it.node.type == NodeType.Creation) {
-                val connectors = network.getCreationConnectors()
-//                viewModel.addConnectionPreview(it, connectors)
-                connectionAdapter.setData(emptyList(), connectors)
-            } else {
-                val openConnectors = network.getOpenConnectors(it)
-                val potentialConnectors = network.getPotentialConnectors(it)
-                viewModel.viewModelScope.launch {
-                    viewModel.addConnectionPreview(it, potentialConnectors)
-                    viewModel.waitForExecutor()
-                    connectionAdapter.setData(openConnectors, potentialConnectors)
-                }
-            }
+//            if (it.node.def == NodeDef.Creation) {
+//                val connectors = network.getCreationConnectors()
+////                viewModel.addConnectionPreview(it, connectors)
+//                connectionAdapter.setData(emptyList(), connectors)
+//            } else {
+//                val openConnectors = network.getOpenConnectors(it)
+//                val potentialConnectors = network.getPotentialConnectors(it)
+//                viewModel.viewModelScope.launch {
+//                    viewModel.addConnectionPreview(it, potentialConnectors)
+//                    viewModel.waitForExecutor()
+//                    connectionAdapter.setData(openConnectors, potentialConnectors)
+//                }
+//            }
         })
     }
 
@@ -209,8 +206,8 @@ class ConnectionAdapter(
 
         override fun bind(item: Item) {
             this.item = item as ConnectorItem
-            portName.text = item.connector.port.name
-            nodeName.setText(item.connector.node.type.title)
+//            portName.text = item.connector.port.name
+//            nodeName.setText(item.connector.node.def.title)
             val id = item.connector.node.id
             Log.d(TAG, "bind $id")
             if (id >= 0) {

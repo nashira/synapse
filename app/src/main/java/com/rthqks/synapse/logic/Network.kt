@@ -9,16 +9,10 @@ class Network(
 ) {
     val nodes = mutableMapOf<Int, Node>()
     val properties = Properties()
+    private val ports = mutableMapOf<Int, Map<String, Port>>()
     private val links = mutableSetOf<Link>()
     private val linkIndex = mutableMapOf<Int, MutableSet<Link>>()
     private var maxNodeId = 0
-
-    val name: String get() = properties[NetworkName]
-
-    init {
-        properties[NetworkName] = "Network"
-        properties[CropToFit] = true
-    }
 
     fun addNode(node: Node): Node {
         node.networkId = id
@@ -30,13 +24,9 @@ class Network(
         return  node
     }
 
-    fun nodeCount() = nodes.size
-
     fun removeNode(nodeId: Int): Node? {
         return nodes.remove(nodeId)
     }
-
-    fun getFirstNode(): Node? = nodes.values.firstOrNull()
 
     fun getNode(nodeId: Int): Node? {
 //        Log.d(TAG, "getNode $nodeId")
@@ -74,6 +64,10 @@ class Network(
         computeComponents()
     }
 
+    // ----------------------------------
+
+    fun getFirstNode(): Node? = nodes.values.firstOrNull()
+
     fun getConnectors(nodeId: Int): List<Connector> {
         val node = getNode(nodeId) ?: return emptyList()
         val ports = node.getPortIds().toMutableSet()
@@ -110,22 +104,22 @@ class Network(
     fun getPotentialConnectors(connector: Connector): List<Connector> {
         val port = connector.port
         val connectors = mutableListOf<Connector>()
-        Nodes.forEach { n ->
-            connectors += n.ports.filter {
-                it.value.type == port.type
-                        && it.value.output != port.output
-            }
-                .map { Connector(n.copy(id), it.value) }
-        }
+//        Nodes.forEach { n ->
+//            connectors += n.ports.filter {
+//                it.value.type == port.type
+//                        && it.value.output != port.output
+//            }
+//                .map { Connector(n.copy(id), it.value) }
+//        }
         return connectors
     }
 
     fun getCreationConnectors(): List<Connector> {
         val connectors = mutableListOf<Connector>()
-        Nodes.filter { it.producer }.forEach { n ->
-            val port = n.ports.values.first { it.output }
-            connectors += Connector(n.copy(id), port)
-        }
+//        Nodes.filter { it.producer }.forEach { n ->
+//            val port = n.ports.values.first { it.output }
+//            connectors += Connector(n.copy(id), port)
+//        }
         return connectors
     }
 

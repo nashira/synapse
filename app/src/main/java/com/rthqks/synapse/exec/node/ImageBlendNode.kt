@@ -8,8 +8,9 @@ import com.rthqks.synapse.exec.ExecutionContext
 import com.rthqks.synapse.exec.Message
 import com.rthqks.synapse.exec.NodeExecutor
 import com.rthqks.synapse.gl.*
-import com.rthqks.synapse.logic.BlendMode
-import com.rthqks.synapse.logic.Opacity
+import com.rthqks.synapse.logic.NodeDef.ImageBlend
+import com.rthqks.synapse.logic.NodeDef.ImageBlend.BlendMode
+import com.rthqks.synapse.logic.NodeDef.ImageBlend.Opacity
 import com.rthqks.synapse.logic.Properties
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
@@ -265,8 +266,8 @@ class ImageBlendNode(
         const val BASE_TEXTURE_LOCATION = 0
         const val BLEND_TEXTURE_LOCATION = 1
         const val UNI_OPACITY = "opacity"
-        val INPUT_BASE = Connection.Key<Texture2d>("input_base")
-        val INPUT_BLEND = Connection.Key<Texture2d>("input_blend")
-        val OUTPUT = Connection.Key<Texture2d>("output")
+        val INPUT_BASE = Connection.Key<Texture2d>(ImageBlend.BASE_IN.key)
+        val INPUT_BLEND = Connection.Key<Texture2d>(ImageBlend.BLEND_IN.key)
+        val OUTPUT = Connection.Key<Texture2d>(ImageBlend.OUTPUT.key)
     }
 }

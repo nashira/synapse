@@ -6,7 +6,8 @@ import com.rthqks.synapse.exec.Connection
 import com.rthqks.synapse.exec.ExecutionContext
 import com.rthqks.synapse.exec.NodeExecutor
 import com.rthqks.synapse.gl.Texture3d
-import com.rthqks.synapse.logic.LutUri
+import com.rthqks.synapse.logic.NodeDef.BCubeImport
+import com.rthqks.synapse.logic.NodeDef.BCubeImport.LutUri
 import com.rthqks.synapse.logic.Properties
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -144,6 +145,6 @@ class BCubeImportNode(
     companion object {
         const val TAG = "BCubeImportNode"
         private val cache = ConcurrentHashMap<Uri, Pair<Int, ByteBuffer>>()
-        val OUTPUT = Connection.Key<Texture3d>("output_lut")
+        val OUTPUT = Connection.Key<Texture3d>(BCubeImport.OUTPUT.key)
     }
 }

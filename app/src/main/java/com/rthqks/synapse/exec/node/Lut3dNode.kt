@@ -9,7 +9,8 @@ import com.rthqks.synapse.exec.ExecutionContext
 import com.rthqks.synapse.exec.Message
 import com.rthqks.synapse.exec.NodeExecutor
 import com.rthqks.synapse.gl.*
-import com.rthqks.synapse.logic.LutStrength
+import com.rthqks.synapse.logic.NodeDef.Lut3d
+import com.rthqks.synapse.logic.NodeDef.Lut3d.LutStrength
 import com.rthqks.synapse.logic.Properties
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
@@ -305,9 +306,9 @@ class Lut3dNode(
         const val LUT_TEXTURE_LOCATION = 1
         const val INPUT_MATRIX = "input_matrix"
         const val U_LUT_STRENGTH = "lut_strength"
-        val INPUT = Connection.Key<Texture2d>("input")
-        val INPUT_LUT = Connection.Key<Texture3d>("input_lut")
-        val LUT_MATRIX = Connection.Key<FloatArray>("lut_matrix")
-        val OUTPUT = Connection.Key<Texture2d>("output")
+        val INPUT = Connection.Key<Texture2d>(Lut3d.SOURCE_IN.key)
+        val INPUT_LUT = Connection.Key<Texture3d>(Lut3d.LUT_IN.key)
+        val LUT_MATRIX = Connection.Key<FloatArray>(Lut3d.MATRIX_IN.key)
+        val OUTPUT = Connection.Key<Texture2d>(Lut3d.OUTPUT.key)
     }
 }

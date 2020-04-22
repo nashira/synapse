@@ -12,9 +12,9 @@ import android.view.View
 import androidx.fragment.app.DialogFragment
 import androidx.lifecycle.ViewModelProvider
 import com.rthqks.synapse.R
-import com.rthqks.synapse.logic.FrameRate
-import com.rthqks.synapse.logic.Stabilize
-import com.rthqks.synapse.logic.VideoSize
+import com.rthqks.synapse.logic.NodeDef.Camera.FrameRate
+import com.rthqks.synapse.logic.NodeDef.Camera.Stabilize
+import com.rthqks.synapse.logic.NodeDef.Camera.VideoSize
 import com.rthqks.synapse.util.throttleClick
 import dagger.android.support.AndroidSupportInjection
 import kotlinx.android.synthetic.polish.fragment_settings.view.*

@@ -1,6 +1,5 @@
 package com.rthqks.synapse.exec
 
-import android.util.Log
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.actor
 

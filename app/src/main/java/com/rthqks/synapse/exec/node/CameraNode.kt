@@ -11,7 +11,12 @@ import android.util.Size
 import android.view.Surface
 import com.rthqks.synapse.exec.*
 import com.rthqks.synapse.gl.Texture2d
-import com.rthqks.synapse.logic.*
+import com.rthqks.synapse.logic.NodeDef.Camera
+import com.rthqks.synapse.logic.NodeDef.Camera.CameraFacing
+import com.rthqks.synapse.logic.NodeDef.Camera.FrameRate
+import com.rthqks.synapse.logic.NodeDef.Camera.Stabilize
+import com.rthqks.synapse.logic.NodeDef.Camera.VideoSize
+import com.rthqks.synapse.logic.Properties
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.channels.ReceiveChannel
 import kotlinx.coroutines.launch
@@ -257,7 +262,6 @@ class CameraNode(
 
     companion object {
         const val TAG = "CameraNode2"
-        val OUTPUT =
-            Connection.Key<Texture2d>("video_1")
+        val OUTPUT = Connection.Key<Texture2d>(Camera.OUTPUT.key)
     }
 }

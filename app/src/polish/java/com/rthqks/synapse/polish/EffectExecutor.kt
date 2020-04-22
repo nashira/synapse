@@ -10,7 +10,13 @@ import android.view.TextureView
 import com.rthqks.synapse.exec.ExecutionContext
 import com.rthqks.synapse.exec.NetworkExecutor
 import com.rthqks.synapse.exec.node.*
-import com.rthqks.synapse.logic.*
+import com.rthqks.synapse.logic.Link
+import com.rthqks.synapse.logic.Network
+import com.rthqks.synapse.logic.Node
+import com.rthqks.synapse.logic.NodeDef
+import com.rthqks.synapse.logic.NodeDef.BCubeImport.LutUri
+import com.rthqks.synapse.logic.NodeDef.CropResize.CropSize
+import com.rthqks.synapse.logic.NodeDef.Microphone.AudioSource
 import kotlinx.coroutines.*
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.ConcurrentLinkedQueue
@@ -18,12 +24,12 @@ import java.util.concurrent.ConcurrentLinkedQueue
 class EffectExecutor(context: ExecutionContext) : NetworkExecutor(context) {
     private var effect: Effect? = null
     private val n = Network(0)
-    private val microphone = n.addNode(NewNode(NodeType.Microphone, Effect.ID_MIC))
-    private val screen = n.addNode(NewNode(NodeType.Screen, Effect.ID_SURFACE_VIEW))
-    private val encoder = n.addNode(NewNode(NodeType.MediaEncoder, Effect.ID_ENCODER))
-    private val cube = n.addNode(NewNode(NodeType.BCubeImport, Effect.ID_LUT_IMPORT))
-    private val lut = n.addNode(NewNode(NodeType.Lut3d, Effect.ID_LUT))
-    private val crop = n.addNode(NewNode(NodeType.CropResize, Effect.ID_THUMBNAIL))
+    private val microphone = n.addNode(NodeDef.Microphone.toNode(Effect.ID_MIC))
+    private val screen = n.addNode(NodeDef.Screen.toNode(Effect.ID_SURFACE_VIEW))
+    private val encoder = n.addNode(NodeDef.MediaEncoder.toNode(Effect.ID_ENCODER))
+    private val cube = n.addNode(NodeDef.BCubeImport.toNode(Effect.ID_LUT_IMPORT))
+    private val lut = n.addNode(NodeDef.Lut3d.toNode(Effect.ID_LUT))
+    private val crop = n.addNode(NodeDef.CropResize.toNode(Effect.ID_THUMBNAIL))
     private var cropLink: Link? = null
     private val lutPreviewPool = ConcurrentLinkedQueue<LutPreview>()
     private val lutPreviews = ConcurrentHashMap<SurfaceTexture, LutPreview>()
@@ -72,9 +78,9 @@ class EffectExecutor(context: ExecutionContext) : NetworkExecutor(context) {
         stopLutPreview()
         await {
 
-            val newCam = effect.network.nodes.values.firstOrNull { it.type == NodeType.Camera }
+            val newCam = effect.network.nodes.values.firstOrNull { it.type == NodeDef.Camera.key }
             val oldCam =
-                this.effect?.network?.nodes?.values?.firstOrNull { it.type == NodeType.Camera }
+                this.effect?.network?.nodes?.values?.firstOrNull { it.type == NodeDef.Camera.key }
             var camNode: CameraNode? = null
 
             this.effect?.let { oldEff ->
@@ -219,9 +225,9 @@ class EffectExecutor(context: ExecutionContext) : NetworkExecutor(context) {
     }
 
     private inner class LutPreview {
-        val cube = NewNode(NodeType.BCubeImport)
-        val lut = NewNode(NodeType.Lut3d)
-        val screen = NewNode(NodeType.TextureView)
+        val cube = NodeDef.BCubeImport.toNode()
+        val lut = NodeDef.Lut3d.toNode()
+        val screen = NodeDef.TextureView.toNode()
 
         lateinit var l2s: Link
         lateinit var cu2l: Link

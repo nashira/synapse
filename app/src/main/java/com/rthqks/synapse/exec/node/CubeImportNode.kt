@@ -7,7 +7,8 @@ import com.rthqks.synapse.exec.Connection
 import com.rthqks.synapse.exec.ExecutionContext
 import com.rthqks.synapse.exec.NodeExecutor
 import com.rthqks.synapse.gl.Texture3d
-import com.rthqks.synapse.logic.LutUri
+import com.rthqks.synapse.logic.NodeDef.CubeImport
+import com.rthqks.synapse.logic.NodeDef.CubeImport.LutUri
 import com.rthqks.synapse.logic.Properties
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -160,7 +161,7 @@ class CubeImportNode(
         val TABLE_DATA = Regex("^($NUMBER)\\s+($NUMBER)\\s+($NUMBER)")
         val DOMAIN_MIN = Regex("^DOMAIN_MIN\\s+([^\\s]+)\\s+([^\\s]+)\\s+([^\\s]+)")
         val DOMAIN_MAX = Regex("^DOMAIN_MAX\\s+([^\\s]+)\\s+([^\\s]+)\\s+([^\\s]+)")
-        val OUTPUT = Connection.Key<Texture3d>("output_lut")
+        val OUTPUT = Connection.Key<Texture3d>(CubeImport.OUTPUT.key)
     }
 }
 

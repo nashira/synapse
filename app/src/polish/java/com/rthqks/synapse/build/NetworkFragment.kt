@@ -1,5 +1,6 @@
 package com.rthqks.synapse.build
 
+//import com.rthqks.synapse.logic.GetNode
 import android.app.Activity
 import android.content.Intent
 import android.os.Bundle
@@ -11,9 +12,7 @@ import android.view.ViewGroup
 import androidx.lifecycle.ViewModelProvider
 import androidx.recyclerview.widget.RecyclerView
 import com.rthqks.synapse.R
-import com.rthqks.synapse.logic.GetNode
 import com.rthqks.synapse.logic.Node
-import com.rthqks.synapse.logic.NodeType
 import com.rthqks.synapse.ui.build.PropertyBinder
 import dagger.android.support.DaggerFragment
 import kotlinx.android.synthetic.polish.fragment_network.*
@@ -61,11 +60,11 @@ class NetworkFragment : DaggerFragment() {
 
         val connectorAdapter = NodeAdapter({ view: View, event: MotionEvent, node: Node ->
             if (event.actionMasked == MotionEvent.ACTION_DOWN) {
-                if (node.type == NodeType.Creation) {
-                    viewModel.showFirstNode()
-                } else {
-                    viewModel.swipeToNode(node)
-                }
+//                if (node.def == NodeDef.Creation) {
+//                    viewModel.showFirstNode()
+//                } else {
+//                    viewModel.swipeToNode(node)
+//                }
             }
             touchMediator.onTouch(view, event)
         },{ longClick: Boolean, node: Node ->
@@ -126,7 +125,7 @@ private class NodeAdapter(
         this.nodes.clear()
         this.nodes.addAll(nodes)
         if (nodes.isEmpty()) {
-            this.nodes.add(GetNode(NodeType.Creation))
+//            this.nodes.add(GetNode(NodeDef.Creation))
         }
         notifyDataSetChanged()
     }
@@ -173,7 +172,7 @@ private class NodeViewHolder(
 
     fun bind(node: Node) {
         this.node = node
-        label.setText(node.type.title)
-        button.setImageResource(node.type.icon)
+//        label.setText(node.def.title)
+//        button.setImageResource(node.def.icon)
     }
 }

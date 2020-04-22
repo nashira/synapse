@@ -8,8 +8,9 @@ import com.rthqks.synapse.exec.ExecutionContext
 import com.rthqks.synapse.exec.Message
 import com.rthqks.synapse.exec.NodeExecutor
 import com.rthqks.synapse.gl.*
+import com.rthqks.synapse.logic.NodeDef.Slice3d
+import com.rthqks.synapse.logic.NodeDef.Slice3d.SliceDirection
 import com.rthqks.synapse.logic.Properties
-import com.rthqks.synapse.logic.SliceDirection
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 
@@ -221,7 +222,7 @@ class Slice3dNode(
         const val T3D_DEPTH = "t3d_depth"
 
         //        val INPUT = Connection.Key<VideoConfig, VideoEvent>("input")
-        val INPUT_3D = Connection.Key<Texture3d>("input_3d")
-        val OUTPUT = Connection.Key<Texture2d>("output")
+        val INPUT_3D = Connection.Key<Texture3d>(Slice3d.INPUT.key)
+        val OUTPUT = Connection.Key<Texture2d>(Slice3d.OUTPUT.key)
     }
 }

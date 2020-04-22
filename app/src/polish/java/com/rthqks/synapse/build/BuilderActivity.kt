@@ -13,7 +13,6 @@ import androidx.viewpager2.adapter.FragmentStateAdapter
 import androidx.viewpager2.widget.ViewPager2
 import com.rthqks.synapse.R
 import com.rthqks.synapse.logic.Node
-import com.rthqks.synapse.logic.NodeType
 import dagger.android.support.DaggerAppCompatActivity
 import kotlinx.android.synthetic.polish.activity_builder.*
 import kotlinx.android.synthetic.polish.activity_gallery.toolbar
@@ -80,7 +79,7 @@ class BuilderActivity : DaggerAppCompatActivity() {
                 R.id.delete_node -> onDeleteNode()
                 R.id.delete_network -> onDeleteNetwork()
                 R.id.jump_to_node -> onJumpToNode()
-                R.id.jump_to_network -> viewModel.jumpToNode(BuilderViewModel.PROPERTIES_NODE)
+//                R.id.jump_to_network -> viewModel.jumpToNode(BuilderViewModel.PROPERTIES_NODE)
                 R.id.cancel -> viewModel.cancelConnection()
                 R.id.execute -> Log.d(TAG, "execute")
             }
@@ -181,9 +180,9 @@ class BuilderActivity : DaggerAppCompatActivity() {
         override fun createFragment(position: Int): Fragment {
             val node = nodes[position]
             return when (node.type) {
-                NodeType.Properties -> NetworkFragment.newInstance()
-                NodeType.Creation,
-                NodeType.Connection -> ConnectionFragment.newInstance()
+//                NodeDef.Properties -> NetworkFragment.newInstance()
+//                NodeDef.Creation,
+//                NodeDef.Connection -> ConnectionFragment.newInstance()
                 else -> NodeFragment.newInstance(node.id)
             }
         }

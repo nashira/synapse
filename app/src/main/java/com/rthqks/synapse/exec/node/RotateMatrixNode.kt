@@ -6,9 +6,10 @@ import com.rthqks.synapse.exec.Connection
 import com.rthqks.synapse.exec.ExecutionContext
 import com.rthqks.synapse.exec.NodeExecutor
 import com.rthqks.synapse.gl.GlesManager
-import com.rthqks.synapse.logic.FrameRate
+import com.rthqks.synapse.logic.NodeDef
+import com.rthqks.synapse.logic.NodeDef.RotateMatrix.FrameRate
+import com.rthqks.synapse.logic.NodeDef.RotateMatrix.Speed
 import com.rthqks.synapse.logic.Properties
-import com.rthqks.synapse.logic.RotationSpeed
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -19,7 +20,7 @@ class RotateMatrixNode(
     private val properties: Properties
 ) : NodeExecutor(context) {
     private val frameDuration: Long get() = 1000L / properties[FrameRate]
-    private val rotationSpeed: Float get() = properties[RotationSpeed]
+    private val rotationSpeed: Float get() = properties[Speed]
     private var startJob: Job? = null
     private var running = false
     private var needsPriming = true
@@ -97,6 +98,6 @@ class RotateMatrixNode(
     }
 
     companion object {
-        val OUTPUT = Connection.Key<FloatArray>("output_matrix")
+        val OUTPUT = Connection.Key<FloatArray>(NodeDef.RotateMatrix.OUTPUT.key)
     }
 }

@@ -15,7 +15,16 @@ import androidx.lifecycle.viewModelScope
 import com.rthqks.synapse.data.PropertyData
 import com.rthqks.synapse.data.SynapseDao
 import com.rthqks.synapse.exec.ExecutionContext
-import com.rthqks.synapse.logic.*
+import com.rthqks.synapse.logic.Network
+import com.rthqks.synapse.logic.NodeDef.BCubeImport.LutUri
+import com.rthqks.synapse.logic.NodeDef.Camera.CameraFacing
+import com.rthqks.synapse.logic.NodeDef.Camera.FrameRate
+import com.rthqks.synapse.logic.NodeDef.Camera.Stabilize
+import com.rthqks.synapse.logic.NodeDef.Camera.VideoSize
+import com.rthqks.synapse.logic.NodeDef.Lut3d.LutStrength
+import com.rthqks.synapse.logic.NodeDef.MediaEncoder.Recording
+import com.rthqks.synapse.logic.NodeDef.MediaEncoder.Rotation
+import com.rthqks.synapse.logic.Property
 import com.rthqks.synapse.ops.Analytics
 import kotlinx.coroutines.*
 import javax.inject.Inject

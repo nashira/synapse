@@ -7,7 +7,12 @@ import com.rthqks.synapse.exec.Connection
 import com.rthqks.synapse.exec.ExecutionContext
 import com.rthqks.synapse.exec.NodeExecutor
 import com.rthqks.synapse.exec.link.AudioData
-import com.rthqks.synapse.logic.*
+import com.rthqks.synapse.logic.NodeDef.Microphone
+import com.rthqks.synapse.logic.NodeDef.Microphone.AudioChannel
+import com.rthqks.synapse.logic.NodeDef.Microphone.AudioEncoding
+import com.rthqks.synapse.logic.NodeDef.Microphone.AudioSampleRate
+import com.rthqks.synapse.logic.NodeDef.Microphone.AudioSource
+import com.rthqks.synapse.logic.Properties
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
@@ -149,6 +154,6 @@ class AudioSourceNode(
 
     companion object {
         const val TAG = "AudioSourceNode"
-        val OUTPUT = Connection.Key<AudioData>("audio_1")
+        val OUTPUT = Connection.Key<AudioData>(Microphone.OUTPUT.key)
     }
 }

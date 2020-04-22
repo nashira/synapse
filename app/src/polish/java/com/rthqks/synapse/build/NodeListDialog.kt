@@ -15,7 +15,6 @@ import androidx.recyclerview.widget.RecyclerView
 import com.rthqks.synapse.R
 import com.rthqks.synapse.logic.Node
 import dagger.android.support.AndroidSupportInjection
-import kotlinx.android.synthetic.polish.layout_node_list_item.view.*
 import javax.inject.Inject
 
 class NodeListDialog : DialogFragment() {
@@ -86,8 +85,8 @@ class NodeListDialog : DialogFragment() {
 
         fun bind(node: Node) {
             this.node = node
-            itemView.icon_view.setImageResource(node.type.icon)
-            itemView.title_view.setText(node.type.title)
+//            itemView.icon_view.setImageResource(node.def.icon)
+//            itemView.title_view.setText(node.def.title)
         }
     }
 }

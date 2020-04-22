@@ -9,7 +9,8 @@ import com.rthqks.synapse.exec.ExecutionContext
 import com.rthqks.synapse.exec.Message
 import com.rthqks.synapse.exec.NodeExecutor
 import com.rthqks.synapse.gl.*
-import com.rthqks.synapse.logic.CropSize
+import com.rthqks.synapse.logic.NodeDef.CropResize
+import com.rthqks.synapse.logic.NodeDef.CropResize.CropSize
 import com.rthqks.synapse.logic.Properties
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
@@ -213,7 +214,7 @@ class CropResizeNode(
     companion object {
         const val TAG = "CropResizeNode"
         const val INPUT_TEXTURE_LOCATION = 0
-        val INPUT = Connection.Key<Texture2d>("input")
-        val OUTPUT = Connection.Key<Texture2d>("output")
+        val INPUT = Connection.Key<Texture2d>(CropResize.INPUT.key)
+        val OUTPUT = Connection.Key<Texture2d>(CropResize.OUTPUT.key)
     }
 }

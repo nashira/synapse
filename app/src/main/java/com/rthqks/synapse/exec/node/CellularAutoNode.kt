@@ -7,9 +7,10 @@ import com.rthqks.synapse.exec.Connection
 import com.rthqks.synapse.exec.ExecutionContext
 import com.rthqks.synapse.exec.NodeExecutor
 import com.rthqks.synapse.gl.*
-import com.rthqks.synapse.logic.FrameRate
+import com.rthqks.synapse.logic.NodeDef.CellAuto
+import com.rthqks.synapse.logic.NodeDef.CellAuto.FrameRate
+import com.rthqks.synapse.logic.NodeDef.CellAuto.GridSize
 import com.rthqks.synapse.logic.Properties
-import com.rthqks.synapse.logic.Property
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -182,7 +183,6 @@ class CellularAutoNode(
     }
 
     companion object {
-        val GridSize = Property.Key("grid_size", Size::class.java)
-        val OUTPUT = Connection.Key<Texture2d>("grid_out")
+        val OUTPUT = Connection.Key<Texture2d>(CellAuto.OUTPUT.key)
     }
 }

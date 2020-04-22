@@ -10,6 +10,7 @@ import com.rthqks.synapse.exec.Connection
 import com.rthqks.synapse.exec.ExecutionContext
 import com.rthqks.synapse.exec.NodeExecutor
 import com.rthqks.synapse.gl.*
+import com.rthqks.synapse.logic.NodeDef.Screen
 import com.rthqks.synapse.logic.Properties
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
@@ -225,6 +226,6 @@ class SurfaceViewNode(
 
     companion object {
         const val TAG = "SVN2"
-        val INPUT = Connection.Key<Texture2d>("video_1")
+        val INPUT = Connection.Key<Texture2d>(Screen.INPUT.key)
     }
 }

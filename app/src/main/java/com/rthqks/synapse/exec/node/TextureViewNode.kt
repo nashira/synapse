@@ -9,6 +9,7 @@ import com.rthqks.synapse.exec.Connection
 import com.rthqks.synapse.exec.ExecutionContext
 import com.rthqks.synapse.exec.NodeExecutor
 import com.rthqks.synapse.gl.*
+import com.rthqks.synapse.logic.NodeDef
 import com.rthqks.synapse.logic.Properties
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
@@ -189,6 +190,6 @@ class TextureViewNode(
 
     companion object {
 
-        val INPUT = Connection.Key<Texture2d>("video_1")
+        val INPUT = Connection.Key<Texture2d>(NodeDef.TextureView.INPUT.key)
     }
 }

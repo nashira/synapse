@@ -10,10 +10,11 @@ import com.rthqks.synapse.exec.ExecutionContext
 import com.rthqks.synapse.exec.NodeExecutor
 import com.rthqks.synapse.exec.link.AudioData
 import com.rthqks.synapse.gl.*
-import com.rthqks.synapse.logic.FrameRate
+import com.rthqks.synapse.logic.NodeDef
+import com.rthqks.synapse.logic.NodeDef.MediaEncoder.FrameRate
+import com.rthqks.synapse.logic.NodeDef.MediaEncoder.Recording
+import com.rthqks.synapse.logic.NodeDef.MediaEncoder.Rotation
 import com.rthqks.synapse.logic.Properties
-import com.rthqks.synapse.logic.Recording
-import com.rthqks.synapse.logic.Rotation
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -270,7 +271,7 @@ class EncoderNode(
         const val START_RECORDING = 1
         const val STOP_RECORDING = 2
         const val RECORDING = 3
-        val INPUT_VIDEO = Connection.Key<Texture2d>("input_video")
-        val INPUT_AUDIO = Connection.Key<AudioData>("input_audio")
+        val INPUT_VIDEO = Connection.Key<Texture2d>(NodeDef.MediaEncoder.VIDEO_IN.key)
+        val INPUT_AUDIO = Connection.Key<AudioData>(NodeDef.MediaEncoder.AUDIO_IN.key)
     }
 }

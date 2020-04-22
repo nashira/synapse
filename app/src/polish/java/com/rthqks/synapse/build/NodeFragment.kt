@@ -20,7 +20,7 @@ import androidx.recyclerview.widget.RecyclerView
 import com.rthqks.synapse.R
 import com.rthqks.synapse.build.NetworkFragment.Companion.OPEN_DOC_REQUEST
 import com.rthqks.synapse.logic.Connector
-import com.rthqks.synapse.logic.Port
+import com.rthqks.synapse.logic.PortType
 import com.rthqks.synapse.ui.build.PropertyBinder
 import dagger.android.support.DaggerFragment
 import kotlinx.android.synthetic.polish.fragment_node.*
@@ -119,7 +119,7 @@ class NodeFragment : DaggerFragment() {
         Log.d(TAG, "onResume $nodeId")
 
         val node = viewModel.getNode(nodeId)
-        viewModel.setTitle(node.type.title)
+//        viewModel.setTitle(node.def.title)
         viewModel.setMenu(R.menu.fragment_node)
         reloadConnectors()
     }
@@ -286,17 +286,17 @@ class NodeFragment : DaggerFragment() {
 //                    if (startAligned) viewModel.getConnector(it.fromNodeId, it.fromPortId).port
 //                    else viewModel.getConnector(it.toNodeId, it.toPortId).port
 
-                label.text = connector.port.name
+//                label.text = connector.port.name
                 button.setBackgroundResource(R.drawable.selectable_accent)
             } ?: run {
                 button.setBackgroundResource(R.drawable.selectable_grey)
-                label.text = connector.port.name
+//                label.text = connector.port.name
             }
 
             when (connector.port.type) {
-                Port.Type.Audio -> button.setImageResource(R.drawable.ic_speaker)
-                Port.Type.Video -> button.setImageResource(R.drawable.ic_display)
-                Port.Type.Texture3D -> button.setImageResource(R.drawable.ic_3d_rotation)
+                PortType.Audio -> button.setImageResource(R.drawable.ic_speaker)
+                PortType.Video -> button.setImageResource(R.drawable.ic_display)
+                PortType.Texture3D -> button.setImageResource(R.drawable.ic_3d_rotation)
             }
         }
     }

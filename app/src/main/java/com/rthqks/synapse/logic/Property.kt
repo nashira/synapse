@@ -105,6 +105,6 @@ class Properties {
     }
 }
 
-data class Property<T>(val key: Key<T>, var value: T) {
+data class Property<T>(val key: Key<T>, var value: T, var exposed: Boolean = false) {
     data class Key<T>(val name: String, val klass: Class<T>)
 }

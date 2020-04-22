@@ -1,15 +1,13 @@
 package com.rthqks.synapse.logic
 
 class Node(
-    val type: NodeType
+    val type: String,
+    var id: Int = -1
 ) {
     var networkId: Int = -1
-    var id: Int = -1
 
     val ports = mutableMapOf<String, Port>()
     val properties = Properties()
-    val producer: Boolean get() = type.flags and NodeType.FLAG_PRODUCER == NodeType.FLAG_PRODUCER
-    val consumer: Boolean get() = type.flags and NodeType.FLAG_CONSUMER == NodeType.FLAG_CONSUMER
 
     fun add(port: Port) {
         ports[port.id] = port
@@ -28,12 +26,12 @@ class Node(
         }
     }
 
-    fun getPort(id: String): Port = ports[id]!!
+    fun getPort(id: String): Port = ports[id] ?: error("unknown port $id for $type")
 
     fun getPortIds(): Set<String> = ports.keys
 
     override fun toString(): String {
-        return "Node(type=${type.key}, id=$id, networkId=$networkId)"
+        return "Node(type=${type}, id=$id, networkId=$networkId)"
     }
 
     companion object {

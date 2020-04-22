@@ -7,9 +7,9 @@ import com.rthqks.synapse.exec.Connection
 import com.rthqks.synapse.exec.ExecutionContext
 import com.rthqks.synapse.exec.NodeExecutor
 import com.rthqks.synapse.gl.*
-import com.rthqks.synapse.logic.HistorySize
+import com.rthqks.synapse.logic.NodeDef.RingBuffer
+import com.rthqks.synapse.logic.NodeDef.RingBuffer.Depth
 import com.rthqks.synapse.logic.Properties
-import com.rthqks.synapse.logic.VideoSize
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 
@@ -19,11 +19,8 @@ class RingBufferNode(
 ) : NodeExecutor(context) {
     private val assetManager = context.assetManager
     private val glesManager = context.glesManager
-    private var outScaleX: Float = 1f
-    private var outScaleY: Float = 1f
     private var startJob: Job? = null
-    private var outputSize = properties[VideoSize]
-    private val depth: Int get() = properties[HistorySize]
+    private val depth: Int get() = properties[Depth]
     private var inputSize = Size(0, 0)
     private var prevConfig: Texture2d? = null
 
@@ -108,22 +105,15 @@ class RingBufferNode(
 
         if (sizeChanged || depthChanged) {
             inputSize = Size(texture2d.width, texture2d.height)
-            outputSize = inputSize
 
-            Log.d(TAG, "input $inputSize output $outputSize")
-
-            val inAspect = inputSize.width / inputSize.height.toFloat()
-            val outAspect = outputSize.width / outputSize.height.toFloat()
-
-            outScaleX = if (inAspect > outAspect) outAspect / inAspect else 1f
-            outScaleY = if (inAspect < outAspect) inAspect / outAspect else 1f
+            Log.d(TAG, "input $inputSize")
 
             glesManager.glContext {
                 texture.initData(
                     0,
                     texture2d.internalFormat,
-                    outputSize.width,
-                    outputSize.height,
+                    inputSize.width,
+                    inputSize.height,
                     depth,
                     texture2d.format,
                     texture2d.type
@@ -183,7 +173,7 @@ class RingBufferNode(
         glesManager.glContext {
             GLES30.glUseProgram(program.programId)
             GLES30.glBindFramebuffer(GLES30.GL_FRAMEBUFFER, framebuffer.id)
-            GLES30.glViewport(0, 0, outputSize.width, outputSize.height)
+            GLES30.glViewport(0, 0, inputSize.width, inputSize.height)
             inputTexture.bind(GLES30.GL_TEXTURE0)
             program.bindUniforms()
             quadMesh.execute()
@@ -193,7 +183,7 @@ class RingBufferNode(
     companion object {
         const val TAG = "RingBufferNode"
         const val INPUT_TEXTURE_LOCATION = 0
-        val INPUT = Connection.Key<Texture2d>("input")
-        val OUTPUT = Connection.Key<Texture3d>("output")
+        val INPUT = Connection.Key<Texture2d>(RingBuffer.INPUT.key)
+        val OUTPUT = Connection.Key<Texture3d>(RingBuffer.OUTPUT.key)
     }
 }

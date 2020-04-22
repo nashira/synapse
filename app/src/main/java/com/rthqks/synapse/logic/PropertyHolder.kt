@@ -4,7 +4,7 @@ import android.net.Uri
 import androidx.annotation.DrawableRes
 import androidx.annotation.StringRes
 
-sealed class PropertyType<T>(
+sealed class PropertyHolder<T>(
     @StringRes val title: Int = 0,
     @DrawableRes val icon: Int = 0
 ) {
@@ -13,46 +13,46 @@ sealed class PropertyType<T>(
             @StringRes title: Int,
             @DrawableRes icon: Int,
             range: ClosedFloatingPointRange<Float>
-        ): FloatRangeType = FloatRangeType(title, icon, range)
+        ): FloatRangeHolder = FloatRangeHolder(title, icon, range)
 
         fun RangeType(
             @StringRes title: Int,
             @DrawableRes icon: Int,
             range: IntRange
-        ): IntRangeType = IntRangeType(title, icon, range)
+        ): IntRangeHolder = IntRangeHolder(title, icon, range)
     }
 }
 
-class ValueType<T>(
+class ValueHolder<T>(
     @StringRes title: Int,
     @DrawableRes icon: Int
-) : PropertyType<T>(title, icon)
+) : PropertyHolder<T>(title, icon)
 
-class ExpandedType<T>(
+class ExpandedHolder<T>(
     @StringRes title: Int,
     @DrawableRes icon: Int,
     vararg val choices: Choice<T>
-) : PropertyType<T>(title, icon)
+) : PropertyHolder<T>(title, icon)
 
-class ToggleType<T>(
+class ToggleHolder<T>(
     @StringRes title: Int,
     @DrawableRes icon: Int,
     vararg val choices: Choice<T>
-) : PropertyType<T>(title, icon)
+) : PropertyHolder<T>(title, icon)
 
 data class Choice<T>(val item: T, @StringRes val label: Int, @DrawableRes val icon: Int)
 
-class FloatRangeType(
+class FloatRangeHolder(
     @StringRes title: Int,
     @DrawableRes icon: Int,
     val range: ClosedFloatingPointRange<Float>
-) : PropertyType<Float>(title, icon)
+) : PropertyHolder<Float>(title, icon)
 
-class IntRangeType(
+class IntRangeHolder(
     @StringRes title: Int,
     @DrawableRes icon: Int,
     val range: IntRange
-) : PropertyType<Int>(title, icon)
+) : PropertyHolder<Int>(title, icon)
 
 //class ToggleType(
 //    @StringRes title: Int,
@@ -61,13 +61,13 @@ class IntRangeType(
 //    @StringRes val disabled: Int
 //) : PropertyType<Boolean>(title, icon)
 
-class UriType(
+class UriHolder(
     @StringRes title: Int,
     @DrawableRes icon: Int,
     val mime: String
-) : PropertyType<Uri>(title, icon)
+) : PropertyHolder<Uri>(title, icon)
 
-class TextType(
+class TextHolder(
     @StringRes title: Int,
     @DrawableRes icon: Int
-) : PropertyType<String>(title, icon)
+) : PropertyHolder<String>(title, icon)

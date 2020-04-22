@@ -3,7 +3,7 @@ package com.rthqks.synapse.data
 import androidx.room.*
 import com.rthqks.synapse.logic.Link
 import com.rthqks.synapse.logic.Network
-import com.rthqks.synapse.logic.NewNode
+import com.rthqks.synapse.logic.NodeDef
 
 @Dao
 abstract class SynapseDao {
@@ -97,7 +97,7 @@ abstract class SynapseDao {
         val properties = getProperties(networkId)
 
         nodes.forEach {
-            network.addNode(NewNode(it.type, it.id))
+            network.addNode(NodeDef[it.type].toNode(it.id))
         }
 
         links.map { Link(it.fromNodeId, it.fromKey, it.toNodeId, it.toKey) }.let(network::addLinks)
