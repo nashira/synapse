@@ -10,7 +10,6 @@ import com.rthqks.synapse.exec.ExecutionContext
 import com.rthqks.synapse.exec.NodeExecutor
 import com.rthqks.synapse.exec.link.AudioData
 import com.rthqks.synapse.gl.*
-import com.rthqks.synapse.logic.NodeDef
 import com.rthqks.synapse.logic.NodeDef.MediaEncoder
 import com.rthqks.synapse.logic.NodeDef.MediaEncoder.FrameRate
 import com.rthqks.synapse.logic.NodeDef.MediaEncoder.Recording

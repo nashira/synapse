@@ -17,6 +17,7 @@ import com.rthqks.synapse.logic.NodeDef.Quantizer.NumElements
 import com.rthqks.synapse.logic.NodeDef.RingBuffer.Depth
 import com.rthqks.synapse.logic.NodeDef.RotateMatrix.Speed
 import com.rthqks.synapse.logic.NodeDef.Slice3d.SliceDirection
+import com.rthqks.synapse.polish.EffectExecutor.Companion.ID_LUT
 
 
 object Effects {
@@ -75,7 +76,7 @@ object Effects {
         val camera = it.addNode(Camera.toNode())
         val rotate = it.addNode(NodeDef.RotateMatrix.toNode())
         it.addLink(
-            Link(rotate.id, RotateMatrixNode.OUTPUT.id, Effect.ID_LUT, Lut3dNode.MATRIX_IN.id)
+            Link(rotate.id, RotateMatrixNode.OUTPUT.id, ID_LUT, Lut3dNode.MATRIX_IN.id)
         )
         Effect(it, "Roto-Hue", Pair(camera.id, CameraNode.OUTPUT.id)).apply {
             val rotateSpeed = rotate.properties.getProperty(Speed)!!

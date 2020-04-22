@@ -6,7 +6,6 @@ import com.rthqks.synapse.exec.Connection
 import com.rthqks.synapse.exec.ExecutionContext
 import com.rthqks.synapse.exec.NodeExecutor
 import com.rthqks.synapse.gl.GlesManager
-import com.rthqks.synapse.logic.NodeDef
 import com.rthqks.synapse.logic.NodeDef.RotateMatrix
 import com.rthqks.synapse.logic.NodeDef.RotateMatrix.FrameRate
 import com.rthqks.synapse.logic.NodeDef.RotateMatrix.Speed

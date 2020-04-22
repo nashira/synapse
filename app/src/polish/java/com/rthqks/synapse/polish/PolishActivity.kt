@@ -154,7 +154,7 @@ class PolishActivity : DaggerAppCompatActivity() {
         var recording = false
         viewModel.setSurfaceView(surface_view)
 
-        lut_list.adapter = LutAdapter(Effect.LUTS, viewModel)
+        lut_list.adapter = LutAdapter(EffectExecutor.LUTS, viewModel)
 
         lut_list.addItemDecoration(object : RecyclerView.ItemDecoration() {
             private val spans = 3

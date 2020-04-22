@@ -8,7 +8,6 @@ import com.rthqks.synapse.exec.ExecutionContext
 import com.rthqks.synapse.exec.Message
 import com.rthqks.synapse.exec.NodeExecutor
 import com.rthqks.synapse.gl.*
-import com.rthqks.synapse.logic.NodeDef
 import com.rthqks.synapse.logic.NodeDef.Sobel
 import com.rthqks.synapse.logic.Properties
 import kotlinx.coroutines.Job

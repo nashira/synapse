@@ -25,12 +25,12 @@ import java.util.concurrent.ConcurrentLinkedQueue
 class EffectExecutor(context: ExecutionContext) : NetworkExecutor(context) {
     private var effect: Effect? = null
     private val n = Network(0)
-    private val microphone = n.addNode(Microphone.toNode(Effect.ID_MIC))
-    private val screen = n.addNode(Screen.toNode(Effect.ID_SURFACE_VIEW))
-    private val encoder = n.addNode(MediaEncoder.toNode(Effect.ID_ENCODER))
-    private val cube = n.addNode(BCubeImport.toNode(Effect.ID_LUT_IMPORT))
-    private val lut = n.addNode(Lut3d.toNode(Effect.ID_LUT))
-    private val crop = n.addNode(CropResize.toNode(Effect.ID_THUMBNAIL))
+    private val microphone = n.addNode(Microphone.toNode(ID_MIC))
+    private val screen = n.addNode(Screen.toNode(ID_SURFACE_VIEW))
+    private val encoder = n.addNode(MediaEncoder.toNode(ID_ENCODER))
+    private val cube = n.addNode(BCubeImport.toNode(ID_LUT_IMPORT))
+    private val lut = n.addNode(Lut3d.toNode(ID_LUT))
+    private val crop = n.addNode(CropResize.toNode(ID_THUMBNAIL))
     private var cropLink: Link? = null
     private val lutPreviewPool = ConcurrentLinkedQueue<LutPreview>()
     private val lutPreviews = ConcurrentHashMap<SurfaceTexture, LutPreview>()
@@ -88,7 +88,7 @@ class EffectExecutor(context: ExecutionContext) : NetworkExecutor(context) {
                 val old = oldEff.network
                 val links = old.getLinks() + Link(
                     oldEff.videoOut.first, oldEff.videoOut.second,
-                    Effect.ID_LUT, Lut3d.SOURCE_IN.key
+                    ID_LUT, Lut3d.SOURCE_IN.key
                 )
 
                 links.map { scope.launch { removeLink(it) } }.joinAll()
@@ -111,7 +111,7 @@ class EffectExecutor(context: ExecutionContext) : NetworkExecutor(context) {
             val new = effect.network
             val newLinks = new.getLinks() + Link(
                 effect.videoOut.first, effect.videoOut.second,
-                Effect.ID_LUT, Lut3d.SOURCE_IN.key
+                ID_LUT, Lut3d.SOURCE_IN.key
             )
             new.nodes.forEach { n.addNode(it.value) }
             newLinks.forEach { n.addLink(it) }
@@ -129,7 +129,7 @@ class EffectExecutor(context: ExecutionContext) : NetworkExecutor(context) {
             }.joinAll()
             newLinks.map { scope.launch { addLink(it) } }.joinAll()
 
-            (getNode(Effect.ID_LUT) as? Lut3dNode)?.resetLutMatrix()
+            (getNode(ID_LUT) as? Lut3dNode)?.resetLutMatrix()
             this.effect = effect
         }
 
@@ -139,7 +139,7 @@ class EffectExecutor(context: ExecutionContext) : NetworkExecutor(context) {
     }
 
     suspend fun setSurfaceView(surfaceView: SurfaceView) = await {
-        (getNode(Effect.ID_SURFACE_VIEW) as? SurfaceViewNode)?.setSurfaceView(surfaceView)
+        (getNode(ID_SURFACE_VIEW) as? SurfaceViewNode)?.setSurfaceView(surfaceView)
     }
 
     suspend fun startLutPreview() = await {
@@ -147,7 +147,7 @@ class EffectExecutor(context: ExecutionContext) : NetworkExecutor(context) {
             cropLink = Link(
                 it.videoOut.first,
                 it.videoOut.second,
-                Effect.ID_THUMBNAIL,
+                ID_THUMBNAIL,
                 CropResize.INPUT.key
             ).also { link ->
                 addLink(link)
@@ -221,12 +221,8 @@ class EffectExecutor(context: ExecutionContext) : NetworkExecutor(context) {
         removeAllNodes()
     }
 
-    companion object {
-        const val TAG = "EffectExecutor"
-    }
-
     private inner class LutPreview {
-        val cube = NodeDef.BCubeImport.toNode()
+        val cube = BCubeImport.toNode()
         val lut = Lut3d.toNode()
         val screen = NodeDef.TextureView.toNode()
 
@@ -260,5 +256,97 @@ class EffectExecutor(context: ExecutionContext) : NetworkExecutor(context) {
             listOf(l2s, cu2l, cr2l).map { scope.launch { removeLink(it) } }.joinAll()
             listOf(cube, lut, screen).map { scope.launch { removeNode(it) } }.joinAll()
         }
+    }
+
+    companion object {
+        const val TAG = "EffectExecutor"
+
+        // node id allocations
+        // 0 - 10,000 : effect specific nodes
+        // 10000+ : effect context nodes
+        const val ID_MIC = 10_002
+        const val ID_SURFACE_VIEW = 10_003
+        const val ID_ENCODER = 10_004
+        const val ID_LUT_IMPORT = 10_005
+        const val ID_LUT = 10_006
+        const val ID_THUMBNAIL = 10_007
+
+        val LUTS = listOf(
+            "identity",
+            "invert",
+            "yellow_film_01",
+            "action_magenta_01",
+            "action_red_01",
+            "adventure_1453",
+            "agressive_highlights",
+            "bleech_bypass_green",
+            "bleech_bypass_yellow_01",
+            "blue_dark",
+            "bright_green_01",
+            "brownish",
+            "colorful_0209",
+            "conflict_01",
+            "contrast_highlights",
+            "contrasty_afternoon",
+            "cross_process_cp3",
+            "cross_process_cp4",
+            "cross_process_cp6",
+            "cross_process_cp14",
+            "cross_process_cp15",
+            "cross_process_cp16",
+            "cross_process_cp18",
+            "cross_process_cp130",
+            "dark_green_02",
+            "dark_green",
+            "dark_place_01",
+            "dream_1",
+            "dream_85",
+            "faded_retro_01",
+            "faded_retro_02",
+            "film_0987",
+            "film_9879",
+            "film_high_contrast",
+            "flat_30",
+            "green_2025",
+            "green_action",
+            "green_afternoon",
+            "green_conflict",
+            "green_day_01",
+            "green_day_02",
+            "green_g09",
+            "green_indoor",
+            "green_light",
+            "harsh_day",
+            "harsh_sunset",
+            "highlights_protection",
+            "indoor_blue",
+            "low_contrast_blue",
+            "low_key_01",
+            "magenta_day_01",
+            "magenta_day",
+            "magenta_dream",
+            "memories",
+            "moonlight_01",
+            "mostly_blue",
+            "muted_01",
+            "only_red_and_blue",
+            "only_red",
+            "operation_yellow",
+            "orange_dark_4",
+            "orange_dark_7",
+            "orange_dark_look",
+            "orange_underexposed",
+            "protect_highlights_01",
+            "red_afternoon_01",
+            "red_day_01",
+            "red_dream_01",
+            "retro_brown_01",
+            "retro_magenta_01",
+            "retro_yellow_01",
+            "smart_contrast",
+            "subtle_blue",
+            "subtle_green",
+            "yellow_55b"
+        )
     }
 }
