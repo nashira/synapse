@@ -9,7 +9,7 @@ class Network(
 ) {
     val nodes = mutableMapOf<Int, Node>()
     val properties = Properties()
-    private val ports = mutableMapOf<Int, Map<String, Port>>()
+    val ports = mutableMapOf<Int, MutableSet<Port>>()
     private val links = mutableSetOf<Link>()
     private val linkIndex = mutableMapOf<Int, MutableSet<Link>>()
     private var maxNodeId = 0
@@ -21,7 +21,12 @@ class Network(
         }
         nodes[node.id] = node
         maxNodeId = max(maxNodeId, node.id)
-        return  node
+        node.ports.forEach {
+            if (it.value.exposed) {
+                ports[node.id]?.add(it.value)
+            }
+        }
+        return node
     }
 
     fun removeNode(nodeId: Int): Node? {
@@ -62,6 +67,17 @@ class Network(
     fun addLinks(links: List<Link>) {
         links.forEach(this::addLink)
         computeComponents()
+    }
+
+    fun setExposed(nodeId: Int, key: String, exposed: Boolean) {
+        getNode(nodeId)?.getPort(key)?.let {
+            it.exposed = exposed
+            if (exposed) {
+                ports.getOrPut(nodeId) {
+                    mutableSetOf()
+                }.add(it)
+            }
+        }
     }
 
     // ----------------------------------

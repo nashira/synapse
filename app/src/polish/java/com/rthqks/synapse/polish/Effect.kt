@@ -1,15 +1,24 @@
 package com.rthqks.synapse.polish
 
-import com.rthqks.synapse.logic.Network
-import com.rthqks.synapse.logic.Properties
-import com.rthqks.synapse.logic.Property
-import com.rthqks.synapse.logic.PropertyHolder
+import com.rthqks.synapse.logic.*
 
 class Effect(
     val network: Network,
-    val title: String,
-    val videoOut: Pair<Int, String>
+    val title: String
 ) {
+
+    val videoOut: Pair<Int, String>
+    get() {
+        network.ports.forEach { entry ->
+            entry.value.forEach {
+                if (it.output && it.type == PortType.Video) {
+                    return Pair(entry.key, it.id)
+                }
+            }
+        }
+        error("missing exposed video port")
+    }
+
     private val propertyTypes = mutableMapOf<Property.Key<*>, PropertyHolder<Any?>>()
     val properties = Properties()
 

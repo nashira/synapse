@@ -4,8 +4,7 @@ import android.util.Size
 import com.rthqks.synapse.R
 import com.rthqks.synapse.exec.node.*
 import com.rthqks.synapse.logic.*
-import com.rthqks.synapse.logic.NodeDef.Camera
-import com.rthqks.synapse.logic.NodeDef.CellAuto
+import com.rthqks.synapse.logic.NodeDef.*
 import com.rthqks.synapse.logic.NodeDef.CellAuto.GridSize
 import com.rthqks.synapse.logic.NodeDef.CropGrayBlur.BlurSize
 import com.rthqks.synapse.logic.NodeDef.CropGrayBlur.CropEnabled
@@ -29,22 +28,28 @@ object Effects {
     val none = Network(ID_NONE).let {
         val camera = it.addNode(Camera.toNode())
 
-        Effect(it, "none", Pair(camera.id, Camera.OUTPUT.key))
+        it.setExposed(camera.id, Camera.OUTPUT.key, true)
+
+        Effect(it, "none")
     }
 
     val timeWarp = Network(ID_TIME_WARP).let {
         val camera = it.addNode(Camera.toNode())
-        val ringBuffer = it.addNode(NodeDef.RingBuffer.toNode())
-        val slice = it.addNode(NodeDef.Slice3d.toNode())
+        val ringBuffer = it.addNode(RingBuffer.toNode())
+        val slice = it.addNode(Slice3d.toNode())
+
+        it.setExposed(slice.id, Slice3d.OUTPUT.key, true)
 
         it.addLink(
-            Link(camera.id, CameraNode.OUTPUT.id, ringBuffer.id, RingBufferNode.INPUT.id)
+            Link(camera.id, Camera.OUTPUT.key, ringBuffer.id, RingBuffer.INPUT.key)
         )
         it.addLink(
-            Link(ringBuffer.id, RingBufferNode.OUTPUT.id, slice.id, Slice3dNode.INPUT_3D.id)
+            Link(ringBuffer.id, RingBuffer.OUTPUT.key, slice.id, Slice3d.INPUT.key)
         )
         ringBuffer.properties[Depth] = 30
-        Effect(it, "Time Warp", Pair(slice.id, Slice3dNode.OUTPUT.id)).apply {
+        ringBuffer.properties.getProperty(Depth)?.exposed = true
+
+        Effect(it, "Time Warp").apply {
             ringBuffer.properties.getProperty(Depth)?.let {
                 addProperty(
                     it, ToggleHolder(
@@ -74,11 +79,13 @@ object Effects {
 
     val rotoHue = Network(ID_ROTO_HUE).let {
         val camera = it.addNode(Camera.toNode())
-        val rotate = it.addNode(NodeDef.RotateMatrix.toNode())
+        val rotate = it.addNode(RotateMatrix.toNode())
         it.addLink(
             Link(rotate.id, RotateMatrixNode.OUTPUT.id, ID_LUT, Lut3dNode.MATRIX_IN.id)
         )
-        Effect(it, "Roto-Hue", Pair(camera.id, CameraNode.OUTPUT.id)).apply {
+        it.setExposed(camera.id, Camera.OUTPUT.key, true)
+
+        Effect(it, "Roto-Hue").apply {
             val rotateSpeed = rotate.properties.getProperty(Speed)!!
             addProperty(
                 rotateSpeed, ToggleHolder(
@@ -95,8 +102,9 @@ object Effects {
 
     val squares = Network(ID_SQUARES).let {
         val cell = it.addNode(CellAuto.toNode())
+        it.setExposed(cell.id, CellAuto.OUTPUT.key, true)
 
-        Effect(it, "Squares", Pair(cell.id, CellAuto.OUTPUT.key)).apply {
+        Effect(it, "Squares").apply {
             val prop = cell.properties.getProperty(GridSize)!!
             addProperty(
                 prop, ToggleHolder(
@@ -113,10 +121,10 @@ object Effects {
 
     val quantizer = Network(5).let {
         val camera = it.addNode(Camera.toNode())
-        val blur = it.addNode(NodeDef.CropGrayBlur.toNode())
-        val sobel = it.addNode(NodeDef.Sobel.toNode())
-        val quantizer = it.addNode(NodeDef.Quantizer.toNode())
-        val blend = it.addNode(NodeDef.ImageBlend.toNode())
+        val blur = it.addNode(CropGrayBlur.toNode())
+        val sobel = it.addNode(Sobel.toNode())
+        val quantizer = it.addNode(Quantizer.toNode())
+        val blend = it.addNode(ImageBlend.toNode())
         it.addLink(
             Link(camera.id, CameraNode.OUTPUT.id, blur.id, CropGrayBlurNode.INPUT.id)
         )
@@ -148,7 +156,10 @@ object Effects {
         )
         blur.properties[BlurSize] = 0
         blend.properties[BlendMode] = 23
-        Effect(it, "Squares", Pair(blend.id, ImageBlendNode.OUTPUT.id)).apply {
+
+        it.setExposed(blend.id, ImageBlend.OUTPUT.key, true)
+
+        Effect(it, "Squares").apply {
             val prop = blur.properties.getProperty(CropSize)!!
             prop.value = Size(1080, 1920)
             addProperty(
