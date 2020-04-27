@@ -17,6 +17,10 @@ class Properties {
         properties[property.key] = property as Property<Any?>
     }
 
+    fun remove(property: Property<out Any?>) {
+        properties.remove(property.key)
+    }
+
     fun getAll(): List<Property<*>> = properties.entries.fold(ArrayList(size)) { list, entry ->
         list.add(entry.value)
         list
@@ -30,21 +34,6 @@ class Properties {
         val property = properties.getOrPut(key) { Property(key, value) as Property<Any?> }
         property.value = value
         runBlocking { channel.send(property) }
-    }
-
-    fun <T> getString(key: Property.Key<T>): String {
-//        if (key !in properties) return ""
-        return when (key.klass) {
-            Size::class.java -> {
-                val p = properties[key]?.value as Size
-                "${p.width}x${p.height}"
-            }
-            FloatArray::class.java -> {
-                val p = properties[key]?.value as FloatArray
-                p.joinToString()
-            }
-            else -> properties[key]?.value.toString()
-        }
     }
 
     fun <T> putString(key: Property.Key<T>, value: String) {
@@ -85,16 +74,6 @@ class Properties {
         else -> error("unhandled property type: ${type}")
     } as Property.Key<Any?>
 
-    fun <T> getType(key: Property.Key<T>): Int = when(key.klass) {
-        Int::class.java -> TYPE_INT
-        Float::class.java -> TYPE_FLOAT
-        Boolean::class.java -> TYPE_BOOL
-        Size::class.java -> TYPE_SIZE
-        Uri::class.java -> TYPE_URI
-        FloatArray::class.java -> TYPE_FLOAT_ARRAY
-        else -> error("unhandled property type: ${key.klass}")
-    }
-
     companion object {
         const val TYPE_INT = 0
         const val TYPE_FLOAT = 1
@@ -107,4 +86,30 @@ class Properties {
 
 data class Property<T>(val key: Key<T>, var value: T, var exposed: Boolean = false) {
     data class Key<T>(val name: String, val klass: Class<T>)
+
+    fun getType(): Int = when(key.klass) {
+        Int::class.java -> Properties.TYPE_INT
+        Float::class.java -> Properties.TYPE_FLOAT
+        Boolean::class.java -> Properties.TYPE_BOOL
+        Size::class.java -> Properties.TYPE_SIZE
+        Uri::class.java -> Properties.TYPE_URI
+        FloatArray::class.java -> Properties.TYPE_FLOAT_ARRAY
+        else -> error("unhandled property type: ${key.klass}")
+    }
+
+
+    fun getString(): String {
+//        if (key !in properties) return ""
+        return when (key.klass) {
+            Size::class.java -> {
+                val p = value as Size
+                "${p.width}x${p.height}"
+            }
+            FloatArray::class.java -> {
+                val p = value as FloatArray
+                p.joinToString()
+            }
+            else -> value.toString()
+        }
+    }
 }

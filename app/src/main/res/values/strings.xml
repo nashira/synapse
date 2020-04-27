@@ -44,7 +44,7 @@
     <string name="title_network_list">Networks</string>
     <string name="confirm_delete">Delete</string>
     <string name="confirm">Confirm</string>
-    <string name="property_name_camera_device">Camera Device</string>
+    <string name="property_name_camera_device">Facing</string>
     <string name="property_label_camera_lens_facing_front">Front</string>
     <string name="property_label_camera_lens_facing_back">Back</string>
     <string name="property_label_camera_capture_size_1080">1080p</string>
@@ -167,7 +167,7 @@
     <string name="name_node_type_crop_resize">Crop/Resize</string>
     <string name="property_label_camera_capture_size_320">320x320</string>
     <string name="name_node_type_shape">Shape</string>
-    <string name="property_name_output_video_size">Output Video Size</string>
+    <string name="property_name_capture_size">Capture Size</string>
     <string name="name_node_type_ring_buffer">Ring Buffer</string>
     <string name="property_name_history_size">Number of Layers</string>
     <string name="property_name_slice_depth">Slice Depth</string>
@@ -212,4 +212,8 @@
     <string name="name_node_type_sobel">Sobel</string>
     <string name="property_label_0">0</string>
     <string name="property_label_13">13</string>
+    <string name="property_name_speed">Speed</string>
+    <string name="property_name_crop_size">Crop Size</string>
+    <string name="property_name_crop_enabled">Enable Crop</string>
+    <string name="property_name_gray_enabled">Grayscale</string>
 </resources>

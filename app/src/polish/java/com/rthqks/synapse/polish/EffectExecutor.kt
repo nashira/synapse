@@ -106,7 +106,9 @@ class EffectExecutor(context: ExecutionContext) : NetworkExecutor(context) {
                 old.nodes.forEach { n.removeNode(it.key) }
             }
 
-            newCam?.properties?.plusAssign(context.properties)
+            listOf(Camera.CameraFacing, Camera.FrameRate, Camera.Stabilize, Camera.VideoSize).forEach {
+                newCam?.properties?.put(context.properties.getProperty(it)!!)
+            }
 
             val new = effect.network
             val newLinks = new.getLinks() + Link(

@@ -8,7 +8,7 @@ class Network(
     val id: Int
 ) {
     val nodes = mutableMapOf<Int, Node>()
-    val properties = Properties()
+    val properties = mutableMapOf<Int, MutableSet<Property<*>>>()
     val ports = mutableMapOf<Int, MutableSet<Port>>()
     private val links = mutableSetOf<Link>()
     private val linkIndex = mutableMapOf<Int, MutableSet<Link>>()
@@ -22,9 +22,7 @@ class Network(
         nodes[node.id] = node
         maxNodeId = max(maxNodeId, node.id)
         node.ports.forEach {
-            if (it.value.exposed) {
-                ports[node.id]?.add(it.value)
-            }
+            setExposed(node.id, it.key, it.value.exposed)
         }
         return node
     }
@@ -73,11 +71,22 @@ class Network(
         getNode(nodeId)?.getPort(key)?.let {
             it.exposed = exposed
             if (exposed) {
-                ports.getOrPut(nodeId) {
-                    mutableSetOf()
-                }.add(it)
+                ports.getOrPut(nodeId) { mutableSetOf() } += it
+            } else {
+                ports.getOrPut(nodeId) { mutableSetOf() } -= it
             }
-        }
+        } ?: error("unknown node=$nodeId, port=$key")
+    }
+
+    fun setExposed(nodeId: Int, key: Property.Key<*>, exposed: Boolean) {
+        getNode(nodeId)?.properties?.getProperty(key)?.let {
+            it.exposed = exposed
+            if (exposed) {
+                properties.getOrPut(nodeId) { mutableSetOf() } += it
+            } else {
+                properties.getOrPut(nodeId) { mutableSetOf() } -= it
+            }
+        } ?: error("unknown node=$nodeId, property=$key")
     }
 
     // ----------------------------------

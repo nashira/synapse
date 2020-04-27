@@ -25,12 +25,12 @@ import androidx.recyclerview.widget.RecyclerView
 import androidx.viewpager2.widget.ViewPager2
 import com.google.android.material.bottomsheet.BottomSheetBehavior
 import com.rthqks.synapse.R
-import com.rthqks.synapse.logic.ExpandedHolder
 import com.rthqks.synapse.logic.NodeDef.Lut3d.LutStrength
 import com.rthqks.synapse.logic.Property
-import com.rthqks.synapse.logic.PropertyHolder
-import com.rthqks.synapse.logic.ToggleHolder
 import com.rthqks.synapse.ops.Analytics
+import com.rthqks.synapse.ui.ExpandedHolder
+import com.rthqks.synapse.ui.PropertyHolder
+import com.rthqks.synapse.ui.ToggleHolder
 import com.rthqks.synapse.util.throttleClick
 import dagger.android.support.DaggerAppCompatActivity
 import kotlinx.android.synthetic.main.layout_lut.view.*

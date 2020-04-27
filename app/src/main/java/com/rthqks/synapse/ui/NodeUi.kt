@@ -1,138 +1,446 @@
 package com.rthqks.synapse.ui
 
+import android.hardware.camera2.CameraCharacteristics
+import android.util.Size
 import androidx.annotation.DrawableRes
 import androidx.annotation.StringRes
 import com.rthqks.synapse.R
-import com.rthqks.synapse.logic.NodeDef
+import com.rthqks.synapse.logic.NodeDef.*
+import com.rthqks.synapse.logic.Property
 
 class NodeUi(
     @StringRes val title: Int,
-    @DrawableRes val icon: Int
+    @DrawableRes val icon: Int,
+    private val prop: Map<Property.Key<*>, PropertyHolder<*>> = emptyMap()
 ) {
+    operator fun <T> get(key: Property.Key<T>) = prop[key] //?: error("unknown property key: $key")
 
     companion object {
         private val MAP = mapOf(
-            NodeDef.Camera.key to NodeUi(
+            Camera.key to NodeUi(
                 R.string.name_node_type_camera,
-                R.drawable.ic_camera
+                R.drawable.ic_camera,
+                mapOf(
+                    Camera.CameraFacing to ToggleHolder(
+                        R.string.property_name_camera_device,
+                        R.drawable.ic_flip_camera,
+                        Choice(
+                            CameraCharacteristics.LENS_FACING_BACK,
+                            R.string.property_label_camera_lens_facing_back,
+                            R.drawable.ic_camera_rear
+                        ),
+                        Choice(
+                            CameraCharacteristics.LENS_FACING_FRONT,
+                            R.string.property_label_camera_lens_facing_front,
+                            R.drawable.ic_camera_front
+                        )
+                    ),
+                    Camera.VideoSize to RadioHolder(
+                        R.string.property_name_capture_size,
+                        R.drawable.ic_photo_size_select,
+                        Choice(
+                            Size(640, 480),
+                            R.string.property_label_camera_capture_size_480,
+                            R.drawable.square
+                        ),
+                        Choice(
+                            Size(1280, 720),
+                            R.string.property_label_camera_capture_size_720,
+                            R.drawable.square
+                        ),
+                        Choice(
+                            Size(1920, 1080),
+                            R.string.property_label_camera_capture_size_1080,
+                            R.drawable.square
+                        ),
+                        Choice(
+                            Size(3840, 2160),
+                            R.string.property_label_camera_capture_size_2160,
+                            R.drawable.square
+                        )
+                    ),
+                    Camera.FrameRate to RadioHolder(
+                        R.string.property_name_frame_rate, R.drawable.ic_speed,
+                        Choice(10, R.string.property_label_camera_fps_10, R.drawable.square),
+                        Choice(15, R.string.property_label_camera_fps_15, R.drawable.square),
+                        Choice(20, R.string.property_label_camera_fps_20, R.drawable.square),
+                        Choice(30, R.string.property_label_camera_fps_30, R.drawable.square),
+                        Choice(60, R.string.property_label_camera_fps_60, R.drawable.square)
+                    ),
+                    Camera.Stabilize to ToggleHolder(
+                        R.string.property_name_camera_stabilize, R.drawable.ic_control_camera,
+                        Choice(true, R.string.property_label_on, 0),
+                        Choice(false, R.string.property_label_off, 0)
+                    )
+                )
             ),
 
-            NodeDef.Microphone.key to NodeUi(
+            Microphone.key to NodeUi(
                 R.string.name_node_type_microphone,
                 R.drawable.ic_mic
+//            listOf(
+//                        16000, 22050, 32000, 44100, 48000
+//                    )
+//            listOf(
+//                        AudioFormat.ENCODING_PCM_8BIT,
+//                        AudioFormat.ENCODING_PCM_16BIT,
+//                        AudioFormat.ENCODING_PCM_FLOAT
+//                    )
+//            listOf(
+//                        AudioFormat.CHANNEL_IN_DEFAULT,
+//                        AudioFormat.CHANNEL_IN_MONO,
+//                        AudioFormat.CHANNEL_IN_STEREO
+//                    )
+//            listOf(
+//                        MediaRecorder.AudioSource.CAMCORDER,
+//                        MediaRecorder.AudioSource.DEFAULT,
+//                        MediaRecorder.AudioSource.VOICE_COMMUNICATION,
+//                        MediaRecorder.AudioSource.VOICE_RECOGNITION
+//                    )
             ),
 
-            NodeDef.MediaEncoder.key to NodeUi(
+            MediaEncoder.key to NodeUi(
                 R.string.name_node_type_media_file,
                 R.drawable.ic_movie
             ),
 
-            NodeDef.FrameDifference.key to NodeUi(
+            FrameDifference.key to NodeUi(
                 R.string.name_node_type_frame_difference,
                 R.drawable.ic_difference
             ),
 
-            NodeDef.MultiplyAccumulate.key to NodeUi(
+            MultiplyAccumulate.key to NodeUi(
                 R.string.name_node_type_multiply_accumulate,
                 R.drawable.ic_add
             ),
 
-            NodeDef.CropGrayBlur.key to NodeUi(
+            CropGrayBlur.key to NodeUi(
                 R.string.name_node_type_blur_filter,
-                R.drawable.ic_blur
+                R.drawable.ic_blur,
+                mapOf(
+                    CropGrayBlur.CropSize to ToggleHolder(
+                        R.string.property_name_crop_size,
+                        R.drawable.ic_crop,
+                        Choice(
+                            Size(180, 320),
+                            R.string.property_label_s,
+                            R.drawable.square
+                        ),
+                        Choice(
+                            Size(270, 480),
+                            R.string.property_label_m,
+                            R.drawable.square
+                        ),
+                        Choice(
+                            Size(540, 960),
+                            R.string.property_label_l,
+                            R.drawable.square
+                        ),
+                        Choice(
+                            Size(1080, 1920),
+                            R.string.property_label_xl,
+                            R.drawable.square
+                        )
+                    ),
+                    CropGrayBlur.CropEnabled to ToggleHolder(
+                        R.string.property_name_crop_enabled,
+                        R.drawable.ic_crop,
+                        Choice(
+                            false,
+                            R.string.property_label_off,
+                            R.drawable.square
+                        ),
+                        Choice(
+                            true,
+                            R.string.property_label_on,
+                            R.drawable.square
+                        )
+                    ),
+                    CropGrayBlur.GrayEnabled to ToggleHolder(
+                        R.string.property_name_gray_enabled,
+                        R.drawable.ic_filter_b_and_w,
+                        Choice(
+                            false,
+                            R.string.property_label_off,
+                            R.drawable.square
+                        ),
+                        Choice(
+                            true,
+                            R.string.property_label_on,
+                            R.drawable.square
+                        )
+                    ),
+                    CropGrayBlur.BlurSize to ToggleHolder(
+                        R.string.property_name_blur_size,
+                        R.drawable.ic_blur,
+                        Choice(
+                            0,
+                            R.string.property_label_0,
+                            R.drawable.square
+                        ),
+                        Choice(
+                            5,
+                            R.string.property_label_5,
+                            R.drawable.square
+                        ),
+                        Choice(
+                            9,
+                            R.string.property_label_9,
+                            R.drawable.square
+                        ),
+                        Choice(
+                            13,
+                            R.string.property_label_13,
+                            R.drawable.square
+                        )
+                    ),
+                    CropGrayBlur.NumPasses to ToggleHolder(
+                        R.string.property_name_num_passes,
+                        R.drawable.ic_layers,
+                        Choice(
+                            1,
+                            R.string.property_label_1,
+                            R.drawable.circle
+                        ),
+                        Choice(
+                            2,
+                            R.string.property_label_2,
+                            R.drawable.circle
+                        ),
+                        Choice(
+                            4,
+                            R.string.property_label_4,
+                            R.drawable.circle
+                        ),
+                        Choice(
+                            8,
+                            R.string.property_label_8,
+                            R.drawable.circle
+                        )
+                    )
+                )
+//            1..10
+//            listOf(5, 9, 13)
+//            listOf(true, false)
             ),
 
-            NodeDef.Image.key to NodeUi(
+            Image.key to NodeUi(
                 R.string.name_node_type_image,
                 R.drawable.ic_image
             ),
 
-            NodeDef.Lut2d.key to NodeUi(
+            Lut2d.key to NodeUi(
                 R.string.name_node_type_lut2d_filter,
                 R.drawable.ic_tune
             ),
 
-            NodeDef.Lut3d.key to NodeUi(
+            Lut3d.key to NodeUi(
                 R.string.name_node_type_lut3d_filter,
                 R.drawable.ic_tune
+//            0f..1f
             ),
 
-            NodeDef.Speakers.key to NodeUi(
+            Speakers.key to NodeUi(
                 R.string.name_node_type_speaker,
                 R.drawable.ic_speaker
             ),
 
-            NodeDef.Screen.key to NodeUi(
+            Screen.key to NodeUi(
                 R.string.name_node_type_screen,
                 R.drawable.ic_display
             ),
 
-            NodeDef.SlimeMold.key to NodeUi(
+            SlimeMold.key to NodeUi(
                 R.string.name_node_type_slime_mold,
                 R.drawable.ic_slime_mold
             ),
 
-            NodeDef.ImageBlend.key to NodeUi(
+            ImageBlend.key to NodeUi(
                 R.string.name_node_type_image_blend,
                 R.drawable.ic_filter_b_and_w
+//            1..25
+//            0f..1f
             ),
 
-            NodeDef.CubeImport.key to NodeUi(
+            CubeImport.key to NodeUi(
                 R.string.name_node_type_cube_importer,
                 R.drawable.ic_3d_rotation
             ),
 
-            NodeDef.BCubeImport.key to NodeUi(
+            BCubeImport.key to NodeUi(
                 R.string.name_node_type_bcube_importer,
                 R.drawable.ic_3d_rotation
             ),
 
-            NodeDef.CropResize.key to NodeUi(
+            CropResize.key to NodeUi(
                 R.string.name_node_type_crop_resize,
                 R.drawable.ic_crop
             ),
 
-            NodeDef.Shape.key to NodeUi(
+            Shape.key to NodeUi(
                 R.string.name_node_type_shape,
                 R.drawable.ic_change_history
             ),
 
-            NodeDef.RingBuffer.key to NodeUi(
+            RingBuffer.key to NodeUi(
                 R.string.name_node_type_ring_buffer,
-                R.drawable.ic_layers
+                R.drawable.ic_layers,
+                mapOf(
+                    RingBuffer.Depth to ToggleHolder(
+                        R.string.property_name_history_size,
+                        R.drawable.ic_layers,
+                        Choice(
+                            20,
+                            R.string.property_label_20,
+                            R.drawable.square
+                        ),
+                        Choice(
+                            30,
+                            R.string.property_label_30,
+                            R.drawable.square
+                        ),
+                        Choice(
+                            45,
+                            R.string.property_label_45,
+                            R.drawable.square
+                        ),
+                        Choice(
+                            60,
+                            R.string.property_label_60,
+                            R.drawable.square
+                        )
+                    )
+                )
             ),
 
-            NodeDef.Slice3d.key to NodeUi(
+            Slice3d.key to NodeUi(
                 R.string.name_node_type_slice_3d,
-                R.drawable.ic_layers
+                R.drawable.ic_layers,
+                mapOf(
+                    Slice3d.SliceDirection to ExpandedHolder(
+                        R.string.property_name_slice_direction,
+                        R.drawable.ic_arrow_forward,
+                        Choice(
+                            0,
+                            R.string.property_label_top,
+                            R.drawable.ic_arrow_upward
+                        ),
+                        Choice(
+                            1,
+                            R.string.property_label_bottom,
+                            R.drawable.ic_arrow_downward
+                        ),
+                        Choice(
+                            2,
+                            R.string.property_label_left,
+                            R.drawable.ic_arrow_back
+                        ),
+                        Choice(
+                            3,
+                            R.string.property_label_right,
+                            R.drawable.ic_arrow_forward
+                        )
+                    )
+                )
             ),
 
-            NodeDef.MediaEncoder.key to NodeUi(
+            MediaEncoder.key to NodeUi(
                 R.string.name_node_type_media_encoder,
                 R.drawable.ic_movie
+//            listOf(0, 90, 180, 270)
+//            listOf(10, 15, 20, 30, 60)
+//            listOf(true, false)
             ),
 
-            NodeDef.RotateMatrix.key to NodeUi(
+            RotateMatrix.key to NodeUi(
                 R.string.name_node_type_matrix_rotate,
-                R.drawable.ic_3d_rotation
+                R.drawable.ic_360,
+                mapOf(
+                    RotateMatrix.Speed to RangeType(
+                        R.string.property_name_speed,
+                        R.drawable.ic_360,
+                        1f..100f
+                    ),
+                    RotateMatrix.FrameRate to RadioHolder(
+                        R.string.property_name_frame_rate, R.drawable.ic_speed,
+                        Choice(10, R.string.property_label_camera_fps_10, R.drawable.square),
+                        Choice(15, R.string.property_label_camera_fps_15, R.drawable.square),
+                        Choice(20, R.string.property_label_camera_fps_20, R.drawable.square),
+                        Choice(30, R.string.property_label_camera_fps_30, R.drawable.square),
+                        Choice(60, R.string.property_label_camera_fps_60, R.drawable.square)
+                    )
+                )
             ),
 
-            NodeDef.TextureView.key to NodeUi(
+            TextureView.key to NodeUi(
                 R.string.name_node_type_texture_view,
                 R.drawable.ic_display
             ),
 
-            NodeDef.CellAuto.key to NodeUi(
+            CellAuto.key to NodeUi(
                 R.string.name_node_type_cell_auto,
-                R.drawable.ic_view_module
+                R.drawable.ic_view_module,
+                mapOf(
+                    CellAuto.GridSize to ToggleHolder(
+                        R.string.property_name_grid_size,
+                        R.drawable.ic_add,
+                        Choice(
+                            Size(180, 320),
+                            R.string.property_label_s,
+                            R.drawable.circle
+                        ),
+                        Choice(
+                            Size(270, 480),
+                            R.string.property_label_m,
+                            R.drawable.circle
+                        ),
+                        Choice(
+                            Size(540, 960),
+                            R.string.property_label_l,
+                            R.drawable.circle
+                        ),
+                        Choice(
+                            Size(1080, 1920),
+                            R.string.property_label_xl,
+                            R.drawable.circle
+                        )
+                    )
+                )
+//            listOf(10, 15, 20, 30, 60)
             ),
 
-            NodeDef.Quantizer.key to NodeUi(
+            Quantizer.key to NodeUi(
                 R.string.name_node_type_quantizer,
-                R.drawable.ic_view_module
+                R.drawable.ic_view_module,
+                mapOf(
+                    Quantizer.NumElements to ToggleHolder(
+                        R.string.property_name_num_passes,
+                        R.drawable.ic_layers,
+                        Choice(
+                            floatArrayOf(4f, 4f, 4f),
+                            R.string.property_label_4,
+                            R.drawable.circle
+                        ),
+                        Choice(
+                            floatArrayOf(6f, 6f, 6f),
+                            R.string.property_label_6,
+                            R.drawable.circle
+                        ),
+                        Choice(
+                            floatArrayOf(8f, 8f, 8f),
+                            R.string.property_label_8,
+                            R.drawable.circle
+                        ),
+                        Choice(
+                            floatArrayOf(10f, 10f, 10f),
+                            R.string.property_label_10,
+                            R.drawable.circle
+                        )
+                    )
+                )
             ),
 
-            NodeDef.Sobel.key to NodeUi(
+            Sobel.key to NodeUi(
                 R.string.name_node_type_sobel,
                 R.drawable.ic_difference
             )

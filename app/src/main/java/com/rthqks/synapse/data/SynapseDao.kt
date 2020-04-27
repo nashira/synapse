@@ -77,17 +77,6 @@ abstract class SynapseDao {
     @Query("DELETE FROM property WHERE networkId = :networkId")
     abstract suspend fun deleteProperties(networkId: Int)
 
-    suspend fun getNetworks(): List<Network> {
-        return getNetworkData().map {
-            val properties = getProperties(it.id)
-            Network(it.id).also { network ->
-                properties.filter { it.nodeId == -1 }.forEach {
-                    network.properties.fromString(it.type, it.key, it.value)
-                }
-            }
-        }
-    }
-
     @Transaction
     open suspend fun getFullNetwork(networkId: Int): Network {
         val networkData = getNetwork(networkId)
@@ -103,9 +92,7 @@ abstract class SynapseDao {
         links.map { Link(it.fromNodeId, it.fromKey, it.toNodeId, it.toKey) }.let(network::addLinks)
 
         properties.forEach {
-            network.getNode(it.nodeId)?.properties?.fromString(it.type, it.key, it.value) ?: run {
-                network.properties.fromString(it.type, it.key, it.value)
-            }
+            network.getNode(it.nodeId)?.properties?.fromString(it.type, it.key, it.value)
         }
 
         return network

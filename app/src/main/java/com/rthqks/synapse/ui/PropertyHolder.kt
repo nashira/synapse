@@ -1,27 +1,17 @@
-package com.rthqks.synapse.logic
+package com.rthqks.synapse.ui
 
 import android.net.Uri
 import androidx.annotation.DrawableRes
 import androidx.annotation.StringRes
 
 sealed class PropertyHolder<T>(
-    @StringRes val title: Int = 0,
-    @DrawableRes val icon: Int = 0
+    @StringRes val title: Int,
+    @DrawableRes val icon: Int
 ) {
-    companion object {
-        fun RangeType(
-            @StringRes title: Int,
-            @DrawableRes icon: Int,
-            range: ClosedFloatingPointRange<Float>
-        ): FloatRangeHolder = FloatRangeHolder(title, icon, range)
 
-        fun RangeType(
-            @StringRes title: Int,
-            @DrawableRes icon: Int,
-            range: IntRange
-        ): IntRangeHolder = IntRangeHolder(title, icon, range)
-    }
 }
+
+data class Choice<T>(val item: T, @StringRes val label: Int, @DrawableRes val icon: Int)
 
 class ValueHolder<T>(
     @StringRes title: Int,
@@ -40,7 +30,11 @@ class ToggleHolder<T>(
     vararg val choices: Choice<T>
 ) : PropertyHolder<T>(title, icon)
 
-data class Choice<T>(val item: T, @StringRes val label: Int, @DrawableRes val icon: Int)
+class RadioHolder<T>(
+    @StringRes title: Int,
+    @DrawableRes icon: Int,
+    vararg val choices: Choice<T>
+) : PropertyHolder<T>(title, icon)
 
 class FloatRangeHolder(
     @StringRes title: Int,
@@ -54,13 +48,6 @@ class IntRangeHolder(
     val range: IntRange
 ) : PropertyHolder<Int>(title, icon)
 
-//class ToggleType(
-//    @StringRes title: Int,
-//    @DrawableRes icon: Int,
-//    @StringRes val enabled: Int,
-//    @StringRes val disabled: Int
-//) : PropertyType<Boolean>(title, icon)
-
 class UriHolder(
     @StringRes title: Int,
     @DrawableRes icon: Int,
@@ -71,3 +58,17 @@ class TextHolder(
     @StringRes title: Int,
     @DrawableRes icon: Int
 ) : PropertyHolder<String>(title, icon)
+
+fun RangeType(
+    @StringRes title: Int,
+    @DrawableRes icon: Int,
+    range: ClosedFloatingPointRange<Float>
+): FloatRangeHolder =
+    FloatRangeHolder(title, icon, range)
+
+fun RangeType(
+    @StringRes title: Int,
+    @DrawableRes icon: Int,
+    range: IntRange
+): IntRangeHolder =
+    IntRangeHolder(title, icon, range)

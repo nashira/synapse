@@ -51,10 +51,10 @@ class NetworkFragment : DaggerFragment() {
 
         val properties = viewModel.network.properties
 
-        propertyBinder = PropertyBinder(properties, tool_list, tool_main, uriProvider) {
-            Log.d(TAG, "onChange ${it.key.name} ${it.value}")
-            viewModel.onPropertyChange(-1, it, properties)
-        }
+//        propertyBinder = PropertyBinder(properties, tool_list, tool_main, uriProvider) {
+//            Log.d(TAG, "onChange ${it.key.name} ${it.value}")
+//            viewModel.onPropertyChange(-1, it, properties)
+//        }
 
         val touchMediator = TouchMediator(requireContext(), viewModel::swipeEvent)
 

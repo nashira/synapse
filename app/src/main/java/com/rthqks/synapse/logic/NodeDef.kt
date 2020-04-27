@@ -12,7 +12,7 @@ sealed class NodeDef(
 ) {
     var ports: List<PortDef> = emptyList()
         protected set
-    var properties: List<PropertyDef<*>> = emptyList()
+    var properties: Map<Property.Key<*>, Any?> = emptyMap()
         protected set
 
     init {
@@ -21,7 +21,7 @@ sealed class NodeDef(
 
     fun toNode(id: Int = -1) = Node(key, id).also { n ->
         ports.forEach { p -> n.add(Port(p.type, p.key, p.output)) }
-        properties.forEach { p -> n.properties[p.key as Property.Key<Any?>] = p.default }
+        properties.forEach { p -> n.properties[p.key as Property.Key<Any?>] = p.value }
     }
 
     object Camera : NodeDef("camera") {
@@ -34,24 +34,11 @@ sealed class NodeDef(
 
         init {
             ports = listOf(OUTPUT)
-            properties = listOf(
-                PropertyDef.List(
-                    CameraFacing,
-                    CameraCharacteristics.LENS_FACING_BACK,
-                    listOf(
-                        CameraCharacteristics.LENS_FACING_BACK,
-                        CameraCharacteristics.LENS_FACING_FRONT
-                    )
-                ),
-                PropertyDef.List(
-                    VideoSize, Size(1280, 720), listOf(
-                        Size(640, 480),
-                        Size(1280, 720),
-                        Size(1920, 1080)
-                    )
-                ),
-                PropertyDef.List(FrameRate, 30, listOf(10, 15, 30, 60)),
-                PropertyDef.List(Stabilize, true, listOf(true, false))
+            properties = mapOf(
+                CameraFacing to CameraCharacteristics.LENS_FACING_BACK,
+                VideoSize to Size(1280, 720),
+                FrameRate to 30,
+                Stabilize to true
             )
         }
     }
@@ -66,34 +53,11 @@ sealed class NodeDef(
 
         init {
             ports = listOf(OUTPUT)
-            properties = listOf(
-                PropertyDef.List(
-                    AudioSampleRate, 44100, listOf(
-                        16000, 22050, 32000, 44100, 48000
-                    )
-                ),
-                PropertyDef.List(
-                    AudioEncoding, AudioFormat.ENCODING_PCM_16BIT, listOf(
-                        AudioFormat.ENCODING_PCM_8BIT,
-                        AudioFormat.ENCODING_PCM_16BIT,
-                        AudioFormat.ENCODING_PCM_FLOAT
-                    )
-                ),
-                PropertyDef.List(
-                    AudioChannel, AudioFormat.CHANNEL_IN_DEFAULT, listOf(
-                        AudioFormat.CHANNEL_IN_DEFAULT,
-                        AudioFormat.CHANNEL_IN_MONO,
-                        AudioFormat.CHANNEL_IN_STEREO
-                    )
-                ),
-                PropertyDef.List(
-                    AudioSource, MediaRecorder.AudioSource.DEFAULT, listOf(
-                        MediaRecorder.AudioSource.CAMCORDER,
-                        MediaRecorder.AudioSource.DEFAULT,
-                        MediaRecorder.AudioSource.VOICE_COMMUNICATION,
-                        MediaRecorder.AudioSource.VOICE_RECOGNITION
-                    )
-                )
+            properties = mapOf(
+                AudioSampleRate to 44100,
+                AudioEncoding to AudioFormat.ENCODING_PCM_16BIT,
+                AudioChannel to AudioFormat.CHANNEL_IN_DEFAULT,
+                AudioSource to  MediaRecorder.AudioSource.DEFAULT
             )
         }
     }
@@ -105,8 +69,8 @@ sealed class NodeDef(
 
         init {
             ports = listOf(AUDIO_OUT, VIDEO_OUT)
-            properties = listOf(
-                PropertyDef.Simple(MediaUri, Uri.parse("none://"))
+            properties = mapOf(
+                MediaUri to Uri.parse("none://")
             )
         }
     }
@@ -132,8 +96,8 @@ sealed class NodeDef(
 
         init {
             ports = listOf(INPUT, OUTPUT)
-            properties = listOf(
-                PropertyDef.Simple(CropSize, Size(320, 320))
+            properties = mapOf(
+                CropSize to Size(320, 320)
             )
         }
     }
@@ -150,12 +114,12 @@ sealed class NodeDef(
 
         init {
             ports = listOf(INPUT, OUTPUT)
-            properties = listOf(
-                PropertyDef.IntRange(NumPasses, 1, 1..10),
-                PropertyDef.List(BlurSize, 9, listOf(5, 9, 13)),
-                PropertyDef.List(CropEnabled, false, listOf(true, false)),
-                PropertyDef.List(GrayEnabled, false, listOf(true, false)),
-                PropertyDef.Simple(CropSize, Size(320, 320))
+            properties = mapOf(
+                NumPasses to 1,
+                BlurSize to 0,
+                CropEnabled to false,
+                GrayEnabled to false,
+                CropSize to Size(320, 320)
             )
         }
     }
@@ -166,8 +130,8 @@ sealed class NodeDef(
 
         init {
             ports = listOf(OUTPUT)
-            properties = listOf(
-                PropertyDef.Simple(MediaUri, Uri.parse("assets:///img/ic_launcher_web.png"))
+            properties = mapOf(
+                MediaUri to Uri.parse("assets:///img/ic_launcher_web.png")
             )
         }
     }
@@ -185,8 +149,8 @@ sealed class NodeDef(
 
         init {
             ports = listOf(SOURCE_IN, LUT_IN, MATRIX_IN, OUTPUT)
-            properties = listOf(
-                PropertyDef.FloatRange(LutStrength, 1f, 0f..1f)
+            properties = mapOf(
+                LutStrength to 1f
             )
         }
 
@@ -222,9 +186,9 @@ sealed class NodeDef(
 
         init {
             ports = listOf(BASE_IN, BLEND_IN, OUTPUT)
-            properties = listOf(
-                PropertyDef.IntRange(BlendMode, 1, 1..25),
-                PropertyDef.FloatRange(Opacity, 1f, 0f..1f)
+            properties = mapOf(
+                BlendMode to 1,
+                Opacity to 1f
             )
         }
     }
@@ -235,8 +199,8 @@ sealed class NodeDef(
 
         init {
             ports = listOf(OUTPUT)
-            properties = listOf(
-                PropertyDef.Simple(LutUri, Uri.parse("assets:///cube/identity.cube"))
+            properties = mapOf(
+                LutUri to Uri.parse("assets:///cube/identity.cube")
             )
         }
     }
@@ -247,8 +211,8 @@ sealed class NodeDef(
 
         init {
             ports = listOf(OUTPUT)
-            properties = listOf(
-                PropertyDef.Simple(LutUri, Uri.parse("assets:///cube/identity.bcube"))
+            properties = mapOf(
+                LutUri to Uri.parse("assets:///cube/identity.bcube")
             )
         }
     }
@@ -264,8 +228,8 @@ sealed class NodeDef(
 
         init {
             ports = listOf(INPUT, OUTPUT)
-            properties = listOf(
-                PropertyDef.IntRange(Depth, 10, 1..64)
+            properties = mapOf(
+                Depth to 10
             )
         }
     }
@@ -277,8 +241,8 @@ sealed class NodeDef(
 
         init {
             ports = listOf(INPUT, OUTPUT)
-            properties = listOf(
-                PropertyDef.List(SliceDirection, 0, listOf(0, 1, 2, 3, 4))
+            properties = mapOf(
+                SliceDirection to 0
             )
         }
     }
@@ -292,10 +256,10 @@ sealed class NodeDef(
 
         init {
             ports = listOf(AUDIO_IN, VIDEO_IN)
-            properties = listOf(
-                PropertyDef.List(Rotation, 0, listOf(0, 90, 180, 270)),
-                PropertyDef.List(FrameRate, 30, listOf(10, 15, 20, 30, 60)),
-                PropertyDef.List(Recording, false, listOf(true, false))
+            properties = mapOf(
+                Rotation to 0,
+                FrameRate to 30,
+                Recording to false
             )
         }
     }
@@ -307,9 +271,9 @@ sealed class NodeDef(
 
         init {
             ports = listOf(OUTPUT)
-            properties = listOf(
-                PropertyDef.List(FrameRate, 30, listOf(10, 15, 20, 30, 60)),
-                PropertyDef.FloatRange(Speed, 1f, 0f..100f)
+            properties = mapOf(
+                FrameRate to 30,
+                Speed to 1f
             )
         }
     }
@@ -329,9 +293,9 @@ sealed class NodeDef(
 
         init {
             ports = listOf(OUTPUT)
-            properties = listOf(
-                PropertyDef.List(FrameRate, 30, listOf(10, 15, 20, 30, 60)),
-                PropertyDef.Simple(GridSize, Size(180, 320))
+            properties = mapOf(
+                FrameRate to 30,
+                GridSize to Size(180, 320)
             )
         }
     }
@@ -343,8 +307,8 @@ sealed class NodeDef(
 
         init {
             ports = listOf(INPUT, OUTPUT)
-            properties = listOf(
-                PropertyDef.Simple(NumElements, floatArrayOf(6f, 6f, 6f))
+            properties = mapOf(
+                NumElements to floatArrayOf(6f, 6f, 6f)
             )
         }
     }
@@ -361,6 +325,6 @@ sealed class NodeDef(
     companion object {
         private val MAP = mutableMapOf<String, NodeDef>()
 
-        operator fun get(key: String) = MAP[key]!!
+        operator fun get(key: String) = MAP[key] ?: error("unknown node type: $key")
     }
 }
