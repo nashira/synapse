@@ -9,6 +9,7 @@ import android.util.Size
 import android.view.SurfaceView
 import android.view.TextureView
 import android.widget.TextView
+import androidx.lifecycle.MediatorLiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -25,6 +26,8 @@ import com.rthqks.synapse.logic.NodeDef.Lut3d.LutStrength
 import com.rthqks.synapse.logic.NodeDef.MediaEncoder.Recording
 import com.rthqks.synapse.logic.NodeDef.MediaEncoder.Rotation
 import com.rthqks.synapse.logic.Property
+import com.rthqks.synapse.logic.SyncLogic
+import com.rthqks.synapse.logic.toNetwork
 import com.rthqks.synapse.ops.Analytics
 import kotlinx.coroutines.*
 import javax.inject.Inject
@@ -32,10 +35,12 @@ import javax.inject.Inject
 class PolishViewModel @Inject constructor(
     private val context: ExecutionContext,
     private val dao: SynapseDao,
+    private val syncLogic: SyncLogic,
     private val analytics: Analytics
 ) : ViewModel() {
+    val effects = MediatorLiveData<List<Network>>()
     val deviceSupported = MutableLiveData<Boolean>()
-    private var currentEffect: Effect? = null
+    private var currentEffect: Network? = null
     private var recordingStart = 0L
     private val recordingDuration: Long get() = SystemClock.elapsedRealtime() - recordingStart
     private var svSetup = false
@@ -72,11 +77,13 @@ class PolishViewModel @Inject constructor(
     fun initializeEffect() {
         viewModelScope.launch {
             effectExecutor.initializeEffect()
+            syncLogic.refreshEffects()
+            val networks = dao.getNetworks().map { it.toNetwork() }
+            effects.postValue(networks)
         }
     }
 
     private var surfaceView: SurfaceView? = null
-    private var network: Network? = null
 
     fun setSurfaceView(surfaceView: SurfaceView?) {
         this.surfaceView = surfaceView
@@ -117,14 +124,14 @@ class PolishViewModel @Inject constructor(
     }
 
     fun startRecording() {
-        val effectName = currentEffect?.title ?: "unknown"
+        val effectName = currentEffect?.name ?: "unknown"
         analytics.logEvent(Analytics.Event.RecordStart(effectName))
         recordingStart = SystemClock.elapsedRealtime()
         properties[Recording] = true
     }
 
     fun stopRecording() {
-        val effectName = currentEffect?.title ?: "unknown"
+        val effectName = currentEffect?.name ?: "unknown"
         analytics.logEvent(
             Analytics.Event.RecordStop(
                 effectName,
@@ -150,17 +157,17 @@ class PolishViewModel @Inject constructor(
                     0, 0,
                     type,
                     key.name,
-                    string
+                    string,
+                    property.exposed
                 )
             )
         }
     }
 
-    fun setEffect(effect: Effect): Boolean {
+    fun setEffect(effect: Network): Boolean {
         currentEffect = effect
-        network = effect.network
 
-        analytics.logEvent(Analytics.Event.SetEffect(effect.title))
+        analytics.logEvent(Analytics.Event.SetEffect(effect.name))
         viewModelScope.launch {
             effectExecutor.swapEffect(effect)
             if (!svSetup) {
@@ -225,10 +232,11 @@ class PolishViewModel @Inject constructor(
             viewModelScope.launch(Dispatchers.IO) {
                 dao.insertProperty(
                     PropertyData(
-                        it.network.id, 0,
+                        it.id, 0,
                         property.getType(),
                         property.key.name,
-                        property.getString()
+                        property.getString(),
+                        property.exposed
                     )
                 )
             }

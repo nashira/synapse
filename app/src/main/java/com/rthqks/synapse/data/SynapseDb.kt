@@ -20,7 +20,7 @@ abstract class SynapseDb : RoomDatabase() {
     abstract fun dao(): SynapseDao
 
     companion object {
-        const val VERSION = 13
+        const val VERSION = 14
         const val NAME = "synapse.db"
     }
 }

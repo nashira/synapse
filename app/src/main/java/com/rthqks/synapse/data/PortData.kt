@@ -16,5 +16,6 @@ data class PortData(
     val id: String,
     val type: Int,
     val name: String,
-    val output: Boolean
+    val output: Boolean,
+    val exposed: Boolean
 )

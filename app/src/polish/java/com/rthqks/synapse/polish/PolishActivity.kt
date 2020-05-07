@@ -25,10 +25,12 @@ import androidx.recyclerview.widget.RecyclerView
 import androidx.viewpager2.widget.ViewPager2
 import com.google.android.material.bottomsheet.BottomSheetBehavior
 import com.rthqks.synapse.R
+import com.rthqks.synapse.logic.Network
 import com.rthqks.synapse.logic.NodeDef.Lut3d.LutStrength
 import com.rthqks.synapse.logic.Property
 import com.rthqks.synapse.ops.Analytics
 import com.rthqks.synapse.ui.ExpandedHolder
+import com.rthqks.synapse.ui.NodeUi
 import com.rthqks.synapse.ui.PropertyHolder
 import com.rthqks.synapse.ui.ToggleHolder
 import com.rthqks.synapse.util.throttleClick
@@ -255,22 +257,21 @@ class PolishActivity : DaggerAppCompatActivity() {
             }
         }
 
-        val effects = listOf(
-            Effects.none,
-            Effects.quantizer,
-            Effects.squares,
-            Effects.timeWarp,
-            Effects.rotoHue
-        )
-
-        effect_list.adapter = EffectAdapter(effects) {
+        val effectAdapter = EffectAdapter {
             viewModel.setEffectProperty(it.property)
         }
+        effect_list.adapter = effectAdapter
+
+        var effects = emptyList<Network>()
+        viewModel.effects.observe(this, Observer {
+            effects = it
+            effectAdapter.setEffects(it)
+        })
 
         effect_list.registerOnPageChangeCallback(object : ViewPager2.OnPageChangeCallback() {
             override fun onPageSelected(position: Int) {
                 val effect = effects[position]
-                 viewModel.setEffect(effect)
+                viewModel.setEffect(effect)
                 Log.d(TAG, "pos $position $effect")
             }
         })
@@ -401,9 +402,9 @@ class PolishActivity : DaggerAppCompatActivity() {
 private data class Permission(val name: String, val granted: Boolean, val showRationale: Boolean)
 
 private class EffectAdapter(
-    private val effects: List<Effect>,
     private val onClick: (PropertyItem) -> Unit
 ) : RecyclerView.Adapter<EffectViewHolder>() {
+    private var effects: List<Network> = emptyList()
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): EffectViewHolder {
         val view = LayoutInflater.from(parent.context)
@@ -417,6 +418,11 @@ private class EffectAdapter(
 
     override fun onBindViewHolder(holder: EffectViewHolder, position: Int) {
         holder.bind(effects[position])
+    }
+
+    fun setEffects(list: List<Network>) {
+        effects = list
+        notifyDataSetChanged()
     }
 }
 
@@ -432,10 +438,23 @@ private class EffectViewHolder(
         settingsList.adapter = adapter
     }
 
-    fun bind(effect: Effect) {
-        nameView.text = effect.title
+    fun bind(effect: Network) {
+        nameView.text = effect.name
         adapter.setProperties(effect.getProperties())
     }
+}
+
+private fun Network.getProperties(): MutableList<Pair<Property<*>, PropertyHolder<*>>> {
+    val list = mutableListOf<Pair<Property<*>, PropertyHolder<*>>>()
+    properties.forEach { entry ->
+        val node = getNode(entry.key)!!
+        entry.value.forEach {  p ->
+            NodeUi[node.type][p.key]?.let {
+                list += Pair(p, it)
+            }
+        }
+    }
+    return list
 }
 
 private class LutAdapter(
@@ -564,7 +583,14 @@ private class PropertiesAdapter(
                     new.add(PropertyItem(it.first as Property<Any?>, it.second, it.second.icon))
                 }
                 else -> {
-                    new.add(PropertyItem(it.first as Property<Any?>, it.second, it.second.icon))
+                    new.add(
+                        PropertyItem(
+                            it.first as Property<Any?>,
+                            it.second,
+                            it.second.icon,
+                            it.first.value
+                        )
+                    )
                 }
             }
         }

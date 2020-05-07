@@ -5,7 +5,8 @@ import java.util.*
 import kotlin.math.max
 
 class Network(
-    val id: Int
+    val id: Int,
+    var name: String
 ) {
     val nodes = mutableMapOf<Int, Node>()
     val properties = mutableMapOf<Int, MutableSet<Property<*>>>()
@@ -156,7 +157,7 @@ class Network(
     }
 
     fun copy(): Network {
-        return Network(id).also {
+        return Network(id, name).also {
             it.nodes += nodes
             it.links += links
             it.properties += properties

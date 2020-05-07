@@ -39,12 +39,12 @@ class BuilderViewModel @Inject constructor(
     fun setNetworkId(networkId: Int) {
         viewModelScope.launch(Dispatchers.IO) {
             if (networkId == -1) {
-                val rowId = dao.insertNetwork(NetworkData(0))
+                val rowId = dao.insertNetwork(NetworkData(0, ""))
 
-                network = Network(rowId.toInt())
+                network = Network(rowId.toInt(), "")
                 Log.d(TAG, "created: $network")
             } else {
-                network = dao.getFullNetwork(networkId)
+//                network = dao.getFullNetwork(networkId)
                 Log.d(TAG, "loaded: $network")
             }
             networkChannel.postValue(network)

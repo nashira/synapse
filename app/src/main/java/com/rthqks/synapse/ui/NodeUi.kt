@@ -16,6 +16,9 @@ class NodeUi(
     operator fun <T> get(key: Property.Key<T>) = prop[key] //?: error("unknown property key: $key")
 
     companion object {
+
+        operator fun get(key: String) = MAP[key] ?: error("unknown node type $key")
+
         private val MAP = mapOf(
             Camera.key to NodeUi(
                 R.string.name_node_type_camera,
@@ -356,7 +359,7 @@ class NodeUi(
                 R.string.name_node_type_matrix_rotate,
                 R.drawable.ic_360,
                 mapOf(
-                    RotateMatrix.Speed to RangeType(
+                    RotateMatrix.Speed to RangeHolder(
                         R.string.property_name_speed,
                         R.drawable.ic_360,
                         1f..100f
@@ -445,7 +448,5 @@ class NodeUi(
                 R.drawable.ic_difference
             )
         )
-
-        operator fun get(key: String) = MAP[key] ?: error("unknown node type $key")
     }
 }

@@ -10,21 +10,20 @@ import android.view.TextureView
 import com.rthqks.synapse.exec.ExecutionContext
 import com.rthqks.synapse.exec.NetworkExecutor
 import com.rthqks.synapse.exec.node.*
-import com.rthqks.synapse.logic.Link
-import com.rthqks.synapse.logic.Network
-import com.rthqks.synapse.logic.Node
-import com.rthqks.synapse.logic.NodeDef
+import com.rthqks.synapse.logic.*
 import com.rthqks.synapse.logic.NodeDef.*
 import com.rthqks.synapse.logic.NodeDef.BCubeImport.LutUri
 import com.rthqks.synapse.logic.NodeDef.CropResize.CropSize
 import com.rthqks.synapse.logic.NodeDef.Microphone.AudioSource
+import com.rthqks.synapse.ui.NodeUi
+import com.rthqks.synapse.ui.PropertyHolder
 import kotlinx.coroutines.*
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.ConcurrentLinkedQueue
 
 class EffectExecutor(context: ExecutionContext) : NetworkExecutor(context) {
-    private var effect: Effect? = null
-    private val n = Network(0)
+    private var effect: Network? = null
+    private val n = Network(0, "effect_common")
     private val microphone = n.addNode(Microphone.toNode(ID_MIC))
     private val screen = n.addNode(Screen.toNode(ID_SURFACE_VIEW))
     private val encoder = n.addNode(MediaEncoder.toNode(ID_ENCODER))
@@ -74,18 +73,18 @@ class EffectExecutor(context: ExecutionContext) : NetworkExecutor(context) {
         addAllLinks()
     }
 
-    suspend fun swapEffect(effect: Effect) {
+    suspend fun swapEffect(effect: Network) {
         val isLutPreview = cropLink != null
         stopLutPreview()
         await {
 
-            val newCam = effect.network.nodes.values.firstOrNull { it.type == Camera.key }
+            val newCam = effect.nodes.values.firstOrNull { it.type == Camera.key }
             val oldCam =
-                this.effect?.network?.nodes?.values?.firstOrNull { it.type == Camera.key }
+                this.effect?.nodes?.values?.firstOrNull { it.type == Camera.key }
             var camNode: CameraNode? = null
 
             this.effect?.let { oldEff ->
-                val old = oldEff.network
+                val old = oldEff
                 val links = old.getLinks() + Link(
                     oldEff.videoOut.first, oldEff.videoOut.second,
                     ID_LUT, Lut3d.SOURCE_IN.key
@@ -110,7 +109,7 @@ class EffectExecutor(context: ExecutionContext) : NetworkExecutor(context) {
                 newCam?.properties?.put(context.properties.getProperty(it)!!)
             }
 
-            val new = effect.network
+            val new = effect
             val newLinks = new.getLinks() + Link(
                 effect.videoOut.first, effect.videoOut.second,
                 ID_LUT, Lut3d.SOURCE_IN.key
@@ -352,3 +351,24 @@ class EffectExecutor(context: ExecutionContext) : NetworkExecutor(context) {
         )
     }
 }
+
+private val Network.videoOut: Pair<Int, String>
+    get() {
+        ports.forEach { entry ->
+            entry.value.forEach {
+                if (it.output && it.type == PortType.Video) {
+                    return Pair(entry.key, it.id)
+                }
+            }
+        }
+        error("missing exposed video port")
+    }
+
+//    private val propertyTypes = mutableMapOf<Property.Key<*>, PropertyHolder<Any?>>()
+//    val properties = Properties()
+//
+//    fun <T> addProperty(property: Property<T>, holder: PropertyHolder<T>) {
+//        properties.put(property)
+//        propertyTypes[property.key] = holder as PropertyHolder<Any?>
+//    }
+

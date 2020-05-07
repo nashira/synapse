@@ -59,14 +59,14 @@ class TextHolder(
     @DrawableRes icon: Int
 ) : PropertyHolder<String>(title, icon)
 
-fun RangeType(
+fun RangeHolder(
     @StringRes title: Int,
     @DrawableRes icon: Int,
     range: ClosedFloatingPointRange<Float>
 ): FloatRangeHolder =
     FloatRangeHolder(title, icon, range)
 
-fun RangeType(
+fun RangeHolder(
     @StringRes title: Int,
     @DrawableRes icon: Int,
     range: IntRange
