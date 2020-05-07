@@ -11,7 +11,7 @@ import com.rthqks.synapse.logic.Property
 class NodeUi(
     @StringRes val title: Int,
     @DrawableRes val icon: Int,
-    private val prop: Map<Property.Key<*>, PropertyHolder<*>> = emptyMap()
+    private val prop: Map<Property.Key<*>, PropertyUi<*>> = emptyMap()
 ) {
     operator fun <T> get(key: Property.Key<T>) = prop[key] //?: error("unknown property key: $key")
 
@@ -24,7 +24,7 @@ class NodeUi(
                 R.string.name_node_type_camera,
                 R.drawable.ic_camera,
                 mapOf(
-                    Camera.CameraFacing to ToggleHolder(
+                    Camera.CameraFacing to ToggleUi(
                         R.string.property_name_camera_device,
                         R.drawable.ic_flip_camera,
                         Choice(
@@ -38,7 +38,7 @@ class NodeUi(
                             R.drawable.ic_camera_front
                         )
                     ),
-                    Camera.VideoSize to RadioHolder(
+                    Camera.VideoSize to MenuUi(
                         R.string.property_name_capture_size,
                         R.drawable.ic_photo_size_select,
                         Choice(
@@ -62,7 +62,7 @@ class NodeUi(
                             R.drawable.square
                         )
                     ),
-                    Camera.FrameRate to RadioHolder(
+                    Camera.FrameRate to MenuUi(
                         R.string.property_name_frame_rate, R.drawable.ic_speed,
                         Choice(10, R.string.property_label_camera_fps_10, R.drawable.square),
                         Choice(15, R.string.property_label_camera_fps_15, R.drawable.square),
@@ -70,7 +70,7 @@ class NodeUi(
                         Choice(30, R.string.property_label_camera_fps_30, R.drawable.square),
                         Choice(60, R.string.property_label_camera_fps_60, R.drawable.square)
                     ),
-                    Camera.Stabilize to ToggleHolder(
+                    Camera.Stabilize to ToggleUi(
                         R.string.property_name_camera_stabilize, R.drawable.ic_control_camera,
                         Choice(true, R.string.property_label_on, 0),
                         Choice(false, R.string.property_label_off, 0)
@@ -121,7 +121,7 @@ class NodeUi(
                 R.string.name_node_type_blur_filter,
                 R.drawable.ic_blur,
                 mapOf(
-                    CropGrayBlur.CropSize to ToggleHolder(
+                    CropGrayBlur.CropSize to ToggleUi(
                         R.string.property_name_crop_size,
                         R.drawable.ic_crop,
                         Choice(
@@ -145,7 +145,7 @@ class NodeUi(
                             R.drawable.square
                         )
                     ),
-                    CropGrayBlur.CropEnabled to ToggleHolder(
+                    CropGrayBlur.CropEnabled to ToggleUi(
                         R.string.property_name_crop_enabled,
                         R.drawable.ic_crop,
                         Choice(
@@ -159,7 +159,7 @@ class NodeUi(
                             R.drawable.square
                         )
                     ),
-                    CropGrayBlur.GrayEnabled to ToggleHolder(
+                    CropGrayBlur.GrayEnabled to ToggleUi(
                         R.string.property_name_gray_enabled,
                         R.drawable.ic_filter_b_and_w,
                         Choice(
@@ -173,7 +173,7 @@ class NodeUi(
                             R.drawable.square
                         )
                     ),
-                    CropGrayBlur.BlurSize to ToggleHolder(
+                    CropGrayBlur.BlurSize to ToggleUi(
                         R.string.property_name_blur_size,
                         R.drawable.ic_blur,
                         Choice(
@@ -197,7 +197,7 @@ class NodeUi(
                             R.drawable.square
                         )
                     ),
-                    CropGrayBlur.NumPasses to ToggleHolder(
+                    CropGrayBlur.NumPasses to ToggleUi(
                         R.string.property_name_num_passes,
                         R.drawable.ic_layers,
                         Choice(
@@ -289,7 +289,7 @@ class NodeUi(
                 R.string.name_node_type_ring_buffer,
                 R.drawable.ic_layers,
                 mapOf(
-                    RingBuffer.Depth to ToggleHolder(
+                    RingBuffer.Depth to ToggleUi(
                         R.string.property_name_history_size,
                         R.drawable.ic_layers,
                         Choice(
@@ -320,7 +320,7 @@ class NodeUi(
                 R.string.name_node_type_slice_3d,
                 R.drawable.ic_layers,
                 mapOf(
-                    Slice3d.SliceDirection to ExpandedHolder(
+                    Slice3d.SliceDirection to ExpandedUi(
                         R.string.property_name_slice_direction,
                         R.drawable.ic_arrow_forward,
                         Choice(
@@ -359,12 +359,12 @@ class NodeUi(
                 R.string.name_node_type_matrix_rotate,
                 R.drawable.ic_360,
                 mapOf(
-                    RotateMatrix.Speed to RangeHolder(
+                    RotateMatrix.Speed to RangeUi(
                         R.string.property_name_speed,
                         R.drawable.ic_360,
                         1f..100f
                     ),
-                    RotateMatrix.FrameRate to RadioHolder(
+                    RotateMatrix.FrameRate to MenuUi(
                         R.string.property_name_frame_rate, R.drawable.ic_speed,
                         Choice(10, R.string.property_label_camera_fps_10, R.drawable.square),
                         Choice(15, R.string.property_label_camera_fps_15, R.drawable.square),
@@ -384,7 +384,7 @@ class NodeUi(
                 R.string.name_node_type_cell_auto,
                 R.drawable.ic_view_module,
                 mapOf(
-                    CellAuto.GridSize to ToggleHolder(
+                    CellAuto.GridSize to ToggleUi(
                         R.string.property_name_grid_size,
                         R.drawable.ic_add,
                         Choice(
@@ -416,7 +416,7 @@ class NodeUi(
                 R.string.name_node_type_quantizer,
                 R.drawable.ic_view_module,
                 mapOf(
-                    Quantizer.NumElements to ToggleHolder(
+                    Quantizer.NumElements to ToggleUi(
                         R.string.property_name_num_passes,
                         R.drawable.ic_layers,
                         Choice(

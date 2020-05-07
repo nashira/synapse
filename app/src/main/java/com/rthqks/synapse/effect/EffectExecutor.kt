@@ -1,4 +1,4 @@
-package com.rthqks.synapse.polish
+package com.rthqks.synapse.effect
 
 import android.graphics.SurfaceTexture
 import android.media.MediaRecorder
@@ -15,8 +15,6 @@ import com.rthqks.synapse.logic.NodeDef.*
 import com.rthqks.synapse.logic.NodeDef.BCubeImport.LutUri
 import com.rthqks.synapse.logic.NodeDef.CropResize.CropSize
 import com.rthqks.synapse.logic.NodeDef.Microphone.AudioSource
-import com.rthqks.synapse.ui.NodeUi
-import com.rthqks.synapse.ui.PropertyHolder
 import kotlinx.coroutines.*
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.ConcurrentLinkedQueue

@@ -5,7 +5,7 @@ import com.rthqks.synapse.exec.node.*
 import com.rthqks.synapse.logic.Link
 import com.rthqks.synapse.logic.Network
 import com.rthqks.synapse.logic.NodeDef
-import com.rthqks.synapse.polish.EffectExecutor
+import com.rthqks.synapse.effect.EffectExecutor
 
 val SeedNetworks = listOf(
     Network(1, "none").also {
@@ -44,6 +44,7 @@ val SeedNetworks = listOf(
         it.setExposed(rotate.id, NodeDef.RotateMatrix.Speed, true)
     }, Network(4, "Squares").also {
         val cell = it.addNode(NodeDef.CellAuto.toNode())
+        it.setExposed(cell.id, NodeDef.CellAuto.GridSize, true)
         it.setExposed(cell.id, NodeDef.CellAuto.OUTPUT.key, true)
     }, Network(5, "Quantizer").also {
         val camera = it.addNode(NodeDef.Camera.toNode())

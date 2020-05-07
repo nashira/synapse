@@ -25,14 +25,12 @@ import androidx.recyclerview.widget.RecyclerView
 import androidx.viewpager2.widget.ViewPager2
 import com.google.android.material.bottomsheet.BottomSheetBehavior
 import com.rthqks.synapse.R
+import com.rthqks.synapse.effect.EffectExecutor
 import com.rthqks.synapse.logic.Network
 import com.rthqks.synapse.logic.NodeDef.Lut3d.LutStrength
 import com.rthqks.synapse.logic.Property
 import com.rthqks.synapse.ops.Analytics
-import com.rthqks.synapse.ui.ExpandedHolder
-import com.rthqks.synapse.ui.NodeUi
-import com.rthqks.synapse.ui.PropertyHolder
-import com.rthqks.synapse.ui.ToggleHolder
+import com.rthqks.synapse.ui.*
 import com.rthqks.synapse.util.throttleClick
 import dagger.android.support.DaggerAppCompatActivity
 import kotlinx.android.synthetic.main.layout_lut.view.*
@@ -444,11 +442,11 @@ private class EffectViewHolder(
     }
 }
 
-private fun Network.getProperties(): MutableList<Pair<Property<*>, PropertyHolder<*>>> {
-    val list = mutableListOf<Pair<Property<*>, PropertyHolder<*>>>()
+private fun Network.getProperties(): MutableList<Pair<Property<*>, PropertyUi<*>>> {
+    val list = mutableListOf<Pair<Property<*>, PropertyUi<*>>>()
     properties.forEach { entry ->
         val node = getNode(entry.key)!!
-        entry.value.forEach {  p ->
+        entry.value.forEach { p ->
             NodeUi[node.type][p.key]?.let {
                 list += Pair(p, it)
             }
@@ -550,10 +548,16 @@ private class PropertiesAdapter(
     override fun getItemCount(): Int = list.size
 
     override fun getItemViewType(position: Int): Int {
-        return when (list[position].holder) {
-            is ExpandedHolder<*> -> 1
-            is ToggleHolder<*> -> 2
-            else -> 0
+        val holder = list[position].ui
+        return when (holder.type) {
+            PropertyType.VALUE,
+            PropertyType.EXPANDED -> 1
+
+            PropertyType.TOGGLE,
+            PropertyType.MENU -> 2
+
+            PropertyType.FLOAT_RANGE,
+            PropertyType.INT_RANGE -> 0
         }
     }
 
@@ -563,31 +567,37 @@ private class PropertiesAdapter(
         Log.d(TAG, "onBind $position $property")
     }
 
-    fun setProperties(properties: List<Pair<Property<*>, PropertyHolder<*>>>) {
+    fun setProperties(properties: List<Pair<Property<*>, PropertyUi<*>>>) {
         val new = mutableListOf<PropertyItem>()
         properties.forEach {
-            when (it.second) {
-                is ExpandedHolder<*> -> {
-                    (it.second as ExpandedHolder).choices.forEach { choice ->
+            val holder = it.second
+            when (holder.type) {
+                PropertyType.EXPANDED -> {
+                    (holder as ChoiceUi<*>).choices.forEach { choice ->
                         new.add(
                             PropertyItem(
                                 it.first as Property<Any?>,
-                                it.second,
+                                holder,
                                 choice.icon,
                                 choice.item
                             )
                         )
                     }
                 }
-                is ToggleHolder<*> -> {
-                    new.add(PropertyItem(it.first as Property<Any?>, it.second, it.second.icon))
+
+                PropertyType.TOGGLE,
+                PropertyType.MENU -> {
+                    new.add(PropertyItem(it.first as Property<Any?>, holder, holder.icon))
                 }
-                else -> {
+
+                PropertyType.VALUE,
+                PropertyType.FLOAT_RANGE,
+                PropertyType.INT_RANGE -> {
                     new.add(
                         PropertyItem(
                             it.first as Property<Any?>,
-                            it.second,
-                            it.second.icon,
+                            holder,
+                            holder.icon,
                             it.first.value
                         )
                     )
@@ -649,7 +659,7 @@ private class ToggleViewHolder(
     private val textView = itemView.text
     private var propertyItem: PropertyItem? = null
     private var index = 0
-    private var toggleType: ToggleHolder<*>? = null
+    private var toggleType: ChoiceUi<*>? = null
 
     init {
         itemView.setOnClickListener {
@@ -663,7 +673,7 @@ private class ToggleViewHolder(
 
     override fun bind(propertyItem: PropertyItem) {
         this.propertyItem = propertyItem
-        val type = propertyItem.holder as ToggleHolder<*>
+        val type = propertyItem.ui as ChoiceUi<*>
         toggleType = type
         index = max(0, type.choices.indexOfFirst {
             when (it.item) {
@@ -688,7 +698,7 @@ private class ToggleViewHolder(
 
 private data class PropertyItem(
     val property: Property<Any?>,
-    val holder: PropertyHolder<*>,
+    val ui: PropertyUi<*>,
     @DrawableRes val icon: Int,
     var value: Any? = null
 )

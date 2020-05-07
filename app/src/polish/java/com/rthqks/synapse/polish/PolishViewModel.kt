@@ -15,6 +15,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.rthqks.synapse.data.PropertyData
 import com.rthqks.synapse.data.SynapseDao
+import com.rthqks.synapse.effect.EffectExecutor
 import com.rthqks.synapse.exec.ExecutionContext
 import com.rthqks.synapse.logic.Network
 import com.rthqks.synapse.logic.NodeDef.BCubeImport.LutUri
@@ -45,7 +46,8 @@ class PolishViewModel @Inject constructor(
     private val recordingDuration: Long get() = SystemClock.elapsedRealtime() - recordingStart
     private var svSetup = false
     private var stopped = true
-    private val effectExecutor = EffectExecutor(context)
+    private val effectExecutor =
+        EffectExecutor(context)
 
     val properties = context.properties
 
