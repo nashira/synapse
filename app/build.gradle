@@ -15,13 +15,14 @@ android {
     if (dateCode > 173571120) {
         throw new RuntimeException("bad version code '$dateCode', check clock")
     }
+    def num = (dateCode / 360).toInteger() % 10_000
     compileSdkVersion 29
     defaultConfig {
         applicationId "com.rthqks.synapse"
         minSdkVersion 23
         targetSdkVersion 29
         versionCode dateCode
-        versionName "0.5"
+        versionName "0.5.$num"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
     }
     signingConfigs {
@@ -43,15 +44,6 @@ android {
             versionNameSuffix "-debug"
         }
     }
-    flavorDimensions "product"
-    productFlavors {
-        polish {
-            // increments 1 per hour, wraps every ~417 days
-            def num = (dateCode / 360).toInteger() % 10_000
-            dimension "product"
-            versionNameSuffix ".$num"
-        }
-    }
     compileOptions {
         sourceCompatibility = '1.8'
         targetCompatibility = '1.8'
@@ -64,7 +56,7 @@ android {
         }
     }
     playConfigs {
-        polishRelease {
+        release {
             enabled = true
             userFraction = 1.0
         }

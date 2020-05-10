@@ -1,3 +1,0 @@
-* Add a LUT (color filter) to any Effect
-* More Effect Settings
-* Change Effects and LUTs while recording
