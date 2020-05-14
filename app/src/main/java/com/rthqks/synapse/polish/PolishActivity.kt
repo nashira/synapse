@@ -25,6 +25,7 @@ import androidx.recyclerview.widget.RecyclerView
 import androidx.viewpager2.widget.ViewPager2
 import com.google.android.material.bottomsheet.BottomSheetBehavior
 import com.rthqks.synapse.R
+import com.rthqks.synapse.build2.BuilderActivity
 import com.rthqks.synapse.effect.EffectExecutor
 import com.rthqks.synapse.logic.Network
 import com.rthqks.synapse.logic.NodeDef.Lut3d.LutStrength
@@ -33,10 +34,10 @@ import com.rthqks.synapse.ops.Analytics
 import com.rthqks.synapse.ui.*
 import com.rthqks.synapse.util.throttleClick
 import dagger.android.support.DaggerAppCompatActivity
+import kotlinx.android.synthetic.main.activity_polish.*
+import kotlinx.android.synthetic.main.layout_effect.view.*
 import kotlinx.android.synthetic.main.layout_lut.view.*
-import kotlinx.android.synthetic.polish.activity_polish.*
-import kotlinx.android.synthetic.polish.layout_effect.view.*
-import kotlinx.android.synthetic.polish.layout_property.view.*
+import kotlinx.android.synthetic.main.layout_property.view.*
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
@@ -224,6 +225,7 @@ class PolishActivity : DaggerAppCompatActivity() {
             Log.d(TAG, "flip camera")
             viewModel.flipCamera()
         })
+
         var updateRecordingTime: Job? = null
         button_record.setOnClickListener(throttleClick {
             recording = !recording
@@ -428,17 +430,26 @@ private class EffectViewHolder(
     itemView: View,
     onClick: (PropertyItem) -> Unit
 ) : RecyclerView.ViewHolder(itemView) {
+    private val editButton = itemView.button_edit
     private val nameView = itemView.name
     private val settingsList = itemView.settings_list
     private val adapter = PropertiesAdapter(onClick)
+    private var network: Network? = null
 
     init {
         settingsList.adapter = adapter
+        editButton.setOnClickListener {
+            Log.d("Effect", "edit click ${network?.id}")
+            network?.id?.let { id ->
+                it.context.startActivity(BuilderActivity.getIntent(it.context, id))
+            }
+        }
     }
 
-    fun bind(effect: Network) {
-        nameView.text = effect.name
-        adapter.setProperties(effect.getProperties())
+    fun bind(network: Network) {
+        this.network = network
+        nameView.text = network.name
+        adapter.setProperties(network.getProperties())
     }
 }
 

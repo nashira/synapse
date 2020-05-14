@@ -7,10 +7,10 @@ import android.view.ViewGroup
 import android.view.animation.AccelerateInterpolator
 import androidx.recyclerview.widget.RecyclerView
 import com.rthqks.synapse.R
-import com.rthqks.synapse.build.UriProvider
+import com.rthqks.synapse.build2.UriProvider
 import com.rthqks.synapse.logic.Properties
 import com.rthqks.synapse.logic.Property
-import kotlinx.android.synthetic.polish.layout_property.view.*
+import kotlinx.android.synthetic.main.layout_property.view.*
 
 class PropertyBinder(
     private val properties: Properties,

@@ -1,6 +1,6 @@
 package com.rthqks.synapse.inject
 
-import com.rthqks.synapse.build.BuilderActivity
+import com.rthqks.synapse.build2.BuilderActivity
 import com.rthqks.synapse.polish.GalleryActivity
 import com.rthqks.synapse.polish.PolishActivity
 import dagger.Module

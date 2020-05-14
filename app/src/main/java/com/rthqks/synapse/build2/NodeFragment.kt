@@ -1,4 +1,4 @@
-package com.rthqks.synapse.build
+package com.rthqks.synapse.build2
 
 import android.annotation.SuppressLint
 import android.app.Activity
@@ -11,20 +11,19 @@ import android.view.View
 import android.view.ViewGroup
 import androidx.appcompat.view.menu.MenuPopupHelper
 import androidx.appcompat.widget.PopupMenu
-import androidx.core.view.doOnLayout
 import androidx.core.view.isEmpty
 import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModelProvider
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.RecyclerView
 import com.rthqks.synapse.R
-import com.rthqks.synapse.build.NetworkFragment.Companion.OPEN_DOC_REQUEST
+import com.rthqks.synapse.build2.NetworkFragment.Companion.OPEN_DOC_REQUEST
 import com.rthqks.synapse.logic.Connector
 import com.rthqks.synapse.logic.PortType
 import com.rthqks.synapse.ui.build.PropertyBinder
 import dagger.android.support.DaggerFragment
-import kotlinx.android.synthetic.polish.fragment_node.*
-import kotlinx.android.synthetic.polish.layout_port_fragment_node.view.*
+import kotlinx.android.synthetic.main.fragment_node.*
+import kotlinx.android.synthetic.main.layout_port_fragment_node.view.*
 import javax.inject.Inject
 
 class NodeFragment : DaggerFragment() {
@@ -73,12 +72,12 @@ class NodeFragment : DaggerFragment() {
         viewModel = ViewModelProvider(requireActivity(), viewModelFactory)[BuilderViewModel::class.java]
         touchMediator = TouchMediator(requireContext(), viewModel::swipeEvent)
 
-        viewModel.network.getNode(nodeId)?.let { node ->
-            propertyBinder = PropertyBinder(node.properties, tool_list, tool_main, uriProvider) {
-                Log.d(TAG, "onChange ${it.key.name} ${it.value}")
-                viewModel.onPropertyChange(nodeId, it, node.properties)
-            }
-        }
+//        viewModel.network.getNode(nodeId)?.let { node ->
+//            propertyBinder = PropertyBinder(node.properties, tool_list, tool_main, uriProvider) {
+//                Log.d(TAG, "onChange ${it.key.name} ${it.value}")
+//                viewModel.onPropertyChange(nodeId, it, node.properties)
+//            }
+//        }
 
 //        surface_view.let {
 //            it.addOnLayoutChangeListener { v, left, top, right, bottom, oldLeft, oldTop, oldRight, oldBottom ->
@@ -92,14 +91,14 @@ class NodeFragment : DaggerFragment() {
 //        }
 
         viewModel.networkChannel.observe(viewLifecycleOwner, Observer {
-            Log.d(TAG, "network change $nodeId ${viewModel.network.getNode(nodeId)}")
-            viewModel.network.getNode(nodeId)?.let {
-                reloadConnectors()
-                surface_view.doOnLayout {
-//                    Log.d(TAG, "surface_view_size ${it.width} ${it.height}")
-                    viewModel.setSurfaceView(nodeId, selectedPortId, surface_view)
-                }
-            }
+//            Log.d(TAG, "network change $nodeId ${viewModel.network.getNode(nodeId)}")
+//            viewModel.network.getNode(nodeId)?.let {
+//                reloadConnectors()
+//                surface_view.doOnLayout {
+////                    Log.d(TAG, "surface_view_size ${it.width} ${it.height}")
+//                    viewModel.setSurfaceView(nodeId, selectedPortId, surface_view)
+//                }
+//            }
         })
     }
 
@@ -118,9 +117,9 @@ class NodeFragment : DaggerFragment() {
         super.onResume()
         Log.d(TAG, "onResume $nodeId")
 
-        val node = viewModel.getNode(nodeId)
+//        val node = viewModel.getNode(nodeId)
 //        viewModel.setTitle(node.def.title)
-        viewModel.setMenu(R.menu.fragment_node)
+//        viewModel.setMenu(R.menu.fragment_node)
         reloadConnectors()
     }
 
@@ -136,10 +135,10 @@ class NodeFragment : DaggerFragment() {
 
     private fun reloadConnectors() {
         Log.d(TAG, "reloadConnectors $nodeId")
-        val network = viewModel.network
-        val connectors = network.getConnectors(nodeId).groupBy { it.port.output }
-        inputsAdapter.setPorts(connectors[false] ?: emptyList())
-        outputsAdapter.setPorts(connectors[true] ?: emptyList())
+//        val network = viewModel.network
+//        val connectors = network.getConnectors(nodeId).groupBy { it.port.output }
+//        inputsAdapter.setPorts(connectors[false] ?: emptyList())
+//        outputsAdapter.setPorts(connectors[true] ?: emptyList())
     }
 
     fun onConnectorTouch(connector: Connector) {

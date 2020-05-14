@@ -17,7 +17,7 @@ import com.rthqks.synapse.logic.NodeDef.Camera.Stabilize
 import com.rthqks.synapse.logic.NodeDef.Camera.VideoSize
 import com.rthqks.synapse.util.throttleClick
 import dagger.android.support.AndroidSupportInjection
-import kotlinx.android.synthetic.polish.fragment_settings.view.*
+import kotlinx.android.synthetic.main.fragment_settings.view.*
 import javax.inject.Inject
 
 class SettingsDialog() : DialogFragment() {

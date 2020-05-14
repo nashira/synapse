@@ -1,4 +1,4 @@
-package com.rthqks.synapse.build
+package com.rthqks.synapse.build2
 
 import android.content.Context
 import android.graphics.Rect
@@ -17,15 +17,15 @@ import com.rthqks.synapse.R
 import com.rthqks.synapse.logic.Connector
 import com.rthqks.synapse.logic.Network
 import dagger.android.support.DaggerFragment
-import kotlinx.android.synthetic.polish.fragment_connection.*
-import kotlinx.android.synthetic.polish.layout_connection.view.*
+import kotlinx.android.synthetic.main.fragment_connection.*
+import kotlinx.android.synthetic.main.layout_connection.view.*
 import javax.inject.Inject
 
 class ConnectionFragment : DaggerFragment() {
     @Inject
     lateinit var viewModelFactory: ViewModelProvider.Factory
     private lateinit var viewModel: BuilderViewModel
-    private val network: Network get() = viewModel.network
+//    private val network: Network get() = viewModel.network
     private lateinit var connectionAdapter: ConnectionAdapter
 
     override fun onCreateView(
@@ -69,8 +69,8 @@ class ConnectionFragment : DaggerFragment() {
     override fun onResume() {
         super.onResume()
         Log.d(TAG, "onResume")
-        viewModel.setTitle(R.string.title_connect)
-        viewModel.setMenu(R.menu.connection)
+//        viewModel.setTitle(R.string.title_connect)
+//        viewModel.setMenu(R.menu.connection)
     }
 
     override fun onPause() {
@@ -197,9 +197,9 @@ class ConnectionAdapter(
                             it
                     }
 
-                    viewModel.completeConnection(
-                        Connector(node, it.connector.port)
-                    )
+//                    viewModel.completeConnection(
+//                        Connector(node, it.connector.port)
+//                    )
                 }
             }
         }
@@ -212,7 +212,7 @@ class ConnectionAdapter(
             Log.d(TAG, "bind $id")
             if (id >= 0) {
                 surfaceView.doOnLayout {
-                    viewModel.setSurfaceView(id, null, surfaceView)
+//                    viewModel.setSurfaceView(id, null, surfaceView)
                 }
             }
         }

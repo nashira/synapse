@@ -1,4 +1,4 @@
-package com.rthqks.synapse.build
+package com.rthqks.synapse.build2
 
 import android.app.Dialog
 import android.content.Context
@@ -32,15 +32,14 @@ class NodeListDialog : DialogFragment() {
     override fun onActivityCreated(savedInstanceState: Bundle?) {
         super.onActivityCreated(savedInstanceState)
         viewModel = ViewModelProvider(requireActivity(), viewModelFactory)[BuilderViewModel::class.java]
-        val nodes = viewModel.network.getNodes()
-        adapter.setNodes(nodes)
-        Log.d("NodeList", "nodes $nodes")
+//        val nodes = viewModel.network.getNodes()
+//        adapter.setNodes(nodes)
+//        Log.d("NodeList", "nodes $nodes")
     }
 
     override fun onCreateDialog(savedInstanceState: Bundle?): Dialog {
         Log.d("NodeList", "onCreateDialog")
-        val view: RecyclerView =
-            LayoutInflater.from(context).inflate(R.layout.fragment_node_list, null) as RecyclerView
+        val view = LayoutInflater.from(context).inflate(R.layout.fragment_node_list, null) as RecyclerView
         view.layoutManager = LinearLayoutManager(context)
         view.adapter = adapter
         return AlertDialog.Builder(requireContext()).apply {

@@ -1,10 +1,9 @@
-package com.rthqks.synapse.build
+package com.rthqks.synapse.build2
 
-import android.app.Activity
+import android.content.Context
 import android.content.Intent
 import android.os.Bundle
 import android.util.Log
-import android.view.MotionEvent
 import androidx.appcompat.app.AppCompatActivity
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.Observer
@@ -14,8 +13,7 @@ import androidx.viewpager2.widget.ViewPager2
 import com.rthqks.synapse.R
 import com.rthqks.synapse.logic.Node
 import dagger.android.support.DaggerAppCompatActivity
-import kotlinx.android.synthetic.polish.activity_builder.*
-import kotlinx.android.synthetic.polish.activity_gallery.toolbar
+import kotlinx.android.synthetic.main.activity_builder.*
 import javax.inject.Inject
 
 class BuilderActivity : DaggerAppCompatActivity() {
@@ -31,15 +29,15 @@ class BuilderActivity : DaggerAppCompatActivity() {
 
         viewModel = ViewModelProvider(this, viewModelFactory)[BuilderViewModel::class.java]
         Log.d(TAG, "viewModel $viewModel")
-        viewModel.onSwipeEvent.observe(this, Observer { consumable ->
-            consumable.consume()?.apply {
-                when (action) {
-                    MotionEvent.ACTION_DOWN -> view_pager.beginFakeDrag()
-                    MotionEvent.ACTION_MOVE -> view_pager.fakeDragBy(x)
-                    MotionEvent.ACTION_UP -> view_pager.endFakeDrag()
-                }
-            }
-        })
+//        viewModel.onSwipeEvent.observe(this, Observer { consumable ->
+//            consumable.consume()?.apply {
+//                when (action) {
+//                    MotionEvent.ACTION_DOWN -> view_pager.beginFakeDrag()
+//                    MotionEvent.ACTION_MOVE -> view_pager.fakeDragBy(x)
+//                    MotionEvent.ACTION_UP -> view_pager.endFakeDrag()
+//                }
+//            }
+//        })
 
         val nodeAdapter = NodeAdapter(this)
         view_pager.adapter = nodeAdapter
@@ -56,7 +54,7 @@ class BuilderActivity : DaggerAppCompatActivity() {
                 when (state) {
                     ViewPager2.SCROLL_STATE_IDLE -> view_pager.post {
                         Log.d(TAG, "scroll idle")
-                        viewModel.updateCurrentItem(view_pager.currentItem)
+//                        viewModel.updateCurrentItem(view_pager.currentItem)
                     }
                     ViewPager2.SCROLL_STATE_DRAGGING -> {
                         Log.d(TAG, "scroll dragging")
@@ -80,7 +78,7 @@ class BuilderActivity : DaggerAppCompatActivity() {
                 R.id.delete_network -> onDeleteNetwork()
                 R.id.jump_to_node -> onJumpToNode()
 //                R.id.jump_to_network -> viewModel.jumpToNode(BuilderViewModel.PROPERTIES_NODE)
-                R.id.cancel -> viewModel.cancelConnection()
+//                R.id.cancel -> viewModel.cancelConnection()
                 R.id.execute -> Log.d(TAG, "execute")
             }
             true
@@ -106,19 +104,19 @@ class BuilderActivity : DaggerAppCompatActivity() {
 
     override fun onStop() {
         super.onStop()
-        viewModel.stopExecution()
+//        viewModel.stopExecution()
     }
 
     override fun onStart() {
         super.onStart()
-        viewModel.updateStartState()
+//        viewModel.updateStartState()
     }
 
     private fun onJumpToNode() {
         val dialog = NodeListDialog()
         dialog.listener = {
             Log.d(TAG, "onJump $it")
-            viewModel.jumpToNode(it)
+//            viewModel.jumpToNode(it)
         }
         dialog.show(supportFragmentManager, null)
     }
@@ -144,24 +142,24 @@ class BuilderActivity : DaggerAppCompatActivity() {
         ) {
             Log.d(TAG, "onDelete $it")
             if (it) {
-                viewModel.deleteNetwork()
+//                viewModel.deleteNetwork()
                 finish()
             }
         }.show(supportFragmentManager, null)
     }
 
     override fun onBackPressed() {
-        if (!viewModel.onBackPressed()) {
-            super.onBackPressed()
-        }
+//        if (!viewModel.onBackPressed()) {
+//            super.onBackPressed()
+//        }
     }
 
     companion object {
         const val TAG = "BuilderActivity"
         const val NETWORK_ID = "network_id"
 
-        fun getIntent(activity: Activity, networkId: Int = -1): Intent =
-            Intent(activity, BuilderActivity::class.java).also {
+        fun getIntent(context: Context, networkId: Int = -1): Intent =
+            Intent(context, BuilderActivity::class.java).also {
                 it.putExtra(NETWORK_ID, networkId)
             }
     }

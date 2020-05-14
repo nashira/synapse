@@ -1,4 +1,4 @@
-package com.rthqks.synapse.build
+package com.rthqks.synapse.build2
 
 //import com.rthqks.synapse.logic.GetNode
 import android.app.Activity
@@ -15,8 +15,8 @@ import com.rthqks.synapse.R
 import com.rthqks.synapse.logic.Node
 import com.rthqks.synapse.ui.build.PropertyBinder
 import dagger.android.support.DaggerFragment
-import kotlinx.android.synthetic.polish.fragment_network.*
-import kotlinx.android.synthetic.polish.layout_node_item.view.*
+import kotlinx.android.synthetic.main.fragment_network.*
+import kotlinx.android.synthetic.main.layout_node_item.view.*
 import javax.inject.Inject
 import kotlin.math.max
 
@@ -46,10 +46,10 @@ class NetworkFragment : DaggerFragment() {
             startActivityForResult(it, OPEN_DOC_REQUEST)
         }
         viewModel = ViewModelProvider(requireActivity(), viewModelFactory)[BuilderViewModel::class.java]
-        viewModel.setTitle(R.string.name_node_type_properties)
-        viewModel.setMenu(R.menu.fragment_network)
+//        viewModel.setTitle(R.string.name_node_type_properties)
+//        viewModel.setMenu(R.menu.fragment_network)
 
-        val properties = viewModel.network.properties
+//        val properties = viewModel.network.properties
 
 //        propertyBinder = PropertyBinder(properties, tool_list, tool_main, uriProvider) {
 //            Log.d(TAG, "onChange ${it.key.name} ${it.value}")
@@ -76,11 +76,11 @@ class NetworkFragment : DaggerFragment() {
             true
         })
 
-        val sorted = viewModel.getSortedNodeList()
-        connectorAdapter.setNodes(sorted)
+//        val sorted = viewModel.getSortedNodeList()
+//        connectorAdapter.setNodes(sorted)
         node_list.adapter = connectorAdapter
 
-        node_list.setData(sorted, viewModel.network.getLinks())
+//        node_list.setData(sorted, viewModel.network.getLinks())
 
 //        graph.setData(viewModel.network)
 //
@@ -102,8 +102,8 @@ class NetworkFragment : DaggerFragment() {
     override fun onResume() {
         super.onResume()
         activity?.let {
-            viewModel.setTitle(R.string.name_node_type_properties)
-            viewModel.setMenu(R.menu.fragment_network)
+//            viewModel.setTitle(R.string.name_node_type_properties)
+//            viewModel.setMenu(R.menu.fragment_network)
         }
         Log.d(TAG, "onResume")
     }

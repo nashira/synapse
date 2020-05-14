@@ -16,8 +16,8 @@ import com.rthqks.synapse.R
 import com.rthqks.synapse.assets.VideoStorage
 import com.rthqks.synapse.ops.Analytics
 import dagger.android.support.DaggerAppCompatActivity
-import kotlinx.android.synthetic.polish.activity_gallery.*
-import kotlinx.android.synthetic.polish.layout_gallery_video.view.*
+import kotlinx.android.synthetic.main.activity_gallery.*
+import kotlinx.android.synthetic.main.layout_gallery_video.view.*
 import javax.inject.Inject
 
 class GalleryActivity : DaggerAppCompatActivity() {

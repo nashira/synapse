@@ -1,4 +1,4 @@
-package com.rthqks.synapse.build
+package com.rthqks.synapse.build2
 
 import android.content.Context
 import android.graphics.Canvas
