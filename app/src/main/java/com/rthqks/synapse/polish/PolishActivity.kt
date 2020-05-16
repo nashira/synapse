@@ -198,6 +198,13 @@ class PolishActivity : DaggerAppCompatActivity() {
             }
         })
 
+        button_edit.setOnClickListener {
+            viewModel.currentEffect?.id?.let { id ->
+                viewModel.releaseContext()
+                startActivity(BuilderActivity.getIntent(this, id))
+            }
+        }
+
         button_color.setOnClickListener {
             Log.d(TAG, "show luts")
             behavior.state = BottomSheetBehavior.STATE_EXPANDED
@@ -244,7 +251,7 @@ class PolishActivity : DaggerAppCompatActivity() {
             Log.d(TAG, "recording $recording")
         })
 
-        button_settings.setOnClickListener {
+        button_node_list.setOnClickListener {
             Log.d(TAG, "show settings")
             analytics.logEvent(Analytics.Event.OpenSettings())
             SettingsDialog().show(supportFragmentManager, "settings")
@@ -280,7 +287,7 @@ class PolishActivity : DaggerAppCompatActivity() {
     private fun setUiOrientation(rotation: Int) {
         listOf(
             button_camera,
-            button_settings,
+            button_node_list,
             button_color,
             button_gallery
         ).forEach {
@@ -309,7 +316,7 @@ class PolishActivity : DaggerAppCompatActivity() {
     private fun focusMode() {
         listOf(
             button_camera,
-            button_settings,
+            button_node_list,
             button_gallery
         ).forEach {
             it.animate()
@@ -324,7 +331,7 @@ class PolishActivity : DaggerAppCompatActivity() {
     private fun exploreMode() {
         listOf(
             button_camera,
-            button_settings,
+            button_node_list,
             button_gallery
         ).forEach {
             it.visibility = View.VISIBLE
@@ -430,7 +437,6 @@ private class EffectViewHolder(
     itemView: View,
     onClick: (PropertyItem) -> Unit
 ) : RecyclerView.ViewHolder(itemView) {
-    private val editButton = itemView.button_edit
     private val nameView = itemView.name
     private val settingsList = itemView.settings_list
     private val adapter = PropertiesAdapter(onClick)
@@ -438,12 +444,6 @@ private class EffectViewHolder(
 
     init {
         settingsList.adapter = adapter
-        editButton.setOnClickListener {
-            Log.d("Effect", "edit click ${network?.id}")
-            network?.id?.let { id ->
-                it.context.startActivity(BuilderActivity.getIntent(it.context, id))
-            }
-        }
     }
 
     fun bind(network: Network) {

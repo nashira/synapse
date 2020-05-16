@@ -17,7 +17,7 @@ import com.rthqks.synapse.data.PropertyData
 import com.rthqks.synapse.data.SynapseDao
 import com.rthqks.synapse.effect.EffectExecutor
 import com.rthqks.synapse.exec.ExecutionContext
-import com.rthqks.synapse.logic.Network
+import com.rthqks.synapse.logic.*
 import com.rthqks.synapse.logic.NodeDef.BCubeImport.LutUri
 import com.rthqks.synapse.logic.NodeDef.Camera.CameraFacing
 import com.rthqks.synapse.logic.NodeDef.Camera.FrameRate
@@ -26,9 +26,6 @@ import com.rthqks.synapse.logic.NodeDef.Camera.VideoSize
 import com.rthqks.synapse.logic.NodeDef.Lut3d.LutStrength
 import com.rthqks.synapse.logic.NodeDef.MediaEncoder.Recording
 import com.rthqks.synapse.logic.NodeDef.MediaEncoder.Rotation
-import com.rthqks.synapse.logic.Property
-import com.rthqks.synapse.logic.SyncLogic
-import com.rthqks.synapse.logic.toNetwork
 import com.rthqks.synapse.ops.Analytics
 import kotlinx.coroutines.*
 import javax.inject.Inject
@@ -41,14 +38,15 @@ class PolishViewModel @Inject constructor(
 ) : ViewModel() {
     val effects = MediatorLiveData<List<Network>>()
     val deviceSupported = MutableLiveData<Boolean>()
-    private var currentEffect: Network? = null
+    var currentEffect: Network? = null
     private var recordingStart = 0L
     private val recordingDuration: Long get() = SystemClock.elapsedRealtime() - recordingStart
     private var svSetup = false
     private var stopped = true
-    private val effectExecutor = EffectExecutor(context)
+    private var effectExecutor = EffectExecutor(context)
+    private var surfaceView: SurfaceView? = null
 
-    val properties = context.properties
+    val properties = Properties()
 
     init {
         properties[CameraFacing] = CameraCharacteristics.LENS_FACING_BACK
@@ -63,14 +61,9 @@ class PolishViewModel @Inject constructor(
         viewModelScope.launch {
             withContext(Dispatchers.IO) {
                 dao.getProperties(0).forEach { properties.fromString(it.type, it.key, it.value) }
-
-//                listOf(Effects.timeWarp, Effects.rotoHue, Effects.quantizer).forEach { effect ->
-//                    dao.getProperties(effect.network.id)
-//                        .forEach { effect.properties.fromString(it.type, it.key, it.value) }
-//                }
             }
 
-            effectExecutor.setup()
+            effectExecutor.setup(properties)
             deviceSupported.value = context.glesManager.supportedDevice
         }
     }
@@ -84,7 +77,12 @@ class PolishViewModel @Inject constructor(
         }
     }
 
-    private var surfaceView: SurfaceView? = null
+    fun releaseContext() {
+        viewModelScope.launch {
+            effectExecutor.removeAll()
+            effectExecutor.release()
+        }
+    }
 
     fun setSurfaceView(surfaceView: SurfaceView?) {
         this.surfaceView = surfaceView
@@ -110,6 +108,7 @@ class PolishViewModel @Inject constructor(
         if (stopped) {
             stopped = false
             Log.d(TAG, "resume")
+
             effectExecutor.resume()
         }
     }
@@ -251,7 +250,7 @@ class PolishViewModel @Inject constructor(
 
                 var minutes: Long = 0
                 var seconds: Long = 0
-                var hundreths: Long = 0
+                var hundredths: Long = 0
                 if (d >= 60000) {
                     minutes = d / 60000
                     d -= minutes * 60000
@@ -260,8 +259,8 @@ class PolishViewModel @Inject constructor(
                     seconds = d / 1000
                     d -= seconds * 1000
                 }
-                hundreths = d / 10
-                textView.text = String.format("%d:%02d.%02d", minutes, seconds, hundreths)
+                hundredths = d / 10
+                textView.text = String.format("%d:%02d.%02d", minutes, seconds, hundredths)
                 delay(16)
             }
         }

@@ -2,6 +2,7 @@ package com.rthqks.synapse.exec
 
 import android.content.Context
 import android.media.MediaCodec
+import android.media.MediaFormat
 import com.rthqks.synapse.assets.AssetManager
 import com.rthqks.synapse.assets.VideoStorage
 import com.rthqks.synapse.gl.GlesManager
@@ -16,11 +17,16 @@ class ExecutionContext @Inject constructor(
     val dispatcher: ExecutorCoroutineDispatcher,
     val glesManager: GlesManager,
     val cameraManager: CameraManager,
-    val assetManager: AssetManager,
-    @Named("video") val videoEncoder: MediaCodec,
-    @Named("audio") val audioEncoder: MediaCodec
+    val assetManager: AssetManager
 ) {
-    val properties = Properties()
+    private val videoEncoderDelegate = lazy {
+        MediaCodec.createEncoderByType(MediaFormat.MIMETYPE_VIDEO_AVC)
+    }
+    private val audioEncoderDelegate = lazy {
+        MediaCodec.createEncoderByType(MediaFormat.MIMETYPE_AUDIO_AAC)
+    }
+    val videoEncoder: MediaCodec by videoEncoderDelegate
+    val audioEncoder: MediaCodec by audioEncoderDelegate
 
     suspend fun setup() {
         glesManager.glContext {
@@ -30,8 +36,12 @@ class ExecutionContext @Inject constructor(
     }
 
     suspend fun release() {
-        videoEncoder.release()
-        audioEncoder.release()
+        if (videoEncoderDelegate.isInitialized()) {
+            videoEncoder.release()
+        }
+        if (audioEncoderDelegate.isInitialized()) {
+            audioEncoder.release()
+        }
         cameraManager.release()
         glesManager.glContext {
             it.release()

@@ -216,4 +216,5 @@
     <string name="property_name_crop_size">Crop Size</string>
     <string name="property_name_crop_enabled">Enable Crop</string>
     <string name="property_name_gray_enabled">Grayscale</string>
+    <string name="button_node_list">Node List</string>
 </resources>

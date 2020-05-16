@@ -54,16 +54,15 @@ class ExecutionModule {
     fun provideGlesManager(assetManager: AssetManager) = GlesManager(assetManager)
 
     @Provides
-    fun provideCameraManager(context: Context) =
-        CameraManager(context)
+    fun provideCameraManager(context: Context) = CameraManager(context)
 
-    @Provides
-    @Named("video")
-    fun provideVideoEncoder() = MediaCodec.createEncoderByType(MediaFormat.MIMETYPE_VIDEO_AVC)
-
-    @Provides
-    @Named("audio")
-    fun provideAudioEncoder() = MediaCodec.createEncoderByType(MediaFormat.MIMETYPE_AUDIO_AAC)
+//    @Provides
+//    @Named("video")
+//    fun provideVideoEncoder() = MediaCodec.createEncoderByType(MediaFormat.MIMETYPE_VIDEO_AVC)
+//
+//    @Provides
+//    @Named("audio")
+//    fun provideAudioEncoder() = MediaCodec.createEncoderByType(MediaFormat.MIMETYPE_AUDIO_AAC)
 
     @Singleton
     @Provides

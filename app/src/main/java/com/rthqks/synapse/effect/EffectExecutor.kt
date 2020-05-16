@@ -32,6 +32,7 @@ class EffectExecutor(context: ExecutionContext) : NetworkExecutor(context) {
     private val lutPreviewPool = ConcurrentLinkedQueue<LutPreview>()
     private val lutPreviews = ConcurrentHashMap<SurfaceTexture, LutPreview>()
     private val lutJobs = ConcurrentHashMap<SurfaceTexture, Job>()
+    private val properties = Properties()
 
     init {
         microphone.properties[AudioSource] = MediaRecorder.AudioSource.CAMCORDER
@@ -57,11 +58,12 @@ class EffectExecutor(context: ExecutionContext) : NetworkExecutor(context) {
         )
     }
 
-    override suspend fun setup() {
+    suspend fun setup(properties: Properties) {
         super.setup()
 
+        this.properties += properties
         n.nodes.values.forEach {
-            it.properties += context.properties
+            it.properties += properties
         }
     }
 
@@ -104,7 +106,7 @@ class EffectExecutor(context: ExecutionContext) : NetworkExecutor(context) {
             }
 
             listOf(Camera.CameraFacing, Camera.FrameRate, Camera.Stabilize, Camera.VideoSize).forEach {
-                newCam?.properties?.put(context.properties.getProperty(it)!!)
+                newCam?.properties?.put(properties.getProperty(it)!!)
             }
 
             val new = effect
