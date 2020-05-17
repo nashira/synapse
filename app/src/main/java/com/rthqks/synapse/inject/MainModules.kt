@@ -47,14 +47,14 @@ class DataModule {
 @Module
 class ExecutionModule {
 
-    @Provides
-    fun provideDispatcher() = Executors.newFixedThreadPool(4).asCoroutineDispatcher()
-
-    @Provides
-    fun provideGlesManager(assetManager: AssetManager) = GlesManager(assetManager)
-
-    @Provides
-    fun provideCameraManager(context: Context) = CameraManager(context)
+//    @Provides
+//    fun provideDispatcher() = Executors.newFixedThreadPool(4).asCoroutineDispatcher()
+//
+//    @Provides
+//    fun provideGlesManager(assetManager: AssetManager) = GlesManager(assetManager)
+//
+//    @Provides
+//    fun provideCameraManager(context: Context) = CameraManager(context)
 
 //    @Provides
 //    @Named("video")

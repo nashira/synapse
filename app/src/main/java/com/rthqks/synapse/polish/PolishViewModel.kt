@@ -1,5 +1,6 @@
 package com.rthqks.synapse.polish
 
+import android.content.Context
 import android.graphics.SurfaceTexture
 import android.hardware.camera2.CameraCharacteristics
 import android.net.Uri
@@ -13,6 +14,8 @@ import androidx.lifecycle.MediatorLiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.rthqks.synapse.assets.AssetManager
+import com.rthqks.synapse.assets.VideoStorage
 import com.rthqks.synapse.data.PropertyData
 import com.rthqks.synapse.data.SynapseDao
 import com.rthqks.synapse.effect.EffectExecutor
@@ -31,7 +34,9 @@ import kotlinx.coroutines.*
 import javax.inject.Inject
 
 class PolishViewModel @Inject constructor(
-    private val context: ExecutionContext,
+    private val contxt: Context,
+    private val videoStorage: VideoStorage,
+    private val assetManager: AssetManager,
     private val dao: SynapseDao,
     private val syncLogic: SyncLogic,
     private val analytics: Analytics
@@ -43,6 +48,8 @@ class PolishViewModel @Inject constructor(
     private val recordingDuration: Long get() = SystemClock.elapsedRealtime() - recordingStart
     private var svSetup = false
     private var stopped = true
+    private var needsNewContext = false
+    private var context = ExecutionContext(contxt, videoStorage, assetManager)
     private var effectExecutor = EffectExecutor(context)
     private var surfaceView: SurfaceView? = null
 
@@ -68,8 +75,21 @@ class PolishViewModel @Inject constructor(
         }
     }
 
-    fun initializeEffect() {
+    fun recreateContext() {
+        if (!needsNewContext) return
+        needsNewContext = false
+        svSetup = false
+        context = ExecutionContext(contxt, videoStorage, assetManager)
+        effectExecutor = EffectExecutor(context)
         viewModelScope.launch {
+            effectExecutor.setup(properties)
+            effectExecutor.initializeEffect()
+            currentEffect?.let { setEffect(it) }
+        }
+    }
+
+    fun initializeEffect() {
+        viewModelScope.launch(Dispatchers.IO) {
             effectExecutor.initializeEffect()
             syncLogic.refreshEffects()
             val networks = dao.getNetworks().map { it.toNetwork() }
@@ -78,6 +98,7 @@ class PolishViewModel @Inject constructor(
     }
 
     fun releaseContext() {
+        needsNewContext = true
         viewModelScope.launch {
             effectExecutor.removeAll()
             effectExecutor.release()

@@ -8,15 +8,14 @@ import com.rthqks.synapse.assets.VideoStorage
 import com.rthqks.synapse.gl.GlesManager
 import com.rthqks.synapse.logic.Properties
 import kotlinx.coroutines.ExecutorCoroutineDispatcher
+import kotlinx.coroutines.asCoroutineDispatcher
+import java.util.concurrent.Executors
 import javax.inject.Inject
 import javax.inject.Named
 
-class ExecutionContext @Inject constructor(
+class ExecutionContext constructor(
     val context: Context,
     val videoStorage: VideoStorage,
-    val dispatcher: ExecutorCoroutineDispatcher,
-    val glesManager: GlesManager,
-    val cameraManager: CameraManager,
     val assetManager: AssetManager
 ) {
     private val videoEncoderDelegate = lazy {
@@ -27,6 +26,9 @@ class ExecutionContext @Inject constructor(
     }
     val videoEncoder: MediaCodec by videoEncoderDelegate
     val audioEncoder: MediaCodec by audioEncoderDelegate
+    val dispatcher = Executors.newFixedThreadPool(4).asCoroutineDispatcher()
+    val glesManager = GlesManager(assetManager)
+    val cameraManager = CameraManager(context)
 
     suspend fun setup() {
         glesManager.glContext {

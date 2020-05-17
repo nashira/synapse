@@ -1,9 +1,12 @@
 package com.rthqks.synapse.build2
 
+import android.content.Context
 import android.util.Log
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.rthqks.synapse.assets.AssetManager
+import com.rthqks.synapse.assets.VideoStorage
 import com.rthqks.synapse.data.NetworkData
 import com.rthqks.synapse.data.SynapseDao
 import com.rthqks.synapse.exec.ExecutionContext
@@ -15,12 +18,15 @@ import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 class BuilderViewModel @Inject constructor(
-    private val context: ExecutionContext,
+    private val contxt: Context,
+    private val videoStorage: VideoStorage,
+    private val assetManager: AssetManager,
     private val logic: SyncLogic,
     private val dao: SynapseDao
 ) : ViewModel() {
     private var network: Network? = null
-    private val executor = NetworkExecutor(context)
+//    private val context = ExecutionContext(contxt, videoStorage, assetManager)
+//    private val executor = NetworkExecutor(context)
 
     val networkChannel = MutableLiveData<Network>()
     val connectionChannel = MutableLiveData<Connector>()
@@ -37,13 +43,13 @@ class BuilderViewModel @Inject constructor(
                 network = Network(rowId.toInt(), "")
                 Log.d(TAG, "created: $network")
             } else {
-//                network = (networkId)
+                network = logic.getNetwork(networkId)
                 Log.d(TAG, "loaded: $network")
             }
             networkChannel.postValue(network)
 
 //            nodesChannel.postValue(AdapterState(0, listOf(PROPERTIES_NODE)))
-            executor.setup()
+//            executor.setup()
 //            executor
         }
     }
@@ -112,7 +118,7 @@ class BuilderViewModel @Inject constructor(
     override fun onCleared() {
         Log.d(TAG, "onCleared")
         CoroutineScope(Dispatchers.IO).launch {
-            executor.release()
+//            executor.release()
         }
         super.onCleared()
     }

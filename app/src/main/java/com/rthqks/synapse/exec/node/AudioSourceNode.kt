@@ -96,7 +96,7 @@ class AudioSourceNode(
     }
 
     override suspend fun <T> onDisconnect(key: Connection.Key<T>, producer: Boolean) {
-
+        onStop()
     }
 
     private suspend fun onStart() {
@@ -117,7 +117,6 @@ class AudioSourceNode(
                     data.buffer.capacity(),
                     AudioRecord.READ_BLOCKING
                 )
-//                Log.d(TAG, "3")
                 data.buffer.limit(read)
                 bytesWritten += read
                 message.timestamp = ((bytesWritten / bytesPerFrame) * frameDurationNs) / 1000

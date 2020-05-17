@@ -90,6 +90,11 @@ abstract class SynapseDao {
     abstract suspend fun deleteProperties(networkId: Int)
 
     @Transaction
+    open suspend fun getFullNetwork(networkId: Int) =
+        getNetwork(networkId).also { populateNetwork(it) }
+
+
+    @Transaction
     open suspend fun getNetworks(): List<NetworkData> {
         return getNetworkData().also { list ->
             list.forEach { populateNetwork(it) }

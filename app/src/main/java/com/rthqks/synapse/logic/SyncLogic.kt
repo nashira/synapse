@@ -15,6 +15,8 @@ class SyncLogic @Inject constructor(
             dao.insertFullNetwork(it.toData())
         }
     }
+
+    suspend fun getNetwork(networkId: Int): Network? = dao.getFullNetwork(networkId).toNetwork()
 }
 
 

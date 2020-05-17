@@ -373,6 +373,7 @@ class PolishActivity : DaggerAppCompatActivity() {
     override fun onResume() {
         super.onResume()
         orientationEventListener.enable()
+        viewModel.recreateContext()
         viewModel.startExecution()
     }
 
