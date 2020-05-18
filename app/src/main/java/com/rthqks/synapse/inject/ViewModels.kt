@@ -2,7 +2,7 @@ package com.rthqks.synapse.inject
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
-import com.rthqks.synapse.build2.BuilderViewModel
+import com.rthqks.synapse.build.BuilderViewModel
 import com.rthqks.synapse.polish.GalleryViewModel
 import com.rthqks.synapse.polish.PolishViewModel
 import dagger.Binds

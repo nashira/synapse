@@ -1,4 +1,4 @@
-package com.rthqks.synapse.build2
+package com.rthqks.synapse.build
 
 import android.content.Context
 import android.util.Log
@@ -25,15 +25,14 @@ class BuilderViewModel @Inject constructor(
     private val dao: SynapseDao
 ) : ViewModel() {
     private var network: Network? = null
-//    private val context = ExecutionContext(contxt, videoStorage, assetManager)
-//    private val executor = NetworkExecutor(context)
+    private val context = ExecutionContext(contxt, videoStorage, assetManager)
+    private val executor = NetworkExecutor(context)
 
     val networkChannel = MutableLiveData<Network>()
-    val connectionChannel = MutableLiveData<Connector>()
-    val nodesChannel = MutableLiveData<AdapterState<Node>>()
+//    val connectionChannel = MutableLiveData<Connector>()
+    val nodeChannel = MutableLiveData<Node>()
     val titleChannel = MutableLiveData<Int>()
     val menuChannel = MutableLiveData<Int>()
-    private var nodeAfterCancel: Node? = null
 
     fun setNetworkId(networkId: Int) {
         viewModelScope.launch(Dispatchers.IO) {
@@ -46,58 +45,21 @@ class BuilderViewModel @Inject constructor(
                 network = logic.getNetwork(networkId)
                 Log.d(TAG, "loaded: $network")
             }
+
+            executor.network = network
+            executor.setup()
+            executor.addAllNodes()
+            executor.addAllLinks()
+
             networkChannel.postValue(network)
-
-//            nodesChannel.postValue(AdapterState(0, listOf(PROPERTIES_NODE)))
-//            executor.setup()
-//            executor
         }
     }
 
-    fun showFirstNode() {
-        val nextNode = network?.getFirstNode() ?: run {
-//            connectionChannel.postValue(Connector(CREATION_NODE, FAKE_PORT))
-//            CREATION_NODE
-        }
-//        nodesChannel.value = AdapterState(0, listOf(PROPERTIES_NODE, nextNode))
-    }
-
-    fun swipeToNode(node: Node) {
-//        nodesChannel.value = AdapterState(0, listOf(PROPERTIES_NODE, node))
-    }
-
-    fun swipeEvent(event: SwipeEvent) {
-    }
-
-    fun preparePortSwipe(connector: Connector) {
-        val port = connector.port
-        val network = network ?: return
-        connector.link?.let {
-            val leftNode = network.getNode(it.fromNodeId)!!
-            val rightNode = network.getNode(it.toNodeId)!!
-            val current = if (port.output) 0 else 1
-            nodesChannel.value = AdapterState(current, listOf(leftNode, rightNode))
-        } ?: run {
-
-            connectionChannel.value = connector
-            if (connector.port.output) {
-//                nodesChannel.value = AdapterState(0, listOf(connector.node, CONNECTION_NODE))
-            } else {
-//                nodesChannel.value = AdapterState(1, listOf(CONNECTION_NODE, connector.node))
-            }
+    fun setNodeId(nodeId: Int) {
+        network?.getNode(nodeId)?.let {
+            nodeChannel.value = it
         }
     }
-
-    fun startConnection(connector: Connector) {
-        connectionChannel.value = connector
-        if (connector.port.output) {
-//            nodesChannel.value = AdapterState(1, listOf(connector.node, CONNECTION_NODE), true)
-        } else {
-//            nodesChannel.value = AdapterState(0, listOf(CONNECTION_NODE, connector.node), true)
-        }
-    }
-
-
 
     fun onAddNode() {
 //        connectionChannel.postValue(Connector(CREATION_NODE, FAKE_PORT))
@@ -118,9 +80,14 @@ class BuilderViewModel @Inject constructor(
     override fun onCleared() {
         Log.d(TAG, "onCleared")
         CoroutineScope(Dispatchers.IO).launch {
-//            executor.release()
+            executor.removeAll()
+            executor.release()
         }
         super.onCleared()
+    }
+
+    fun getConnectors(nodeId: Int): List<Connector> {
+        return network?.getConnectors(nodeId) ?: emptyList()
     }
 
     companion object {

@@ -1,4 +1,4 @@
-package com.rthqks.synapse.build2
+package com.rthqks.synapse.build
 
 import android.content.Context
 import android.graphics.Rect
@@ -9,7 +9,6 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.TextView
 import androidx.core.view.doOnLayout
-import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModelProvider
 import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.RecyclerView
@@ -47,7 +46,7 @@ class ConnectionFragment : DaggerFragment() {
         recycler_view.layoutManager = layoutManager
         recycler_view.adapter = connectionAdapter
 
-        viewModel.connectionChannel.observe(viewLifecycleOwner, Observer {
+//        viewModel.connectionChannel.observe(viewLifecycleOwner, Observer {
 //            Log.d(TAG, "changed ${it.node.def} ${it.port.name}")
 
 //            if (it.node.def == NodeDef.Creation) {
@@ -63,7 +62,7 @@ class ConnectionFragment : DaggerFragment() {
 //                    connectionAdapter.setData(openConnectors, potentialConnectors)
 //                }
 //            }
-        })
+//        })
     }
 
     override fun onResume() {

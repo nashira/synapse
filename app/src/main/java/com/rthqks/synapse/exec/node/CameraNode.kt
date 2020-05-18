@@ -261,7 +261,7 @@ class CameraNode(
 //    }
 
     companion object {
-        const val TAG = "CameraNode2"
+        const val TAG = "CameraNode"
         val OUTPUT = Connection.Key<Texture2d>(Camera.OUTPUT.key)
     }
 }

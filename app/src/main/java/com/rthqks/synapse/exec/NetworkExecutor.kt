@@ -11,7 +11,7 @@ import java.util.concurrent.ConcurrentHashMap
 
 open class NetworkExecutor(context: ExecutionContext) : Executor(context) {
     protected val nodes = ConcurrentHashMap<Int, NodeExecutor>()
-    protected var network: Network? = null
+    var network: Network? = null
     var isResumed = false
         private set
 
@@ -130,8 +130,13 @@ open class NetworkExecutor(context: ExecutionContext) : Executor(context) {
         context.release()
     }
 
+    suspend fun removeAll() = await {
+        removeAllLinks()
+        removeAllNodes()
+    }
+
     companion object {
-        const val TAG = "NetworkExecutor2"
+        const val TAG = "NetworkExecutor"
         private val EXECUTORS =
             mutableMapOf<String, (ExecutionContext, Properties) -> NodeExecutor>()
 

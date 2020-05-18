@@ -1,4 +1,4 @@
-package com.rthqks.synapse.build2
+package com.rthqks.synapse.build
 
 import android.app.Dialog
 import android.content.Context
@@ -14,7 +14,9 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.rthqks.synapse.R
 import com.rthqks.synapse.logic.Node
+import com.rthqks.synapse.ui.NodeUi
 import dagger.android.support.AndroidSupportInjection
+import kotlinx.android.synthetic.main.layout_node_list_item.view.*
 import javax.inject.Inject
 
 class NodeListDialog : DialogFragment() {
@@ -32,9 +34,9 @@ class NodeListDialog : DialogFragment() {
     override fun onActivityCreated(savedInstanceState: Bundle?) {
         super.onActivityCreated(savedInstanceState)
         viewModel = ViewModelProvider(requireActivity(), viewModelFactory)[BuilderViewModel::class.java]
-//        val nodes = viewModel.network.getNodes()
-//        adapter.setNodes(nodes)
-//        Log.d("NodeList", "nodes $nodes")
+        viewModel.networkChannel.value?.let {
+            adapter.setNodes(it.getNodes())
+        }
     }
 
     override fun onCreateDialog(savedInstanceState: Bundle?): Dialog {
@@ -45,7 +47,6 @@ class NodeListDialog : DialogFragment() {
         return AlertDialog.Builder(requireContext()).apply {
             setTitle(R.string.menu_title_jump_to_node)
             setView(view)
-
         }.create()
     }
 
@@ -84,8 +85,9 @@ class NodeListDialog : DialogFragment() {
 
         fun bind(node: Node) {
             this.node = node
-//            itemView.icon_view.setImageResource(node.def.icon)
-//            itemView.title_view.setText(node.def.title)
+            val def = NodeUi[node.type]
+            itemView.icon_view.setImageResource(def.icon)
+            itemView.title_view.setText(def.title)
         }
     }
 }

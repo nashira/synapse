@@ -217,11 +217,6 @@ class EffectExecutor(context: ExecutionContext) : NetworkExecutor(context) {
         updateCubeUri(cube, lut)
     }
 
-    suspend fun removeAll() = await {
-        removeAllLinks()
-        removeAllNodes()
-    }
-
     private inner class LutPreview {
         val cube = BCubeImport.toNode()
         val lut = Lut3d.toNode()

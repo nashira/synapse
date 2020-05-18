@@ -1,4 +1,4 @@
-package com.rthqks.synapse.build2
+package com.rthqks.synapse.build
 
 import android.app.Activity
 import android.content.Intent

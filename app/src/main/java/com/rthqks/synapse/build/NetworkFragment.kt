@@ -1,8 +1,5 @@
-package com.rthqks.synapse.build2
+package com.rthqks.synapse.build
 
-//import com.rthqks.synapse.logic.GetNode
-import android.app.Activity
-import android.content.Intent
 import android.os.Bundle
 import android.util.Log
 import android.view.LayoutInflater
@@ -13,9 +10,7 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.recyclerview.widget.RecyclerView
 import com.rthqks.synapse.R
 import com.rthqks.synapse.logic.Node
-import com.rthqks.synapse.ui.build.PropertyBinder
 import dagger.android.support.DaggerFragment
-import kotlinx.android.synthetic.main.fragment_network.*
 import kotlinx.android.synthetic.main.layout_node_item.view.*
 import javax.inject.Inject
 import kotlin.math.max
@@ -24,8 +19,6 @@ class NetworkFragment : DaggerFragment() {
     @Inject
     lateinit var viewModelFactory: ViewModelProvider.Factory
     private lateinit var viewModel: BuilderViewModel
-    private lateinit var propertyBinder: PropertyBinder
-    private lateinit var uriProvider: UriProvider
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -42,9 +35,6 @@ class NetworkFragment : DaggerFragment() {
 
     override fun onActivityCreated(savedInstanceState: Bundle?) {
         super.onActivityCreated(savedInstanceState)
-        uriProvider = UriProvider {
-            startActivityForResult(it, OPEN_DOC_REQUEST)
-        }
         viewModel = ViewModelProvider(requireActivity(), viewModelFactory)[BuilderViewModel::class.java]
 //        viewModel.setTitle(R.string.name_node_type_properties)
 //        viewModel.setMenu(R.menu.fragment_network)
@@ -56,29 +46,29 @@ class NetworkFragment : DaggerFragment() {
 //            viewModel.onPropertyChange(-1, it, properties)
 //        }
 
-        val touchMediator = TouchMediator(requireContext(), viewModel::swipeEvent)
+//        val touchMediator = TouchMediator(requireContext(), viewModel::swipeEvent)
 
-        val connectorAdapter = NodeAdapter({ view: View, event: MotionEvent, node: Node ->
-            if (event.actionMasked == MotionEvent.ACTION_DOWN) {
-//                if (node.def == NodeDef.Creation) {
-//                    viewModel.showFirstNode()
-//                } else {
-//                    viewModel.swipeToNode(node)
-//                }
-            }
-            touchMediator.onTouch(view, event)
-        },{ longClick: Boolean, node: Node ->
-//            if (node.type == NodeType.Creation) {
-//                viewModel.showFirstNode()
-//            } else {
-//                viewModel.swipeToNode(node)
+//        val connectorAdapter = NodeAdapter({ view: View, event: MotionEvent, node: Node ->
+//            if (event.actionMasked == MotionEvent.ACTION_DOWN) {
+////                if (node.def == NodeDef.Creation) {
+////                    viewModel.showFirstNode()
+////                } else {
+////                    viewModel.swipeToNode(node)
+////                }
 //            }
-            true
-        })
+//            touchMediator.onTouch(view, event)
+//        },{ longClick: Boolean, node: Node ->
+////            if (node.type == NodeType.Creation) {
+////                viewModel.showFirstNode()
+////            } else {
+////                viewModel.swipeToNode(node)
+////            }
+//            true
+//        })
 
 //        val sorted = viewModel.getSortedNodeList()
 //        connectorAdapter.setNodes(sorted)
-        node_list.adapter = connectorAdapter
+//        node_list.adapter = connectorAdapter
 
 //        node_list.setData(sorted, viewModel.network.getLinks())
 
@@ -91,12 +81,6 @@ class NetworkFragment : DaggerFragment() {
 //                delay(30)
 //            }
 //        }
-    }
-
-    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
-        if (requestCode == OPEN_DOC_REQUEST && resultCode == Activity.RESULT_OK) {
-            data?.data?.let { uriProvider.onActivityResult(requireActivity(), it) }
-        }
     }
 
     override fun onResume() {

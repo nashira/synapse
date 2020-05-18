@@ -14,35 +14,32 @@ import android.view.*
 import android.view.animation.AccelerateDecelerateInterpolator
 import android.widget.SeekBar
 import android.widget.Toast
-import androidx.annotation.DrawableRes
 import androidx.core.content.edit
 import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
-import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import androidx.viewpager2.widget.ViewPager2
 import com.google.android.material.bottomsheet.BottomSheetBehavior
 import com.rthqks.synapse.R
-import com.rthqks.synapse.build2.BuilderActivity
+import com.rthqks.synapse.build.BuilderActivity
 import com.rthqks.synapse.effect.EffectExecutor
 import com.rthqks.synapse.logic.Network
 import com.rthqks.synapse.logic.NodeDef.Lut3d.LutStrength
 import com.rthqks.synapse.logic.Property
 import com.rthqks.synapse.ops.Analytics
-import com.rthqks.synapse.ui.*
+import com.rthqks.synapse.ui.PropertiesAdapter
+import com.rthqks.synapse.ui.propertiesUi
 import com.rthqks.synapse.util.throttleClick
 import dagger.android.support.DaggerAppCompatActivity
 import kotlinx.android.synthetic.main.activity_polish.*
 import kotlinx.android.synthetic.main.layout_effect.view.*
 import kotlinx.android.synthetic.main.layout_lut.view.*
-import kotlinx.android.synthetic.main.layout_property.view.*
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import javax.inject.Inject
-import kotlin.math.max
 import kotlin.math.min
 import kotlin.math.roundToInt
 
@@ -265,7 +262,7 @@ class PolishActivity : DaggerAppCompatActivity() {
         }
 
         val effectAdapter = EffectAdapter {
-            viewModel.setEffectProperty(it.property)
+            viewModel.setEffectProperty(it)
         }
         effect_list.adapter = effectAdapter
 
@@ -410,7 +407,7 @@ class PolishActivity : DaggerAppCompatActivity() {
 private data class Permission(val name: String, val granted: Boolean, val showRationale: Boolean)
 
 private class EffectAdapter(
-    private val onClick: (PropertyItem) -> Unit
+    private val onClick: (Property<*>) -> Unit
 ) : RecyclerView.Adapter<EffectViewHolder>() {
     private var effects: List<Network> = emptyList()
 
@@ -436,7 +433,7 @@ private class EffectAdapter(
 
 private class EffectViewHolder(
     itemView: View,
-    onClick: (PropertyItem) -> Unit
+    onClick: (Property<*>) -> Unit
 ) : RecyclerView.ViewHolder(itemView) {
     private val nameView = itemView.name
     private val settingsList = itemView.settings_list
@@ -450,21 +447,8 @@ private class EffectViewHolder(
     fun bind(network: Network) {
         this.network = network
         nameView.text = network.name
-        adapter.setProperties(network.getProperties())
+        adapter.setProperties(network.propertiesUi())
     }
-}
-
-private fun Network.getProperties(): MutableList<Pair<Property<*>, PropertyUi<*>>> {
-    val list = mutableListOf<Pair<Property<*>, PropertyUi<*>>>()
-    properties.forEach { entry ->
-        val node = getNode(entry.key)!!
-        entry.value.forEach { p ->
-            NodeUi[node.type][p.key]?.let {
-                list += Pair(p, it)
-            }
-        }
-    }
-    return list
 }
 
 private class LutAdapter(
@@ -537,180 +521,3 @@ private class LutViewHolder(
     }
 }
 
-
-private class PropertiesAdapter(
-    private val onSelected: (PropertyItem) -> Unit
-) : RecyclerView.Adapter<PropertyViewHolder>() {
-    private var list = emptyList<PropertyItem>()
-    private val clickListener: (position: Int) -> Unit = { position ->
-        val p = list[position]
-        onSelected(p)
-    }
-
-    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): PropertyViewHolder {
-        val inflater = LayoutInflater.from(parent.context)
-        val view = inflater.inflate(R.layout.layout_property, parent, false)
-
-        return when (viewType) {
-            2 -> ToggleViewHolder(view, clickListener)
-            else -> SingleValueViewHolder(view, clickListener)
-        }
-    }
-
-    override fun getItemCount(): Int = list.size
-
-    override fun getItemViewType(position: Int): Int {
-        val holder = list[position].ui
-        return when (holder.type) {
-            PropertyType.VALUE,
-            PropertyType.EXPANDED -> 1
-
-            PropertyType.TOGGLE,
-            PropertyType.MENU -> 2
-
-            PropertyType.FLOAT_RANGE,
-            PropertyType.INT_RANGE -> 0
-        }
-    }
-
-    override fun onBindViewHolder(holder: PropertyViewHolder, position: Int) {
-        val property = list[position]
-        holder.bind(property)
-        Log.d(TAG, "onBind $position $property")
-    }
-
-    fun setProperties(properties: List<Pair<Property<*>, PropertyUi<*>>>) {
-        val new = mutableListOf<PropertyItem>()
-        properties.forEach {
-            val holder = it.second
-            when (holder.type) {
-                PropertyType.EXPANDED -> {
-                    (holder as ChoiceUi<*>).choices.forEach { choice ->
-                        new.add(
-                            PropertyItem(
-                                it.first as Property<Any?>,
-                                holder,
-                                choice.icon,
-                                choice.item
-                            )
-                        )
-                    }
-                }
-
-                PropertyType.TOGGLE,
-                PropertyType.MENU -> {
-                    new.add(PropertyItem(it.first as Property<Any?>, holder, holder.icon))
-                }
-
-                PropertyType.VALUE,
-                PropertyType.FLOAT_RANGE,
-                PropertyType.INT_RANGE -> {
-                    new.add(
-                        PropertyItem(
-                            it.first as Property<Any?>,
-                            holder,
-                            holder.icon,
-                            it.first.value
-                        )
-                    )
-                }
-            }
-        }
-
-        val result = DiffUtil.calculateDiff(object : DiffUtil.Callback() {
-            override fun areItemsTheSame(oldItemPosition: Int, newItemPosition: Int): Boolean {
-                return list[oldItemPosition] == new[newItemPosition]
-            }
-
-            override fun getOldListSize(): Int = list.size
-
-            override fun getNewListSize(): Int = properties.size
-
-            override fun areContentsTheSame(oldItemPosition: Int, newItemPosition: Int): Boolean {
-                return list[oldItemPosition] == new[newItemPosition]
-            }
-        })
-        list = new
-        result.dispatchUpdatesTo(this)
-    }
-
-    companion object {
-        const val TAG = "PropertiesAdapter"
-    }
-}
-
-private abstract class PropertyViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
-    abstract fun bind(propertyItem: PropertyItem)
-}
-
-private class SingleValueViewHolder(
-    itemView: View, clickListener: (position: Int) -> Unit
-) : PropertyViewHolder(itemView) {
-    private val iconView = itemView.icon
-    private var propertyItem: PropertyItem? = null
-
-    init {
-        itemView.setOnClickListener {
-            propertyItem?.let { p ->
-                p.property.value = p.value
-            }
-            clickListener(adapterPosition)
-        }
-    }
-
-    override fun bind(propertyItem: PropertyItem) {
-        this.propertyItem = propertyItem
-        iconView.setImageResource(propertyItem.icon)
-    }
-}
-
-private class ToggleViewHolder(
-    itemView: View, clickListener: (position: Int) -> Unit
-) : PropertyViewHolder(itemView) {
-    private val iconView = itemView.icon
-    private val textView = itemView.text
-    private var propertyItem: PropertyItem? = null
-    private var index = 0
-    private var toggleType: ChoiceUi<*>? = null
-
-    init {
-        itemView.setOnClickListener {
-            toggleType?.let {
-                index = (index + 1) % it.choices.size
-                update()
-            }
-            clickListener(adapterPosition)
-        }
-    }
-
-    override fun bind(propertyItem: PropertyItem) {
-        this.propertyItem = propertyItem
-        val type = propertyItem.ui as ChoiceUi<*>
-        toggleType = type
-        index = max(0, type.choices.indexOfFirst {
-            when (it.item) {
-                is FloatArray -> it.item.contentEquals(propertyItem.property.value as FloatArray)
-                else -> it.item == propertyItem.property.value
-            }
-        })
-        update()
-    }
-
-    private fun update() {
-        toggleType?.let {
-            val choice = it.choices[index]
-            propertyItem?.let { p ->
-                p.property.value = choice.item
-            }
-            textView.setText(choice.label)
-            iconView.setImageResource(choice.icon)
-        }
-    }
-}
-
-private data class PropertyItem(
-    val property: Property<Any?>,
-    val ui: PropertyUi<*>,
-    @DrawableRes val icon: Int,
-    var value: Any? = null
-)

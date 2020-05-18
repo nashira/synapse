@@ -1,4 +1,4 @@
-package com.rthqks.synapse.build2
+package com.rthqks.synapse.build
 
 import android.annotation.SuppressLint
 import android.app.Activity
@@ -17,7 +17,7 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.RecyclerView
 import com.rthqks.synapse.R
-import com.rthqks.synapse.build2.NetworkFragment.Companion.OPEN_DOC_REQUEST
+import com.rthqks.synapse.build.NetworkFragment.Companion.OPEN_DOC_REQUEST
 import com.rthqks.synapse.logic.Connector
 import com.rthqks.synapse.logic.PortType
 import com.rthqks.synapse.ui.build.PropertyBinder
@@ -70,7 +70,7 @@ class NodeFragment : DaggerFragment() {
             startActivityForResult(it, OPEN_DOC_REQUEST)
         }
         viewModel = ViewModelProvider(requireActivity(), viewModelFactory)[BuilderViewModel::class.java]
-        touchMediator = TouchMediator(requireContext(), viewModel::swipeEvent)
+//        touchMediator = TouchMediator(requireContext(), viewModel::swipeEvent)
 
 //        viewModel.network.getNode(nodeId)?.let { node ->
 //            propertyBinder = PropertyBinder(node.properties, tool_list, tool_main, uriProvider) {
@@ -143,7 +143,7 @@ class NodeFragment : DaggerFragment() {
 
     fun onConnectorTouch(connector: Connector) {
         Log.d(TAG, "touch $connector")
-        viewModel.preparePortSwipe(connector)
+//        viewModel.preparePortSwipe(connector)
     }
 
     fun onConnectorClick(connector: Connector) {
@@ -190,7 +190,7 @@ class NodeFragment : DaggerFragment() {
                     }
                 }
                 R.id.add_connection -> {
-                    viewModel.startConnection(connector)
+//                    viewModel.startConnection(connector)
                 }
             }
             true

@@ -22,7 +22,7 @@
         android:layout_height="match_parent">
 
 
-        <com.rthqks.synapse.build2.TouchRecyclerView
+        <com.rthqks.synapse.build.TouchRecyclerView
             android:id="@+id/inputs_list"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
@@ -33,7 +33,7 @@
             tools:itemCount="3"
             tools:listitem="@layout/layout_port_fragment_node_start" />
 
-        <com.rthqks.synapse.build2.TouchRecyclerView
+        <com.rthqks.synapse.build.TouchRecyclerView
             android:id="@+id/outputs_list"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"

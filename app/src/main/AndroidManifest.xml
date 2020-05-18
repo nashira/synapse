@@ -36,7 +36,7 @@
         <activity android:name=".polish.GalleryActivity" />
 
         <activity
-            android:name="com.rthqks.synapse.build2.BuilderActivity"
+            android:name="com.rthqks.synapse.build.BuilderActivity"
             android:screenOrientation="portrait" />
     </application>
 

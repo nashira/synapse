@@ -55,32 +55,32 @@ class IntRangeUi(
     val range: IntRange
 ) : PropertyUi<Int>(title, icon, PropertyType.INT_RANGE)
 
-fun <T> ExpandedUi(
+fun <T> expandedUi(
     @StringRes title: Int,
     @DrawableRes icon: Int,
     vararg choices: Choice<T>
 ) = ChoiceUi(title, icon, PropertyType.EXPANDED, choices.toList())
 
-fun <T> ToggleUi(
+fun <T> toggleUi(
     @StringRes title: Int,
     @DrawableRes icon: Int,
     vararg choices: Choice<T>
 ) = ChoiceUi(title, icon, PropertyType.TOGGLE, choices.toList())
 
-fun <T> MenuUi(
+fun <T> menuUi(
     @StringRes title: Int,
     @DrawableRes icon: Int,
     vararg choices: Choice<T>
 ) = ChoiceUi(title, icon, PropertyType.MENU, choices.toList())
 
-fun RangeUi(
+fun rangeUi(
     @StringRes title: Int,
     @DrawableRes icon: Int,
     range: ClosedFloatingPointRange<Float>
 ): FloatRangeUi =
     FloatRangeUi(title, icon, range)
 
-fun RangeUi(
+fun rangeUi(
     @StringRes title: Int,
     @DrawableRes icon: Int,
     range: IntRange
