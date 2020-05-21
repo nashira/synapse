@@ -67,14 +67,8 @@ class PolishViewModel @Inject constructor(
         if (!needsNewContext) return
         needsNewContext = false
         svSetup = false
-        context = ExecutionContext(contxt, videoStorage, assetManager)
 
         viewModelScope.launch {
-            baseNetwork = withContext(Dispatchers.IO) {
-                syncLogic.getNetwork(0)
-            }
-
-            effectExecutor = EffectExecutor(context, baseNetwork!!)
             effectExecutor.setup()
             effectExecutor.initializeEffect()
             if (!stopped) {
@@ -102,6 +96,11 @@ class PolishViewModel @Inject constructor(
         viewModelScope.launch {
             effectExecutor.removeAll()
             effectExecutor.release()
+            baseNetwork = withContext(Dispatchers.IO) {
+                syncLogic.getNetwork(BaseEffectId)
+            }
+            context = ExecutionContext(contxt, videoStorage, assetManager)
+            effectExecutor = EffectExecutor(context, baseNetwork!!)
         }
     }
 

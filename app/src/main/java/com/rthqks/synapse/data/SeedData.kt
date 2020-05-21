@@ -5,10 +5,10 @@ import android.media.MediaRecorder
 import android.net.Uri
 import android.util.Size
 import com.rthqks.synapse.effect.EffectExecutor
-import com.rthqks.synapse.exec.node.*
+import com.rthqks.synapse.exec.node.Lut3dNode
+import com.rthqks.synapse.exec.node.RotateMatrixNode
 import com.rthqks.synapse.logic.Link
 import com.rthqks.synapse.logic.Network
-import com.rthqks.synapse.logic.NodeDef
 import com.rthqks.synapse.logic.NodeDef.*
 
 object SeedData {
