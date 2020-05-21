@@ -127,6 +127,6 @@ abstract class SynapseDao {
         deleteNetwork(networkId)
     }
 
-    @Query("SELECT COUNT(*) > 0 FROM network WHERE id = 100")
-    abstract suspend fun hasNetwork0(): Boolean
+    @Query("SELECT COUNT(*) > 0 FROM network WHERE id = :id")
+    abstract suspend fun hasNetwork(id: Int): Boolean
 }

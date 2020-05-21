@@ -36,7 +36,7 @@ open class NetworkExecutor(context: ExecutionContext) : Executor(context) {
         }.joinAll()
     }
 
-    fun getNode(id: Int) = nodes[id] ?: error("node not found $id")
+    protected fun getNode(id: Int) = nodes[id]
 
     suspend fun addNode(node: Node) {
         Log.d(TAG, "add node ${node.id}")

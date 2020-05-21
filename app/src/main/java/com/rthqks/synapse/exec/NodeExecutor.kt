@@ -22,13 +22,17 @@ abstract class NodeExecutor(
     suspend fun setup() = await(this::onSetup)
 
     suspend fun pause() = await {
-        state = STATE_PAUSED
-        onPause()
+        if (state != STATE_PAUSED) {
+            state = STATE_PAUSED
+            onPause()
+        }
     }
 
     suspend fun resume() = await {
-        state = STATE_RESUMED
-        onResume()
+        if (state != STATE_RESUMED) {
+            state = STATE_RESUMED
+            onResume()
+        }
     }
 
     suspend fun <T> stopConsumer(key: Connection.Key<T>, channel: ReceiveChannel<Message<T>>) =

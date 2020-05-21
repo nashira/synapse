@@ -311,36 +311,36 @@ sealed class NodeDef(
             ports = listOf(INPUT, OUTPUT)
         }
     }
+}
 
-    companion object {
-        private val MAP = mapOf<String, NodeDef>(
-            Camera.key to Camera,
-            Microphone.key to Microphone,
-            MediaDecoder.key to MediaDecoder,
-            FrameDifference.key to FrameDifference,
-            MultiplyAccumulate.key to MultiplyAccumulate,
-            CropResize.key to CropResize,
-            CropGrayBlur.key to CropGrayBlur,
-            Image.key to Image,
-            Lut2d.key to Lut2d,
-            Lut3d.key to Lut3d,
-            Speakers.key to Speakers,
-            Screen.key to Screen,
-            SlimeMold.key to SlimeMold,
-            ImageBlend.key to ImageBlend,
-            CubeImport.key to CubeImport,
-            BCubeImport.key to BCubeImport,
-            Shape.key to Shape,
-            RingBuffer.key to RingBuffer,
-            Slice3d.key to Slice3d,
-            MediaEncoder.key to MediaEncoder,
-            RotateMatrix.key to RotateMatrix,
-            TextureView.key to TextureView,
-            CellAuto.key to CellAuto,
-            Quantizer.key to Quantizer,
-            Sobel.key to Sobel
-        )
+object Nodes {
+    private val MAP = mapOf(
+        NodeDef.Camera.key to NodeDef.Camera,
+        NodeDef.Microphone.key to NodeDef.Microphone,
+        NodeDef.MediaDecoder.key to NodeDef.MediaDecoder,
+        NodeDef.FrameDifference.key to NodeDef.FrameDifference,
+        NodeDef.MultiplyAccumulate.key to NodeDef.MultiplyAccumulate,
+        NodeDef.CropResize.key to NodeDef.CropResize,
+        NodeDef.CropGrayBlur.key to NodeDef.CropGrayBlur,
+        NodeDef.Image.key to NodeDef.Image,
+        NodeDef.Lut2d.key to NodeDef.Lut2d,
+        NodeDef.Lut3d.key to NodeDef.Lut3d,
+        NodeDef.Speakers.key to NodeDef.Speakers,
+        NodeDef.Screen.key to NodeDef.Screen,
+        NodeDef.SlimeMold.key to NodeDef.SlimeMold,
+        NodeDef.ImageBlend.key to NodeDef.ImageBlend,
+        NodeDef.CubeImport.key to NodeDef.CubeImport,
+        NodeDef.BCubeImport.key to NodeDef.BCubeImport,
+        NodeDef.Shape.key to NodeDef.Shape,
+        NodeDef.RingBuffer.key to NodeDef.RingBuffer,
+        NodeDef.Slice3d.key to NodeDef.Slice3d,
+        NodeDef.MediaEncoder.key to NodeDef.MediaEncoder,
+        NodeDef.RotateMatrix.key to NodeDef.RotateMatrix,
+        NodeDef.TextureView.key to NodeDef.TextureView,
+        NodeDef.CellAuto.key to NodeDef.CellAuto,
+        NodeDef.Quantizer.key to NodeDef.Quantizer,
+        NodeDef.Sobel.key to NodeDef.Sobel
+    )
 
-        operator fun get(key: String) = MAP[key] ?: error("unknown node type: $key")
-    }
+    operator fun get(key: String) = MAP[key] ?: error("unknown node type: $key")
 }

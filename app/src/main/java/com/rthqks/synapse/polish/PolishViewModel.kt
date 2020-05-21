@@ -15,6 +15,7 @@ import androidx.lifecycle.viewModelScope
 import com.rthqks.synapse.assets.AssetManager
 import com.rthqks.synapse.assets.VideoStorage
 import com.rthqks.synapse.data.PropertyData
+import com.rthqks.synapse.data.SeedData.BaseEffectId
 import com.rthqks.synapse.data.SynapseDao
 import com.rthqks.synapse.effect.EffectExecutor
 import com.rthqks.synapse.exec.ExecutionContext
@@ -51,10 +52,10 @@ class PolishViewModel @Inject constructor(
     init {
         viewModelScope.launch {
             baseNetwork = withContext(Dispatchers.IO) {
-                if (!dao.hasNetwork0()) {
+                if (!dao.hasNetwork(BaseEffectId)) {
                     syncLogic.refreshEffects()
                 }
-                syncLogic.getNetwork(100)
+                syncLogic.getNetwork(BaseEffectId)
             }
             effectExecutor = EffectExecutor(context, baseNetwork!!)
             effectExecutor.setup()
@@ -69,13 +70,16 @@ class PolishViewModel @Inject constructor(
         context = ExecutionContext(contxt, videoStorage, assetManager)
 
         viewModelScope.launch {
-//            baseNetwork = withContext(Dispatchers.IO) {
-//                syncLogic.getNetwork(0)
-//            }
+            baseNetwork = withContext(Dispatchers.IO) {
+                syncLogic.getNetwork(0)
+            }
 
             effectExecutor = EffectExecutor(context, baseNetwork!!)
             effectExecutor.setup()
             effectExecutor.initializeEffect()
+            if (!stopped) {
+                effectExecutor.resume()
+            }
             currentEffect?.let { setEffect(it) }
         }
     }
@@ -83,7 +87,12 @@ class PolishViewModel @Inject constructor(
     fun initializeEffect() {
         viewModelScope.launch(Dispatchers.IO) {
             effectExecutor.initializeEffect()
-            val networks = dao.getNetworks().map { it.toNetwork() }
+            if (!stopped) {
+                effectExecutor.resume()
+            }
+            val networks = dao.getNetworks().filter {
+                it.id != BaseEffectId
+            }.map { it.toNetwork() }
             effects.postValue(networks)
         }
     }
@@ -117,25 +126,22 @@ class PolishViewModel @Inject constructor(
     }
 
     fun startExecution() {
-        currentEffect ?: return
-
-        viewModelScope.launch {
-            if (stopped) {
-                stopped = false
-                Log.d(TAG, "resume")
-
+        if (stopped) {
+            stopped = false
+            Log.d(TAG, "resume")
+            currentEffect ?: return
+            viewModelScope.launch {
                 effectExecutor.resume()
             }
         }
     }
 
     fun stopExecution() {
-        currentEffect ?: return
-        viewModelScope.launch {
-            if (!stopped) {
-                stopped = true
-                Log.d(TAG, "pause")
-
+        if (!stopped) {
+            stopped = true
+            Log.d(TAG, "pause")
+            currentEffect ?: return
+            viewModelScope.launch {
 //            properties[Recording] = false
                 effectExecutor.pause()
             }
@@ -160,7 +166,7 @@ class PolishViewModel @Inject constructor(
 //        properties[Recording] = false
     }
 
-    fun <T: Any> editProperty(
+    fun <T : Any> editProperty(
         key: Property.Key<T>,
         value: T
     ) {

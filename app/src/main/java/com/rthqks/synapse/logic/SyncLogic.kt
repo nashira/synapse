@@ -1,6 +1,8 @@
 package com.rthqks.synapse.logic
 
 import com.rthqks.synapse.data.*
+import com.rthqks.synapse.data.SeedData.BaseEffect
+import com.rthqks.synapse.data.SeedData.SeedNetworks
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -9,16 +11,14 @@ class SyncLogic @Inject constructor(
     val dao: SynapseDao
 ) {
     suspend fun refreshEffects() {
-        dao.insertFullNetwork(BaseEffect.toData())
         SeedNetworks.forEach {
             dao.insertFullNetwork(it.toData())
         }
+        dao.insertFullNetwork(BaseEffect.toData())
     }
 
     suspend fun getNetwork(networkId: Int): Network? = dao.getFullNetwork(networkId).toNetwork()
 }
-
-
 
 fun Network.toData(): NetworkData {
     val data = NetworkData(id, name)
@@ -34,7 +34,7 @@ fun NetworkData.toNetwork(): Network {
     val network = Network(id, name)
 
     nodes.forEach {
-        network.addNode(NodeDef[it.type], it.id)
+        network.addNode(Nodes[it.type], it.id)
     }
 
     links.map { Link(it.fromNodeId, it.fromKey, it.toNodeId, it.toKey) }.let(network::addLinks)

@@ -206,12 +206,10 @@ data class PropertyItem(
 
 fun Network.propertiesUi(): MutableList<Pair<Property, PropertyUi<*>>> {
     val list = mutableListOf<Pair<Property, PropertyUi<*>>>()
-    getProperties().forEach {
-        val node = getNode(it.nodeId)
-        node.properties.values.forEach { p ->
-            NodeUi[node.type][p.key]?.let {
-                list += Pair(p, it)
-            }
+    getProperties().filter { it.exposed }.forEach { p ->
+        val node = getNode(p.nodeId)
+        NodeUi[node.type][p.key]?.let {
+            list += Pair(p, it)
         }
     }
     return list

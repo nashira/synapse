@@ -36,8 +36,6 @@ class EffectExecutor(
     private val lutPreviews = ConcurrentHashMap<SurfaceTexture, LutPreview>()
     private val lutJobs = ConcurrentHashMap<SurfaceTexture, Job>()
 
-    val properties: Collection<Property> get() = n.getProperties()
-
     suspend fun initializeEffect() = await {
         network = n
         addAllNodes()
@@ -49,64 +47,18 @@ class EffectExecutor(
         stopLutPreview()
 
         await {
-            val newCam = effect.videoIn != null
-            val oldCam = this.effect?.videoIn != null
+            val videoIn = effect.videoIn
+            val videoOut = effect.videoOut
 
-            if (newCam && !oldCam) {
-                getNode(camera.id).pause()
-            } else if (!newCam && oldCam) {
-                getNode(camera.id).resume()
+            if (videoIn.isNotEmpty() || (videoIn.isEmpty() && videoOut == null)) {
+                getNode(camera.id)?.resume()
+            } else {
+                getNode(camera.id)?.pause()
             }
 
-            this.effect?.let { oldEff ->
-                val old = oldEff
-                val links = mutableListOf<Link>()
-                links += old.getLinks()
-                oldEff.videoOut?.let {
-                    links += Link(
-                        it.first, it.second,
-                        ID_LUT, Lut3d.SOURCE_IN.key
-                    )
-                }
-                oldEff.videoIn?.let {
-                    links += Link(
-                        ID_CAMERA, Camera.OUTPUT.key,
-                        it.first, it.second
-                    )
-                }
+            removeOldEffect()
 
-                links.map { scope.launch { removeLink(it) } }.joinAll()
-                old.getNodes().map {
-                    scope.launch { removeNode(it) }
-                }.joinAll()
-
-                links.forEach { n.removeLink(it) }
-                old.getNodes().forEach { n.removeNode(it.id) }
-            }
-
-            val new = effect
-            val newLinks = mutableListOf<Link>()
-            newLinks += new.getLinks()
-            effect.videoOut?.let {
-                newLinks += Link(
-                    it.first, it.second,
-                    ID_LUT, Lut3d.SOURCE_IN.key
-                )
-            }
-            new.videoIn?.let {
-                newLinks += Link(
-                    ID_CAMERA, Camera.OUTPUT.key,
-                    it.first, it.second
-                )
-            }
-            new.getNodes().forEach { n.addNode(it) }
-            n.addLinks(newLinks)
-            new.getNodes().map {
-                scope.launch {
-                    addNode(it)
-                }
-            }.joinAll()
-            newLinks.map { scope.launch { addLink(it) } }.joinAll()
+            addNewEffect(effect, videoIn, videoOut)
 
             (getNode(ID_LUT) as? Lut3dNode)?.resetLutMatrix()
             this.effect = effect
@@ -114,6 +66,83 @@ class EffectExecutor(
 
         if (isLutPreview) {
             startLutPreview()
+        }
+    }
+
+    private suspend fun addNewEffect(
+        effect: Network,
+        videoIn: List<Pair<Int, String>>,
+        videoOut: Pair<Int, String>?
+    ) {
+        val new = effect
+        val newLinks = mutableListOf<Link>()
+        newLinks += new.getLinks()
+        videoOut?.let {
+            newLinks += Link(
+                it.first, it.second,
+                ID_LUT, Lut3d.SOURCE_IN.key
+            )
+        }
+        videoIn.forEach {
+            newLinks += Link(
+                ID_CAMERA, Camera.OUTPUT.key,
+                it.first, it.second
+            )
+        }
+
+        // `none` effect
+        if (videoIn.isEmpty() && videoOut == null) {
+            newLinks += Link(
+                ID_CAMERA, Camera.OUTPUT.key,
+                ID_LUT, Lut3d.SOURCE_IN.key
+            )
+        }
+
+        new.getNodes().forEach { n.addNode(it) }
+        n.addLinks(newLinks)
+        new.getNodes().map {
+            scope.launch {
+                addNode(it)
+            }
+        }.joinAll()
+        newLinks.map { scope.launch { addLink(it) } }.joinAll()
+    }
+
+    private suspend fun removeOldEffect() {
+        this.effect?.let { oldEff ->
+            val old = oldEff
+            val links = mutableListOf<Link>()
+            links += old.getLinks()
+            val videoOut = oldEff.videoOut
+            videoOut?.let {
+                links += Link(
+                    it.first, it.second,
+                    ID_LUT, Lut3d.SOURCE_IN.key
+                )
+            }
+            val videoIn = oldEff.videoIn
+            videoIn.map {
+                links += Link(
+                    ID_CAMERA, Camera.OUTPUT.key,
+                    it.first, it.second
+                )
+            }
+            
+            // `none` effect
+            if (videoIn.isEmpty() && videoOut == null) {
+                links += Link(
+                    ID_CAMERA, Camera.OUTPUT.key,
+                    ID_LUT, Lut3d.SOURCE_IN.key
+                )
+            }
+
+            links.map { scope.launch { removeLink(it) } }.joinAll()
+            old.getNodes().map {
+                scope.launch { removeNode(it) }
+            }.joinAll()
+
+            links.forEach { n.removeLink(it) }
+            old.getNodes().forEach { n.removeNode(it.id) }
         }
     }
 
@@ -174,6 +203,7 @@ class EffectExecutor(
             lutPreviews.remove(surfaceTexture)?.let {
                 //            Log.d(TAG, "removed $surfaceTexture")
 //            it.release()
+
                 (getNode(it.screen.id) as? TextureViewNode)?.removeTextureView()
                 surfaceTexture.release()
                 lutPreviewPool += it
@@ -331,12 +361,12 @@ class EffectExecutor(
 private val Network.videoOut: Pair<Int, String>?
     get() = getPorts().firstOrNull {
         it.exposed && it.output && it.type == PortType.Video
-    }?.let { return Pair(it.nodeId, it.key) }
+    }?.let { Pair(it.nodeId, it.key) }
 
-private val Network.videoIn: Pair<Int, String>?
-    get() = getPorts().firstOrNull {
+private val Network.videoIn: List<Pair<Int, String>>
+    get() = getPorts().filter {
         it.exposed && it.input && it.type == PortType.Video
-    }?.let { return Pair(it.nodeId, it.key) }
+    }.map { Pair(it.nodeId, it.key) }
 
 //    private val propertyTypes = mutableMapOf<Property.Key<*>, PropertyHolder<Any?>>()
 //    val properties = Properties()
