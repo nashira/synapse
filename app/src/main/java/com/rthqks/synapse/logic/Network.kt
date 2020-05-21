@@ -8,42 +8,60 @@ class Network(
     val id: Int,
     var name: String
 ) {
-    val nodes = mutableMapOf<Int, Node>()
-    val properties = mutableMapOf<Int, MutableSet<Property<*>>>()
-    val ports = mutableMapOf<Int, MutableSet<Port>>()
+    private val nodes = mutableMapOf<Int, Node>()
+//    private val properties = mutableMapOf<Int, MutableSet<Property>>()
+//    private val ports = mutableMapOf<Int, MutableSet<Port>>()
     private val links = mutableSetOf<Link>()
     private val linkIndex = mutableMapOf<Int, MutableSet<Link>>()
-    private var maxNodeId = 0
+    private var nextNodeId = 1
 
-    fun addNode(node: Node): Node {
-        node.networkId = id
-        if (node.id == -1) {
-            node.id = ++maxNodeId
-        }
-        nodes[node.id] = node
-        maxNodeId = max(maxNodeId, node.id)
-        node.ports.forEach {
-            setExposed(node.id, it.key, it.value.exposed)
-        }
+    // nodes
+    fun addNode(nodeDef: NodeDef, id: Int = nextNodeId): Node {
+        val node = addNode(nodeDef.key, id)
+        nodeDef.ports.forEach { addPort(node.id, it.type, it.key, it.output) }
+        nodeDef.properties.forEach { addProperty(node.id, it.key as Property.Key<Any>, it.value) }
         return node
     }
 
-    fun removeNode(nodeId: Int): Node? {
-        return nodes.remove(nodeId)
+    fun addNode(node: Node, id: Int = nextNodeId): Node {
+        val newNode = addNode(node.type, id)
+        node.ports.values.forEach { addPort(newNode.id, it.type, it.key, it.output) }
+        node.properties.values.forEach { addProperty(newNode.id, it.key as Property.Key<Any>, it.value) }
+        return newNode
     }
 
-    fun getNode(nodeId: Int): Node? {
+    fun addNode(type: String, id: Int = nextNodeId) = Node(this.id, id, type).also {
+        nextNodeId = max(nextNodeId, id) + 1
+        nodes[id] = it
+    }
+
+    fun removeNode(nodeId: Int) {
+        nodes.remove(nodeId)
+    }
+
+    fun getNode(nodeId: Int): Node {
 //        Log.d(TAG, "getNode $nodeId")
-        return nodes[nodeId]
+        return nodes[nodeId] ?: error("node not found: $id")
     }
 
-    fun getNodes(): List<Node> {
+    fun getNodes(): Collection<Node> {
         return nodes.values.toList()
     }
 
-    fun getLinks(): Set<Link> = links
+    // links
+    fun addLink(fromNodeId: Int, fromPort: String, toNodeId: Int, toPort: String) {
+        val link = Link(fromNodeId, fromPort, toNodeId, toPort)
+        links.add(link)
+        linkIndex.getOrPut(link.fromNodeId) { mutableSetOf() } += link
+        linkIndex.getOrPut(link.toNodeId) { mutableSetOf() } += link
+    }
 
-    fun getLinks(nodeId: Int): Set<Link> = linkIndex[nodeId] ?: emptySet()
+    fun removeLink(fromNodeId: Int, fromPort: String, toNodeId: Int, toPort: String) {
+        val link = Link(fromNodeId, fromPort, toNodeId, toPort)
+        links.remove(link)
+        linkIndex[link.fromNodeId]?.remove(link)
+        linkIndex[link.toNodeId]?.remove(link)
+    }
 
     fun addLink(link: Link) {
         links.add(link)
@@ -57,57 +75,98 @@ class Network(
         linkIndex[link.toNodeId]?.remove(link)
     }
 
+    fun getLinks(): Set<Link> = links
+
+    fun getLinks(nodeId: Int): Set<Link> = linkIndex[nodeId] ?: emptySet()
+
+    fun addLinks(links: List<Link>) {
+        links.forEach(this::addLink)
+//        computeComponents()
+    }
+
     fun removeLinks(nodeId: Int): Set<Link> {
         val removed = linkIndex.remove(nodeId) ?: emptySet<Link>()
         removed.forEach(this::removeLink)
         return removed
     }
 
-    fun addLinks(links: List<Link>) {
-        links.forEach(this::addLink)
-        computeComponents()
+    // ports
+
+    fun addPort(
+        nodeId: Int,
+        type: PortType,
+        key: String,
+        output: Boolean,
+        exposed: Boolean = false
+    ) = Port(id, nodeId, key, type, output, exposed).also {
+        getNode(nodeId).ports[key] = it
     }
 
-    fun setExposed(nodeId: Int, key: String, exposed: Boolean) {
-        getNode(nodeId)?.getPort(key)?.let {
-            it.exposed = exposed
-            if (exposed) {
-                ports.getOrPut(nodeId) { mutableSetOf() } += it
-            } else {
-                ports.getOrPut(nodeId) { mutableSetOf() } -= it
-            }
-        } ?: error("unknown node=$nodeId, port=$key")
+    fun removePort(nodeId: Int, key: String) {
+        getNode(nodeId).ports.remove(key)
     }
 
-    fun setExposed(nodeId: Int, key: Property.Key<*>, exposed: Boolean) {
-        getNode(nodeId)?.properties?.getProperty(key)?.let {
-            it.exposed = exposed
-            if (exposed) {
-                properties.getOrPut(nodeId) { mutableSetOf() } += it
-            } else {
-                properties.getOrPut(nodeId) { mutableSetOf() } -= it
-            }
-        } ?: error("unknown node=$nodeId, property=$key")
+    fun getPort(nodeId: Int, key: String): Port {
+        return getNode(nodeId).ports[key] ?: error("port not found $nodeId:$key")
+    }
+
+    fun getPorts(): List<Port> = nodes.values.fold(mutableListOf()) { a, v ->
+        a.addAll(v.ports.values)
+        a
+    }
+
+    // properties
+
+    fun <T: Any> addProperty(nodeId: Int, key: Property.Key<T>, value: T) =
+        Property(id, nodeId, key, value).also {
+            getNode(nodeId).properties[key.name] = it
+        }
+
+    fun removeProperty(nodeId: Int, key: String) {
+    }
+
+    fun getProperty(nodeId: Int, key: String): Property =
+        getNode(nodeId).properties[key] ?: error("property not found $nodeId:$key")
+
+    fun <T: Any> getPropertyValue(nodeId: Int, key: Property.Key<T>): T =
+        getProperty(nodeId, key.name).value as T
+
+    fun getProperties(): Collection<Property> = nodes.values.fold(mutableListOf()) { a, n ->
+        a += n.properties.values
+        a
+    }
+
+    fun <T : Any> setProperty(nodeId: Int, key: Property.Key<T>, value: T) {
+        getProperty(nodeId, key.name).value = value
     }
 
     // ----------------------------------
 
+    fun setExposed(nodeId: Int, key: String, exposed: Boolean) {
+        getPort(nodeId, key).exposed = exposed
+    }
+
+    fun setExposed(nodeId: Int, key: Property.Key<*>, exposed: Boolean) {
+        getProperty(nodeId, key.name).exposed = exposed
+    }
+
     fun getFirstNode(): Node? = nodes.values.firstOrNull()
 
     fun getConnectors(nodeId: Int): List<Connector> {
-        val node = getNode(nodeId) ?: return emptyList()
-        val ports = node.getPortIds().toMutableSet()
-        val nodeLinks = getLinks(nodeId)
-
-        return (nodeLinks.map {
-            if (it.fromNodeId == nodeId) {
-                ports.remove(it.fromPortId)
-                Connector(node, node.getPort(it.fromPortId), it)
-            } else {
-                ports.remove(it.toPortId)
-                Connector(node, node.getPort(it.toPortId), it)
-            }
-        } + ports.map { Connector(node, node.getPort(it)) }).sortedBy { it.port.id }
+        return emptyList()
+//        val node = getNode(nodeId) ?: return emptyList()
+//        val ports = node.getPortIds().toMutableSet()
+//        val nodeLinks = getLinks(nodeId)
+//
+//        return (nodeLinks.map {
+//            if (it.fromNodeId == nodeId) {
+//                ports.remove(it.fromPortId)
+//                Connector(node, node.getPort(it.fromPortId), it)
+//            } else {
+//                ports.remove(it.toPortId)
+//                Connector(node, node.getPort(it.toPortId), it)
+//            }
+//        } + ports.map { Connector(node, node.getPort(it)) }).sortedBy { it.port.key }
     }
 
     fun getOpenConnectors(connector: Connector): List<Connector> {
@@ -151,8 +210,8 @@ class Network(
 
     private fun isConnected(node: Node, port: Port): Boolean {
         return linkIndex[node.id]?.any {
-            it.fromNodeId == node.id && it.fromPortId == port.id
-                    || it.toNodeId == node.id && it.toPortId == port.id
+            it.fromNodeId == node.id && it.fromPortId == port.key
+                    || it.toNodeId == node.id && it.toPortId == port.key
         } ?: false
     }
 
@@ -160,11 +219,11 @@ class Network(
         return Network(id, name).also {
             it.nodes += nodes
             it.links += links
-            it.properties += properties
+//            it.properties += properties
             val ei = mutableMapOf<Int, MutableSet<Link>>()
             linkIndex.forEach { ei[it.key] = it.value.toMutableSet() }
             it.linkIndex += ei
-            it.maxNodeId = COPY_ID_SKIP
+            it.nextNodeId = COPY_ID_SKIP
         }
     }
 
@@ -187,7 +246,7 @@ class Network(
             val component = mutableListOf<Pair<Int, String>>()
             components.add(component)
 //            Log.d(TAG, "node ${it.first} ${nodes[it.first]} ${it.second}")
-            val output = nodes[it.first]?.getPort(it.second)?.output ?: true
+            val output = getNode(it.first).ports[it.second]?.output ?: true
             if (!output && it !in mark) {
                 mark.add(it)
                 component.add(it)

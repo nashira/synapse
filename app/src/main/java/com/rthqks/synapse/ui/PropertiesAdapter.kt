@@ -15,7 +15,7 @@ import kotlinx.android.synthetic.main.layout_property.view.*
 import kotlin.math.max
 
 class PropertiesAdapter(
-    private val onSelected: (Property<*>) -> Unit
+    private val onSelected: (Property) -> Unit
 ) : RecyclerView.Adapter<PropertyViewHolder>() {
     private var list = emptyList<PropertyItem>()
     private val clickListener: (position: Int) -> Unit = { position ->
@@ -58,7 +58,7 @@ class PropertiesAdapter(
         Log.d(TAG, "onBind $position $property")
     }
 
-    fun setProperties(properties: List<Pair<Property<*>, PropertyUi<*>>>) {
+    fun setProperties(properties: List<Pair<Property, PropertyUi<*>>>) {
         val new = mutableListOf<PropertyItem>()
         properties.forEach {
             val holder = it.second
@@ -67,7 +67,7 @@ class PropertiesAdapter(
                     (holder as ChoiceUi<*>).choices.forEach { choice ->
                         new.add(
                             PropertyItem(
-                                it.first as Property<Any?>,
+                                it.first,
                                 holder,
                                 choice.icon,
                                 choice.item
@@ -80,9 +80,10 @@ class PropertiesAdapter(
                 PropertyType.MENU -> {
                     new.add(
                         PropertyItem(
-                            it.first as Property<Any?>,
+                            it.first,
                             holder,
-                            holder.icon
+                            holder.icon,
+                            it.first.value
                         )
                     )
                 }
@@ -92,7 +93,7 @@ class PropertiesAdapter(
                 PropertyType.INT_RANGE -> {
                     new.add(
                         PropertyItem(
-                            it.first as Property<Any?>,
+                            it.first,
                             holder,
                             holder.icon,
                             it.first.value
@@ -197,17 +198,17 @@ private class ToggleViewHolder(
 }
 
 data class PropertyItem(
-    val property: Property<Any?>,
+    val property: Property,
     val ui: PropertyUi<*>,
     @DrawableRes val icon: Int,
-    var value: Any? = null
+    var value: Any
 )
 
-fun Network.propertiesUi(): MutableList<Pair<Property<*>, PropertyUi<*>>> {
-    val list = mutableListOf<Pair<Property<*>, PropertyUi<*>>>()
-    properties.forEach { entry ->
-        val node = getNode(entry.key)!!
-        entry.value.forEach { p ->
+fun Network.propertiesUi(): MutableList<Pair<Property, PropertyUi<*>>> {
+    val list = mutableListOf<Pair<Property, PropertyUi<*>>>()
+    getProperties().forEach {
+        val node = getNode(it.nodeId)
+        node.properties.values.forEach { p ->
             NodeUi[node.type][p.key]?.let {
                 list += Pair(p, it)
             }
@@ -216,9 +217,9 @@ fun Network.propertiesUi(): MutableList<Pair<Property<*>, PropertyUi<*>>> {
     return list
 }
 
-fun Node.propertiesUi(): MutableList<Pair<Property<*>, PropertyUi<*>>> {
-    val list = mutableListOf<Pair<Property<*>, PropertyUi<*>>>()
-    properties.getAll().forEach { property ->
+fun Node.propertiesUi(): MutableList<Pair<Property, PropertyUi<*>>> {
+    val list = mutableListOf<Pair<Property, PropertyUi<*>>>()
+    properties.values.forEach { property ->
         NodeUi[type][property.key]?.let {
             list += Pair(property, it)
         }

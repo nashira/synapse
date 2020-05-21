@@ -5,11 +5,11 @@ import android.os.SystemClock
 import com.rthqks.synapse.exec.Connection
 import com.rthqks.synapse.exec.ExecutionContext
 import com.rthqks.synapse.exec.NodeExecutor
+import com.rthqks.synapse.exec.Properties
 import com.rthqks.synapse.gl.GlesManager
 import com.rthqks.synapse.logic.NodeDef.RotateMatrix
 import com.rthqks.synapse.logic.NodeDef.RotateMatrix.FrameRate
 import com.rthqks.synapse.logic.NodeDef.RotateMatrix.Speed
-import com.rthqks.synapse.logic.Properties
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch

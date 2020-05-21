@@ -162,7 +162,8 @@ class BuilderActivity : DaggerAppCompatActivity() {
 //                NodeDef.Properties -> NetworkFragment.newInstance()
 //                NodeDef.Creation,
 //                NodeDef.Connection -> ConnectionFragment.newInstance()
-                else -> NodeFragment.newInstance(node.id)
+//                else -> NodeFragment.newInstance(node.id)
+                else -> error("gone")
             }
         }
 

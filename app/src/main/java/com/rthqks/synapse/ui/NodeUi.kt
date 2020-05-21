@@ -13,7 +13,7 @@ class NodeUi(
     @DrawableRes val icon: Int,
     private val prop: Map<Property.Key<*>, PropertyUi<*>> = emptyMap()
 ) {
-    operator fun <T> get(key: Property.Key<T>) = prop[key] //?: error("unknown property key: $key")
+    operator fun <T: Any> get(key: Property.Key<T>) = prop[key] //?: error("unknown property key: $key")
 
     companion object {
 

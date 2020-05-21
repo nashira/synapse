@@ -1,14 +1,14 @@
 package com.rthqks.synapse.exec.node
 
+//import com.rthqks.synapse.logic.ScaleFactor
 import android.opengl.GLES30.*
 import android.util.Log
 import android.util.Size
 import com.rthqks.synapse.exec.Connection
 import com.rthqks.synapse.exec.ExecutionContext
 import com.rthqks.synapse.exec.NodeExecutor
+import com.rthqks.synapse.exec.Properties
 import com.rthqks.synapse.gl.*
-import com.rthqks.synapse.logic.Properties
-//import com.rthqks.synapse.logic.ScaleFactor
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 

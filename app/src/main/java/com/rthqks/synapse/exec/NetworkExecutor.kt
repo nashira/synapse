@@ -2,7 +2,10 @@ package com.rthqks.synapse.exec
 
 import android.util.Log
 import com.rthqks.synapse.exec.node.*
-import com.rthqks.synapse.logic.*
+import com.rthqks.synapse.logic.Link
+import com.rthqks.synapse.logic.Network
+import com.rthqks.synapse.logic.Node
+import com.rthqks.synapse.logic.NodeDef
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.channels.ReceiveChannel
 import kotlinx.coroutines.joinAll
@@ -33,11 +36,11 @@ open class NetworkExecutor(context: ExecutionContext) : Executor(context) {
         }.joinAll()
     }
 
-    fun getNode(id: Int) = nodes[id]
+    fun getNode(id: Int) = nodes[id] ?: error("node not found $id")
 
     suspend fun addNode(node: Node) {
         Log.d(TAG, "add node ${node.id}")
-        val executor = executor(node.type, context, node.properties)
+        val executor = executor(node.type, context, Properties(node.properties))
         nodes[node.id] = executor
         network?.getLinks(node.id)?.forEach {
             val key = if (it.fromNodeId == node.id) {

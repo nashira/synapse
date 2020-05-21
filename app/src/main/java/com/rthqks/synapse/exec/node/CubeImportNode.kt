@@ -6,10 +6,10 @@ import android.util.Log
 import com.rthqks.synapse.exec.Connection
 import com.rthqks.synapse.exec.ExecutionContext
 import com.rthqks.synapse.exec.NodeExecutor
+import com.rthqks.synapse.exec.Properties
 import com.rthqks.synapse.gl.Texture3d
 import com.rthqks.synapse.logic.NodeDef.CubeImport
 import com.rthqks.synapse.logic.NodeDef.CubeImport.LutUri
-import com.rthqks.synapse.logic.Properties
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch

@@ -8,11 +8,11 @@ import android.util.Log
 import android.util.Size
 import androidx.exifinterface.media.ExifInterface
 import com.rthqks.synapse.exec.ExecutionContext
+import com.rthqks.synapse.exec.Properties
 import com.rthqks.synapse.exec_dep.NodeExecutor
 import com.rthqks.synapse.exec_dep.link.*
 import com.rthqks.synapse.gl.Texture2d
 import com.rthqks.synapse.logic.NodeDef.Image.MediaUri
-import com.rthqks.synapse.logic.Properties
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import java.io.InputStream

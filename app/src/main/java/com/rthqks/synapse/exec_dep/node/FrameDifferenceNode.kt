@@ -5,10 +5,10 @@ import android.opengl.Matrix
 import android.util.Log
 import android.util.Size
 import com.rthqks.synapse.exec.ExecutionContext
+import com.rthqks.synapse.exec.Properties
 import com.rthqks.synapse.exec_dep.NodeExecutor
 import com.rthqks.synapse.exec_dep.link.*
 import com.rthqks.synapse.gl.*
-import com.rthqks.synapse.logic.Properties
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch

@@ -10,7 +10,7 @@
 //import com.rthqks.synapse.exec_dep.link.*
 //import com.rthqks.synapse.gl.*
 //import com.rthqks.synapse.logic.FrameRate
-//import com.rthqks.synapse.logic.Properties
+//import com.rthqks.synapse.exec.Properties
 //import com.rthqks.synapse.logic.VideoSize
 //import kotlinx.coroutines.CoroutineScope
 //import kotlinx.coroutines.Job

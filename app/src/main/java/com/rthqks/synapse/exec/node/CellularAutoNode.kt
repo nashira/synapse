@@ -6,11 +6,11 @@ import android.util.Size
 import com.rthqks.synapse.exec.Connection
 import com.rthqks.synapse.exec.ExecutionContext
 import com.rthqks.synapse.exec.NodeExecutor
+import com.rthqks.synapse.exec.Properties
 import com.rthqks.synapse.gl.*
 import com.rthqks.synapse.logic.NodeDef.CellAuto
 import com.rthqks.synapse.logic.NodeDef.CellAuto.FrameRate
 import com.rthqks.synapse.logic.NodeDef.CellAuto.GridSize
-import com.rthqks.synapse.logic.Properties
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch

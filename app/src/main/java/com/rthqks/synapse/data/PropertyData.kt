@@ -15,6 +15,6 @@ data class PropertyData(
     val nodeId: Int,
     val type: Int,
     val key: String,
-    val value: String?,
+    val value: String,
     val exposed: Boolean
 )

@@ -16,7 +16,6 @@ import com.rthqks.synapse.logic.NodeDef.Camera.CameraFacing
 import com.rthqks.synapse.logic.NodeDef.Camera.FrameRate
 import com.rthqks.synapse.logic.NodeDef.Camera.Stabilize
 import com.rthqks.synapse.logic.NodeDef.Camera.VideoSize
-import com.rthqks.synapse.logic.Properties
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.channels.ReceiveChannel
 import kotlinx.coroutines.launch

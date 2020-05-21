@@ -6,12 +6,8 @@ import android.media.MediaFormat
 import com.rthqks.synapse.assets.AssetManager
 import com.rthqks.synapse.assets.VideoStorage
 import com.rthqks.synapse.gl.GlesManager
-import com.rthqks.synapse.logic.Properties
-import kotlinx.coroutines.ExecutorCoroutineDispatcher
 import kotlinx.coroutines.asCoroutineDispatcher
 import java.util.concurrent.Executors
-import javax.inject.Inject
-import javax.inject.Named
 
 class ExecutionContext constructor(
     val context: Context,

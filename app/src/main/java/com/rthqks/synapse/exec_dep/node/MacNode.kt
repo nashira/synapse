@@ -10,7 +10,7 @@
 //import com.rthqks.synapse.gl.*
 //import com.rthqks.synapse.logic.AccumulateFactor
 //import com.rthqks.synapse.logic.MultiplyFactor
-//import com.rthqks.synapse.logic.Properties
+//import com.rthqks.synapse.exec.Properties
 //import kotlinx.coroutines.Job
 //import kotlinx.coroutines.isActive
 //import kotlinx.coroutines.launch

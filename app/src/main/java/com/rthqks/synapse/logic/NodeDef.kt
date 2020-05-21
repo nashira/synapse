@@ -6,31 +6,21 @@ import android.media.MediaRecorder
 import android.net.Uri
 import android.util.Size
 
-@Suppress("LeakingThis")
 sealed class NodeDef(
     val key: String
 ) {
     var ports: List<PortDef> = emptyList()
         protected set
-    var properties: Map<Property.Key<*>, Any?> = emptyMap()
+    var properties: Map<Property.Key<*>, Any> = emptyMap()
         protected set
-
-    init {
-        MAP[key] = this
-    }
-
-    fun toNode(id: Int = -1) = Node(key, id).also { n ->
-        ports.forEach { p -> n.add(Port(p.type, p.key, p.output)) }
-        properties.forEach { p -> n.properties[p.key as Property.Key<Any?>] = p.value }
-    }
 
     object Camera : NodeDef("camera") {
         val OUTPUT = PortDef(PortType.Video, "camera_out", true)
 
-        val CameraFacing = Property.Key("camera_facing", Int::class.java)
-        val VideoSize = Property.Key("video_size", Size::class.java)
-        val FrameRate = Property.Key("frame_rate", Int::class.java)
-        val Stabilize = Property.Key("stabilize", Boolean::class.java)
+        val CameraFacing = Property.Key("camera_facing", Int::class)
+        val VideoSize = Property.Key("video_size", Size::class)
+        val FrameRate = Property.Key("frame_rate", Int::class)
+        val Stabilize = Property.Key("stabilize", Boolean::class)
 
         init {
             ports = listOf(OUTPUT)
@@ -46,10 +36,10 @@ sealed class NodeDef(
     object Microphone : NodeDef("microphone") {
         val OUTPUT = PortDef(PortType.Audio, "audio_out", true)
 
-        val AudioSampleRate = Property.Key("audio_sample_rate", Int::class.java)
-        val AudioEncoding = Property.Key("audio_encoding", Int::class.java)
-        val AudioChannel = Property.Key("audio_channel", Int::class.java)
-        val AudioSource = Property.Key("audio_source", Int::class.java)
+        val AudioSampleRate = Property.Key("audio_sample_rate", Int::class)
+        val AudioEncoding = Property.Key("audio_encoding", Int::class)
+        val AudioChannel = Property.Key("audio_channel", Int::class)
+        val AudioSource = Property.Key("audio_source", Int::class)
 
         init {
             ports = listOf(OUTPUT)
@@ -57,7 +47,7 @@ sealed class NodeDef(
                 AudioSampleRate to 44100,
                 AudioEncoding to AudioFormat.ENCODING_PCM_16BIT,
                 AudioChannel to AudioFormat.CHANNEL_IN_DEFAULT,
-                AudioSource to  MediaRecorder.AudioSource.DEFAULT
+                AudioSource to MediaRecorder.AudioSource.DEFAULT
             )
         }
     }
@@ -65,7 +55,7 @@ sealed class NodeDef(
     object MediaDecoder : NodeDef("media_decoder") {
         val AUDIO_OUT = PortDef(PortType.Audio, "audio_out", true)
         val VIDEO_OUT = PortDef(PortType.Video, "video_out", true)
-        val MediaUri = Property.Key("media_uri", Uri::class.java)
+        val MediaUri = Property.Key("media_uri", Uri::class)
 
         init {
             ports = listOf(AUDIO_OUT, VIDEO_OUT)
@@ -92,7 +82,7 @@ sealed class NodeDef(
         val INPUT = PortDef(PortType.Video, "crop_in", false)
         val OUTPUT = PortDef(PortType.Video, "crop_out", true)
 
-        val CropSize = Property.Key("crop_size", Size::class.java)
+        val CropSize = Property.Key("crop_size", Size::class)
 
         init {
             ports = listOf(INPUT, OUTPUT)
@@ -106,11 +96,11 @@ sealed class NodeDef(
         val INPUT = PortDef(PortType.Video, "cgb_in", false)
         val OUTPUT = PortDef(PortType.Video, "cgb_out", true)
 
-        val CropSize = Property.Key("crop_size", Size::class.java)
-        val BlurSize = Property.Key("blur_size", Int::class.java)
-        val NumPasses = Property.Key("num_passes", Int::class.java)
-        val CropEnabled = Property.Key("crop_enabled", Boolean::class.java)
-        val GrayEnabled = Property.Key("gray_enabled", Boolean::class.java)
+        val CropSize = Property.Key("crop_size", Size::class)
+        val BlurSize = Property.Key("blur_size", Int::class)
+        val NumPasses = Property.Key("num_passes", Int::class)
+        val CropEnabled = Property.Key("crop_enabled", Boolean::class)
+        val GrayEnabled = Property.Key("gray_enabled", Boolean::class)
 
         init {
             ports = listOf(INPUT, OUTPUT)
@@ -126,7 +116,7 @@ sealed class NodeDef(
 
     object Image : NodeDef("image") {
         val OUTPUT = PortDef(PortType.Video, "image_out", true)
-        val MediaUri = Property.Key("media_uri", Uri::class.java)
+        val MediaUri = Property.Key("media_uri", Uri::class)
 
         init {
             ports = listOf(OUTPUT)
@@ -145,7 +135,7 @@ sealed class NodeDef(
         val LUT_IN = PortDef(PortType.Texture3D, "lut_in", false)
         val MATRIX_IN = PortDef(PortType.Matrix, "matrix_in", false)
         val OUTPUT = PortDef(PortType.Video, "output", true)
-        val LutStrength = Property.Key("lut_strength", Float::class.java)
+        val LutStrength = Property.Key("lut_strength", Float::class)
 
         init {
             ports = listOf(SOURCE_IN, LUT_IN, MATRIX_IN, OUTPUT)
@@ -181,8 +171,8 @@ sealed class NodeDef(
         val BLEND_IN = PortDef(PortType.Video, "blend_in", false)
         val OUTPUT = PortDef(PortType.Video, "output", true)
 
-        val BlendMode = Property.Key("blend_mode", Int::class.java)
-        val Opacity = Property.Key("opacity", Float::class.java)
+        val BlendMode = Property.Key("blend_mode", Int::class)
+        val Opacity = Property.Key("opacity", Float::class)
 
         init {
             ports = listOf(BASE_IN, BLEND_IN, OUTPUT)
@@ -195,7 +185,7 @@ sealed class NodeDef(
 
     object CubeImport : NodeDef("cube_import") {
         val OUTPUT = PortDef(PortType.Texture3D, "cube_out", true)
-        val LutUri = Property.Key("lut_uri", Uri::class.java)
+        val LutUri = Property.Key("lut_uri", Uri::class)
 
         init {
             ports = listOf(OUTPUT)
@@ -207,7 +197,7 @@ sealed class NodeDef(
 
     object BCubeImport : NodeDef("bcube_import") {
         val OUTPUT = PortDef(PortType.Texture3D, "bcube_out", true)
-        val LutUri = Property.Key("lut_uri", Uri::class.java)
+        val LutUri = Property.Key("lut_uri", Uri::class)
 
         init {
             ports = listOf(OUTPUT)
@@ -224,7 +214,7 @@ sealed class NodeDef(
     object RingBuffer : NodeDef("ring_buffer") {
         val INPUT = PortDef(PortType.Video, "rb_input", false)
         val OUTPUT = PortDef(PortType.Texture3D, "rb_output", true)
-        val Depth = Property.Key("depth", Int::class.java)
+        val Depth = Property.Key("depth", Int::class)
 
         init {
             ports = listOf(INPUT, OUTPUT)
@@ -237,7 +227,7 @@ sealed class NodeDef(
     object Slice3d : NodeDef("slice_3d") {
         val INPUT = PortDef(PortType.Texture3D, "slice_input", false)
         val OUTPUT = PortDef(PortType.Video, "slice_output", true)
-        val SliceDirection = Property.Key("slice_direction", Int::class.java)
+        val SliceDirection = Property.Key("slice_direction", Int::class)
 
         init {
             ports = listOf(INPUT, OUTPUT)
@@ -250,9 +240,9 @@ sealed class NodeDef(
     object MediaEncoder : NodeDef("media_encoder") {
         val VIDEO_IN = PortDef(PortType.Video, "video_in", false)
         val AUDIO_IN = PortDef(PortType.Audio, "audio_in", false)
-        val Rotation = Property.Key("rotation", Int::class.java)
-        val FrameRate = Property.Key("frame_rate", Int::class.java)
-        val Recording = Property.Key("recording", Boolean::class.java)
+        val Rotation = Property.Key("rotation", Int::class)
+        val FrameRate = Property.Key("frame_rate", Int::class)
+        val Recording = Property.Key("recording", Boolean::class)
 
         init {
             ports = listOf(AUDIO_IN, VIDEO_IN)
@@ -266,8 +256,8 @@ sealed class NodeDef(
 
     object RotateMatrix : NodeDef("matrix_rotate") {
         val OUTPUT = PortDef(PortType.Matrix, "matrix_out", true)
-        val Speed = Property.Key("speed", Float::class.java)
-        val FrameRate = Property.Key("frame_rate", Int::class.java)
+        val Speed = Property.Key("speed", Float::class)
+        val FrameRate = Property.Key("frame_rate", Int::class)
 
         init {
             ports = listOf(OUTPUT)
@@ -288,8 +278,8 @@ sealed class NodeDef(
 
     object CellAuto : NodeDef("cellular_automaton") {
         val OUTPUT = PortDef(PortType.Video, "cell_out", true)
-        val FrameRate = Property.Key("frame_rate", Int::class.java)
-        val GridSize = Property.Key("grid_size", Size::class.java)
+        val FrameRate = Property.Key("frame_rate", Int::class)
+        val GridSize = Property.Key("grid_size", Size::class)
 
         init {
             ports = listOf(OUTPUT)
@@ -303,7 +293,7 @@ sealed class NodeDef(
     object Quantizer : NodeDef("quantizer") {
         val INPUT = PortDef(PortType.Video, "q_input", false)
         val OUTPUT = PortDef(PortType.Video, "q_output", true)
-        val NumElements = Property.Key("num_elements", FloatArray::class.java)
+        val NumElements = Property.Key("num_elements", FloatArray::class)
 
         init {
             ports = listOf(INPUT, OUTPUT)
@@ -323,7 +313,33 @@ sealed class NodeDef(
     }
 
     companion object {
-        private val MAP = mutableMapOf<String, NodeDef>()
+        private val MAP = mapOf<String, NodeDef>(
+            Camera.key to Camera,
+            Microphone.key to Microphone,
+            MediaDecoder.key to MediaDecoder,
+            FrameDifference.key to FrameDifference,
+            MultiplyAccumulate.key to MultiplyAccumulate,
+            CropResize.key to CropResize,
+            CropGrayBlur.key to CropGrayBlur,
+            Image.key to Image,
+            Lut2d.key to Lut2d,
+            Lut3d.key to Lut3d,
+            Speakers.key to Speakers,
+            Screen.key to Screen,
+            SlimeMold.key to SlimeMold,
+            ImageBlend.key to ImageBlend,
+            CubeImport.key to CubeImport,
+            BCubeImport.key to BCubeImport,
+            Shape.key to Shape,
+            RingBuffer.key to RingBuffer,
+            Slice3d.key to Slice3d,
+            MediaEncoder.key to MediaEncoder,
+            RotateMatrix.key to RotateMatrix,
+            TextureView.key to TextureView,
+            CellAuto.key to CellAuto,
+            Quantizer.key to Quantizer,
+            Sobel.key to Sobel
+        )
 
         operator fun get(key: String) = MAP[key] ?: error("unknown node type: $key")
     }

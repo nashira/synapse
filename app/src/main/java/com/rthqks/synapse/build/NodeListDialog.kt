@@ -53,7 +53,7 @@ class NodeListDialog : DialogFragment() {
     inner class NodeAdapter: RecyclerView.Adapter<NodeHolder>() {
         private val nodes = mutableListOf<Node>()
 
-        fun setNodes(nodes: List<Node>) {
+        fun setNodes(nodes: Collection<Node>) {
             this.nodes.clear()
             this.nodes.addAll(nodes)
             notifyDataSetChanged()

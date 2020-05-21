@@ -211,8 +211,10 @@ class PolishActivity : DaggerAppCompatActivity() {
             behavior.state = BottomSheetBehavior.STATE_HIDDEN
         }
 
+
+
         lut_strength.max = 1000
-        lut_strength.progress = (viewModel.properties[LutStrength] * 1000).toInt()
+        lut_strength.progress = (viewModel.getLutStrength() * 1000).toInt()
         lut_strength.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
             override fun onProgressChanged(seekBar: SeekBar?, progress: Int, fromUser: Boolean) {
                 viewModel.setLutStrength(progress / 1000f)
@@ -407,7 +409,7 @@ class PolishActivity : DaggerAppCompatActivity() {
 private data class Permission(val name: String, val granted: Boolean, val showRationale: Boolean)
 
 private class EffectAdapter(
-    private val onClick: (Property<*>) -> Unit
+    private val onClick: (Property) -> Unit
 ) : RecyclerView.Adapter<EffectViewHolder>() {
     private var effects: List<Network> = emptyList()
 
@@ -433,7 +435,7 @@ private class EffectAdapter(
 
 private class EffectViewHolder(
     itemView: View,
-    onClick: (Property<*>) -> Unit
+    onClick: (Property) -> Unit
 ) : RecyclerView.ViewHolder(itemView) {
     private val nameView = itemView.name
     private val settingsList = itemView.settings_list

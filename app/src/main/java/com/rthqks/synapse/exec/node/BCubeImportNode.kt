@@ -5,10 +5,10 @@ import android.opengl.GLES30
 import com.rthqks.synapse.exec.Connection
 import com.rthqks.synapse.exec.ExecutionContext
 import com.rthqks.synapse.exec.NodeExecutor
+import com.rthqks.synapse.exec.Properties
 import com.rthqks.synapse.gl.Texture3d
 import com.rthqks.synapse.logic.NodeDef.BCubeImport
 import com.rthqks.synapse.logic.NodeDef.BCubeImport.LutUri
-import com.rthqks.synapse.logic.Properties
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
@@ -111,14 +111,6 @@ class BCubeImportNode(
     override suspend fun <T> onDisconnect(key: Connection.Key<T>, producer: Boolean) {
         if (key == OUTPUT && !linked(OUTPUT)) {
             onStop()
-        }
-    }
-
-    private suspend fun onStart() {
-        for (change in properties.channel()) {
-            if (change.key == LutUri) {
-
-            }
         }
     }
 

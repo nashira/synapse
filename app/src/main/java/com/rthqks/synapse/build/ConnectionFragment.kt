@@ -14,7 +14,6 @@ import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.rthqks.synapse.R
 import com.rthqks.synapse.logic.Connector
-import com.rthqks.synapse.logic.Network
 import dagger.android.support.DaggerFragment
 import kotlinx.android.synthetic.main.fragment_connection.*
 import kotlinx.android.synthetic.main.layout_connection.view.*
@@ -189,12 +188,12 @@ class ConnectionAdapter(
         init {
             surfaceView.setOnClickListener {
                 item?.let {
-                    val node = it.connector.node.let {
-                        if (it.id >= Network.COPY_ID_SKIP)
-                            it.copy(id = -1)
-                        else
-                            it
-                    }
+//                    val node = it.connector.node.let {
+//                        if (it.id >= Network.COPY_ID_SKIP)
+//                            it.copy(id = -1)
+//                        else
+//                            it
+//                    }
 
 //                    viewModel.completeConnection(
 //                        Connector(node, it.connector.port)

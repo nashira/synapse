@@ -2,11 +2,9 @@ package com.rthqks.synapse.polish
 
 import android.content.Context
 import android.graphics.SurfaceTexture
-import android.hardware.camera2.CameraCharacteristics
 import android.net.Uri
 import android.os.SystemClock
 import android.util.Log
-import android.util.Size
 import android.view.SurfaceView
 import android.view.TextureView
 import android.widget.TextView
@@ -20,15 +18,11 @@ import com.rthqks.synapse.data.PropertyData
 import com.rthqks.synapse.data.SynapseDao
 import com.rthqks.synapse.effect.EffectExecutor
 import com.rthqks.synapse.exec.ExecutionContext
-import com.rthqks.synapse.logic.*
+import com.rthqks.synapse.logic.Network
 import com.rthqks.synapse.logic.NodeDef.BCubeImport.LutUri
-import com.rthqks.synapse.logic.NodeDef.Camera.CameraFacing
-import com.rthqks.synapse.logic.NodeDef.Camera.FrameRate
-import com.rthqks.synapse.logic.NodeDef.Camera.Stabilize
-import com.rthqks.synapse.logic.NodeDef.Camera.VideoSize
-import com.rthqks.synapse.logic.NodeDef.Lut3d.LutStrength
-import com.rthqks.synapse.logic.NodeDef.MediaEncoder.Recording
-import com.rthqks.synapse.logic.NodeDef.MediaEncoder.Rotation
+import com.rthqks.synapse.logic.Property
+import com.rthqks.synapse.logic.SyncLogic
+import com.rthqks.synapse.logic.toNetwork
 import com.rthqks.synapse.ops.Analytics
 import kotlinx.coroutines.*
 import javax.inject.Inject
@@ -43,6 +37,7 @@ class PolishViewModel @Inject constructor(
 ) : ViewModel() {
     val effects = MediatorLiveData<List<Network>>()
     val deviceSupported = MutableLiveData<Boolean>()
+    var baseNetwork: Network? = null
     var currentEffect: Network? = null
     private var recordingStart = 0L
     private val recordingDuration: Long get() = SystemClock.elapsedRealtime() - recordingStart
@@ -50,27 +45,19 @@ class PolishViewModel @Inject constructor(
     private var stopped = true
     private var needsNewContext = false
     private var context = ExecutionContext(contxt, videoStorage, assetManager)
-    private var effectExecutor = EffectExecutor(context)
+    private lateinit var effectExecutor: EffectExecutor
     private var surfaceView: SurfaceView? = null
 
-    val properties = Properties()
-
     init {
-        properties[CameraFacing] = CameraCharacteristics.LENS_FACING_BACK
-        properties[FrameRate] = 30
-        properties[VideoSize] = Size(1280, 720)
-        properties[Stabilize] = true
-        properties[Recording] = false
-        properties[Rotation] = 0
-        properties[LutUri] = Uri.parse("assets:///cube/identity.bcube")
-        properties[LutStrength] = 1f
-
         viewModelScope.launch {
-            withContext(Dispatchers.IO) {
-                dao.getProperties(0).forEach { properties.fromString(it.type, it.key, it.value) }
+            baseNetwork = withContext(Dispatchers.IO) {
+                if (!dao.hasNetwork0()) {
+                    syncLogic.refreshEffects()
+                }
+                syncLogic.getNetwork(100)
             }
-
-            effectExecutor.setup(properties)
+            effectExecutor = EffectExecutor(context, baseNetwork!!)
+            effectExecutor.setup()
             deviceSupported.value = context.glesManager.supportedDevice
         }
     }
@@ -80,9 +67,14 @@ class PolishViewModel @Inject constructor(
         needsNewContext = false
         svSetup = false
         context = ExecutionContext(contxt, videoStorage, assetManager)
-        effectExecutor = EffectExecutor(context)
+
         viewModelScope.launch {
-            effectExecutor.setup(properties)
+//            baseNetwork = withContext(Dispatchers.IO) {
+//                syncLogic.getNetwork(0)
+//            }
+
+            effectExecutor = EffectExecutor(context, baseNetwork!!)
+            effectExecutor.setup()
             effectExecutor.initializeEffect()
             currentEffect?.let { setEffect(it) }
         }
@@ -91,7 +83,6 @@ class PolishViewModel @Inject constructor(
     fun initializeEffect() {
         viewModelScope.launch(Dispatchers.IO) {
             effectExecutor.initializeEffect()
-            syncLogic.refreshEffects()
             val networks = dao.getNetworks().map { it.toNetwork() }
             effects.postValue(networks)
         }
@@ -110,37 +101,44 @@ class PolishViewModel @Inject constructor(
     }
 
     fun flipCamera() {
-        val facing = currentEffect?.let {
-            val facing = when (properties[CameraFacing]) {
-                CameraCharacteristics.LENS_FACING_BACK ->
-                    CameraCharacteristics.LENS_FACING_FRONT
-                CameraCharacteristics.LENS_FACING_FRONT ->
-                    CameraCharacteristics.LENS_FACING_BACK
-                else -> CameraCharacteristics.LENS_FACING_BACK
+//        val facing = currentEffect?.let {
+//            val facing = when (properties[CameraFacing]) {
+//                CameraCharacteristics.LENS_FACING_BACK ->
+//                    CameraCharacteristics.LENS_FACING_FRONT
+//                CameraCharacteristics.LENS_FACING_FRONT ->
+//                    CameraCharacteristics.LENS_FACING_BACK
+//                else -> CameraCharacteristics.LENS_FACING_BACK
+//            }
+//            properties[CameraFacing] = facing
+//            facing
+//        }
+//        val string = if (facing == 0) "front" else "back"
+//        analytics.logEvent(Analytics.Event.EditSetting(CameraFacing.name, string))
+    }
+
+    fun startExecution() {
+        currentEffect ?: return
+
+        viewModelScope.launch {
+            if (stopped) {
+                stopped = false
+                Log.d(TAG, "resume")
+
+                effectExecutor.resume()
             }
-            properties[CameraFacing] = facing
-            facing
-        }
-        val string = if (facing == 0) "front" else "back"
-        analytics.logEvent(Analytics.Event.EditSetting(CameraFacing.name, string))
-    }
-
-    fun startExecution() = viewModelScope.launch {
-        if (stopped) {
-            stopped = false
-            Log.d(TAG, "resume")
-
-            effectExecutor.resume()
         }
     }
 
-    fun stopExecution() = viewModelScope.launch {
-        if (!stopped) {
-            stopped = true
-            Log.d(TAG, "pause")
+    fun stopExecution() {
+        currentEffect ?: return
+        viewModelScope.launch {
+            if (!stopped) {
+                stopped = true
+                Log.d(TAG, "pause")
 
-            properties[Recording] = false
-            effectExecutor.pause()
+//            properties[Recording] = false
+                effectExecutor.pause()
+            }
         }
     }
 
@@ -148,7 +146,7 @@ class PolishViewModel @Inject constructor(
         val effectName = currentEffect?.name ?: "unknown"
         analytics.logEvent(Analytics.Event.RecordStart(effectName))
         recordingStart = SystemClock.elapsedRealtime()
-        properties[Recording] = true
+//        properties[Recording] = true
     }
 
     fun stopRecording() {
@@ -159,30 +157,30 @@ class PolishViewModel @Inject constructor(
                 SystemClock.elapsedRealtime() - recordingStart
             )
         )
-        properties[Recording] = false
+//        properties[Recording] = false
     }
 
-    fun <T> editProperty(
+    fun <T: Any> editProperty(
         key: Property.Key<T>,
         value: T
     ) {
-        properties[key] = value
-        val property = properties.getProperty(key)!!
-        val type = property.getType()
-        val string = property.getString()
-        analytics.logEvent(Analytics.Event.EditSetting(key.name, string))
-
-        viewModelScope.launch(Dispatchers.IO) {
-            dao.insertProperty(
-                PropertyData(
-                    0, 0,
-                    type,
-                    key.name,
-                    string,
-                    property.exposed
-                )
-            )
-        }
+//        properties[key] = value
+//        val property = properties.getProperty(key)!!
+//        val type = property.getType()
+//        val string = property.getString()
+//        analytics.logEvent(Analytics.Event.EditSetting(key.name, string))
+//
+//        viewModelScope.launch(Dispatchers.IO) {
+//            dao.insertProperty(
+//                PropertyData(
+//                    0, 0,
+//                    type,
+//                    key.name,
+//                    string,
+//                    property.exposed
+//                )
+//            )
+//        }
     }
 
     fun setEffect(effect: Network): Boolean {
@@ -213,7 +211,7 @@ class PolishViewModel @Inject constructor(
     }
 
     fun setDeviceOrientation(orientation: Int) {
-        properties[Rotation] = orientation
+//        properties[Rotation] = orientation
     }
 
     fun setLut(lut: String) {
@@ -245,18 +243,19 @@ class PolishViewModel @Inject constructor(
     }
 
     fun setLutStrength(strength: Float) {
-        properties[LutStrength] = strength
+//        properties[LutStrength] = strength
     }
 
-    fun setEffectProperty(property: Property<*>) {
+    fun setEffectProperty(property: Property) {
         currentEffect?.let {
             viewModelScope.launch(Dispatchers.IO) {
                 dao.insertProperty(
                     PropertyData(
-                        it.id, 0,
-                        property.getType(),
+                        property.networkId,
+                        property.nodeId,
+                        property.type,
                         property.key.name,
-                        property.getString(),
+                        property.stringValue,
                         property.exposed
                     )
                 )
@@ -286,6 +285,8 @@ class PolishViewModel @Inject constructor(
             }
         }
     }
+
+    fun getLutStrength(): Float = effectExecutor.getLutStrength()
 
     companion object {
         const val TAG = "PolishViewModel"

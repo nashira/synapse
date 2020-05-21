@@ -17,7 +17,7 @@ enum class PropertyType {
     INT_RANGE
 }
 
-data class Choice<T>(val item: T, @StringRes val label: Int, @DrawableRes val icon: Int)
+data class Choice<T: Any>(val item: T, @StringRes val label: Int, @DrawableRes val icon: Int)
 
 //class ValueHolder<T>(
 //    @StringRes title: Int,
@@ -35,7 +35,7 @@ data class Choice<T>(val item: T, @StringRes val label: Int, @DrawableRes val ic
 //    @DrawableRes icon: Int
 //) : PropertyHolder<String>(title, icon)
 
-class ChoiceUi<T>(
+class ChoiceUi<T: Any>(
     @StringRes title: Int,
     @DrawableRes icon: Int,
     type: PropertyType,
@@ -55,19 +55,19 @@ class IntRangeUi(
     val range: IntRange
 ) : PropertyUi<Int>(title, icon, PropertyType.INT_RANGE)
 
-fun <T> expandedUi(
+fun <T: Any> expandedUi(
     @StringRes title: Int,
     @DrawableRes icon: Int,
     vararg choices: Choice<T>
 ) = ChoiceUi(title, icon, PropertyType.EXPANDED, choices.toList())
 
-fun <T> toggleUi(
+fun <T: Any> toggleUi(
     @StringRes title: Int,
     @DrawableRes icon: Int,
     vararg choices: Choice<T>
 ) = ChoiceUi(title, icon, PropertyType.TOGGLE, choices.toList())
 
-fun <T> menuUi(
+fun <T: Any> menuUi(
     @StringRes title: Int,
     @DrawableRes icon: Int,
     vararg choices: Choice<T>
