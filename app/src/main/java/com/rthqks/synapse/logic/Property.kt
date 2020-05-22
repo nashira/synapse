@@ -55,7 +55,6 @@ data class Property(
         }
 
         fun <T: Any> getString(klass: KClass<T>, value: Any): String {
-//        if (key !in properties) return ""
             return when (klass) {
                 Size::class -> {
                     val p = value as Size

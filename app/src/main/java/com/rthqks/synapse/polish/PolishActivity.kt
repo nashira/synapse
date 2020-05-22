@@ -223,7 +223,7 @@ class PolishActivity : DaggerAppCompatActivity() {
             override fun onStartTrackingTouch(seekBar: SeekBar?) {}
 
             override fun onStopTrackingTouch(seekBar: SeekBar?) {
-                viewModel.editProperty(LutStrength, lut_strength.progress / 1000f)
+                viewModel.editProperty(EffectExecutor.ID_LUT, LutStrength, lut_strength.progress / 1000f)
             }
         })
 

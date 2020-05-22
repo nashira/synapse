@@ -227,6 +227,9 @@ class EffectExecutor(
 
     fun getLutStrength(): Float = n.getPropertyValue(ID_LUT, LutStrength)
 
+    fun getProperty(nodeId: Int, key: String) = n.getProperty(nodeId, key)
+    fun <T: Any> setProperty(nodeId: Int, key: Property.Key<T>, value: T) = n.setProperty(nodeId, key, value)
+
     private inner class LutPreview {
         lateinit var cube: Node
         lateinit var lut: Node

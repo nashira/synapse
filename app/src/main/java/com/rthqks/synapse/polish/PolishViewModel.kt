@@ -2,6 +2,7 @@ package com.rthqks.synapse.polish
 
 import android.content.Context
 import android.graphics.SurfaceTexture
+import android.hardware.camera2.CameraCharacteristics
 import android.net.Uri
 import android.os.SystemClock
 import android.util.Log
@@ -21,6 +22,10 @@ import com.rthqks.synapse.effect.EffectExecutor
 import com.rthqks.synapse.exec.ExecutionContext
 import com.rthqks.synapse.logic.Network
 import com.rthqks.synapse.logic.NodeDef.BCubeImport.LutUri
+import com.rthqks.synapse.logic.NodeDef.Camera.CameraFacing
+import com.rthqks.synapse.logic.NodeDef.Lut3d.LutStrength
+import com.rthqks.synapse.logic.NodeDef.MediaEncoder.Recording
+import com.rthqks.synapse.logic.NodeDef.MediaEncoder.Rotation
 import com.rthqks.synapse.logic.Property
 import com.rthqks.synapse.logic.SyncLogic
 import com.rthqks.synapse.logic.toNetwork
@@ -71,9 +76,6 @@ class PolishViewModel @Inject constructor(
         viewModelScope.launch {
             effectExecutor.setup()
             effectExecutor.initializeEffect()
-            if (!stopped) {
-                effectExecutor.resume()
-            }
             currentEffect?.let { setEffect(it) }
         }
     }
@@ -109,19 +111,16 @@ class PolishViewModel @Inject constructor(
     }
 
     fun flipCamera() {
-//        val facing = currentEffect?.let {
-//            val facing = when (properties[CameraFacing]) {
-//                CameraCharacteristics.LENS_FACING_BACK ->
-//                    CameraCharacteristics.LENS_FACING_FRONT
-//                CameraCharacteristics.LENS_FACING_FRONT ->
-//                    CameraCharacteristics.LENS_FACING_BACK
-//                else -> CameraCharacteristics.LENS_FACING_BACK
-//            }
-//            properties[CameraFacing] = facing
-//            facing
-//        }
-//        val string = if (facing == 0) "front" else "back"
-//        analytics.logEvent(Analytics.Event.EditSetting(CameraFacing.name, string))
+        val facing =
+            effectExecutor.getProperty(EffectExecutor.ID_CAMERA, CameraFacing.name)
+        val new = when (facing.value) {
+            CameraCharacteristics.LENS_FACING_BACK ->
+                CameraCharacteristics.LENS_FACING_FRONT
+            CameraCharacteristics.LENS_FACING_FRONT ->
+                CameraCharacteristics.LENS_FACING_BACK
+            else -> CameraCharacteristics.LENS_FACING_BACK
+        }
+        editProperty(EffectExecutor.ID_CAMERA, CameraFacing, new)
     }
 
     fun startExecution() {
@@ -141,7 +140,7 @@ class PolishViewModel @Inject constructor(
             Log.d(TAG, "pause")
             currentEffect ?: return
             viewModelScope.launch {
-//            properties[Recording] = false
+                effectExecutor.setProperty(EffectExecutor.ID_ENCODER, Recording,  false)
                 effectExecutor.pause()
             }
         }
@@ -151,7 +150,7 @@ class PolishViewModel @Inject constructor(
         val effectName = currentEffect?.name ?: "unknown"
         analytics.logEvent(Analytics.Event.RecordStart(effectName))
         recordingStart = SystemClock.elapsedRealtime()
-//        properties[Recording] = true
+        effectExecutor.setProperty(EffectExecutor.ID_ENCODER, Recording,  true)
     }
 
     fun stopRecording() {
@@ -162,30 +161,31 @@ class PolishViewModel @Inject constructor(
                 SystemClock.elapsedRealtime() - recordingStart
             )
         )
-//        properties[Recording] = false
+        effectExecutor.setProperty(EffectExecutor.ID_ENCODER, Recording,  false)
     }
 
     fun <T : Any> editProperty(
+        nodeId: Int,
         key: Property.Key<T>,
         value: T
     ) {
-//        properties[key] = value
-//        val property = properties.getProperty(key)!!
-//        val type = property.getType()
-//        val string = property.getString()
-//        analytics.logEvent(Analytics.Event.EditSetting(key.name, string))
-//
-//        viewModelScope.launch(Dispatchers.IO) {
-//            dao.insertProperty(
-//                PropertyData(
-//                    0, 0,
-//                    type,
-//                    key.name,
-//                    string,
-//                    property.exposed
-//                )
-//            )
-//        }
+        val property = effectExecutor.getProperty(nodeId, key.name)
+        property.value = value
+        val type = property.type
+        val string = property.stringValue
+        analytics.logEvent(Analytics.Event.EditSetting(key.name, string))
+
+        viewModelScope.launch(Dispatchers.IO) {
+            dao.insertProperty(
+                PropertyData(
+                    BaseEffectId, property.nodeId,
+                    type,
+                    key.name,
+                    string,
+                    property.exposed
+                )
+            )
+        }
     }
 
     fun setEffect(effect: Network): Boolean {
@@ -216,13 +216,13 @@ class PolishViewModel @Inject constructor(
     }
 
     fun setDeviceOrientation(orientation: Int) {
-//        properties[Rotation] = orientation
+        effectExecutor.setProperty(EffectExecutor.ID_ENCODER, Rotation, orientation)
     }
 
     fun setLut(lut: String) {
         viewModelScope.launch {
             val uri = Uri.parse("assets:///cube/$lut.bcube")
-            editProperty(LutUri, uri)
+            editProperty(EffectExecutor.ID_LUT_IMPORT, LutUri, uri)
             effectExecutor.setLut(lut)
         }
     }
@@ -247,8 +247,10 @@ class PolishViewModel @Inject constructor(
         effectExecutor.unregisterLutPreview(surfaceTexture)
     }
 
+    fun getLutStrength(): Float = effectExecutor.getLutStrength()
+
     fun setLutStrength(strength: Float) {
-//        properties[LutStrength] = strength
+        effectExecutor.setProperty(EffectExecutor.ID_LUT, LutStrength, strength)
     }
 
     fun setEffectProperty(property: Property) {
@@ -290,8 +292,6 @@ class PolishViewModel @Inject constructor(
             }
         }
     }
-
-    fun getLutStrength(): Float = effectExecutor.getLutStrength()
 
     companion object {
         const val TAG = "PolishViewModel"
