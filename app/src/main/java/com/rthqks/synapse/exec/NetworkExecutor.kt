@@ -32,7 +32,11 @@ open class NetworkExecutor(context: ExecutionContext) : Executor(context) {
     open suspend fun resume() = await {
         isResumed = true
         nodes.map {
-            scope.launch { it.value.resume() }
+            scope.launch {
+                Log.d(TAG, "resuming: ${it.key}")
+                it.value.resume()
+                Log.d(TAG, "resumed: ${it.key}")
+            }
         }.joinAll()
     }
 
@@ -42,17 +46,17 @@ open class NetworkExecutor(context: ExecutionContext) : Executor(context) {
         Log.d(TAG, "add node ${node.id}")
         val executor = executor(node.type, context, Properties(node.properties))
         nodes[node.id] = executor
-        network?.getLinks(node.id)?.forEach {
-            val key = if (it.fromNodeId == node.id) {
-                Connection.Key<Any?>(it.fromPortId)
-            } else {
-                Connection.Key(it.toPortId)
-            }
-            executor.setLinked(key)
-            if (it.inCycle) {
-                executor.setCycle(key)
-            }
-        }
+//        network?.getLinks(node.id)?.forEach {
+//            val key = if (it.fromNodeId == node.id) {
+//                Connection.Key<Any?>(it.fromPortId)
+//            } else {
+//                Connection.Key(it.toPortId)
+//            }
+//            executor.setLinked(key)
+//            if (it.inCycle) {
+//                executor.setCycle(key)
+//            }
+//        }
         executor.setup()
         if (isResumed) {
             executor.resume()
@@ -74,6 +78,9 @@ open class NetworkExecutor(context: ExecutionContext) : Executor(context) {
         val toKey = Connection.Key<Any?>(link.toPortId)
 
         Log.d(TAG, "add link $link")
+
+        fromNode.setLinked(fromKey)
+        toNode.setLinked(toKey)
 
         val channel = fromNode.getConsumer(fromKey)
         toNode.startConsumer(toKey, channel as ReceiveChannel<Message<Any?>>)
@@ -133,7 +140,7 @@ open class NetworkExecutor(context: ExecutionContext) : Executor(context) {
         context.release()
     }
 
-    suspend fun removeAll() = await {
+    open suspend fun removeAll() = await {
         removeAllLinks()
         removeAllNodes()
     }

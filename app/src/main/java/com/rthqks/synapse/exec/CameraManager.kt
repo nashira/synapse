@@ -13,6 +13,7 @@ import android.util.Size
 import android.view.Surface
 import android.view.WindowManager
 import kotlinx.coroutines.CompletableDeferred
+import java.util.concurrent.ConcurrentHashMap
 
 
 class CameraManager(
@@ -103,6 +104,8 @@ class Camera(
     private val cameraMap: Map<String, CameraCharacteristics>,
     private val handler: Handler
 ) {
+    val TAG = "*cam* ${this.toString().substring(8)}"
+
     private var openDeferred: CompletableDeferred<Boolean>? = null
     private var closeDeferred: CompletableDeferred<Boolean>? = null
     private var sessionReadyDeferred: CompletableDeferred<Boolean>? = null
@@ -115,21 +118,26 @@ class Camera(
     private val cameraCallback = object : CameraDevice.StateCallback() {
 
         override fun onOpened(camera: CameraDevice) {
+            Log.d(TAG, "onOpened")
             this@Camera.camera = camera
             openDeferred?.complete(true)
         }
 
         override fun onDisconnected(camera: CameraDevice) {
+            Log.d(TAG, "onDisconnected")
             openDeferred?.complete(false)
             camera.close()
         }
 
         override fun onError(camera: CameraDevice, error: Int) {
+            Log.d(TAG, "onError")
             openDeferred?.complete(false)
             this@Camera.camera = null
         }
 
         override fun onClosed(camera: CameraDevice) {
+            Log.d(TAG, "onClosed")
+            sessionClosedDeferred?.complete(true)
             closeDeferred?.complete(true)
             this@Camera.camera = null
         }
@@ -158,20 +166,27 @@ class Camera(
     @SuppressLint("MissingPermission")
     suspend fun open(cameraId: String) {
         Log.d(TAG, "open")
+        // hack to close any currently open camera before attempting to open
+        CAMS.remove(cameraId)?.close()
+
         openDeferred = CompletableDeferred()
         closeDeferred = CompletableDeferred()
         cameraManager.openCamera(cameraId, cameraCallback, handler)
         openDeferred?.await()
         openDeferred = null
+
+        CAMS[cameraId] = this
     }
 
     suspend fun close() {
         Log.d(TAG, "close")
         camera?.close()
+        camera?.let { CAMS.remove(it.id) }
         camera = null
         requestBuilder = null
         closeDeferred?.await()
         closeDeferred = null
+
     }
 
     suspend fun openSession(surface: Surface) {
@@ -195,7 +210,7 @@ class Camera(
 
     suspend fun startRequest(conf: CameraManager.Conf) {
         Log.d(TAG, "startRequest")
-        getRequest(conf)?.let {
+        createRequest(conf)?.let {
             session?.setRepeatingRequest(it, null, null)
         }
     }
@@ -208,7 +223,7 @@ class Camera(
         sessionReadyDeferred = null
     }
 
-    private fun getRequest(conf: CameraManager.Conf): CaptureRequest? {
+    private fun createRequest(conf: CameraManager.Conf): CaptureRequest? {
         requestBuilder?.also {
             it.set(
                 CaptureRequest.CONTROL_CAPTURE_INTENT,
@@ -236,6 +251,6 @@ class Camera(
     }
 
     companion object {
-        const val TAG = "*cam*"
+        val CAMS = ConcurrentHashMap<String, Camera>()
     }
 }

@@ -12,7 +12,6 @@ import android.view.View
 import androidx.fragment.app.DialogFragment
 import androidx.lifecycle.ViewModelProvider
 import com.rthqks.synapse.R
-import com.rthqks.synapse.effect.EffectExecutor
 import com.rthqks.synapse.exec.Properties
 import com.rthqks.synapse.logic.NodeDef.Camera.FrameRate
 import com.rthqks.synapse.logic.NodeDef.Camera.Stabilize

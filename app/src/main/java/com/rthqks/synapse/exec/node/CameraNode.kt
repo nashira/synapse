@@ -49,10 +49,6 @@ class CameraNode(
     private val frameRate: Int get() = properties[FrameRate]
     private val stabilize: Boolean get() = properties[Stabilize]
 
-    fun setProperties(properties: Properties) {
-        this.properties = properties
-    }
-
     override suspend fun onSetup() {
         Log.d(TAG, "onSetup")
         updateCameraConfig()

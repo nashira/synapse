@@ -18,7 +18,6 @@ import com.rthqks.synapse.assets.VideoStorage
 import com.rthqks.synapse.data.PropertyData
 import com.rthqks.synapse.data.SeedData.BaseEffectId
 import com.rthqks.synapse.data.SynapseDao
-import com.rthqks.synapse.effect.EffectExecutor
 import com.rthqks.synapse.exec.ExecutionContext
 import com.rthqks.synapse.logic.Network
 import com.rthqks.synapse.logic.NodeDef.BCubeImport.LutUri
@@ -48,10 +47,9 @@ class PolishViewModel @Inject constructor(
     private var recordingStart = 0L
     private val recordingDuration: Long get() = SystemClock.elapsedRealtime() - recordingStart
     private var svSetup = false
-    private var stopped = true
     private var needsNewContext = false
     private var context = ExecutionContext(contxt, videoStorage, assetManager)
-    private lateinit var effectExecutor: EffectExecutor
+    private var effectExecutor = EffectExecutor(context)
     private var surfaceView: SurfaceView? = null
 
     init {
@@ -62,30 +60,23 @@ class PolishViewModel @Inject constructor(
                 }
                 syncLogic.getNetwork(BaseEffectId)
             }
-            effectExecutor = EffectExecutor(context, baseNetwork!!)
+            effectExecutor.setBaseNetwork(baseNetwork!!)
             effectExecutor.setup()
             deviceSupported.value = context.glesManager.supportedDevice
         }
     }
 
-    fun recreateContext() {
-        if (!needsNewContext) return
-        needsNewContext = false
-        svSetup = false
+    private suspend fun recreateContext() {
+        Log.d(TAG, "recreateContext")
 
-        viewModelScope.launch {
-            effectExecutor.setup()
-            effectExecutor.initializeEffect()
-            currentEffect?.let { setEffect(it) }
-        }
+        effectExecutor.setup()
+        effectExecutor.initializeEffect()
+        currentEffect?.let { setEffect(it) }
     }
 
     fun initializeEffect() {
         viewModelScope.launch(Dispatchers.IO) {
             effectExecutor.initializeEffect()
-            if (!stopped) {
-                effectExecutor.resume()
-            }
             val networks = dao.getNetworks().filter {
                 it.id != BaseEffectId
             }.map { it.toNetwork() }
@@ -102,7 +93,8 @@ class PolishViewModel @Inject constructor(
                 syncLogic.getNetwork(BaseEffectId)
             }
             context = ExecutionContext(contxt, videoStorage, assetManager)
-            effectExecutor = EffectExecutor(context, baseNetwork!!)
+            effectExecutor = EffectExecutor(context)
+            effectExecutor.setBaseNetwork(baseNetwork!!)
         }
     }
 
@@ -124,25 +116,23 @@ class PolishViewModel @Inject constructor(
     }
 
     fun startExecution() {
-        if (stopped) {
-            stopped = false
-            Log.d(TAG, "resume")
-            currentEffect ?: return
-            viewModelScope.launch {
-                effectExecutor.resume()
+        Log.d(TAG, "resume $needsNewContext")
+        viewModelScope.launch(Dispatchers.IO) {
+            effectExecutor.resume()
+            Log.d(TAG, "resumed")
+            if (needsNewContext) {
+                needsNewContext = false
+                svSetup = false
+                recreateContext()
             }
         }
     }
 
     fun stopExecution() {
-        if (!stopped) {
-            stopped = true
-            Log.d(TAG, "pause")
-            currentEffect ?: return
-            viewModelScope.launch {
-                effectExecutor.setProperty(EffectExecutor.ID_ENCODER, Recording,  false)
-                effectExecutor.pause()
-            }
+        Log.d(TAG, "pause")
+        viewModelScope.launch {
+            effectExecutor.setProperty(EffectExecutor.ID_ENCODER, Recording, false)
+            effectExecutor.pause()
         }
     }
 
@@ -150,7 +140,7 @@ class PolishViewModel @Inject constructor(
         val effectName = currentEffect?.name ?: "unknown"
         analytics.logEvent(Analytics.Event.RecordStart(effectName))
         recordingStart = SystemClock.elapsedRealtime()
-        effectExecutor.setProperty(EffectExecutor.ID_ENCODER, Recording,  true)
+        effectExecutor.setProperty(EffectExecutor.ID_ENCODER, Recording, true)
     }
 
     fun stopRecording() {
@@ -161,7 +151,7 @@ class PolishViewModel @Inject constructor(
                 SystemClock.elapsedRealtime() - recordingStart
             )
         )
-        effectExecutor.setProperty(EffectExecutor.ID_ENCODER, Recording,  false)
+        effectExecutor.setProperty(EffectExecutor.ID_ENCODER, Recording, false)
     }
 
     fun <T : Any> editProperty(

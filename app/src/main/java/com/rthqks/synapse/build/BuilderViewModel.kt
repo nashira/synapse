@@ -2,6 +2,7 @@ package com.rthqks.synapse.build
 
 import android.content.Context
 import android.util.Log
+import android.view.SurfaceView
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -10,11 +11,11 @@ import com.rthqks.synapse.assets.VideoStorage
 import com.rthqks.synapse.data.NetworkData
 import com.rthqks.synapse.data.SynapseDao
 import com.rthqks.synapse.exec.ExecutionContext
-import com.rthqks.synapse.exec.NetworkExecutor
 import com.rthqks.synapse.logic.*
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import javax.inject.Inject
 
 class BuilderViewModel @Inject constructor(
@@ -26,30 +27,32 @@ class BuilderViewModel @Inject constructor(
 ) : ViewModel() {
     private var network: Network? = null
     private val context = ExecutionContext(contxt, videoStorage, assetManager)
-    private val executor = NetworkExecutor(context)
+    private val executor = BuildExecutor(context)
 
     val networkChannel = MutableLiveData<Network>()
-//    val connectionChannel = MutableLiveData<Connector>()
+
+    //    val connectionChannel = MutableLiveData<Connector>()
     val nodeChannel = MutableLiveData<Node>()
     val titleChannel = MutableLiveData<Int>()
     val menuChannel = MutableLiveData<Int>()
 
     fun setNetworkId(networkId: Int) {
-        viewModelScope.launch(Dispatchers.IO) {
-            if (networkId == -1) {
-                val rowId = dao.insertNetwork(NetworkData(0, ""))
+        viewModelScope.launch {
+            withContext(Dispatchers.IO) {
+                if (networkId == -1) {
+                    val rowId = dao.insertNetwork(NetworkData(0, ""))
 
-                network = Network(rowId.toInt(), "")
-                Log.d(TAG, "created: $network")
-            } else {
-                network = logic.getNetwork(networkId)
-                Log.d(TAG, "loaded: $network")
+                    network = Network(rowId.toInt(), "")
+                    Log.d(TAG, "created: $network")
+                } else {
+                    network = logic.getNetwork(networkId)
+                    Log.d(TAG, "loaded: $network")
+                }
             }
 
-            executor.network = network
             executor.setup()
-            executor.addAllNodes()
-            executor.addAllLinks()
+            executor.initialize()
+            executor.setBuildNetwork(network!!)
 
             networkChannel.postValue(network)
         }
@@ -58,6 +61,30 @@ class BuilderViewModel @Inject constructor(
     fun setNodeId(nodeId: Int) {
         network?.getNode(nodeId)?.let {
             nodeChannel.value = it
+        }
+    }
+
+    fun setSurfaceView(surfaceView: SurfaceView) {
+        viewModelScope.launch {
+            executor.setSurfaceView(surfaceView)
+        }
+    }
+
+    fun setOutputPort(nodeId: Int, key: String) = viewModelScope.launch {
+        executor.setOutputPort(nodeId, key)
+    }
+
+    fun startExecution() {
+        Log.d(TAG, "resume")
+        viewModelScope.launch {
+            executor.resume()
+        }
+    }
+
+    fun stopExecution() {
+        Log.d(TAG, "pause")
+        viewModelScope.launch {
+            executor.pause()
         }
     }
 

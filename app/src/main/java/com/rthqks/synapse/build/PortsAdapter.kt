@@ -11,7 +11,8 @@ import com.rthqks.synapse.logic.PortType
 import kotlinx.android.synthetic.main.layout_port_fragment_node.view.*
 
 class PortsAdapter(
-    private val isStartAligned: Boolean
+    private val isStartAligned: Boolean,
+    private val onClick: (Connector) -> Unit
 ) : RecyclerView.Adapter<PortViewHolder>() {
     private val ports = mutableListOf<Connector>()
 
@@ -49,7 +50,7 @@ class PortsAdapter(
             parent,
             false
         )
-        return PortViewHolder(view)
+        return PortViewHolder(view, onClick)
     }
 
     override fun getItemViewType(position: Int): Int = if (isStartAligned) {
@@ -66,7 +67,8 @@ class PortsAdapter(
 }
 
 class PortViewHolder(
-    itemView: View
+    itemView: View,
+    onClick: (Connector) -> Unit
 ) : RecyclerView.ViewHolder(itemView) {
     private val button = itemView.button
     private val label = itemView.label
@@ -74,7 +76,7 @@ class PortViewHolder(
 
     init {
         button.setOnClickListener {
-//            connector?.let { it1 -> onConnectorClick(it1) }
+            connector?.let { it1 -> onClick(it1) }
         }
         button.setOnLongClickListener {
 //            connector?.let { it1 -> onConnectorLongClick(it, it1) }
@@ -96,10 +98,12 @@ class PortViewHolder(
 //                label.text = connector.port.name
         }
 
+        label.text = connector.port.key
+
         when (connector.port.type) {
-            PortType.Audio -> button.setImageResource(R.drawable.ic_speaker)
-            PortType.Video -> button.setImageResource(R.drawable.ic_display)
-            PortType.Texture3D -> button.setImageResource(R.drawable.ic_3d_rotation)
+            PortType.Audio -> button.setImageResource(R.drawable.ic_volume_2)
+            PortType.Video -> button.setImageResource(R.drawable.ic_image)
+            PortType.Texture3D -> button.setImageResource(R.drawable.ic_layers)
         }
     }
 }

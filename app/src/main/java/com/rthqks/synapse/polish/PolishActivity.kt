@@ -24,7 +24,6 @@ import androidx.viewpager2.widget.ViewPager2
 import com.google.android.material.bottomsheet.BottomSheetBehavior
 import com.rthqks.synapse.R
 import com.rthqks.synapse.build.BuilderActivity
-import com.rthqks.synapse.effect.EffectExecutor
 import com.rthqks.synapse.logic.Network
 import com.rthqks.synapse.logic.NodeDef.Lut3d.LutStrength
 import com.rthqks.synapse.logic.Property
@@ -372,7 +371,6 @@ class PolishActivity : DaggerAppCompatActivity() {
     override fun onResume() {
         super.onResume()
         orientationEventListener.enable()
-        viewModel.recreateContext()
         viewModel.startExecution()
     }
 

@@ -27,8 +27,27 @@
             app:layout_constraintTop_toTopOf="parent"
             tools:text="camera" />
 
+        <TextView
+            android:id="@+id/inputs_title"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="12dp"
+            android:text="@string/heading_node_inputs"
+            android:textColor="@color/white"
+            app:layout_constraintBottom_toTopOf="@id/inputs_list"
+            app:layout_constraintStart_toStartOf="parent" />
 
-        <com.rthqks.synapse.build.TouchRecyclerView
+        <TextView
+            android:id="@+id/outputs_title"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginEnd="12dp"
+            android:text="@string/heading_node_outputs"
+            android:textColor="@color/white"
+            app:layout_constraintBottom_toTopOf="@id/inputs_list"
+            app:layout_constraintEnd_toEndOf="parent" />
+
+        <androidx.recyclerview.widget.RecyclerView
             android:id="@+id/inputs_list"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
@@ -39,7 +58,7 @@
             tools:itemCount="3"
             tools:listitem="@layout/layout_port_fragment_node_start" />
 
-        <com.rthqks.synapse.build.TouchRecyclerView
+        <androidx.recyclerview.widget.RecyclerView
             android:id="@+id/outputs_list"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"

@@ -9,8 +9,8 @@ class Network(
     var name: String
 ) {
     private val nodes = mutableMapOf<Int, Node>()
-//    private val properties = mutableMapOf<Int, MutableSet<Property>>()
-//    private val ports = mutableMapOf<Int, MutableSet<Port>>()
+//    private val properties = mutableMapOf<Int, MutableMap<String, Property>>()
+//    private val ports = mutableMapOf<Int, MutableMap<String, Port>>()
     private val links = mutableSetOf<Link>()
     private val linkIndex = mutableMapOf<Int, MutableSet<Link>>()
     private var nextNodeId = 1
@@ -99,6 +99,7 @@ class Network(
         output: Boolean,
         exposed: Boolean = false
     ) = Port(id, nodeId, key, type, output, exposed).also {
+//        ports.getOrPut(nodeId) { mutableMapOf() }[key] = it
         getNode(nodeId).ports[key] = it
     }
 
@@ -153,20 +154,21 @@ class Network(
     fun getFirstNode(): Node? = nodes.values.firstOrNull()
 
     fun getConnectors(nodeId: Int): List<Connector> {
-        return emptyList()
-//        val node = getNode(nodeId) ?: return emptyList()
-//        val ports = node.getPortIds().toMutableSet()
-//        val nodeLinks = getLinks(nodeId)
-//
-//        return (nodeLinks.map {
-//            if (it.fromNodeId == nodeId) {
-//                ports.remove(it.fromPortId)
-//                Connector(node, node.getPort(it.fromPortId), it)
-//            } else {
-//                ports.remove(it.toPortId)
-//                Connector(node, node.getPort(it.toPortId), it)
-//            }
-//        } + ports.map { Connector(node, node.getPort(it)) }).sortedBy { it.port.key }
+        val node = getNode(nodeId)
+        val ports = node.ports.toMutableMap()
+        val nodeLinks = getLinks(nodeId)
+
+        return (nodeLinks.map {
+            if (it.fromNodeId == nodeId) {
+                ports.remove(it.fromPortId)!!
+                val port = getPort(nodeId, it.fromPortId)
+                Connector(node, port, it)
+            } else {
+                ports.remove(it.toPortId)!!
+                val port = getPort(nodeId, it.toPortId)
+                Connector(node, port, it)
+            }
+        } + ports.map { Connector(node, it.value) }).sortedBy { it.port.key }
     }
 
     fun getOpenConnectors(connector: Connector): List<Connector> {
@@ -216,14 +218,11 @@ class Network(
     }
 
     fun copy(): Network {
-        return Network(id, name).also {
-            it.nodes += nodes
-            it.links += links
-//            it.properties += properties
-            val ei = mutableMapOf<Int, MutableSet<Link>>()
-            linkIndex.forEach { ei[it.key] = it.value.toMutableSet() }
-            it.linkIndex += ei
-            it.nextNodeId = COPY_ID_SKIP
+        return Network(id, name).also { network ->
+            nodes.values.forEach {
+                network.addNode(it, it.id)
+            }
+            links.forEach { network.addLink(it) }
         }
     }
 

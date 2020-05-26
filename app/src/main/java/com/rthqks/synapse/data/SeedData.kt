@@ -4,15 +4,18 @@ import android.hardware.camera2.CameraCharacteristics
 import android.media.MediaRecorder
 import android.net.Uri
 import android.util.Size
-import com.rthqks.synapse.effect.EffectExecutor
+import com.rthqks.synapse.build.BuildExecutor
 import com.rthqks.synapse.exec.node.Lut3dNode
 import com.rthqks.synapse.exec.node.RotateMatrixNode
 import com.rthqks.synapse.logic.Link
 import com.rthqks.synapse.logic.Network
 import com.rthqks.synapse.logic.NodeDef.*
+import com.rthqks.synapse.polish.EffectExecutor
 
 object SeedData {
     const val BaseEffectId = 100
+    const val BuildNetworkId = 101
+
     val BaseEffect = Network(BaseEffectId, "base").also {
         val camera = it.addNode(Camera, EffectExecutor.ID_CAMERA)
         val microphone = it.addNode(Microphone, EffectExecutor.ID_MIC)
@@ -20,7 +23,7 @@ object SeedData {
         val encoder = it.addNode(MediaEncoder, EffectExecutor.ID_ENCODER)
         val cube = it.addNode(BCubeImport, EffectExecutor.ID_LUT_IMPORT)
         val lut = it.addNode(Lut3d, EffectExecutor.ID_LUT)
-        val crop = it.addNode(CropResize, EffectExecutor.ID_THUMBNAIL)
+        val crop = it.addNode(CropResize, EffectExecutor.ID_CROP)
 
         it.setProperty(camera.id, Camera.CameraFacing, CameraCharacteristics.LENS_FACING_BACK)
         it.setProperty(camera.id, Camera.FrameRate, 30)
@@ -44,6 +47,11 @@ object SeedData {
                 MediaEncoder.AUDIO_IN.key
             )
         )
+    }
+
+    val BuildNetwork = Network(BuildNetworkId, "builder").also {
+        val camera = it.addNode(Camera, BuildExecutor.ID_CAMERA)
+        val screen = it.addNode(Screen, BuildExecutor.ID_SURFACE_VIEW)
     }
 
     val SeedNetworks = listOf(

@@ -11,6 +11,7 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.viewpager2.adapter.FragmentStateAdapter
 import com.google.android.material.bottomsheet.BottomSheetBehavior
 import com.rthqks.synapse.R
+import com.rthqks.synapse.logic.Connector
 import com.rthqks.synapse.logic.Node
 import com.rthqks.synapse.ui.PropertiesAdapter
 import com.rthqks.synapse.ui.propertiesUi
@@ -22,8 +23,8 @@ class BuilderActivity : DaggerAppCompatActivity() {
     @Inject
     lateinit var viewModelFactory: ViewModelProvider.Factory
     lateinit var viewModel: BuilderViewModel
-    private val inputsAdapter = PortsAdapter(true)
-    private val outputsAdapter = PortsAdapter(false)
+    private val inputsAdapter = PortsAdapter(true, this::onPortClick)
+    private val outputsAdapter = PortsAdapter(false, this::onPortClick)
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -72,6 +73,7 @@ class BuilderActivity : DaggerAppCompatActivity() {
                     viewModel.setNodeId(it.id)
                 }
             }
+            viewModel.setSurfaceView(surface_view)
         })
 
         viewModel.nodeChannel.observe(this, Observer { node ->
@@ -85,12 +87,19 @@ class BuilderActivity : DaggerAppCompatActivity() {
 
     override fun onStop() {
         super.onStop()
-//        viewModel.stopExecution()
+        viewModel.stopExecution()
     }
 
     override fun onStart() {
         super.onStart()
-//        viewModel.updateStartState()
+        viewModel.startExecution()
+    }
+
+    private fun onPortClick(connector: Connector) {
+        val port = connector.port
+        if (port.output) {
+            viewModel.setOutputPort(port.nodeId, port.key)
+        }
     }
 
     private fun onJumpToNode() {

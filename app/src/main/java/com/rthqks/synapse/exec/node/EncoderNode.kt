@@ -174,7 +174,7 @@ class EncoderNode(
     private suspend fun updateRecording() {
         if (linked(INPUT_AUDIO) && needAudioConfig
             || linked(INPUT_VIDEO) && needVideoConfig) {
-            Log.d(TAG, "not recording, waiting for init")
+//            Log.d(TAG, "not recording, waiting for init")
             return
         }
         val r = properties[Recording]
