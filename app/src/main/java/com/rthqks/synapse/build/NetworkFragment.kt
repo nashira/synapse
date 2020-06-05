@@ -6,11 +6,13 @@ import android.view.LayoutInflater
 import android.view.MotionEvent
 import android.view.View
 import android.view.ViewGroup
+import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModelProvider
 import androidx.recyclerview.widget.RecyclerView
 import com.rthqks.synapse.R
 import com.rthqks.synapse.logic.Node
 import dagger.android.support.DaggerFragment
+import kotlinx.android.synthetic.main.fragment_network.*
 import kotlinx.android.synthetic.main.layout_node_item.view.*
 import javax.inject.Inject
 import kotlin.math.max
@@ -19,11 +21,6 @@ class NetworkFragment : DaggerFragment() {
     @Inject
     lateinit var viewModelFactory: ViewModelProvider.Factory
     private lateinit var viewModel: BuilderViewModel
-
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-        Log.d(TAG, "onCreate")
-    }
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -36,15 +33,20 @@ class NetworkFragment : DaggerFragment() {
     override fun onActivityCreated(savedInstanceState: Bundle?) {
         super.onActivityCreated(savedInstanceState)
         viewModel = ViewModelProvider(requireActivity(), viewModelFactory)[BuilderViewModel::class.java]
-//        viewModel.setTitle(R.string.name_node_type_properties)
-//        viewModel.setMenu(R.menu.fragment_network)
 
-//        val properties = viewModel.network.properties
+        viewModel.networkChannel.observe(viewLifecycleOwner, Observer {
+            node_list.setData(it)
+        })
 
-//        propertyBinder = PropertyBinder(properties, tool_list, tool_main, uriProvider) {
-//            Log.d(TAG, "onChange ${it.key.name} ${it.value}")
-//            viewModel.onPropertyChange(-1, it, properties)
-//        }
+        node_list.setOnClickListener {
+
+            Log.d(TAG, "iterating")
+
+            repeat(100) {
+                node_list.iterate()
+            }
+            node_list.invalidate()
+        }
 
 //        val touchMediator = TouchMediator(requireContext(), viewModel::swipeEvent)
 
@@ -65,8 +67,6 @@ class NetworkFragment : DaggerFragment() {
 ////            }
 //            true
 //        })
-
-//        val sorted = viewModel.getSortedNodeList()
 //        connectorAdapter.setNodes(sorted)
 //        node_list.adapter = connectorAdapter
 

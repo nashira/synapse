@@ -42,16 +42,16 @@
             app:layout_constraintStart_toStartOf="parent" />
 
         <ImageButton
-            android:id="@+id/button_camera"
+            android:id="@+id/button_settings"
             style="@style/Widget.AppCompat.Button.Borderless"
             android:layout_width="48dp"
             android:layout_height="48dp"
-            android:contentDescription="@string/flip_camera"
-            android:src="@drawable/ic_flip_camera"
+            android:contentDescription="@string/button_settings"
+            android:src="@drawable/ic_settings"
             android:tint="@color/white"
             app:layout_constraintBottom_toBottomOf="@id/button_record"
             app:layout_constraintEnd_toStartOf="@id/button_record"
-            app:layout_constraintStart_toEndOf="@id/button_node_list"
+            app:layout_constraintStart_toEndOf="@id/button_effects"
             app:layout_constraintTop_toTopOf="@id/button_record" />
 
         <ImageButton
@@ -69,15 +69,15 @@
 
 
         <ImageButton
-            android:id="@+id/button_node_list"
+            android:id="@+id/button_effects"
             style="@style/Widget.AppCompat.Button.Borderless"
             android:layout_width="48dp"
             android:layout_height="48dp"
-            android:contentDescription="@string/button_settings"
-            android:src="@drawable/ic_settings"
+            android:contentDescription="@string/button_effects"
+            android:src="@drawable/ic_hexagon"
             android:tint="@color/white"
             app:layout_constraintBottom_toBottomOf="@id/button_record"
-            app:layout_constraintEnd_toStartOf="@id/button_camera"
+            app:layout_constraintEnd_toStartOf="@id/button_settings"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="@id/button_record" />
 
@@ -118,50 +118,12 @@
 
     </androidx.constraintlayout.widget.ConstraintLayout>
 
-    <androidx.constraintlayout.widget.ConstraintLayout
-        android:id="@+id/layout_colors"
+    <FrameLayout
+        android:id="@+id/bottom_sheet"
         android:layout_width="match_parent"
-        android:layout_height="400dp"
+        android:layout_height="wrap_content"
         app:behavior_hideable="true"
         app:behavior_skipCollapsed="true"
         app:layout_behavior="@string/bottom_sheet_behavior"
-        tools:visibility="gone">
-
-        <ImageButton
-            android:id="@+id/button_lut_close"
-            style="@style/Widget.AppCompat.Button.Borderless"
-            android:layout_width="48dp"
-            android:layout_height="48dp"
-            android:contentDescription="@string/done"
-            android:src="@drawable/ic_keyboard_arrow_down"
-            android:tint="@color/white"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintTop_toTopOf="parent" />
-
-        <SeekBar
-            android:id="@+id/lut_strength"
-            android:layout_width="0dp"
-            android:layout_height="48dp"
-            android:layout_marginStart="12dp"
-            android:layout_marginEnd="12dp"
-            app:layout_constraintBottom_toTopOf="@id/lut_list"
-            app:layout_constraintEnd_toStartOf="@id/button_lut_close"
-            app:layout_constraintStart_toStartOf="parent" />
-
-        <androidx.recyclerview.widget.RecyclerView
-            android:id="@+id/lut_list"
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:layout_marginTop="48dp"
-            android:background="#aa000000"
-            android:clipToPadding="false"
-            android:orientation="vertical"
-            android:paddingTop="12dp"
-            android:paddingBottom="48dp"
-            app:layoutManager="androidx.recyclerview.widget.GridLayoutManager"
-            app:spanCount="3"
-            tools:itemCount="37"
-            tools:listitem="@layout/layout_lut" />
-
-    </androidx.constraintlayout.widget.ConstraintLayout>
+        tools:visibility="gone" />
 </androidx.coordinatorlayout.widget.CoordinatorLayout>

@@ -5,27 +5,23 @@ import android.content.Context
 import android.content.Intent
 import android.content.SharedPreferences
 import android.content.pm.PackageManager
-import android.graphics.Rect
-import android.graphics.SurfaceTexture
 import android.os.Build
 import android.os.Bundle
 import android.util.Log
 import android.view.*
 import android.view.animation.AccelerateDecelerateInterpolator
-import android.widget.SeekBar
 import android.widget.Toast
 import androidx.core.content.edit
+import androidx.fragment.app.commit
 import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
-import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import androidx.viewpager2.widget.ViewPager2
 import com.google.android.material.bottomsheet.BottomSheetBehavior
 import com.rthqks.synapse.R
 import com.rthqks.synapse.build.BuilderActivity
 import com.rthqks.synapse.logic.Network
-import com.rthqks.synapse.logic.NodeDef.Lut3d.LutStrength
 import com.rthqks.synapse.logic.Property
 import com.rthqks.synapse.ops.Analytics
 import com.rthqks.synapse.ui.PropertiesAdapter
@@ -34,13 +30,10 @@ import com.rthqks.synapse.util.throttleClick
 import dagger.android.support.DaggerAppCompatActivity
 import kotlinx.android.synthetic.main.activity_polish.*
 import kotlinx.android.synthetic.main.layout_effect.view.*
-import kotlinx.android.synthetic.main.layout_lut.view.*
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import javax.inject.Inject
-import kotlin.math.min
-import kotlin.math.roundToInt
 
 
 class PolishActivity : DaggerAppCompatActivity() {
@@ -62,7 +55,7 @@ class PolishActivity : DaggerAppCompatActivity() {
         setContentView(R.layout.activity_polish)
         viewModel = ViewModelProvider(this, viewModelFactory)[PolishViewModel::class.java]
 
-        val behavior = BottomSheetBehavior.from(layout_colors)
+        val behavior = BottomSheetBehavior.from(bottom_sheet)
         behavior.state = BottomSheetBehavior.STATE_HIDDEN
 
         preferences = getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE)
@@ -147,52 +140,38 @@ class PolishActivity : DaggerAppCompatActivity() {
 
     private fun onReady() {
         viewModel.initializeEffect()
-        val behavior = BottomSheetBehavior.from(layout_colors)
         var recording = false
         viewModel.setSurfaceView(surface_view)
+        val behavior = BottomSheetBehavior.from(bottom_sheet)
 
-        lut_list.adapter = LutAdapter(EffectExecutor.LUTS, viewModel)
-
-        lut_list.addItemDecoration(object : RecyclerView.ItemDecoration() {
-            private val spans = 3
-            private val margin = resources.getDimension(R.dimen.connector_margin).roundToInt()
-            override fun getItemOffsets(
-                outRect: Rect,
-                view: View,
-                parent: RecyclerView,
-                state: RecyclerView.State
-            ) {
-                val index = (view.layoutParams as GridLayoutManager.LayoutParams).spanIndex % spans
-                val left = margin * (spans - index) / spans
-                val right = margin * (index + 1) / spans
-                outRect.set(left, 0, right, margin)
-            }
+        viewModel.bottomSheetState.observe(this, Observer {
+            behavior.state = it
         })
 
-        behavior.addBottomSheetCallback(object : BottomSheetBehavior.BottomSheetCallback() {
-            private var started = false
-
-            override fun onSlide(bottomSheet: View, slideOffset: Float) {
-            }
-
-            override fun onStateChanged(bottomSheet: View, newState: Int) {
-                Log.d(TAG, "state changed $newState")
-                when (newState) {
-                    BottomSheetBehavior.STATE_HIDDEN -> {
-                        Log.d(TAG, "stop lut previews")
-                        started = false
-                        viewModel.stopLutPreview()
-                    }
-                    else -> {
-                        if (!started) {
-                            Log.d(TAG, "start lut previews")
-                            started = true
-                            viewModel.startLutPreview()
-                        }
-                    }
-                }
-            }
-        })
+//        behavior.addBottomSheetCallback(object : BottomSheetBehavior.BottomSheetCallback() {
+//            private var started = false
+//
+//            override fun onSlide(bottomSheet: View, slideOffset: Float) {
+//            }
+//
+//            override fun onStateChanged(bottomSheet: View, newState: Int) {
+//                Log.d(TAG, "state changed $newState")
+//                when (newState) {
+//                    BottomSheetBehavior.STATE_HIDDEN -> {
+//                        Log.d(TAG, "stop lut previews")
+//                        started = false
+//                        viewModel.stopLutPreview()
+//                    }
+//                    else -> {
+//                        if (!started) {
+//                            Log.d(TAG, "start lut previews")
+//                            started = true
+//                            viewModel.startLutPreview()
+//                        }
+//                    }
+//                }
+//            }
+//        })
 
         button_edit.setOnClickListener {
             viewModel.currentEffect?.id?.let { id ->
@@ -204,31 +183,21 @@ class PolishActivity : DaggerAppCompatActivity() {
         button_color.setOnClickListener {
             Log.d(TAG, "show luts")
             behavior.state = BottomSheetBehavior.STATE_EXPANDED
+            supportFragmentManager.commit {
+                replace(R.id.bottom_sheet, LutFragment())
+            }
         }
 
-        button_lut_close.setOnClickListener {
-            behavior.state = BottomSheetBehavior.STATE_HIDDEN
-        }
+        button_settings.setOnClickListener(throttleClick {
+            Log.d(TAG, "show settings")
+            analytics.logEvent(Analytics.Event.OpenSettings())
 
-
-
-        lut_strength.max = 1000
-        lut_strength.progress = (viewModel.getLutStrength() * 1000).toInt()
-        lut_strength.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
-            override fun onProgressChanged(seekBar: SeekBar?, progress: Int, fromUser: Boolean) {
-                viewModel.setLutStrength(progress / 1000f)
+            behavior.state = BottomSheetBehavior.STATE_EXPANDED
+            supportFragmentManager.commit {
+                replace(R.id.bottom_sheet, SettingsFragment())
             }
-
-            override fun onStartTrackingTouch(seekBar: SeekBar?) {}
-
-            override fun onStopTrackingTouch(seekBar: SeekBar?) {
-                viewModel.editProperty(EffectExecutor.ID_LUT, LutStrength, lut_strength.progress / 1000f)
-            }
-        })
-
-        button_camera.setOnClickListener(throttleClick {
-            Log.d(TAG, "flip camera")
-            viewModel.flipCamera()
+//            Log.d(TAG, "flip camera")
+//            viewModel.flipCamera()
         })
 
         var updateRecordingTime: Job? = null
@@ -249,10 +218,7 @@ class PolishActivity : DaggerAppCompatActivity() {
             Log.d(TAG, "recording $recording")
         })
 
-        button_node_list.setOnClickListener {
-            Log.d(TAG, "show settings")
-            analytics.logEvent(Analytics.Event.OpenSettings())
-            SettingsDialog().show(supportFragmentManager, "settings")
+        button_effects.setOnClickListener {
         }
 
         button_gallery.setOnClickListener {
@@ -284,8 +250,8 @@ class PolishActivity : DaggerAppCompatActivity() {
 
     private fun setUiOrientation(rotation: Int) {
         listOf(
-            button_camera,
-            button_node_list,
+            button_settings,
+            button_effects,
             button_color,
             button_gallery
         ).forEach {
@@ -313,8 +279,8 @@ class PolishActivity : DaggerAppCompatActivity() {
 
     private fun focusMode() {
         listOf(
-            button_camera,
-            button_node_list,
+            button_settings,
+            button_effects,
             button_gallery
         ).forEach {
             it.animate()
@@ -328,8 +294,8 @@ class PolishActivity : DaggerAppCompatActivity() {
 
     private fun exploreMode() {
         listOf(
-            button_camera,
-            button_node_list,
+            button_settings,
+            button_effects,
             button_gallery
         ).forEach {
             it.visibility = View.VISIBLE
@@ -448,76 +414,6 @@ private class EffectViewHolder(
         this.network = network
         nameView.text = network.name
         adapter.setProperties(network.propertiesUi())
-    }
-}
-
-private class LutAdapter(
-    private val luts: List<String>,
-    private val viewModel: PolishViewModel
-) : RecyclerView.Adapter<LutViewHolder>() {
-
-    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): LutViewHolder {
-        val view = LayoutInflater.from(parent.context)
-            .inflate(R.layout.layout_lut, parent, false)
-        return LutViewHolder(view, viewModel)
-    }
-
-    override fun getItemCount(): Int {
-        return luts.size
-    }
-
-    override fun onBindViewHolder(holder: LutViewHolder, position: Int) {
-        holder.bind(luts[position])
-    }
-}
-
-private class LutViewHolder(
-    itemView: View,
-    private val viewModel: PolishViewModel
-) : RecyclerView.ViewHolder(itemView), TextureView.SurfaceTextureListener {
-    private var lut: String? = null
-    private var created = false
-
-    init {
-        Log.d("Lut", "onCreateViewHolder $this")
-        itemView.texture_view.surfaceTextureListener = this
-        itemView.setOnClickListener {
-            lut?.let { it1 -> viewModel.setLut(it1) }
-        }
-    }
-
-    fun bind(lut: String) {
-//        Log.d("Lut", "onBindViewHolder $lut ${this.lut} ${itemView.texture_view.surfaceTexture} ${itemView.texture_view.isAvailable}")
-        if (created) {
-            Log.w("Lut", "destroy not called")
-        }
-        this.lut = lut
-        itemView.title_view.text = lut.replace("_", " ")
-    }
-
-    override fun onSurfaceTextureSizeChanged(surface: SurfaceTexture?, width: Int, height: Int) {
-        Log.d("Lut", "surface size: $lut")
-    }
-
-    override fun onSurfaceTextureUpdated(surface: SurfaceTexture?) {}
-
-    override fun onSurfaceTextureDestroyed(surface: SurfaceTexture?): Boolean {
-//        Log.d("Lut", "surface destroyed $lut $surface")
-        created = false
-        surface?.let { viewModel.unregisterLutPreview(it) }
-        return false
-    }
-
-    override fun onSurfaceTextureAvailable(surface: SurfaceTexture?, width: Int, height: Int) {
-//        Log.d("Lut", "surface available $lut $surface")
-        created = true
-
-        surface?.let {
-            val s = min(width, 320)
-            it.setDefaultBufferSize(s, s)
-        }
-//        if (adapterPosition % 3 == 0)
-        lut?.let { viewModel.registerLutPreview(itemView.texture_view, it) }
     }
 }
 

@@ -38,6 +38,8 @@
         <activity
             android:name="com.rthqks.synapse.build.BuilderActivity"
             android:screenOrientation="portrait" />
+
+        <activity android:name=".about.AboutActivity" />
     </application>
 
 </manifest>

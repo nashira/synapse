@@ -39,70 +39,65 @@ class ForceGraphView @JvmOverloads constructor(
         nodes1.addAll(nodes.map { Vertex(it) })
         nodes2.clear()
         nodes2.addAll(nodes.map { Vertex(it) })
-    }
 
-    fun iterate() {
-        iterate(nodes1, nodes2)
-//        if (nodes0 == nodes1) {
-//            iterate(nodes1, nodes2)
-//            nodes0 = nodes2
-//        } else {
-//            iterate(nodes2, nodes1)
-//            nodes0 = nodes1
-//        }
+        repeat(100) {
+            iterate()
+        }
         invalidate()
     }
 
-    private fun iterate(from: List<Vertex>, to: MutableList<Vertex>) {
-        val map = mutableMapOf<Int, Vertex>()
+    fun iterate() {
+//        iterate(nodes1, nodes2)
+        if (nodes0 == nodes1) {
+            iterate(nodes1, nodes2)
+            nodes0 = nodes2
+        } else {
+            iterate(nodes2, nodes1)
+            nodes0 = nodes1
+        }
+    }
 
+    private fun iterate(from: List<Vertex>, to: List<Vertex>) {
         from.forEachIndexed { index, n1 ->
             var fx = 0f
             var fy = 0f
             from.forEach { n2 ->
                 if (n1.node != n2.node) {
-                    val dx = (n1.x - n2.x).let { it.sign * max(1f, abs(it)) }
-                    val dy = (n1.y - n2.y).let { it.sign * max(1f, abs(it)) }
-                    val d2 = dx * dx + dy * dy
-                    val dist = sqrt(d2)
-                    fx += dx / (dist * dist * dist)
-                    fy += dy / (dist * dist * dist)
+                    val dx = (n1.x - n2.x)
+                    val dy = (n1.y - n2.y)
+                    val d2 = max(dx * dx, 1f) + max(dy * dy, 1f)
+                    val dist = sqrt(d2).let { it * it }
+                    fx += dx.sign / dist
+                    fy += dy.sign / dist
                 }
             }
 
 //            Log.d("ForceGraph", "$index x $fx y $fy")
-            val K = 100.0f
+            val K = 2000.0f
             val n3 = to[index]
             n3.x = n1.x + fx * K
             n3.y = n1.y + fy * K
-            map[n3.node.id] = n3
         }
 
-//
-//        nodes.clear()
-//        nodes0.forEach {
-//            this.nodes[it.node.id] = it
-//        }
+        val fromMap = from.associateBy { it.node.id }
+        val toMap = to.associateBy { it.node.id}
 
-        to.forEachIndexed { i, vert ->
-            var fx = 0f
-            var fy = 0f
-            val n1 = vert
+        network?.getLinks()?.forEach {
+            val n1 = fromMap[it.fromNodeId]!!
+            val n2 = fromMap[it.toNodeId]!!
 
-            network?.getLinks(vert.node.id)?.forEach {
-                val n2 = map[it.toNodeId]!!
-                val dx = (n1.x - n2.x).let { it.sign * max(1f, abs(it)) }
-                val dy = (n1.y - n2.y).let { it.sign * max(1f, abs(it)) }
-                fx += dx
-                fy += dy
-            }
+            val fx = n1.x - n2.x
+            val fy = n1.y - n2.y
 
-            val K = -0.04f
-            val n3 = from[i]
-            n3.x = n1.x + fx * K
-            n3.y = n1.y + fy * K
+            val K = -0.001f
+            val n3 = toMap[it.fromNodeId]!!
+            n3.x += fx * K
+            n3.y += fy * K
+
+            val n4 = toMap[it.toNodeId]!!
+            n4.x -= fx * K
+            n4.y -= fy * K
         }
-
     }
 
     override fun onDraw(canvas: Canvas?) {
@@ -121,6 +116,8 @@ class ForceGraphView @JvmOverloads constructor(
                 false,
                 paint
             )
+
+            canvas.drawText(it.node.type, it.x, it.y, paint)
         }
 
         canvas.restore()
@@ -129,6 +126,6 @@ class ForceGraphView @JvmOverloads constructor(
 
 private class Vertex(
     val node: Node,
-    var x: Float = random().toFloat(),
-    var y: Float = random().toFloat()
+    var x: Float = random().toFloat() * 100,
+    var y: Float = random().toFloat() * 100
 )

@@ -6,6 +6,7 @@ import android.os.Bundle
 import android.util.Log
 import androidx.appcompat.app.AppCompatActivity
 import androidx.fragment.app.Fragment
+import androidx.fragment.app.commit
 import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModelProvider
 import androidx.viewpager2.adapter.FragmentStateAdapter
@@ -41,22 +42,6 @@ class BuilderActivity : DaggerAppCompatActivity() {
             viewModel.setNetworkId(networkId)
         }
 
-        button_node_list.setOnClickListener {
-            onJumpToNode()
-        }
-
-//        button_node_list.setOnClickListener {
-//            behavior.state = if (behavior.state == BottomSheetBehavior.STATE_HIDDEN)
-//                BottomSheetBehavior.STATE_EXPANDED else BottomSheetBehavior.STATE_HIDDEN
-//
-//            if (behavior.state == BottomSheetBehavior.STATE_EXPANDED) {
-//                supportFragmentManager.commit {
-//                    val fragment = NetworkFragment.newInstance()
-//                    replace(R.id.bottom_container, fragment, NetworkFragment.TAG)
-//                }
-//            }
-//        }
-
         val propertiesAdapter = PropertiesAdapter {
             Log.d(TAG, "property changed: ${it.key.name}: ${it.value}")
         }
@@ -77,12 +62,45 @@ class BuilderActivity : DaggerAppCompatActivity() {
         })
 
         viewModel.nodeChannel.observe(this, Observer { node ->
-            title_view.text = node.type
+            node_name_view.text = node.type
             propertiesAdapter.setProperties(node.propertiesUi())
             val connectors = viewModel.getConnectors(node.id).groupBy { it.port.output }
             inputsAdapter.setPorts(connectors[false] ?: emptyList())
             outputsAdapter.setPorts(connectors[true] ?: emptyList())
+            connectors[true]?.firstOrNull()?.let {
+                viewModel.setOutputPort(it.port.nodeId, it.port.key)
+            }
         })
+
+//        button_node_list.setOnClickListener {
+//            onJumpToNode()
+//        }
+
+        button_effects.setOnClickListener {
+            val state = if (behavior.state == BottomSheetBehavior.STATE_HIDDEN)
+                BottomSheetBehavior.STATE_EXPANDED else BottomSheetBehavior.STATE_HIDDEN
+            behavior.state = state
+
+            if (state == BottomSheetBehavior.STATE_EXPANDED) {
+                supportFragmentManager.commit {
+                    val fragment = NetworkFragment.newInstance()
+                    replace(R.id.bottom_container, fragment, NetworkFragment.TAG)
+                }
+            }
+        }
+
+        button_add_node.setOnClickListener {
+            val state = if (behavior.state == BottomSheetBehavior.STATE_HIDDEN)
+                BottomSheetBehavior.STATE_EXPANDED else BottomSheetBehavior.STATE_HIDDEN
+            behavior.state = state
+
+            if (state == BottomSheetBehavior.STATE_EXPANDED) {
+                supportFragmentManager.commit {
+                    val fragment = AddNodeFragment()
+                    replace(R.id.bottom_container, fragment, AddNodeFragment.TAG)
+                }
+            }
+        }
     }
 
     override fun onStop() {
@@ -97,9 +115,7 @@ class BuilderActivity : DaggerAppCompatActivity() {
 
     private fun onPortClick(connector: Connector) {
         val port = connector.port
-        if (port.output) {
-            viewModel.setOutputPort(port.nodeId, port.key)
-        }
+        viewModel.setOutputPort(port.nodeId, port.key)
     }
 
     private fun onJumpToNode() {

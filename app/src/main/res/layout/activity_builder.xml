@@ -25,7 +25,7 @@
             android:gravity="center"
             android:textColor="@color/white"
             app:layout_constraintTop_toTopOf="parent"
-            tools:text="camera" />
+            tools:text="bgr_out - not connected" />
 
         <TextView
             android:id="@+id/inputs_title"
@@ -78,21 +78,24 @@
             android:clipToPadding="false"
             android:orientation="horizontal"
             app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager"
-            app:layout_constraintBottom_toTopOf="@id/separator"
+            app:layout_constraintBottom_toTopOf="@id/node_name_view"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             tools:itemCount="5"
             tools:listitem="@layout/layout_property" />
 
-        <View
-            android:id="@+id/separator"
+        <TextView
+            android:id="@+id/node_name_view"
             android:layout_width="match_parent"
-            android:layout_height="1dp"
-            android:background="@color/white"
-            app:layout_constraintBottom_toTopOf="@id/button_node_list" />
+            android:layout_height="wrap_content"
+            android:layout_marginTop="20dp"
+            android:gravity="center"
+            android:textColor="@color/white"
+            app:layout_constraintBottom_toTopOf="@id/button_effects"
+            tools:text="camera" />
 
         <ImageButton
-            android:id="@+id/button_node_list"
+            android:id="@+id/button_effects"
             style="@style/Widget.AppCompat.Button.Borderless"
             android:layout_width="48dp"
             android:layout_height="48dp"
@@ -103,6 +106,20 @@
             android:tint="@color/white"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintStart_toStartOf="parent" />
+
+
+        <ImageButton
+            android:id="@+id/button_add_node"
+            style="@style/Widget.AppCompat.Button.Borderless"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
+            android:layout_marginStart="12dp"
+            android:layout_marginBottom="12dp"
+            android:contentDescription="@string/button_node_list"
+            android:src="@drawable/ic_add"
+            android:tint="@color/white"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintStart_toEndOf="@id/button_effects" />
 
     </androidx.constraintlayout.widget.ConstraintLayout>
 

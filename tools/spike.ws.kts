@@ -1,4 +1,8 @@
-
+import kotlin.math.abs
+import kotlin.math.max
+import kotlin.math.sign
+import kotlin.math.sqrt
+import kotlin.random.Random
 
 fun go() {
     val net = Network(1)
@@ -23,7 +27,7 @@ class Property
 
 data class Port(val nodeId: Int, val key: String, var output: Boolean = false)
 
-class Link
+class Link(val fromNodeId: Int, val toNodeId: Int)
 
 class Network(val id: Int) {
     private val nodes = mutableMapOf<Int, Node>()
@@ -75,3 +79,16 @@ class Network(val id: Int) {
         println(nodes.toString())
     }
 }
+
+
+fun fdg() {
+    val r = Random(9)
+    val nodes = (0..9).toSet()
+    val links = (1..15).map { r.nextInt(10) to r.nextInt(10) }
+    val a = 1.1
+    val b = 1.2
+    val dx = (a - b).let { it.sign * max(1f, abs(it.toFloat())) }
+    println(dx)
+}
+
+fdg()

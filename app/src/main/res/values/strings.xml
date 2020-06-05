@@ -217,4 +217,7 @@
     <string name="property_name_crop_enabled">Enable Crop</string>
     <string name="property_name_gray_enabled">Grayscale</string>
     <string name="button_node_list">Node List</string>
+    <string name="title_about">About</string>
+    <string name="about_text" />
+    <string name="button_effects">Effects</string>
 </resources>

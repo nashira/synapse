@@ -40,6 +40,7 @@ class PolishViewModel @Inject constructor(
     private val syncLogic: SyncLogic,
     private val analytics: Analytics
 ) : ViewModel() {
+    val bottomSheetState = MutableLiveData<Int>()
     val effects = MediatorLiveData<List<Network>>()
     val deviceSupported = MutableLiveData<Boolean>()
     var baseNetwork: Network? = null
