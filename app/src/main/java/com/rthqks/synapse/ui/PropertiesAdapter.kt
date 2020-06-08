@@ -15,12 +15,11 @@ import kotlinx.android.synthetic.main.layout_property.view.*
 import kotlin.math.max
 
 class PropertiesAdapter(
-    private val onSelected: (Property) -> Unit
+    private val onSelected: (Property, Choice<*>) -> Unit
 ) : RecyclerView.Adapter<PropertyViewHolder>() {
     private var list = emptyList<PropertyItem>()
-    private val clickListener: (position: Int) -> Unit = { position ->
-        val p = list[position]
-        onSelected(p.property)
+    private val clickListener: (Property, Choice<*>) -> Unit = { property, choice ->
+        onSelected(property, choice)
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): PropertyViewHolder {
@@ -69,8 +68,7 @@ class PropertiesAdapter(
                             PropertyItem(
                                 it.first,
                                 holder,
-                                choice.icon,
-                                choice.item
+                                choice
                             )
                         )
                     }
@@ -81,9 +79,7 @@ class PropertiesAdapter(
                     new.add(
                         PropertyItem(
                             it.first,
-                            holder,
-                            holder.icon,
-                            it.first.value
+                            holder
                         )
                     )
                 }
@@ -94,9 +90,7 @@ class PropertiesAdapter(
                     new.add(
                         PropertyItem(
                             it.first,
-                            holder,
-                            holder.icon,
-                            it.first.value
+                            holder
                         )
                     )
                 }
@@ -131,28 +125,34 @@ abstract class PropertyViewHolder(itemView: View) : RecyclerView.ViewHolder(item
 }
 
 private class SingleValueViewHolder(
-    itemView: View, clickListener: (position: Int) -> Unit
+    itemView: View, clickListener: (Property, Choice<*>) -> Unit
 ) : PropertyViewHolder(itemView) {
     private val iconView = itemView.icon
+    private val nameView = itemView.text
     private var propertyItem: PropertyItem? = null
 
     init {
         itemView.setOnClickListener {
-            propertyItem?.let { p ->
-                p.property.value = p.value
-            }
-            clickListener(adapterPosition)
+            val property = propertyItem?.property ?: return@setOnClickListener
+            val choice = propertyItem?.choice ?: return@setOnClickListener
+            property.value = choice.item
+            clickListener(property, choice)
         }
     }
 
     override fun bind(propertyItem: PropertyItem) {
         this.propertyItem = propertyItem
-        iconView.setImageResource(propertyItem.icon)
+        val choice = propertyItem.choice ?: return
+
+        iconView.setImageResource(choice.icon)
+        if (choice.label != 0) {
+            nameView.setText(choice.label)
+        }
     }
 }
 
 private class ToggleViewHolder(
-    itemView: View, clickListener: (position: Int) -> Unit
+    itemView: View, clickListener: (Property, Choice<*>) -> Unit
 ) : PropertyViewHolder(itemView) {
     private val iconView = itemView.icon
     private val textView = itemView.text
@@ -165,8 +165,13 @@ private class ToggleViewHolder(
             toggleType?.let {
                 index = (index + 1) % it.choices.size
                 update()
+
+                val choice = it.choices[index]
+                propertyItem?.let { p ->
+                    p.property.value = choice.item
+                    clickListener(p.property, choice)
+                }
             }
-            clickListener(adapterPosition)
         }
     }
 
@@ -186,9 +191,6 @@ private class ToggleViewHolder(
     private fun update() {
         toggleType?.let {
             val choice = it.choices[index]
-            propertyItem?.let { p ->
-                p.property.value = choice.item
-            }
             if (choice.label != 0) {
                 textView.setText(choice.label)
             }
@@ -200,8 +202,7 @@ private class ToggleViewHolder(
 data class PropertyItem(
     val property: Property,
     val ui: PropertyUi<*>,
-    @DrawableRes val icon: Int,
-    var value: Any
+    val choice: Choice<*>? = null
 )
 
 fun Network.propertiesUi(): MutableList<Pair<Property, PropertyUi<*>>> {

@@ -24,6 +24,7 @@ import com.rthqks.synapse.build.BuilderActivity
 import com.rthqks.synapse.logic.Network
 import com.rthqks.synapse.logic.Property
 import com.rthqks.synapse.ops.Analytics
+import com.rthqks.synapse.ui.Choice
 import com.rthqks.synapse.ui.PropertiesAdapter
 import com.rthqks.synapse.ui.propertiesUi
 import com.rthqks.synapse.util.throttleClick
@@ -228,8 +229,8 @@ class PolishActivity : DaggerAppCompatActivity() {
             }
         }
 
-        val effectAdapter = EffectAdapter {
-            viewModel.setEffectProperty(it)
+        val effectAdapter = EffectAdapter { property, choice ->
+            viewModel.setEffectProperty(property)
         }
         effect_list.adapter = effectAdapter
 
@@ -373,7 +374,7 @@ class PolishActivity : DaggerAppCompatActivity() {
 private data class Permission(val name: String, val granted: Boolean, val showRationale: Boolean)
 
 private class EffectAdapter(
-    private val onClick: (Property) -> Unit
+    private val onClick: (Property, Choice<*>) -> Unit
 ) : RecyclerView.Adapter<EffectViewHolder>() {
     private var effects: List<Network> = emptyList()
 
@@ -399,7 +400,7 @@ private class EffectAdapter(
 
 private class EffectViewHolder(
     itemView: View,
-    onClick: (Property) -> Unit
+    onClick: (Property, Choice<*>) -> Unit
 ) : RecyclerView.ViewHolder(itemView) {
     private val nameView = itemView.name
     private val settingsList = itemView.settings_list

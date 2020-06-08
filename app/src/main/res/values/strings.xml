@@ -50,11 +50,11 @@
     <string name="property_label_camera_capture_size_1080">1080p</string>
     <string name="property_label_camera_capture_size_720">720p</string>
     <string name="property_name_camera_capture_size">Capture Size</string>
-    <string name="property_label_camera_fps_10">10 fps</string>
-    <string name="property_label_camera_fps_15">15 fps</string>
-    <string name="property_label_camera_fps_20">20 fps</string>
-    <string name="property_label_camera_fps_30">30 fps</string>
-    <string name="property_label_camera_fps_60">60 fps</string>
+    <string name="property_label_camera_fps_10">10</string>
+    <string name="property_label_camera_fps_15">15</string>
+    <string name="property_label_camera_fps_24">24</string>
+    <string name="property_label_camera_fps_30">30</string>
+    <string name="property_label_camera_fps_60">60</string>
     <string name="property_name_frame_rate">Frame Rate (fps)</string>
     <string name="property_label_camera_capture_size_480">640x480</string>
     <string name="name_node_type_audio_waveform">Audio Waveform</string>

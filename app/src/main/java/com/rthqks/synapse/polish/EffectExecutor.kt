@@ -29,7 +29,7 @@ class EffectExecutor(
     private val lutPreviews = ConcurrentHashMap<SurfaceTexture, LutPreview>()
     private val lutJobs = ConcurrentHashMap<SurfaceTexture, Job>()
 
-    fun setBaseNetwork(network: Network) {
+    suspend fun setBaseNetwork(network: Network) = await {
         baseNetwork = network
         this.network = network
     }

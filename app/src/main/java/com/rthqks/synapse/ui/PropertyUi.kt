@@ -41,6 +41,7 @@ class ChoiceUi<T: Any>(
     type: PropertyType,
     val choices: List<Choice<T>>
 ) : PropertyUi<T>(title, icon, type) {
+    fun asType(type: PropertyType): ChoiceUi<T> = ChoiceUi(title, icon, type, choices)
 }
 
 class FloatRangeUi(

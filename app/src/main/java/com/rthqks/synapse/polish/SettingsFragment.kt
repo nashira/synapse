@@ -7,12 +7,15 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import androidx.lifecycle.ViewModelProvider
+import com.google.android.material.bottomsheet.BottomSheetBehavior
 import com.rthqks.synapse.R
-import com.rthqks.synapse.exec.Properties
+import com.rthqks.synapse.logic.NodeDef
+import com.rthqks.synapse.logic.NodeDef.Camera.CameraFacing
 import com.rthqks.synapse.logic.NodeDef.Camera.FrameRate
 import com.rthqks.synapse.logic.NodeDef.Camera.Stabilize
 import com.rthqks.synapse.logic.NodeDef.Camera.VideoSize
-import com.rthqks.synapse.util.throttleClick
+import com.rthqks.synapse.logic.Property
+import com.rthqks.synapse.ui.*
 import dagger.android.support.DaggerFragment
 import kotlinx.android.synthetic.main.fragment_settings.*
 import javax.inject.Inject
@@ -32,67 +35,67 @@ class SettingsFragment : DaggerFragment() {
 
     override fun onActivityCreated(savedInstanceState: Bundle?) {
         super.onActivityCreated(savedInstanceState)
-        Log.d("Settings", "activity")
         viewModel =
             ViewModelProvider(requireActivity(), viewModelFactory)[PolishViewModel::class.java]
 
-        updateStates()
+        button_close.setOnClickListener {
+            viewModel.bottomSheetState.value = BottomSheetBehavior.STATE_HIDDEN
+        }
 
-        listOf(
-            size_720p,
-            size_1080p,
-            fps_30,
-            fps_60,
-            stabilize_on,
-            stabilize_off
-        ).forEach {
-            it.setOnClickListener(throttleClick(1000, this::onClick))
+        list_capture.adapter = PropertiesAdapter(::onSelected).apply {
+            val property =
+                viewModel.baseNetwork?.getNode(EffectExecutor.ID_CAMERA)?.properties?.get(VideoSize.name)
+                    ?: return@apply
+            val ui = expandedUi(
+                R.string.property_name_capture_size,
+                R.drawable.ic_photo_size_select,
+                Choice(
+                    Size(1280, 720),
+                    R.string.property_label_camera_capture_size_720,
+                    R.drawable.square
+                ),
+                Choice(
+                    Size(1920, 1080),
+                    R.string.property_label_camera_capture_size_1080,
+                    R.drawable.square
+                )
+            )
+            setProperties(listOf(Pair(property, ui)))
+        }
+
+        list_fps.adapter = PropertiesAdapter(::onSelected).apply {
+            val property =
+                viewModel.baseNetwork?.getNode(EffectExecutor.ID_CAMERA)?.properties?.get(FrameRate.name)
+                    ?: return@apply
+            val ui =
+                (NodeUi[NodeDef.Camera.key][FrameRate] as? ChoiceUi<*>)?.asType(PropertyType.EXPANDED)
+                    ?: return@apply
+            setProperties(listOf(Pair(property, ui)))
+        }
+
+        list_stabilize.adapter = PropertiesAdapter(::onSelected).apply {
+            val property =
+                viewModel.baseNetwork?.getNode(EffectExecutor.ID_CAMERA)?.properties?.get(
+                    Stabilize.name
+                )
+                    ?: return@apply
+            val ui =
+                (NodeUi[NodeDef.Camera.key][Stabilize] as? ChoiceUi<*>)?.asType(PropertyType.EXPANDED)
+                    ?: return@apply
+            setProperties(listOf(Pair(property, ui)))
         }
     }
 
-    private fun updateStates() {
-        viewModel.baseNetwork?.getNode(EffectExecutor.ID_CAMERA)?.let {
-            val properties = Properties(it.properties)
-
-            when (properties[VideoSize]) {
-                Size(1280, 720) -> size_720p.isChecked = true
-                Size(1920, 1080) -> size_1080p.isChecked = true
-            }
-            when (properties[FrameRate]) {
-                30 -> fps_30.isChecked = true
-                60 -> fps_60.isChecked = true
-            }
-            when (properties[Stabilize]) {
-                true -> stabilize_on.isChecked = true
-                false -> stabilize_off.isChecked = true
-            }
+    private fun onSelected(property: Property, choice: Choice<*>) {
+        Log.d(TAG, "onSelected $property")
+        when (property.key) {
+            VideoSize -> value_capture.setText(choice.label)
+            FrameRate -> value_fps.setText(choice.label)
+            Stabilize -> value_stabilize.setText(choice.label)
         }
     }
 
-    private fun onClick(view: View) {
-        when (view) {
-            size_720p -> viewModel.editProperty(
-                EffectExecutor.ID_CAMERA,
-                VideoSize,
-                Size(1280, 720)
-            )
-            size_1080p -> viewModel.editProperty(
-                EffectExecutor.ID_CAMERA,
-                VideoSize,
-                Size(1920, 1080)
-            )
-            fps_30 -> viewModel.editProperty(EffectExecutor.ID_CAMERA, FrameRate, 30)
-            fps_60 -> viewModel.editProperty(EffectExecutor.ID_CAMERA, FrameRate, 60)
-            stabilize_on -> viewModel.editProperty(
-                EffectExecutor.ID_CAMERA,
-                Stabilize,
-                true
-            )
-            stabilize_off -> viewModel.editProperty(
-                EffectExecutor.ID_CAMERA,
-                Stabilize,
-                false
-            )
-        }
+    companion object {
+        private const val TAG = "SettingsFragment"
     }
 }

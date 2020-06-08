@@ -66,7 +66,7 @@ class NodeUi(
                         R.string.property_name_frame_rate, R.drawable.ic_speed,
                         Choice(10, R.string.property_label_camera_fps_10, R.drawable.square),
                         Choice(15, R.string.property_label_camera_fps_15, R.drawable.square),
-                        Choice(20, R.string.property_label_camera_fps_20, R.drawable.square),
+                        Choice(24, R.string.property_label_camera_fps_24, R.drawable.square),
                         Choice(30, R.string.property_label_camera_fps_30, R.drawable.square),
                         Choice(60, R.string.property_label_camera_fps_60, R.drawable.square)
                     ),
@@ -368,7 +368,7 @@ class NodeUi(
                         R.string.property_name_frame_rate, R.drawable.ic_speed,
                         Choice(10, R.string.property_label_camera_fps_10, R.drawable.square),
                         Choice(15, R.string.property_label_camera_fps_15, R.drawable.square),
-                        Choice(20, R.string.property_label_camera_fps_20, R.drawable.square),
+                        Choice(20, R.string.property_label_camera_fps_24, R.drawable.square),
                         Choice(30, R.string.property_label_camera_fps_30, R.drawable.square),
                         Choice(60, R.string.property_label_camera_fps_60, R.drawable.square)
                     )

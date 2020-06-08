@@ -42,8 +42,8 @@ class BuilderActivity : DaggerAppCompatActivity() {
             viewModel.setNetworkId(networkId)
         }
 
-        val propertiesAdapter = PropertiesAdapter {
-            Log.d(TAG, "property changed: ${it.key.name}: ${it.value}")
+        val propertiesAdapter = PropertiesAdapter { property, choice ->
+            Log.d(TAG, "property changed: ${property.key.name}: ${property.value}")
         }
         properties_list.adapter = propertiesAdapter
 
