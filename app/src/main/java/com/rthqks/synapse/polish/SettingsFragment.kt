@@ -84,6 +84,18 @@ class SettingsFragment : DaggerFragment() {
                     ?: return@apply
             setProperties(listOf(Pair(property, ui)))
         }
+
+        list_facing.adapter = PropertiesAdapter(::onSelected).apply {
+            val property =
+                viewModel.baseNetwork?.getNode(EffectExecutor.ID_CAMERA)?.properties?.get(
+                    CameraFacing.name
+                )
+                    ?: return@apply
+            val ui =
+                (NodeUi[NodeDef.Camera.key][CameraFacing] as? ChoiceUi<*>)?.asType(PropertyType.EXPANDED)
+                    ?: return@apply
+            setProperties(listOf(Pair(property, ui)))
+        }
     }
 
     private fun onSelected(property: Property, choice: Choice<*>) {

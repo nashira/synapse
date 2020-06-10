@@ -24,13 +24,23 @@
         app:layout_constraintTop_toBottomOf="@id/button_close">
 
         <TextView
+            android:id="@+id/title_camera"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            android:text="Camera"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textAppearance="@style/TextAppearance.AppCompat.Title" />
+
+        <TextView
             android:id="@+id/label_capture"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:layout_marginTop="24dp"
             android:text="@string/property_name_camera_capture_size"
             android:textAppearance="@style/TextAppearance.AppCompat.Subhead"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toTopOf="parent" />
+            app:layout_constraintTop_toBottomOf="@id/title_camera"/>
 
         <TextView
             android:id="@+id/value_capture"
@@ -92,12 +102,10 @@
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toBottomOf="@id/list_fps" />
 
-
         <TextView
             android:id="@+id/value_stabilize"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="@string/property_name_camera_capture_size"
             android:textAppearance="@style/TextAppearance.AppCompat.Caption"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toBottomOf="@id/label_stabilize" />
@@ -110,6 +118,35 @@
             app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintTop_toTopOf="@id/label_stabilize"
+            tools:itemCount="3"
+            tools:listitem="@layout/layout_property" />
+
+        <TextView
+            android:id="@+id/label_facing"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="20dp"
+            android:text="@string/property_name_camera_device"
+            android:textAppearance="@style/TextAppearance.AppCompat.Subhead"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/list_stabilize" />
+
+        <TextView
+            android:id="@+id/value_facing"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:textAppearance="@style/TextAppearance.AppCompat.Caption"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/label_facing" />
+
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/list_facing"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toTopOf="@id/label_facing"
             tools:itemCount="3"
             tools:listitem="@layout/layout_property" />
 

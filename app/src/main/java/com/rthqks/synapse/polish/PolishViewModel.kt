@@ -42,6 +42,7 @@ class PolishViewModel @Inject constructor(
 ) : ViewModel() {
     val bottomSheetState = MutableLiveData<Int>()
     val effects = MediatorLiveData<List<Network>>()
+    var currentEffectLive = MutableLiveData<Network>()
     val deviceSupported = MutableLiveData<Boolean>()
     var baseNetwork: Network? = null
     var currentEffect: Network? = null
@@ -181,6 +182,7 @@ class PolishViewModel @Inject constructor(
 
     fun setEffect(effect: Network): Boolean {
         currentEffect = effect
+        currentEffectLive.value = effect
 
         analytics.logEvent(Analytics.Event.SetEffect(effect.name))
         viewModelScope.launch {

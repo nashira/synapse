@@ -58,7 +58,6 @@ class LutFragment : DaggerFragment() {
 
         button_lut_close.setOnClickListener {
             viewModel.bottomSheetState.value = BottomSheetBehavior.STATE_HIDDEN
-            viewModel.stopLutPreview()
         }
 
         lut_strength.max = 1000
@@ -80,13 +79,13 @@ class LutFragment : DaggerFragment() {
     override fun onResume() {
         super.onResume()
         Log.d(TAG, "resume")
-        viewModel.startLutPreview()
+//        viewModel.startLutPreview()
     }
 
     override fun onPause() {
         super.onPause()
         Log.d(TAG, "pause")
-        viewModel.stopLutPreview()
+//        viewModel.stopLutPreview()
     }
 
     companion object {

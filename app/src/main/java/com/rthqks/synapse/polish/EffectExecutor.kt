@@ -150,6 +150,7 @@ class EffectExecutor(
     }
 
     suspend fun startLutPreview() = await {
+        effect ?: return@await
         val videoOut = effect?.videoOut ?: Pair(ID_CAMERA, Camera.OUTPUT.key)
         cropLink = Link(
             videoOut.first,

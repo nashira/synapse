@@ -59,6 +59,9 @@ class Analytics @Inject constructor(
             Param("device_supported", supported.toString(), String::class.java),
             Param("permissions_granted", permissionsGranted.toString(), String::class.java)
         )
+
+        class OpenLuts : Analytics.Event("open_luts")
+        class OpenEffects : Analytics.Event("open_effects")
     }
 
     class Param<T>(

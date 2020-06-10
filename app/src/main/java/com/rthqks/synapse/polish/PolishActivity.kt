@@ -8,29 +8,25 @@ import android.content.pm.PackageManager
 import android.os.Build
 import android.os.Bundle
 import android.util.Log
-import android.view.*
+import android.view.OrientationEventListener
+import android.view.View
+import android.view.WindowManager
 import android.view.animation.AccelerateDecelerateInterpolator
 import android.widget.Toast
 import androidx.core.content.edit
-import androidx.fragment.app.commit
+import androidx.fragment.app.commitNow
 import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
-import androidx.recyclerview.widget.RecyclerView
-import androidx.viewpager2.widget.ViewPager2
 import com.google.android.material.bottomsheet.BottomSheetBehavior
 import com.rthqks.synapse.R
 import com.rthqks.synapse.build.BuilderActivity
-import com.rthqks.synapse.logic.Network
-import com.rthqks.synapse.logic.Property
 import com.rthqks.synapse.ops.Analytics
-import com.rthqks.synapse.ui.Choice
 import com.rthqks.synapse.ui.PropertiesAdapter
 import com.rthqks.synapse.ui.propertiesUi
 import com.rthqks.synapse.util.throttleClick
 import dagger.android.support.DaggerAppCompatActivity
 import kotlinx.android.synthetic.main.activity_polish.*
-import kotlinx.android.synthetic.main.layout_effect.view.*
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
@@ -149,30 +145,29 @@ class PolishActivity : DaggerAppCompatActivity() {
             behavior.state = it
         })
 
-//        behavior.addBottomSheetCallback(object : BottomSheetBehavior.BottomSheetCallback() {
-//            private var started = false
-//
-//            override fun onSlide(bottomSheet: View, slideOffset: Float) {
-//            }
-//
-//            override fun onStateChanged(bottomSheet: View, newState: Int) {
-//                Log.d(TAG, "state changed $newState")
-//                when (newState) {
-//                    BottomSheetBehavior.STATE_HIDDEN -> {
-//                        Log.d(TAG, "stop lut previews")
-//                        started = false
-//                        viewModel.stopLutPreview()
-//                    }
-//                    else -> {
-//                        if (!started) {
-//                            Log.d(TAG, "start lut previews")
-//                            started = true
-//                            viewModel.startLutPreview()
-//                        }
-//                    }
-//                }
-//            }
-//        })
+        val adapter = PropertiesAdapter { p, c ->
+            viewModel.setEffectProperty(p)
+        }
+
+        effect_settings.adapter = adapter
+        viewModel.currentEffectLive.observe(this, Observer {
+            effect_name.text = it.name
+            adapter.setProperties(it.propertiesUi())
+        })
+
+        behavior.addBottomSheetCallback(object : BottomSheetBehavior.BottomSheetCallback() {
+            override fun onSlide(bottomSheet: View, slideOffset: Float) {}
+
+            override fun onStateChanged(bottomSheet: View, newState: Int) {
+                Log.d(TAG, "state changed $newState")
+                when (newState) {
+                    BottomSheetBehavior.STATE_HIDDEN -> {
+                        Log.d(TAG, "stop lut previews")
+                        viewModel.stopLutPreview()
+                    }
+                }
+            }
+        })
 
         button_edit.setOnClickListener {
             viewModel.currentEffect?.id?.let { id ->
@@ -183,23 +178,23 @@ class PolishActivity : DaggerAppCompatActivity() {
 
         button_color.setOnClickListener {
             Log.d(TAG, "show luts")
-            behavior.state = BottomSheetBehavior.STATE_EXPANDED
-            supportFragmentManager.commit {
+            analytics.logEvent(Analytics.Event.OpenLuts())
+            supportFragmentManager.commitNow {
                 replace(R.id.bottom_sheet, LutFragment())
             }
+            behavior.state = BottomSheetBehavior.STATE_EXPANDED
+            viewModel.startLutPreview()
         }
 
-        button_settings.setOnClickListener(throttleClick {
+        button_settings.setOnClickListener {
             Log.d(TAG, "show settings")
             analytics.logEvent(Analytics.Event.OpenSettings())
 
-            behavior.state = BottomSheetBehavior.STATE_EXPANDED
-            supportFragmentManager.commit {
+            supportFragmentManager.commitNow {
                 replace(R.id.bottom_sheet, SettingsFragment())
             }
-//            Log.d(TAG, "flip camera")
-//            viewModel.flipCamera()
-        })
+            behavior.state = BottomSheetBehavior.STATE_EXPANDED
+        }
 
         var updateRecordingTime: Job? = null
         button_record.setOnClickListener(throttleClick {
@@ -220,6 +215,13 @@ class PolishActivity : DaggerAppCompatActivity() {
         })
 
         button_effects.setOnClickListener {
+            Log.d(TAG, "show effects")
+            analytics.logEvent(Analytics.Event.OpenEffects())
+
+            supportFragmentManager.commitNow {
+                replace(R.id.bottom_sheet, EffectsFragment())
+            }
+            behavior.state = BottomSheetBehavior.STATE_EXPANDED
         }
 
         button_gallery.setOnClickListener {
@@ -228,25 +230,6 @@ class PolishActivity : DaggerAppCompatActivity() {
                 startActivity(it)
             }
         }
-
-        val effectAdapter = EffectAdapter { property, choice ->
-            viewModel.setEffectProperty(property)
-        }
-        effect_list.adapter = effectAdapter
-
-        var effects = emptyList<Network>()
-        viewModel.effects.observe(this, Observer {
-            effects = it
-            effectAdapter.setEffects(it)
-        })
-
-        effect_list.registerOnPageChangeCallback(object : ViewPager2.OnPageChangeCallback() {
-            override fun onPageSelected(position: Int) {
-                val effect = effects[position]
-                viewModel.setEffect(effect)
-                Log.d(TAG, "pos $position $effect")
-            }
-        })
     }
 
     private fun setUiOrientation(rotation: Int) {
@@ -372,49 +355,3 @@ class PolishActivity : DaggerAppCompatActivity() {
 }
 
 private data class Permission(val name: String, val granted: Boolean, val showRationale: Boolean)
-
-private class EffectAdapter(
-    private val onClick: (Property, Choice<*>) -> Unit
-) : RecyclerView.Adapter<EffectViewHolder>() {
-    private var effects: List<Network> = emptyList()
-
-    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): EffectViewHolder {
-        val view = LayoutInflater.from(parent.context)
-            .inflate(R.layout.layout_effect, parent, false)
-        return EffectViewHolder(view, onClick)
-    }
-
-    override fun getItemCount(): Int {
-        return effects.size
-    }
-
-    override fun onBindViewHolder(holder: EffectViewHolder, position: Int) {
-        holder.bind(effects[position])
-    }
-
-    fun setEffects(list: List<Network>) {
-        effects = list
-        notifyDataSetChanged()
-    }
-}
-
-private class EffectViewHolder(
-    itemView: View,
-    onClick: (Property, Choice<*>) -> Unit
-) : RecyclerView.ViewHolder(itemView) {
-    private val nameView = itemView.name
-    private val settingsList = itemView.settings_list
-    private val adapter = PropertiesAdapter(onClick)
-    private var network: Network? = null
-
-    init {
-        settingsList.adapter = adapter
-    }
-
-    fun bind(network: Network) {
-        this.network = network
-        nameView.text = network.name
-        adapter.setProperties(network.propertiesUi())
-    }
-}
-
