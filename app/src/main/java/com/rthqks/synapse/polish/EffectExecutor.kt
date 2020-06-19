@@ -224,7 +224,9 @@ class EffectExecutor(
         updateCubeUri(ID_LUT_IMPORT, lut)
     }
 
-    fun getLutStrength(): Float = baseNetwork.getPropertyValue(ID_LUT, LutStrength)
+    fun getLutStrength(): Float = effect?.let {
+        baseNetwork.getPropertyValue(ID_LUT, LutStrength)
+    } ?: 1f
 
     fun getProperty(nodeId: Int, key: String) = baseNetwork.getProperty(nodeId, key)
     fun <T : Any> setProperty(nodeId: Int, key: Property.Key<T>, value: T) =

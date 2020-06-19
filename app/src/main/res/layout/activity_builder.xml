@@ -126,7 +126,8 @@
     <androidx.constraintlayout.widget.ConstraintLayout
         android:id="@+id/bottom_sheet"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
+        android:layout_height="wrap_content"
+        android:minHeight="400dp"
         app:behavior_hideable="true"
         app:behavior_skipCollapsed="true"
         app:layout_behavior="@string/bottom_sheet_behavior"

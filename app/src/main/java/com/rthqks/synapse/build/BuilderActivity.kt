@@ -1,12 +1,17 @@
 package com.rthqks.synapse.build
 
+import android.annotation.SuppressLint
 import android.content.Context
 import android.content.Intent
 import android.os.Bundle
 import android.util.Log
+import android.view.View
 import androidx.appcompat.app.AppCompatActivity
+import androidx.appcompat.view.menu.MenuPopupHelper
+import androidx.appcompat.widget.PopupMenu
+import androidx.core.view.isEmpty
 import androidx.fragment.app.Fragment
-import androidx.fragment.app.commit
+import androidx.fragment.app.commitNow
 import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModelProvider
 import androidx.viewpager2.adapter.FragmentStateAdapter
@@ -62,14 +67,7 @@ class BuilderActivity : DaggerAppCompatActivity() {
         })
 
         viewModel.nodeChannel.observe(this, Observer { node ->
-            node_name_view.text = node.type
-            propertiesAdapter.setProperties(node.propertiesUi())
-            val connectors = viewModel.getConnectors(node.id).groupBy { it.port.output }
-            inputsAdapter.setPorts(connectors[false] ?: emptyList())
-            outputsAdapter.setPorts(connectors[true] ?: emptyList())
-            connectors[true]?.firstOrNull()?.let {
-                viewModel.setOutputPort(it.port.nodeId, it.port.key)
-            }
+            handleNode(node, propertiesAdapter)
         })
 
 //        button_node_list.setOnClickListener {
@@ -79,27 +77,43 @@ class BuilderActivity : DaggerAppCompatActivity() {
         button_effects.setOnClickListener {
             val state = if (behavior.state == BottomSheetBehavior.STATE_HIDDEN)
                 BottomSheetBehavior.STATE_EXPANDED else BottomSheetBehavior.STATE_HIDDEN
-            behavior.state = state
 
             if (state == BottomSheetBehavior.STATE_EXPANDED) {
-                supportFragmentManager.commit {
+                supportFragmentManager.commitNow {
                     val fragment = NetworkFragment.newInstance()
                     replace(R.id.bottom_container, fragment, NetworkFragment.TAG)
                 }
             }
+
+            behavior.state = state
         }
 
         button_add_node.setOnClickListener {
             val state = if (behavior.state == BottomSheetBehavior.STATE_HIDDEN)
                 BottomSheetBehavior.STATE_EXPANDED else BottomSheetBehavior.STATE_HIDDEN
-            behavior.state = state
+
 
             if (state == BottomSheetBehavior.STATE_EXPANDED) {
-                supportFragmentManager.commit {
+                supportFragmentManager.commitNow {
                     val fragment = AddNodeFragment()
                     replace(R.id.bottom_container, fragment, AddNodeFragment.TAG)
                 }
             }
+            behavior.state = state
+        }
+    }
+
+    private fun handleNode(
+        node: Node,
+        propertiesAdapter: PropertiesAdapter
+    ) {
+        node_name_view.text = node.type
+        propertiesAdapter.setProperties(node.propertiesUi())
+        val connectors = viewModel.getConnectors(node.id).groupBy { it.port.output }
+        inputsAdapter.setPorts(connectors[false] ?: emptyList())
+        outputsAdapter.setPorts(connectors[true] ?: emptyList())
+        connectors[true]?.firstOrNull()?.let {
+            viewModel.setOutputPort(it.port.nodeId, it.port.key)
         }
     }
 
@@ -113,9 +127,55 @@ class BuilderActivity : DaggerAppCompatActivity() {
         viewModel.startExecution()
     }
 
-    private fun onPortClick(connector: Connector) {
-        val port = connector.port
-        viewModel.setOutputPort(port.nodeId, port.key)
+    @SuppressLint("RestrictedApi")
+    private fun onPortClick(view: View, connector: Connector) {
+        Log.d(TAG, "long click $connector")
+        val menu = PopupMenu(this, view)
+        menu.inflate(R.menu.layout_connector)
+
+        if (connector.link == null) {
+            menu.menu.findItem(R.id.delete_connection)?.isVisible = false
+        }
+
+        if (!connector.port.output) {
+            menu.menu.findItem(R.id.add_connection)?.isVisible = false
+        }
+
+        if (menu.menu.isEmpty()) {
+            return
+        }
+
+        try {
+            // TODO: remove when support library adds this
+            val field = PopupMenu::class.java.getDeclaredField("mPopup").also {
+                it.isAccessible = true
+            }.get(menu) as MenuPopupHelper
+            field.setForceShowIcon(true)
+        } catch (e: Throwable) {
+            Log.w(TAG, "error forcing icons visible")
+        }
+
+        menu.setOnMenuItemClickListener {
+            when (it.itemId) {
+                R.id.show_preview -> {
+                    Log.d(TAG, "show preview")
+                    val port = connector.port
+                    viewModel.setOutputPort(port.nodeId, port.key)
+                }
+                R.id.expose_port -> {
+                    Log.d(TAG, "expose")
+                }
+                R.id.add_connection -> {
+                    Log.d(TAG, "add")
+                }
+                R.id.delete_connection -> {
+                    Log.d(TAG, "delete")
+                }
+            }
+            true
+        }
+
+        menu.show()
     }
 
     private fun onJumpToNode() {

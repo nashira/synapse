@@ -33,8 +33,6 @@ class GalleryActivity : DaggerAppCompatActivity() {
         setContentView(R.layout.activity_gallery)
         viewModel = ViewModelProvider(this, viewModelFactory)[GalleryViewModel::class.java]
 
-        appbar.outlineProvider = null
-        toolbar.setTitle(R.string.title_gallery)
         val gridPadding = resources.getDimensionPixelSize(R.dimen.gallery_grid_spacing)
 
         val adapter = VideoAdapter {

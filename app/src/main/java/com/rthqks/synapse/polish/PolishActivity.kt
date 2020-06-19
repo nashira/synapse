@@ -12,6 +12,7 @@ import android.view.OrientationEventListener
 import android.view.View
 import android.view.WindowManager
 import android.view.animation.AccelerateDecelerateInterpolator
+import android.widget.FrameLayout
 import android.widget.Toast
 import androidx.core.content.edit
 import androidx.fragment.app.commitNow
@@ -160,11 +161,9 @@ class PolishActivity : DaggerAppCompatActivity() {
 
             override fun onStateChanged(bottomSheet: View, newState: Int) {
                 Log.d(TAG, "state changed $newState")
-                when (newState) {
-                    BottomSheetBehavior.STATE_HIDDEN -> {
-                        Log.d(TAG, "stop lut previews")
-                        viewModel.stopLutPreview()
-                    }
+                if (newState == BottomSheetBehavior.STATE_HIDDEN) {
+                    Log.d(TAG, "stop lut previews")
+                    viewModel.stopLutPreview()
                 }
             }
         })
@@ -215,13 +214,11 @@ class PolishActivity : DaggerAppCompatActivity() {
         })
 
         button_effects.setOnClickListener {
-            Log.d(TAG, "show effects")
-            analytics.logEvent(Analytics.Event.OpenEffects())
+            showEffects(behavior)
+        }
 
-            supportFragmentManager.commitNow {
-                replace(R.id.bottom_sheet, EffectsFragment())
-            }
-            behavior.state = BottomSheetBehavior.STATE_EXPANDED
+        effect_name.setOnClickListener {
+            showEffects(behavior)
         }
 
         button_gallery.setOnClickListener {
@@ -230,6 +227,16 @@ class PolishActivity : DaggerAppCompatActivity() {
                 startActivity(it)
             }
         }
+    }
+
+    private fun showEffects(behavior: BottomSheetBehavior<FrameLayout>) {
+        Log.d(TAG, "show effects")
+        analytics.logEvent(Analytics.Event.OpenEffects())
+
+        supportFragmentManager.commitNow {
+            replace(R.id.bottom_sheet, EffectsFragment())
+        }
+        behavior.state = BottomSheetBehavior.STATE_EXPANDED
     }
 
     private fun setUiOrientation(rotation: Int) {

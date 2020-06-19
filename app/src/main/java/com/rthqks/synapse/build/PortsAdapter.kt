@@ -12,7 +12,7 @@ import kotlinx.android.synthetic.main.layout_port_fragment_node.view.*
 
 class PortsAdapter(
     private val isStartAligned: Boolean,
-    private val onClick: (Connector) -> Unit
+    private val onClick: (View, Connector) -> Unit
 ) : RecyclerView.Adapter<PortViewHolder>() {
     private val ports = mutableListOf<Connector>()
 
@@ -68,7 +68,7 @@ class PortsAdapter(
 
 class PortViewHolder(
     itemView: View,
-    onClick: (Connector) -> Unit
+    onClick: (View, Connector) -> Unit
 ) : RecyclerView.ViewHolder(itemView) {
     private val button = itemView.button
     private val label = itemView.label
@@ -76,7 +76,7 @@ class PortViewHolder(
 
     init {
         button.setOnClickListener {
-            connector?.let { it1 -> onClick(it1) }
+            connector?.let { it1 -> onClick(it, it1) }
         }
         button.setOnLongClickListener {
 //            connector?.let { it1 -> onConnectorLongClick(it, it1) }

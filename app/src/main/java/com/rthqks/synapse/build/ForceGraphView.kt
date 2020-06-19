@@ -9,7 +9,6 @@ import com.rthqks.synapse.R
 import com.rthqks.synapse.logic.Network
 import com.rthqks.synapse.logic.Node
 import java.lang.Math.random
-import kotlin.math.abs
 import kotlin.math.max
 import kotlin.math.sign
 import kotlin.math.sqrt
@@ -80,7 +79,7 @@ class ForceGraphView @JvmOverloads constructor(
         }
 
         val fromMap = from.associateBy { it.node.id }
-        val toMap = to.associateBy { it.node.id}
+        val toMap = to.associateBy { it.node.id }
 
         network?.getLinks()?.forEach {
             val n1 = fromMap[it.fromNodeId]!!
@@ -105,6 +104,7 @@ class ForceGraphView @JvmOverloads constructor(
         canvas.save()
         canvas.translate(width / 2f, height / 2f)
 
+        iterate()
         nodes0.forEach {
             canvas.drawArc(
                 it.x - radius,

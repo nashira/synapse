@@ -182,7 +182,7 @@ class PolishViewModel @Inject constructor(
 
     fun setEffect(effect: Network): Boolean {
         currentEffect = effect
-        currentEffectLive.value = effect
+        currentEffectLive.postValue(effect)
 
         analytics.logEvent(Analytics.Event.SetEffect(effect.name))
         viewModelScope.launch {

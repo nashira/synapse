@@ -29,7 +29,7 @@
     <string name="name_node_type_image">Image</string>
     <string name="name_node_type_audio_file">Audio File</string>
     <string name="name_node_type_video_file">Video File</string>
-    <string name="name_node_type_color_filter">LUT Filter</string>
+    <string name="name_node_type_color_filter">Color</string>
     <string name="name_node_type_shader_filter">Shader Filter</string>
     <string name="name_data_type_audio_buffer">Audio Buffer</string>
     <string name="name_data_type_surface">Surface</string>
@@ -106,8 +106,8 @@
     <string name="menu_title_add_node">Add Node</string>
     <string name="menu_title_jump_to_node">Jump to Node</string>
     <string name="menu_title_execute">Execute</string>
-    <string name="add_connection">Add Connection</string>
-    <string name="delete_connection">Delete Connection</string>
+    <string name="add_connection">Connect</string>
+    <string name="delete_connection">Disconnect</string>
     <string name="name_node_type_properties">Network Properties</string>
     <string name="menu_title_delete_network">Delete Network</string>
     <string name="menu_title_jump_to_network">Network Settings</string>
@@ -220,4 +220,7 @@
     <string name="title_about">About</string>
     <string name="about_text" />
     <string name="button_effects">Effects</string>
+    <string name="show_preview">Preview</string>
+    <string name="expose_port">Expose</string>
+    <string name="button_videos">Videos</string>
 </resources>
