@@ -3,11 +3,14 @@ package com.rthqks.synapse.data
 import androidx.room.Entity
 import androidx.room.Ignore
 import androidx.room.PrimaryKey
+import java.util.*
 
 @Entity(tableName = "network")
 data class NetworkData(
-    @PrimaryKey(autoGenerate = true) val id: Int,
-    val name: String
+    @PrimaryKey val id: String,
+    val creatorId: String,
+    val name: String,
+    val description: String
 ) {
 
     @Ignore

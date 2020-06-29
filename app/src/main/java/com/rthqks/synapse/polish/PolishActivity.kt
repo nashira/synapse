@@ -22,6 +22,7 @@ import androidx.lifecycle.viewModelScope
 import com.google.android.material.bottomsheet.BottomSheetBehavior
 import com.rthqks.synapse.R
 import com.rthqks.synapse.build.BuilderActivity
+import com.rthqks.synapse.ui.ConfirmDialog
 import com.rthqks.synapse.ops.Analytics
 import com.rthqks.synapse.ui.PropertiesAdapter
 import com.rthqks.synapse.ui.propertiesUi
@@ -169,9 +170,23 @@ class PolishActivity : DaggerAppCompatActivity() {
         })
 
         button_edit.setOnClickListener {
-            viewModel.currentEffect?.id?.let { id ->
-                viewModel.releaseContext()
-                startActivity(BuilderActivity.getIntent(this, id))
+            viewModel.currentEffect?.let { effect ->
+                if (effect.creatorId != viewModel.currentUser?.id) {
+                    ConfirmDialog(
+                        R.string.title_copy_effect,
+                        R.string.button_cancel,
+                        R.string.button_copy
+                    ) {
+                        if (it) {
+                            val id = viewModel.makeCopy(effect)
+                            viewModel.releaseContext()
+                            startActivity(BuilderActivity.getIntent(this, id))
+                        }
+                    }.show(supportFragmentManager, null)
+                } else {
+                    viewModel.releaseContext()
+                    startActivity(BuilderActivity.getIntent(this, effect.id))
+                }
             }
         }
 

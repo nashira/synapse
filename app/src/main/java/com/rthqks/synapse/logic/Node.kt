@@ -1,7 +1,7 @@
 package com.rthqks.synapse.logic
 
 class Node(
-    val networkId: Int,
+    val networkId: String,
     val id: Int,
     val type: String
 ) {

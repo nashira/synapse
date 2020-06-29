@@ -5,11 +5,14 @@ import java.util.*
 import kotlin.math.max
 
 class Network(
-    val id: Int,
-    var name: String
+    val id: String,
+    val creatorId: String,
+    var name: String,
+    var description: String = ""
 ) {
     private val nodes = mutableMapOf<Int, Node>()
-//    private val properties = mutableMapOf<Int, MutableMap<String, Property>>()
+
+    //    private val properties = mutableMapOf<Int, MutableMap<String, Property>>()
 //    private val ports = mutableMapOf<Int, MutableMap<String, Port>>()
     private val links = mutableSetOf<Link>()
     private val linkIndex = mutableMapOf<Int, MutableSet<Link>>()
@@ -25,8 +28,15 @@ class Network(
 
     fun addNode(node: Node, id: Int = nextNodeId): Node {
         val newNode = addNode(node.type, id)
-        node.ports.values.forEach { addPort(newNode.id, it.type, it.key, it.output) }
-        node.properties.values.forEach { addProperty(newNode.id, it.key as Property.Key<Any>, it.value) }
+        node.ports.values.forEach { addPort(newNode.id, it.type, it.key, it.output, it.exposed) }
+        node.properties.values.forEach {
+            addProperty(
+                newNode.id,
+                it.key as Property.Key<Any>,
+                it.value,
+                it.exposed
+            )
+        }
         return newNode
     }
 
@@ -118,8 +128,13 @@ class Network(
 
     // properties
 
-    fun <T: Any> addProperty(nodeId: Int, key: Property.Key<T>, value: T) =
-        Property(id, nodeId, key, value).also {
+    fun <T : Any> addProperty(
+        nodeId: Int,
+        key: Property.Key<T>,
+        value: T,
+        exposed: Boolean = false
+    ) =
+        Property(id, nodeId, key, value, exposed).also {
             getNode(nodeId).properties[key.name] = it
         }
 
@@ -129,7 +144,7 @@ class Network(
     fun getProperty(nodeId: Int, key: String): Property =
         getNode(nodeId).properties[key] ?: error("property not found $nodeId:$key")
 
-    fun <T: Any> getPropertyValue(nodeId: Int, key: Property.Key<T>): T =
+    fun <T : Any> getPropertyValue(nodeId: Int, key: Property.Key<T>): T =
         getProperty(nodeId, key.name).value as T
 
     fun getProperties(): Collection<Property> = nodes.values.fold(mutableListOf()) { a, n ->
@@ -217,8 +232,13 @@ class Network(
         } ?: false
     }
 
-    fun copy(): Network {
-        return Network(id, name).also { network ->
+    fun copy(
+        id: String = this.id,
+        creatorId: String = this.creatorId,
+        name: String = this.name,
+        description: String = this.description
+    ): Network {
+        return Network(id, creatorId, name).also { network ->
             nodes.values.forEach {
                 network.addNode(it, it.id)
             }

@@ -5,6 +5,7 @@ import androidx.room.RoomDatabase
 
 @Database(
     entities = [
+        UserData::class,
         NetworkData::class,
         NodeData::class,
         PortData::class,
@@ -20,7 +21,7 @@ abstract class SynapseDb : RoomDatabase() {
     abstract fun dao(): SynapseDao
 
     companion object {
-        const val VERSION = 14
+        const val VERSION = 18
         const val NAME = "synapse.db"
     }
 }

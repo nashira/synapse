@@ -5,7 +5,7 @@ import android.util.Size
 import kotlin.reflect.KClass
 
 data class Property(
-    val networkId: Int,
+    val networkId: String,
     val nodeId: Int,
     val key: Key<*>,
     var value: Any,

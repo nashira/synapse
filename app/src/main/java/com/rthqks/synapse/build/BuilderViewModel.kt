@@ -16,6 +16,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import java.util.*
 import javax.inject.Inject
 
 class BuilderViewModel @Inject constructor(
@@ -36,18 +37,11 @@ class BuilderViewModel @Inject constructor(
     val titleChannel = MutableLiveData<Int>()
     val menuChannel = MutableLiveData<Int>()
 
-    fun setNetworkId(networkId: Int) {
+    fun setNetworkId(networkId: String) {
         viewModelScope.launch {
             withContext(Dispatchers.IO) {
-                if (networkId == -1) {
-                    val rowId = dao.insertNetwork(NetworkData(0, ""))
-
-                    network = Network(rowId.toInt(), "")
-                    Log.d(TAG, "created: $network")
-                } else {
-                    network = logic.getNetwork(networkId)
-                    Log.d(TAG, "loaded: $network")
-                }
+                network = logic.getNetwork(networkId)
+                Log.d(TAG, "loaded: $network")
             }
 
             executor.setup()

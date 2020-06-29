@@ -1,4 +1,4 @@
-package com.rthqks.synapse.build
+package com.rthqks.synapse.ui
 
 import android.app.Dialog
 import android.os.Bundle

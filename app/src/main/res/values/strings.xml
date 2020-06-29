@@ -223,4 +223,10 @@
     <string name="show_preview">Preview</string>
     <string name="expose_port">Expose</string>
     <string name="button_videos">Videos</string>
+    <string name="network">Network</string>
+    <string name="button_add_node">Add Node</string>
+    <string name="title_copy_effect">Copy Effect?</string>
+    <string name="button_copy">Copy</string>
+    <string name="hint_name">name</string>
+    <string name="hint_description">description</string>
 </resources>

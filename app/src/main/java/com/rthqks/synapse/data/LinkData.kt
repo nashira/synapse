@@ -11,7 +11,7 @@ import androidx.room.Index
     ]
 )
 data class LinkData(
-    val networkId: Int,
+    val networkId: String,
     val fromNodeId: Int,
     val fromKey: String,
     val toNodeId: Int,

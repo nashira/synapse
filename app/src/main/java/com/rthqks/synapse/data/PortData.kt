@@ -11,7 +11,7 @@ import androidx.room.Index
     primaryKeys = ["networkId", "nodeId", "id"]
 )
 data class PortData(
-    val networkId: Int,
+    val networkId: String,
     val nodeId: Int,
     val id: String,
     val type: Int,

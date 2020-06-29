@@ -19,17 +19,15 @@ import com.rthqks.synapse.data.PropertyData
 import com.rthqks.synapse.data.SeedData.BaseEffectId
 import com.rthqks.synapse.data.SynapseDao
 import com.rthqks.synapse.exec.ExecutionContext
-import com.rthqks.synapse.logic.Network
+import com.rthqks.synapse.logic.*
 import com.rthqks.synapse.logic.NodeDef.BCubeImport.LutUri
 import com.rthqks.synapse.logic.NodeDef.Camera.CameraFacing
 import com.rthqks.synapse.logic.NodeDef.Lut3d.LutStrength
 import com.rthqks.synapse.logic.NodeDef.MediaEncoder.Recording
 import com.rthqks.synapse.logic.NodeDef.MediaEncoder.Rotation
-import com.rthqks.synapse.logic.Property
-import com.rthqks.synapse.logic.SyncLogic
-import com.rthqks.synapse.logic.toNetwork
 import com.rthqks.synapse.ops.Analytics
 import kotlinx.coroutines.*
+import java.util.*
 import javax.inject.Inject
 
 class PolishViewModel @Inject constructor(
@@ -46,6 +44,7 @@ class PolishViewModel @Inject constructor(
     val deviceSupported = MutableLiveData<Boolean>()
     var baseNetwork: Network? = null
     var currentEffect: Network? = null
+    var currentUser: User? = null
     private var recordingStart = 0L
     private val recordingDuration: Long get() = SystemClock.elapsedRealtime() - recordingStart
     private var svSetup = false
@@ -56,11 +55,12 @@ class PolishViewModel @Inject constructor(
 
     init {
         viewModelScope.launch {
-            baseNetwork = withContext(Dispatchers.IO) {
+            withContext(Dispatchers.IO) {
                 if (!dao.hasNetwork(BaseEffectId)) {
                     syncLogic.refreshEffects()
                 }
-                syncLogic.getNetwork(BaseEffectId)
+                baseNetwork = syncLogic.getNetwork(BaseEffectId)
+                currentUser = syncLogic.currentUser()
             }
             effectExecutor.setBaseNetwork(baseNetwork!!)
             effectExecutor.setup()
@@ -284,6 +284,15 @@ class PolishViewModel @Inject constructor(
                 delay(16)
             }
         }
+    }
+
+    fun makeCopy(effect: Network): String {
+        val id = UUID.randomUUID().toString()
+        viewModelScope.launch(Dispatchers.IO) {
+            val copy = effect.copy(id, currentUser!!.id, "${effect.name} (copy)")
+            dao.insertFullNetwork(copy.toData())
+        }
+        return id
     }
 
     companion object {

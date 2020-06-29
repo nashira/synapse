@@ -3,9 +3,13 @@ package com.rthqks.synapse.build
 import android.annotation.SuppressLint
 import android.content.Context
 import android.content.Intent
+import android.graphics.Rect
 import android.os.Bundle
 import android.util.Log
+import android.view.MotionEvent
 import android.view.View
+import android.view.inputmethod.InputMethodManager
+import android.widget.EditText
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.view.menu.MenuPopupHelper
 import androidx.appcompat.widget.PopupMenu
@@ -19,11 +23,13 @@ import com.google.android.material.bottomsheet.BottomSheetBehavior
 import com.rthqks.synapse.R
 import com.rthqks.synapse.logic.Connector
 import com.rthqks.synapse.logic.Node
+import com.rthqks.synapse.ui.ConfirmDialog
 import com.rthqks.synapse.ui.PropertiesAdapter
 import com.rthqks.synapse.ui.propertiesUi
 import dagger.android.support.DaggerAppCompatActivity
 import kotlinx.android.synthetic.main.activity_builder.*
 import javax.inject.Inject
+
 
 class BuilderActivity : DaggerAppCompatActivity() {
     @Inject
@@ -43,7 +49,7 @@ class BuilderActivity : DaggerAppCompatActivity() {
         Log.d(TAG, "viewModel $viewModel")
 
         if (savedInstanceState == null) {
-            val networkId = intent.getIntExtra(NETWORK_ID, -1)
+            val networkId = intent.getStringExtra(NETWORK_ID) ?: error("missing network id")
             viewModel.setNetworkId(networkId)
         }
 
@@ -81,7 +87,7 @@ class BuilderActivity : DaggerAppCompatActivity() {
             if (state == BottomSheetBehavior.STATE_EXPANDED) {
                 supportFragmentManager.commitNow {
                     val fragment = NetworkFragment.newInstance()
-                    replace(R.id.bottom_container, fragment, NetworkFragment.TAG)
+                    replace(R.id.bottom_sheet, fragment, NetworkFragment.TAG)
                 }
             }
 
@@ -96,7 +102,7 @@ class BuilderActivity : DaggerAppCompatActivity() {
             if (state == BottomSheetBehavior.STATE_EXPANDED) {
                 supportFragmentManager.commitNow {
                     val fragment = AddNodeFragment()
-                    replace(R.id.bottom_container, fragment, AddNodeFragment.TAG)
+                    replace(R.id.bottom_sheet, fragment, AddNodeFragment.TAG)
                 }
             }
             behavior.state = state
@@ -125,6 +131,27 @@ class BuilderActivity : DaggerAppCompatActivity() {
     override fun onStart() {
         super.onStart()
         viewModel.startExecution()
+    }
+
+    override fun dispatchTouchEvent(event: MotionEvent): Boolean {
+        if (event.action == MotionEvent.ACTION_DOWN) {
+            val v = currentFocus
+            if (v is EditText) {
+                val outRect = Rect()
+                v.getGlobalVisibleRect(outRect)
+                if (!outRect.contains(
+                        event.rawX.toInt(),
+                        event.rawY.toInt()
+                    )
+                ) {
+                    v.clearFocus()
+                    val imm: InputMethodManager =
+                        getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
+                    imm.hideSoftInputFromWindow(v.getWindowToken(), 0)
+                }
+            }
+        }
+        return super.dispatchTouchEvent(event)
     }
 
     @SuppressLint("RestrictedApi")
@@ -224,7 +251,7 @@ class BuilderActivity : DaggerAppCompatActivity() {
         const val TAG = "BuilderActivity"
         const val NETWORK_ID = "network_id"
 
-        fun getIntent(context: Context, networkId: Int = -1): Intent =
+        fun getIntent(context: Context, networkId: String? = null): Intent =
             Intent(context, BuilderActivity::class.java).also {
                 it.putExtra(NETWORK_ID, networkId)
             }

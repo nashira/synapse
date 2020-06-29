@@ -11,7 +11,7 @@ import androidx.room.Index
     primaryKeys = ["networkId", "nodeId", "key"]
 )
 data class PropertyData(
-    val networkId: Int,
+    val networkId: String,
     val nodeId: Int,
     val type: Int,
     val key: String,

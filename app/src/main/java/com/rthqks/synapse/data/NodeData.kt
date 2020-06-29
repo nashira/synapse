@@ -12,6 +12,6 @@ import androidx.room.Index
 )
 data class NodeData(
     val id: Int,
-    val networkId: Int,
+    val networkId: String,
     val type: String
 )

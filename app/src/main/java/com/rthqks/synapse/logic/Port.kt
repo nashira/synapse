@@ -1,7 +1,7 @@
 package com.rthqks.synapse.logic
 
 class Port(
-    val networkId: Int,
+    val networkId: String,
     val nodeId: Int,
     val key: String,
     val type: PortType,

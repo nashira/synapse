@@ -1,9 +1,13 @@
 package com.rthqks.synapse.build
 
+import android.app.Activity
 import android.os.Bundle
+import android.util.Log
+import android.view.KeyEvent
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.view.inputmethod.InputMethodManager
 import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModelProvider
 import androidx.recyclerview.widget.RecyclerView
@@ -30,7 +34,8 @@ class NetworkFragment : DaggerFragment() {
 
     override fun onActivityCreated(savedInstanceState: Bundle?) {
         super.onActivityCreated(savedInstanceState)
-        viewModel = ViewModelProvider(requireActivity(), viewModelFactory)[BuilderViewModel::class.java]
+        viewModel =
+            ViewModelProvider(requireActivity(), viewModelFactory)[BuilderViewModel::class.java]
 
         val nodeAdapter = NodeAdapter { l, n ->
             viewModel.setNodeId(n.id)
@@ -39,8 +44,37 @@ class NetworkFragment : DaggerFragment() {
         node_list.adapter = nodeAdapter
         viewModel.networkChannel.observe(viewLifecycleOwner, Observer {
             nodeAdapter.setNodes(it.getNodes())
+            network_name.setText(it.name)
+            network_description.setText(it.description)
         })
+
+        network_name.setOnEditorActionListener { _, _, _ ->
+            hideKeyboard()
+            false
+        }
+
+        network_description.setOnEditorActionListener { _, _, _ ->
+            hideKeyboard()
+            false
+        }
+
+        network_name.setOnFocusChangeListener { _, hasFocus ->
+            Log.d(TAG, "name focus $hasFocus")
+        }
+        network_description.setOnFocusChangeListener { _, hasFocus ->
+            Log.d(TAG, "desc focus $hasFocus")
+        }
     }
+
+    private fun hideKeyboard() {
+        network_name.clearFocus()
+        network_description.clearFocus()
+
+        val imm = requireContext()
+            .getSystemService(Activity.INPUT_METHOD_SERVICE) as InputMethodManager
+        imm.hideSoftInputFromWindow(network_name.windowToken, 0)
+    }
+
 
     companion object {
         const val TAG = "NetworkFragment"

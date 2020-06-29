@@ -1,3 +1,4 @@
+import java.util.*
 import kotlin.math.abs
 import kotlin.math.max
 import kotlin.math.sign
@@ -56,4 +57,10 @@ fun fdg() {
 //    }
 }
 
-fdg()
+fun uuids() {
+    repeat(10) {
+        println(UUID.randomUUID().toString())
+    }
+}
+
+uuids()

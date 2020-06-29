@@ -13,10 +13,11 @@ import com.rthqks.synapse.logic.NodeDef.*
 import com.rthqks.synapse.polish.EffectExecutor
 
 object SeedData {
-    const val BaseEffectId = 100
-    const val BuildNetworkId = 101
+    const val BaseEffectId = "6f8dfca8-3c09-4d51-b7d8-e2594df487d2"
+    const val SystemUser = "deb08317-61ad-4d11-a1f8-c17e731e520d"
+    private const val BuildNetworkId = "8b82e801-58d9-4eb8-b1b7-6c6c692cc727"
 
-    val BaseEffect = Network(BaseEffectId, "base").also {
+    val BaseEffect = Network(BaseEffectId, SystemUser, "base").also {
         val camera = it.addNode(Camera, EffectExecutor.ID_CAMERA)
         val microphone = it.addNode(Microphone, EffectExecutor.ID_MIC)
         val screen = it.addNode(Screen, EffectExecutor.ID_SURFACE_VIEW)
@@ -49,14 +50,14 @@ object SeedData {
         )
     }
 
-    val BuildNetwork = Network(BuildNetworkId, "builder").also {
+    val BuildNetwork = Network(BuildNetworkId, SystemUser, "builder").also {
         val camera = it.addNode(Camera, BuildExecutor.ID_CAMERA)
         val screen = it.addNode(Screen, BuildExecutor.ID_SURFACE_VIEW)
     }
 
     val SeedNetworks = listOf(
-        Network(1, "none"),
-        Network(2, "Time Warp").also {
+        Network("4b6466f3-981c-44c2-9027-a3514055ebae", SystemUser, "none"),
+        Network("aa85bcfb-b864-404b-b020-0e996a53cffa", SystemUser, "Time Warp").also {
             val ringBuffer = it.addNode(RingBuffer)
             val slice = it.addNode(Slice3d)
 
@@ -70,7 +71,7 @@ object SeedData {
             it.addLink(
                 Link(ringBuffer.id, RingBuffer.OUTPUT.key, slice.id, Slice3d.INPUT.key)
             )
-        }, Network(3, "Roto-Hue").also {
+        }, Network("cb5cf58a-9556-4a38-b9b8-92957c06ee27", SystemUser, "Roto-Hue").also {
             val rotate = it.addNode(RotateMatrix)
             it.addLink(
                 Link(
@@ -81,11 +82,11 @@ object SeedData {
                 )
             )
             it.setExposed(rotate.id, RotateMatrix.Speed, true)
-        }, Network(4, "Squares").also {
+        }, Network("6368ca1f-bd52-4004-8cf3-f414cc0c99c3", SystemUser, "Squares").also {
             val cell = it.addNode(CellAuto)
             it.setExposed(cell.id, CellAuto.GridSize, true)
             it.setExposed(cell.id, CellAuto.OUTPUT.key, true)
-        }, Network(5, "Quantizer").also {
+        }, Network("dcd5d876-d011-433a-bf96-63d65596d2db", SystemUser, "Quantizer").also {
             val blur = it.addNode(CropGrayBlur)
 //        val sobel = it.addNode(Sobel)
             val quantizer = it.addNode(Quantizer)

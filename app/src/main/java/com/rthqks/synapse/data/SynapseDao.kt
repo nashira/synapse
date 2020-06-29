@@ -6,25 +6,25 @@ import androidx.room.*
 abstract class SynapseDao {
 
     @Query("SELECT * FROM network WHERE id = :networkId")
-    abstract suspend fun getNetwork(networkId: Int): NetworkData
+    abstract suspend fun getNetwork(networkId: String): NetworkData
 
     @Query("SELECT * FROM network")
     abstract suspend fun getNetworkData(): List<NetworkData>
 
     @Query("SELECT * FROM node WHERE networkId = :networkId")
-    abstract suspend fun getNodes(networkId: Int): List<NodeData>
+    abstract suspend fun getNodes(networkId: String): List<NodeData>
 
     @Query("SELECT * FROM link WHERE networkId = :networkId")
-    abstract suspend fun getLinks(networkId: Int): List<LinkData>
+    abstract suspend fun getLinks(networkId: String): List<LinkData>
 
     @Query("SELECT * FROM property WHERE networkId = :networkId AND nodeId = :nodeId")
-    abstract suspend fun getProperties(networkId: Int, nodeId: Int): List<PropertyData>
+    abstract suspend fun getProperties(networkId: String, nodeId: Int): List<PropertyData>
 
     @Query("SELECT * FROM property WHERE networkId = :networkId")
-    abstract suspend fun getProperties(networkId: Int): List<PropertyData>
+    abstract suspend fun getProperties(networkId: String): List<PropertyData>
 
     @Query("SELECT * FROM port WHERE networkId = :networkId")
-    abstract suspend fun getPorts(networkId: Int): List<PortData>
+    abstract suspend fun getPorts(networkId: String): List<PortData>
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     abstract suspend fun insertPorts(portData: List<PortData>)
@@ -50,26 +50,29 @@ abstract class SynapseDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     abstract suspend fun insertProperty(property: PropertyData)
 
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    abstract suspend fun insertUser(userData: UserData)
+
     @Query("DELETE FROM network WHERE id = :networkId")
-    abstract suspend fun deleteNetwork(networkId: Int)
+    abstract suspend fun deleteNetwork(networkId: String)
 
     @Delete
     abstract suspend fun deleteNode(node: NodeData)
 
     @Query("DELETE FROM node WHERE networkId = :networkId AND id = :id")
-    abstract suspend fun deleteNode(networkId: Int, id: Int)
+    abstract suspend fun deleteNode(networkId: String, id: Int)
 
     @Query("DELETE FROM node WHERE networkId = :networkId")
-    abstract suspend fun deleteNodes(networkId: Int)
+    abstract suspend fun deleteNodes(networkId: String)
 
     @Query("DELETE FROM link WHERE networkId = :networkId")
-    abstract suspend fun deleteLinks(networkId: Int)
+    abstract suspend fun deleteLinks(networkId: String)
 
     @Query("DELETE FROM port WHERE networkId = :networkId")
-    abstract suspend fun deletePorts(networkId: Int)
+    abstract suspend fun deletePorts(networkId: String)
 
     @Query("DELETE FROM link WHERE networkId = :networkId AND (fromNodeId = :nodeId OR toNodeId = :nodeId)")
-    abstract suspend fun deleteLinksForNode(networkId: Int, nodeId: Int)
+    abstract suspend fun deleteLinksForNode(networkId: String, nodeId: Int)
 
     @Query(
         """DELETE FROM link WHERE networkId = :networkId
@@ -87,10 +90,10 @@ abstract class SynapseDao {
     )
 
     @Query("DELETE FROM property WHERE networkId = :networkId")
-    abstract suspend fun deleteProperties(networkId: Int)
+    abstract suspend fun deleteProperties(networkId: String)
 
     @Transaction
-    open suspend fun getFullNetwork(networkId: Int) =
+    open suspend fun getFullNetwork(networkId: String) =
         getNetwork(networkId).also { populateNetwork(it) }
 
 
@@ -119,7 +122,7 @@ abstract class SynapseDao {
     }
 
     @Transaction
-    open suspend fun deleteFullNetwork(networkId: Int) {
+    open suspend fun deleteFullNetwork(networkId: String) {
         deletePorts(networkId)
         deleteProperties(networkId)
         deleteLinks(networkId)
@@ -128,5 +131,8 @@ abstract class SynapseDao {
     }
 
     @Query("SELECT COUNT(*) > 0 FROM network WHERE id = :id")
-    abstract suspend fun hasNetwork(id: Int): Boolean
+    abstract suspend fun hasNetwork(id: String): Boolean
+
+    @Query("SELECT * FROM user WHERE current = 1 LIMIT 1")
+    abstract suspend fun getCurrentUser(): UserData?
 }

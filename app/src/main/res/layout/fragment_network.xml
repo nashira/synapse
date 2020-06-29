@@ -1,15 +1,68 @@
 <?xml version="1.0" encoding="utf-8"?>
 <androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/root_view"
     android:layout_width="match_parent"
-    android:background="@color/black"
-    android:layout_height="match_parent">
+    android:layout_height="500dp"
+    android:background="@color/black">
+
+    <ImageButton
+        android:id="@+id/bottom_close"
+        style="@style/Widget.AppCompat.Button.Borderless"
+        android:layout_width="48dp"
+        android:layout_height="48dp"
+        android:contentDescription="@string/done"
+        android:src="@drawable/ic_keyboard_arrow_down"
+        android:tint="@color/white"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <TextView
+        android:id="@+id/sheet_title"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:padding="12dp"
+        android:text="@string/network"
+        android:textAppearance="@style/TextAppearance.AppCompat.Display1"
+        android:textColor="@color/blue"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <EditText
+        android:id="@+id/network_name"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="12dp"
+        android:layout_marginEnd="12dp"
+        android:hint="@string/hint_name"
+        android:imeOptions="actionDone"
+        android:importantForAutofill="no"
+        android:inputType="textAutoCorrect"
+        android:maxLines="1"
+        app:layout_constraintTop_toBottomOf="@id/sheet_title" />
+
+    <EditText
+        android:id="@+id/network_description"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="12dp"
+        android:layout_marginEnd="12dp"
+        android:hint="@string/hint_description"
+        android:imeOptions="actionDone"
+        android:importantForAutofill="no"
+        android:inputType="textAutoCorrect"
+        android:maxLines="1"
+        app:layout_constraintTop_toBottomOf="@id/network_name" />
 
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/node_list"
-        app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager"
         android:layout_width="match_parent"
-        android:layout_height="match_parent" />
+        android:layout_height="0dp"
+        android:layout_marginTop="12dp"
+        app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/network_description"
+        tools:listitem="@layout/layout_effect_list_item" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>
