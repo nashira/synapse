@@ -55,6 +55,17 @@
         android:maxLines="1"
         app:layout_constraintTop_toBottomOf="@id/network_name" />
 
+    <TextView
+        android:id="@+id/title_nodes"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="12dp"
+        android:layout_marginTop="12dp"
+        android:text="@string/nodes"
+        android:textSize="22sp"
+        android:textStyle="bold"
+        app:layout_constraintTop_toBottomOf="@id/network_description" />
+
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/node_list"
         android:layout_width="match_parent"
@@ -62,7 +73,7 @@
         android:layout_marginTop="12dp"
         app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager"
         app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/network_description"
+        app:layout_constraintTop_toBottomOf="@id/title_nodes"
         tools:listitem="@layout/layout_effect_list_item" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

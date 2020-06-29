@@ -9,10 +9,7 @@ import android.util.Log
 import android.view.SurfaceView
 import android.view.TextureView
 import android.widget.TextView
-import androidx.lifecycle.MediatorLiveData
-import androidx.lifecycle.MutableLiveData
-import androidx.lifecycle.ViewModel
-import androidx.lifecycle.viewModelScope
+import androidx.lifecycle.*
 import com.rthqks.synapse.assets.AssetManager
 import com.rthqks.synapse.assets.VideoStorage
 import com.rthqks.synapse.data.PropertyData
@@ -27,6 +24,8 @@ import com.rthqks.synapse.logic.NodeDef.MediaEncoder.Recording
 import com.rthqks.synapse.logic.NodeDef.MediaEncoder.Rotation
 import com.rthqks.synapse.ops.Analytics
 import kotlinx.coroutines.*
+import kotlinx.coroutines.flow.collect
+import kotlinx.coroutines.flow.map
 import java.util.*
 import javax.inject.Inject
 
@@ -79,10 +78,15 @@ class PolishViewModel @Inject constructor(
     fun initializeEffect() {
         viewModelScope.launch(Dispatchers.IO) {
             effectExecutor.initializeEffect()
-            val networks = dao.getNetworks().filter {
-                it.id != BaseEffectId
-            }.map { it.toNetwork() }
-            effects.postValue(networks)
+            val ld = dao.getNetworks().map { list ->
+                list.filter {
+                    it.id != BaseEffectId
+                }.map { it.toNetwork() }
+            }.asLiveData()
+
+            effects.addSource(ld) {
+                effects.postValue(it)
+            }
         }
     }
 
@@ -270,7 +274,7 @@ class PolishViewModel @Inject constructor(
 
                 var minutes: Long = 0
                 var seconds: Long = 0
-                var hundredths: Long = 0
+                var hundredths: Long
                 if (d >= 60000) {
                     minutes = d / 60000
                     d -= minutes * 60000

@@ -84,6 +84,7 @@ private class EffectViewHolder(
     onEffect: (Network) -> Unit
 ) : RecyclerView.ViewHolder(itemView) {
     private val nameView = itemView.effect_title
+    private val descView = itemView.effect_description
     private var network: Network? = null
 
     init {
@@ -95,6 +96,7 @@ private class EffectViewHolder(
     fun bind(network: Network) {
         this.network = network
         nameView.text = network.name
+        descView.text = network.description
     }
 }
 

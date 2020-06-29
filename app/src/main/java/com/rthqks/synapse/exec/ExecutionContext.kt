@@ -3,6 +3,7 @@ package com.rthqks.synapse.exec
 import android.content.Context
 import android.media.MediaCodec
 import android.media.MediaFormat
+import android.util.Log
 import com.rthqks.synapse.assets.AssetManager
 import com.rthqks.synapse.assets.VideoStorage
 import com.rthqks.synapse.gl.GlesManager
@@ -34,6 +35,8 @@ class ExecutionContext constructor(
     }
 
     suspend fun release() {
+        Log.d(TAG, "releasing - video ${videoEncoderDelegate.isInitialized()}")
+        Log.d(TAG, "releasing - audio ${audioEncoderDelegate.isInitialized()}")
         if (videoEncoderDelegate.isInitialized()) {
             videoEncoder.release()
         }
@@ -41,9 +44,11 @@ class ExecutionContext constructor(
             audioEncoder.release()
         }
         cameraManager.release()
-        glesManager.glContext {
-            it.release()
-        }
+        glesManager.release()
         dispatcher.close()
+    }
+
+    companion object {
+        const val TAG = "ExecutionContext"
     }
 }

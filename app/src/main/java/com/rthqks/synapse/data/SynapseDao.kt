@@ -1,6 +1,8 @@
 package com.rthqks.synapse.data
 
 import androidx.room.*
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.map
 
 @Dao
 abstract class SynapseDao {
@@ -9,7 +11,7 @@ abstract class SynapseDao {
     abstract suspend fun getNetwork(networkId: String): NetworkData
 
     @Query("SELECT * FROM network")
-    abstract suspend fun getNetworkData(): List<NetworkData>
+    abstract fun getNetworkData(): Flow<List<NetworkData>>
 
     @Query("SELECT * FROM node WHERE networkId = :networkId")
     abstract suspend fun getNodes(networkId: String): List<NodeData>
@@ -98,9 +100,10 @@ abstract class SynapseDao {
 
 
     @Transaction
-    open suspend fun getNetworks(): List<NetworkData> {
-        return getNetworkData().also { list ->
+    open fun getNetworks(): Flow<List<NetworkData>> {
+        return getNetworkData().map { list ->
             list.forEach { populateNetwork(it) }
+            list
         }
     }
 
@@ -135,4 +138,10 @@ abstract class SynapseDao {
 
     @Query("SELECT * FROM user WHERE current = 1 LIMIT 1")
     abstract suspend fun getCurrentUser(): UserData?
+
+    @Query("UPDATE network SET name = :name WHERE id = :id")
+    abstract fun setNetworkName(id: String, name: String)
+
+    @Query("UPDATE network SET description = :description WHERE id = :id")
+    abstract fun setNetworkDescription(id: String, description: String)
 }

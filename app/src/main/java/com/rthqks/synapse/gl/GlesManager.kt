@@ -72,15 +72,17 @@ class GlesManager(
         geo.initialize()
     }
 
-    fun release() {
-        emptyTexture2d.release()
-        emptyTexture3d.release()
-        randProgram.release()
-        geo.release()
-        eglSurface?.release()
-        eglCore?.release()
-        dispatcher.close()
+    suspend fun release() {
+        glContext {
+            emptyTexture2d.release()
+            emptyTexture3d.release()
+            randProgram.release()
+            geo.release()
+            eglSurface?.release()
+            eglCore?.release()
+        }
         thread.quitSafely()
+        dispatcher.close()
     }
 
     fun createWindowSurface(surface: Surface): WindowSurface =

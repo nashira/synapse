@@ -229,4 +229,5 @@
     <string name="button_copy">Copy</string>
     <string name="hint_name">name</string>
     <string name="hint_description">description</string>
+    <string name="nodes">Nodes:</string>
 </resources>

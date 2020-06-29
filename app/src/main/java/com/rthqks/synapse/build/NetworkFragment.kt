@@ -37,7 +37,7 @@ class NetworkFragment : DaggerFragment() {
         viewModel =
             ViewModelProvider(requireActivity(), viewModelFactory)[BuilderViewModel::class.java]
 
-        val nodeAdapter = NodeAdapter { l, n ->
+        val nodeAdapter = NodeAdapter { _, n ->
             viewModel.setNodeId(n.id)
             true
         }
@@ -49,27 +49,31 @@ class NetworkFragment : DaggerFragment() {
         })
 
         network_name.setOnEditorActionListener { _, _, _ ->
+            network_name.clearFocus()
             hideKeyboard()
             false
         }
 
         network_description.setOnEditorActionListener { _, _, _ ->
+            network_description.clearFocus()
             hideKeyboard()
             false
         }
 
         network_name.setOnFocusChangeListener { _, hasFocus ->
             Log.d(TAG, "name focus $hasFocus")
+            if (!hasFocus) {
+                viewModel.setNetworkName(network_name.text.toString().trim())
+            }
         }
+
         network_description.setOnFocusChangeListener { _, hasFocus ->
             Log.d(TAG, "desc focus $hasFocus")
+            viewModel.setNetworkDescription(network_description.text.toString().trim())
         }
     }
 
     private fun hideKeyboard() {
-        network_name.clearFocus()
-        network_description.clearFocus()
-
         val imm = requireContext()
             .getSystemService(Activity.INPUT_METHOD_SERVICE) as InputMethodManager
         imm.hideSoftInputFromWindow(network_name.windowToken, 0)
