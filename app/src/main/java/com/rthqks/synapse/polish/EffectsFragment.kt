@@ -10,8 +10,6 @@ import androidx.recyclerview.widget.RecyclerView
 import com.google.android.material.bottomsheet.BottomSheetBehavior
 import com.rthqks.synapse.R
 import com.rthqks.synapse.logic.Network
-import com.rthqks.synapse.logic.Property
-import com.rthqks.synapse.ui.Choice
 import dagger.android.support.DaggerFragment
 import kotlinx.android.synthetic.main.fragment_effects.*
 import kotlinx.android.synthetic.main.fragment_settings.button_close
@@ -44,12 +42,13 @@ class EffectsFragment : DaggerFragment() {
         effect_list.adapter = effectAdapter
 
         viewModel.effects.observe(viewLifecycleOwner, Observer {
-            effectAdapter.setEffects(it)
+            val selected = it.indexOfFirst { it.id == viewModel.currentEffect?.id }
+            effectAdapter.setEffects(it, selected)
         })
     }
 
     private fun onEffectSelected(network: Network) {
-        viewModel.bottomSheetState.value = BottomSheetBehavior.STATE_HIDDEN
+//        viewModel.bottomSheetState.value = BottomSheetBehavior.STATE_HIDDEN
         viewModel.setEffect(network)
     }
 }
@@ -58,11 +57,17 @@ private class EffectAdapter(
     private val onEffectSelected: (Network) -> Unit
 ) : RecyclerView.Adapter<EffectViewHolder>() {
     private var effects: List<Network> = emptyList()
+    private var selectedPos: Int = 0
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): EffectViewHolder {
         val view = LayoutInflater.from(parent.context)
             .inflate(R.layout.layout_effect_list_item, parent, false)
-        return EffectViewHolder(view, onEffectSelected)
+        return EffectViewHolder(view) {
+            notifyItemChanged(selectedPos)
+            selectedPos = it
+            notifyItemChanged(selectedPos)
+            onEffectSelected(effects[it])
+        }
     }
 
     override fun getItemCount(): Int {
@@ -70,10 +75,12 @@ private class EffectAdapter(
     }
 
     override fun onBindViewHolder(holder: EffectViewHolder, position: Int) {
-        holder.bind(effects[position])
+        val network = effects[position]
+        holder.bind(network, position == selectedPos)
     }
 
-    fun setEffects(list: List<Network>) {
+    fun setEffects(list: List<Network>, selected: Int) {
+        selectedPos = selected
         effects = list
         notifyDataSetChanged()
     }
@@ -81,7 +88,7 @@ private class EffectAdapter(
 
 private class EffectViewHolder(
     itemView: View,
-    onEffect: (Network) -> Unit
+    onEffect: (Int) -> Unit
 ) : RecyclerView.ViewHolder(itemView) {
     private val nameView = itemView.effect_title
     private val descView = itemView.effect_description
@@ -89,14 +96,15 @@ private class EffectViewHolder(
 
     init {
         itemView.setOnClickListener {
-            network?.let { onEffect(it) }
+            onEffect(adapterPosition)
         }
     }
 
-    fun bind(network: Network) {
+    fun bind(network: Network, selected: Boolean) {
         this.network = network
         nameView.text = network.name
         descView.text = network.description
+        itemView.isSelected = selected
     }
 }
 

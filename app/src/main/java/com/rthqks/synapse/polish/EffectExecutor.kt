@@ -40,6 +40,7 @@ class EffectExecutor(
     }
 
     suspend fun swapEffect(effect: Network) {
+        Log.d(TAG, "swapEffect from ${this.effect?.id} to ${effect.id}")
         val isLutPreview = cropLink != null
         stopLutPreview()
 
@@ -97,9 +98,9 @@ class EffectExecutor(
             )
         }
 
-        new.getNodes().forEach { baseNetwork.addNode(it) }
+        val newNodes = new.getNodes().map { baseNetwork.addNode(it, it.id) }
         baseNetwork.addLinks(newLinks)
-        new.getNodes().map {
+        newNodes.map {
             scope.launch {
                 addNode(it)
             }
@@ -229,6 +230,7 @@ class EffectExecutor(
     } ?: 1f
 
     fun getProperty(nodeId: Int, key: String) = baseNetwork.getProperty(nodeId, key)
+
     fun <T : Any> setProperty(nodeId: Int, key: Property.Key<T>, value: T) =
         network?.setProperty(nodeId, key, value)
 

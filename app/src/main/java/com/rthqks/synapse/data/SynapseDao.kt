@@ -8,7 +8,7 @@ import kotlinx.coroutines.flow.map
 abstract class SynapseDao {
 
     @Query("SELECT * FROM network WHERE id = :networkId")
-    abstract suspend fun getNetwork(networkId: String): NetworkData
+    abstract fun getNetwork(networkId: String): Flow<NetworkData>
 
     @Query("SELECT * FROM network")
     abstract fun getNetworkData(): Flow<List<NetworkData>>
@@ -96,7 +96,7 @@ abstract class SynapseDao {
 
     @Transaction
     open suspend fun getFullNetwork(networkId: String) =
-        getNetwork(networkId).also { populateNetwork(it) }
+        getNetwork(networkId).map { populateNetwork(it); it }
 
 
     @Transaction

@@ -41,7 +41,7 @@ class Network(
     }
 
     fun addNode(type: String, id: Int = nextNodeId) = Node(this.id, id, type).also {
-        nextNodeId = max(nextNodeId, id) + 1
+        nextNodeId = max(nextNodeId, id) + if (id < nextNodeId) 0 else 1
         nodes[id] = it
     }
 
@@ -51,7 +51,7 @@ class Network(
 
     fun getNode(nodeId: Int): Node {
 //        Log.d(TAG, "getNode $nodeId")
-        return nodes[nodeId] ?: error("node not found: $id")
+        return nodes[nodeId] ?: error("node not found: $nodeId")
     }
 
     fun getNodes(): Collection<Node> {

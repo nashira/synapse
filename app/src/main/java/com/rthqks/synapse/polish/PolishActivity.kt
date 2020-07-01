@@ -22,8 +22,8 @@ import androidx.lifecycle.viewModelScope
 import com.google.android.material.bottomsheet.BottomSheetBehavior
 import com.rthqks.synapse.R
 import com.rthqks.synapse.build.BuilderActivity
-import com.rthqks.synapse.ui.ConfirmDialog
 import com.rthqks.synapse.ops.Analytics
+import com.rthqks.synapse.ui.ConfirmDialog
 import com.rthqks.synapse.ui.PropertiesAdapter
 import com.rthqks.synapse.ui.propertiesUi
 import com.rthqks.synapse.util.throttleClick

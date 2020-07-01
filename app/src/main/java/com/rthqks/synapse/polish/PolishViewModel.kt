@@ -24,7 +24,7 @@ import com.rthqks.synapse.logic.NodeDef.MediaEncoder.Recording
 import com.rthqks.synapse.logic.NodeDef.MediaEncoder.Rotation
 import com.rthqks.synapse.ops.Analytics
 import kotlinx.coroutines.*
-import kotlinx.coroutines.flow.collect
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import java.util.*
 import javax.inject.Inject
@@ -39,7 +39,8 @@ class PolishViewModel @Inject constructor(
 ) : ViewModel() {
     val bottomSheetState = MutableLiveData<Int>()
     val effects = MediatorLiveData<List<Network>>()
-    var currentEffectLive = MutableLiveData<Network>()
+    private var currentEffectLD: LiveData<Network>? = null
+    val currentEffectLive = MediatorLiveData<Network>()
     val deviceSupported = MutableLiveData<Boolean>()
     var baseNetwork: Network? = null
     var currentEffect: Network? = null
@@ -58,7 +59,7 @@ class PolishViewModel @Inject constructor(
                 if (!dao.hasNetwork(BaseEffectId)) {
                     syncLogic.refreshEffects()
                 }
-                baseNetwork = syncLogic.getNetwork(BaseEffectId)
+                baseNetwork = syncLogic.getNetwork(BaseEffectId).first()
                 currentUser = syncLogic.currentUser()
             }
             effectExecutor.setBaseNetwork(baseNetwork!!)
@@ -84,7 +85,12 @@ class PolishViewModel @Inject constructor(
                 }.map { it.toNetwork() }
             }.asLiveData()
 
+            var first = true
             effects.addSource(ld) {
+                if (first) {
+                    first = false
+                    setEffect(it.first())
+                }
                 effects.postValue(it)
             }
         }
@@ -96,7 +102,7 @@ class PolishViewModel @Inject constructor(
             effectExecutor.removeAll()
             effectExecutor.release()
             baseNetwork = withContext(Dispatchers.IO) {
-                syncLogic.getNetwork(BaseEffectId)
+                syncLogic.getNetwork(BaseEffectId).first()
             }
             context = ExecutionContext(contxt, videoStorage, assetManager)
             effectExecutor = EffectExecutor(context)
@@ -186,10 +192,20 @@ class PolishViewModel @Inject constructor(
 
     fun setEffect(effect: Network): Boolean {
         currentEffect = effect
-        currentEffectLive.postValue(effect)
-
         analytics.logEvent(Analytics.Event.SetEffect(effect.name))
         viewModelScope.launch {
+
+            val ld = withContext(Dispatchers.IO) {
+                syncLogic.getNetwork(effect.id)
+            }.asLiveData()
+
+            currentEffectLD?.let { currentEffectLive.removeSource(it) }
+            currentEffectLD = ld
+            currentEffectLive.addSource(ld) {
+                currentEffect = it
+                currentEffectLive.postValue(it)
+            }
+
             effectExecutor.swapEffect(effect)
             if (!svSetup) {
                 svSetup = true
@@ -252,6 +268,7 @@ class PolishViewModel @Inject constructor(
 
     fun setEffectProperty(property: Property) {
         currentEffect?.let {
+            effectExecutor.setProperty(property.nodeId, property.key as Property.Key<Any>, property.value)
             viewModelScope.launch(Dispatchers.IO) {
                 dao.insertProperty(
                     PropertyData(

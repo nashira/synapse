@@ -13,6 +13,7 @@ import com.rthqks.synapse.exec.ExecutionContext
 import com.rthqks.synapse.logic.*
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import javax.inject.Inject
@@ -38,7 +39,7 @@ class BuilderViewModel @Inject constructor(
     fun setNetworkId(networkId: String) {
         viewModelScope.launch {
             withContext(Dispatchers.IO) {
-                network = logic.getNetwork(networkId)
+                network = logic.getNetwork(networkId).first()
                 Log.d(TAG, "loaded: $network")
             }
 
