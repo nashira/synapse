@@ -55,7 +55,7 @@
     <string name="property_label_camera_fps_24">24</string>
     <string name="property_label_camera_fps_30">30</string>
     <string name="property_label_camera_fps_60">60</string>
-    <string name="property_name_frame_rate">Frame Rate (fps)</string>
+    <string name="property_name_frame_rate">FPS</string>
     <string name="property_label_camera_capture_size_480">640x480</string>
     <string name="name_node_type_audio_waveform">Audio Waveform</string>
     <string name="name_node_type_frame_difference">Frame Difference</string>
@@ -76,7 +76,8 @@
     <string name="property_label_8">8</string>
     <string name="property_label_9">9</string>
     <string name="property_label_10">10</string>
-    <string name="property_name_num_passes">Number of Passes</string>
+    <string name="property_name_num_passes">Blur Passes</string>
+    <string name="property_name_quant_depth">Quant Depth</string>
     <string name="property_label_scale_factor_4">1/4</string>
     <string name="property_label_scale_factor_2">1/2</string>
     <string name="property_label_scale_factor_1">1</string>
@@ -169,7 +170,7 @@
     <string name="name_node_type_shape">Shape</string>
     <string name="property_name_capture_size">Capture Size</string>
     <string name="name_node_type_ring_buffer">Ring Buffer</string>
-    <string name="property_name_history_size">Number of Layers</string>
+    <string name="property_name_history_size">Frames</string>
     <string name="property_name_slice_depth">Slice Depth</string>
     <string name="name_node_type_slice_3d">2D Slice of 3D Texture</string>
     <string name="title_camera_settings">Camera Settings</string>
@@ -214,7 +215,7 @@
     <string name="property_label_13">13</string>
     <string name="property_name_speed">Speed</string>
     <string name="property_name_crop_size">Crop Size</string>
-    <string name="property_name_crop_enabled">Enable Crop</string>
+    <string name="property_name_crop_enabled">Crop</string>
     <string name="property_name_gray_enabled">Grayscale</string>
     <string name="button_node_list">Node List</string>
     <string name="title_about">About</string>

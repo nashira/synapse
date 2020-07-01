@@ -13,6 +13,7 @@ import androidx.lifecycle.*
 import com.rthqks.synapse.assets.AssetManager
 import com.rthqks.synapse.assets.VideoStorage
 import com.rthqks.synapse.data.PropertyData
+import com.rthqks.synapse.data.SeedData
 import com.rthqks.synapse.data.SeedData.BaseEffectId
 import com.rthqks.synapse.data.SynapseDao
 import com.rthqks.synapse.exec.ExecutionContext
@@ -85,14 +86,12 @@ class PolishViewModel @Inject constructor(
                 }.map { it.toNetwork() }
             }.asLiveData()
 
-            var first = true
             effects.addSource(ld) {
-                if (first) {
-                    first = false
-                    setEffect(it.first())
-                }
                 effects.postValue(it)
             }
+
+            val defaultEffect = syncLogic.getNetwork(SeedData.SeedNetworks.first().id).first()
+            setEffect(defaultEffect)
         }
     }
 
@@ -268,7 +267,11 @@ class PolishViewModel @Inject constructor(
 
     fun setEffectProperty(property: Property) {
         currentEffect?.let {
-            effectExecutor.setProperty(property.nodeId, property.key as Property.Key<Any>, property.value)
+            effectExecutor.setProperty(
+                property.nodeId,
+                property.key as Property.Key<Any>,
+                property.value
+            )
             viewModelScope.launch(Dispatchers.IO) {
                 dao.insertProperty(
                     PropertyData(

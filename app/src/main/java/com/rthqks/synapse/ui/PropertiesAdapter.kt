@@ -128,6 +128,7 @@ private class SingleValueViewHolder(
 ) : PropertyViewHolder(itemView) {
     private val iconView = itemView.icon
     private val nameView = itemView.text
+    private val titleView = itemView.title
     private var propertyItem: PropertyItem? = null
 
     init {
@@ -143,10 +144,18 @@ private class SingleValueViewHolder(
         this.propertyItem = propertyItem
         val choice = propertyItem.choice ?: return
 
-        iconView.setImageResource(choice.icon)
+        if (choice.icon == 0) {
+            iconView.visibility = View.GONE
+            nameView.visibility = View.VISIBLE
+        } else {
+            iconView.visibility = View.VISIBLE
+            nameView.visibility = View.GONE
+            iconView.setImageResource(choice.icon)
+        }
         if (choice.label != 0) {
             nameView.setText(choice.label)
         }
+        titleView.visibility = View.GONE
     }
 }
 
@@ -155,6 +164,7 @@ private class ToggleViewHolder(
 ) : PropertyViewHolder(itemView) {
     private val iconView = itemView.icon
     private val textView = itemView.text
+    private val titleView = itemView.title
     private var propertyItem: PropertyItem? = null
     private var index = 0
     private var toggleType: ChoiceUi<*>? = null
@@ -190,10 +200,20 @@ private class ToggleViewHolder(
     private fun update() {
         toggleType?.let {
             val choice = it.choices[index]
+            if (choice.icon == 0) {
+                iconView.visibility = View.GONE
+                textView.visibility = View.VISIBLE
+            } else {
+                iconView.visibility = View.VISIBLE
+                textView.visibility = View.GONE
+                iconView.setImageResource(choice.icon)
+            }
+
             if (choice.label != 0) {
                 textView.setText(choice.label)
             }
-            iconView.setImageResource(choice.icon)
+
+            propertyItem?.ui?.title?.let { t -> titleView.setText(t) }
         }
     }
 }

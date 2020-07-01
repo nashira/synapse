@@ -44,31 +44,31 @@ class NodeUi(
                         Choice(
                             Size(640, 480),
                             R.string.property_label_camera_capture_size_480,
-                            R.drawable.square
+                            0
                         ),
                         Choice(
                             Size(1280, 720),
                             R.string.property_label_camera_capture_size_720,
-                            R.drawable.square
+                            0
                         ),
                         Choice(
                             Size(1920, 1080),
                             R.string.property_label_camera_capture_size_1080,
-                            R.drawable.square
+                            0
                         ),
                         Choice(
                             Size(3840, 2160),
                             R.string.property_label_camera_capture_size_2160,
-                            R.drawable.square
+                            0
                         )
                     ),
                     Camera.FrameRate to menuUi(
                         R.string.property_name_frame_rate, R.drawable.ic_speed,
-                        Choice(10, R.string.property_label_camera_fps_10, R.drawable.square),
-                        Choice(15, R.string.property_label_camera_fps_15, R.drawable.square),
-                        Choice(24, R.string.property_label_camera_fps_24, R.drawable.square),
-                        Choice(30, R.string.property_label_camera_fps_30, R.drawable.square),
-                        Choice(60, R.string.property_label_camera_fps_60, R.drawable.square)
+                        Choice(10, R.string.property_label_camera_fps_10, 0),
+                        Choice(15, R.string.property_label_camera_fps_15, 0),
+                        Choice(24, R.string.property_label_camera_fps_24, 0),
+                        Choice(30, R.string.property_label_camera_fps_30, 0),
+                        Choice(60, R.string.property_label_camera_fps_60, 0)
                     ),
                     Camera.Stabilize to toggleUi(
                         R.string.property_name_camera_stabilize, R.drawable.ic_control_camera,
@@ -127,22 +127,22 @@ class NodeUi(
                         Choice(
                             Size(180, 320),
                             R.string.property_label_s,
-                            R.drawable.square
+                            0
                         ),
                         Choice(
                             Size(270, 480),
                             R.string.property_label_m,
-                            R.drawable.square
+                            0
                         ),
                         Choice(
                             Size(540, 960),
                             R.string.property_label_l,
-                            R.drawable.square
+                            0
                         ),
                         Choice(
                             Size(1080, 1920),
                             R.string.property_label_xl,
-                            R.drawable.square
+                            0
                         )
                     ),
                     CropGrayBlur.CropEnabled to toggleUi(
@@ -151,12 +151,12 @@ class NodeUi(
                         Choice(
                             false,
                             R.string.property_label_off,
-                            R.drawable.square
+                            0
                         ),
                         Choice(
                             true,
                             R.string.property_label_on,
-                            R.drawable.square
+                            0
                         )
                     ),
                     CropGrayBlur.GrayEnabled to toggleUi(
@@ -165,12 +165,12 @@ class NodeUi(
                         Choice(
                             false,
                             R.string.property_label_off,
-                            R.drawable.square
+                            0
                         ),
                         Choice(
                             true,
                             R.string.property_label_on,
-                            R.drawable.square
+                            0
                         )
                     ),
                     CropGrayBlur.BlurSize to toggleUi(
@@ -179,22 +179,22 @@ class NodeUi(
                         Choice(
                             0,
                             R.string.property_label_0,
-                            R.drawable.square
+                            0
                         ),
                         Choice(
                             5,
                             R.string.property_label_5,
-                            R.drawable.square
+                            0
                         ),
                         Choice(
                             9,
                             R.string.property_label_9,
-                            R.drawable.square
+                            0
                         ),
                         Choice(
                             13,
                             R.string.property_label_13,
-                            R.drawable.square
+                            0
                         )
                     ),
                     CropGrayBlur.NumPasses to toggleUi(
@@ -203,22 +203,22 @@ class NodeUi(
                         Choice(
                             1,
                             R.string.property_label_1,
-                            R.drawable.circle
+                            0
                         ),
                         Choice(
                             2,
                             R.string.property_label_2,
-                            R.drawable.circle
+                            0
                         ),
                         Choice(
                             4,
                             R.string.property_label_4,
-                            R.drawable.circle
+                            0
                         ),
                         Choice(
                             8,
                             R.string.property_label_8,
-                            R.drawable.circle
+                            0
                         )
                     )
                 )
@@ -295,22 +295,22 @@ class NodeUi(
                         Choice(
                             20,
                             R.string.property_label_20,
-                            R.drawable.square
+                            0
                         ),
                         Choice(
                             30,
                             R.string.property_label_30,
-                            R.drawable.square
+                            0
                         ),
                         Choice(
                             45,
                             R.string.property_label_45,
-                            R.drawable.square
+                            0
                         ),
                         Choice(
                             60,
                             R.string.property_label_60,
-                            R.drawable.square
+                            0
                         )
                     )
                 )
@@ -366,11 +366,11 @@ class NodeUi(
                     ),
                     RotateMatrix.FrameRate to menuUi(
                         R.string.property_name_frame_rate, R.drawable.ic_speed,
-                        Choice(10, R.string.property_label_camera_fps_10, R.drawable.square),
-                        Choice(15, R.string.property_label_camera_fps_15, R.drawable.square),
-                        Choice(20, R.string.property_label_camera_fps_24, R.drawable.square),
-                        Choice(30, R.string.property_label_camera_fps_30, R.drawable.square),
-                        Choice(60, R.string.property_label_camera_fps_60, R.drawable.square)
+                        Choice(10, R.string.property_label_camera_fps_10, 0),
+                        Choice(15, R.string.property_label_camera_fps_15, 0),
+                        Choice(20, R.string.property_label_camera_fps_24, 0),
+                        Choice(30, R.string.property_label_camera_fps_30, 0),
+                        Choice(60, R.string.property_label_camera_fps_60, 0)
                     )
                 )
             ),
@@ -390,22 +390,22 @@ class NodeUi(
                         Choice(
                             Size(180, 320),
                             R.string.property_label_s,
-                            R.drawable.circle
+                            0
                         ),
                         Choice(
                             Size(270, 480),
                             R.string.property_label_m,
-                            R.drawable.circle
+                            0
                         ),
                         Choice(
                             Size(540, 960),
                             R.string.property_label_l,
-                            R.drawable.circle
+                            0
                         ),
                         Choice(
                             Size(1080, 1920),
                             R.string.property_label_xl,
-                            R.drawable.circle
+                            0
                         )
                     )
                 )
@@ -417,27 +417,27 @@ class NodeUi(
                 R.drawable.ic_view_module,
                 mapOf(
                     Quantizer.NumElements to toggleUi(
-                        R.string.property_name_num_passes,
+                        R.string.property_name_quant_depth,
                         R.drawable.ic_layers,
                         Choice(
                             floatArrayOf(4f, 4f, 4f),
                             R.string.property_label_4,
-                            R.drawable.circle
+                            0
                         ),
                         Choice(
                             floatArrayOf(6f, 6f, 6f),
                             R.string.property_label_6,
-                            R.drawable.circle
+                            0
                         ),
                         Choice(
                             floatArrayOf(8f, 8f, 8f),
                             R.string.property_label_8,
-                            R.drawable.circle
+                            0
                         ),
                         Choice(
                             floatArrayOf(10f, 10f, 10f),
                             R.string.property_label_10,
-                            R.drawable.circle
+                            0
                         )
                     )
                 )
