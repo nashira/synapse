@@ -3,6 +3,7 @@ package com.rthqks.synapse.build
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.TextView
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.RecyclerView
 import com.rthqks.synapse.R
@@ -54,7 +55,7 @@ class PortsAdapter(
     }
 
     override fun getItemViewType(position: Int): Int = if (isStartAligned) {
-        R.layout.layout_port_fragment_node_start
+        R.layout.layout_port_fragment_node
     } else {
         R.layout.layout_port_fragment_node
     }
@@ -70,40 +71,81 @@ class PortViewHolder(
     itemView: View,
     onClick: (View, Connector) -> Unit
 ) : RecyclerView.ViewHolder(itemView) {
-    private val button = itemView.button
-    private val label = itemView.label
+    private val textView = itemView as TextView
     private var connector: Connector? = null
 
     init {
-        button.setOnClickListener {
+        textView.setOnClickListener {
             connector?.let { it1 -> onClick(it, it1) }
-        }
-        button.setOnLongClickListener {
-//            connector?.let { it1 -> onConnectorLongClick(it, it1) }
-            true
         }
     }
 
     fun bind(connector: Connector, startAligned: Boolean) {
         this.connector = connector
-        connector.link?.let {
-            //                val otherPort =
-//                    if (startAligned) viewModel.getConnector(it.fromNodeId, it.fromPortId).port
-//                    else viewModel.getConnector(it.toNodeId, it.toPortId).port
+        textView.text = connector.port.key
 
-//                label.text = connector.port.name
-            button.setBackgroundResource(R.drawable.selectable_accent)
-        } ?: run {
-            button.setBackgroundResource(R.drawable.selectable_grey)
-//                label.text = connector.port.name
+        if (startAligned) {
+            startIcons(connector.port.type)
+        } else {
+            endIcons(connector.port.type)
         }
+    }
 
-        label.text = connector.port.key
+    private fun startIcons(type: PortType) {
+        when (type) {
+            PortType.Audio -> textView.setCompoundDrawablesWithIntrinsicBounds(
+                R.drawable.ic_volume_2,
+                0,
+                0,
+                0
+            )
+            PortType.Video -> textView.setCompoundDrawablesWithIntrinsicBounds(
+                R.drawable.ic_image,
+                0,
+                0,
+                0
+            )
+            PortType.Texture3D -> textView.setCompoundDrawablesWithIntrinsicBounds(
+                R.drawable.ic_layers,
+                0,
+                0,
+                0
+            )
+            else -> textView.setCompoundDrawablesWithIntrinsicBounds(
+                R.drawable.ic_3d_rotation,
+                0,
+                0,
+                0
+            )
+        }
+    }
 
-        when (connector.port.type) {
-            PortType.Audio -> button.setImageResource(R.drawable.ic_volume_2)
-            PortType.Video -> button.setImageResource(R.drawable.ic_image)
-            PortType.Texture3D -> button.setImageResource(R.drawable.ic_layers)
+    private fun endIcons(type: PortType) {
+        when (type) {
+            PortType.Audio -> textView.setCompoundDrawablesWithIntrinsicBounds(
+                0,
+                0,
+                R.drawable.ic_volume_2,
+                0
+            )
+            PortType.Video -> textView.setCompoundDrawablesWithIntrinsicBounds(
+                0,
+                0,
+                R.drawable.ic_image,
+                0
+            )
+            PortType.Texture3D -> textView.setCompoundDrawablesWithIntrinsicBounds(
+                0,
+                0,
+                R.drawable.ic_layers,
+                0
+            )
+            else -> textView.setCompoundDrawablesWithIntrinsicBounds(
+                0,
+                0,
+                R.drawable.ic_3d_rotation,
+                0
+            )
         }
     }
 }

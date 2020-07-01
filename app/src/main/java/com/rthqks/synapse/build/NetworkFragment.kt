@@ -12,6 +12,8 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.recyclerview.widget.RecyclerView
 import com.rthqks.synapse.R
 import com.rthqks.synapse.logic.Node
+import com.rthqks.synapse.logic.Port
+import com.rthqks.synapse.logic.PortType
 import com.rthqks.synapse.ui.NodeUi
 import dagger.android.support.DaggerFragment
 import kotlinx.android.synthetic.main.fragment_network.*
@@ -88,35 +90,58 @@ class NetworkFragment : DaggerFragment() {
 
 private class NodeAdapter(
     private val clickListener: (Boolean, Node) -> Boolean
-) : RecyclerView.Adapter<NodeViewHolder>() {
+) : RecyclerView.Adapter<ItemViewHolder>() {
     private val nodes = mutableListOf<Node>()
+    private val items = mutableListOf<Item>()
 
     fun setNodes(nodes: Collection<Node>) {
         this.nodes.clear()
-        this.nodes.addAll(nodes)
+        this.nodes += nodes
+        items.clear()
+        nodes.forEach { node ->
+            items += Item(node)
+            node.ports.values.forEach {
+                items += Item(node, 1, it)
+            }
+        }
         notifyDataSetChanged()
     }
 
-    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): NodeViewHolder {
+    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ItemViewHolder {
         val view = LayoutInflater.from(parent.context).inflate(
-            R.layout.layout_node_list_item,
+            viewType,
             parent,
             false
         )
         return NodeViewHolder(view, clickListener)
     }
 
-    override fun getItemCount() = nodes.size
+    override fun getItemCount() = items.size
 
-    override fun onBindViewHolder(holder: NodeViewHolder, position: Int) {
-        holder.bind(nodes[position])
+    override fun getItemViewType(position: Int): Int = when(items[position].type) {
+        0 -> R.layout.layout_node_list_item
+        else -> R.layout.layout_port_list_item
     }
+
+    override fun onBindViewHolder(holder: ItemViewHolder, position: Int) {
+        holder.bind(items[position])
+    }
+
+    data class Item(
+        val node: Node,
+        val type: Int = 0,
+        val port: Port? = null
+    )
+}
+
+private abstract class ItemViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
+    abstract fun bind(item: NodeAdapter.Item)
 }
 
 private class NodeViewHolder(
     itemView: View,
     clickListener: (Boolean, Node) -> Boolean
-) : RecyclerView.ViewHolder(itemView) {
+) : ItemViewHolder(itemView) {
     private val icon = itemView.icon_view
     private val label = itemView.title_view
     private var node: Node? = null
@@ -127,10 +152,21 @@ private class NodeViewHolder(
         }
     }
 
-    fun bind(node: Node) {
-        this.node = node
-        val ui = NodeUi[node.type]
-        label.setText(ui.title)
-        icon.setImageResource(ui.icon)
+    override fun bind(item: NodeAdapter.Item) {
+        node = item.node
+        val ui = NodeUi[item.node.type]
+        if (item.type == 0) {
+            label.setText(ui.title)
+            icon.setImageResource(ui.icon)
+        } else {
+            val port = item.port!!
+            label.text = port.key
+            when (port.type) {
+                PortType.Audio -> icon.setImageResource(R.drawable.ic_volume_2)
+                PortType.Video -> icon.setImageResource(R.drawable.ic_image)
+                PortType.Texture3D -> icon.setImageResource(R.drawable.ic_layers)
+                PortType.Matrix -> icon.setImageResource(R.drawable.ic_3d_rotation)
+            }
+        }
     }
 }

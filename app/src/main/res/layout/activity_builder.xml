@@ -18,13 +18,23 @@
             app:layout_constraintTop_toTopOf="parent" />
 
         <TextView
-            android:id="@+id/title_view"
+            android:id="@+id/node_name_view"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="20dp"
             android:gravity="center"
             android:textColor="@color/white"
             app:layout_constraintTop_toTopOf="parent"
+            tools:text="camera" />
+
+        <TextView
+            android:id="@+id/title_view"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
+            android:gravity="center"
+            android:textColor="@color/white"
+            app:layout_constraintTop_toBottomOf="@id/node_name_view"
             tools:text="bgr_out - not connected" />
 
         <TextView
@@ -34,6 +44,8 @@
             android:layout_marginStart="12dp"
             android:text="@string/heading_node_inputs"
             android:textColor="@color/white"
+            android:textSize="16sp"
+            android:textStyle="bold"
             app:layout_constraintBottom_toTopOf="@id/inputs_list"
             app:layout_constraintStart_toStartOf="parent" />
 
@@ -44,6 +56,8 @@
             android:layout_marginEnd="12dp"
             android:text="@string/heading_node_outputs"
             android:textColor="@color/white"
+            android:textSize="16sp"
+            android:textStyle="bold"
             app:layout_constraintBottom_toTopOf="@id/outputs_list"
             app:layout_constraintEnd_toEndOf="parent" />
 
@@ -56,7 +70,7 @@
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent"
             tools:itemCount="3"
-            tools:listitem="@layout/layout_port_fragment_node_start" />
+            tools:listitem="@layout/layout_port_fragment_node" />
 
         <androidx.recyclerview.widget.RecyclerView
             android:id="@+id/outputs_list"
@@ -74,36 +88,26 @@
             android:id="@+id/properties_list"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginBottom="8dp"
+            android:layout_marginBottom="16dp"
             android:clipToPadding="false"
             android:orientation="horizontal"
             app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager"
-            app:layout_constraintBottom_toTopOf="@id/node_name_view"
+            app:layout_constraintBottom_toTopOf="@id/button_effects"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             tools:itemCount="5"
             tools:listitem="@layout/layout_property" />
 
-        <TextView
-            android:id="@+id/node_name_view"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="20dp"
-            android:gravity="center"
-            android:textColor="@color/white"
-            app:layout_constraintBottom_toTopOf="@id/button_effects"
-            tools:text="camera" />
-
         <Button
             android:id="@+id/button_effects"
             style="@style/PolishButton"
-            android:layout_marginStart="12dp"
             android:layout_marginBottom="12dp"
             android:drawableTop="@drawable/ic_network"
             android:drawableTint="@color/blue"
             android:text="@string/network"
             android:textColor="@color/blue"
             app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toStartOf="@id/button_add_node"
             app:layout_constraintStart_toStartOf="parent" />
 
         <Button
@@ -116,6 +120,7 @@
             android:text="@string/button_add_node"
             android:textColor="@color/pink"
             app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toEndOf="@id/button_effects" />
 
     </androidx.constraintlayout.widget.ConstraintLayout>
