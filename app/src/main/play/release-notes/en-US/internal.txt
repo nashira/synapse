@@ -1,7 +1,1 @@
-New Effect Preview!!!
-"Squares" is a work in progress, it is experimental and will be updated soon.
-Have fun and let me know what you think.
-
-* Add a LUT (color filter) to any Effect
-* More Effect Settings
-* Change Effects and LUTs while recording
+New look!
