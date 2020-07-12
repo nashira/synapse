@@ -109,9 +109,9 @@ private class VideoViewHolder(
                     setDataAndType(it.uri, "video/*")
                 }
 
-                if (intent.resolveActivity(itemView.context.packageManager) != null) {
+//                if (intent.resolveActivity(itemView.context.packageManager) != null) {
                     onIntent(intent)
-                }
+//                }
             }
         }
         itemView.button_share.setOnClickListener {

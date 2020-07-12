@@ -52,15 +52,19 @@ class SettingsFragment : DaggerFragment() {
                 Choice(
                     Size(1280, 720),
                     R.string.property_label_camera_capture_size_720,
-                    R.drawable.square
+                    0
                 ),
                 Choice(
                     Size(1920, 1080),
                     R.string.property_label_camera_capture_size_1080,
-                    R.drawable.square
+                    0
                 )
             )
             setProperties(listOf(Pair(property, ui)))
+
+            ui.choices.firstOrNull { it.item == property.value }?.let {
+                value_capture.setText(it.label)
+            }
         }
 
         list_fps.adapter = PropertiesAdapter(::onSelected).apply {
@@ -71,6 +75,10 @@ class SettingsFragment : DaggerFragment() {
                 (NodeUi[NodeDef.Camera.key][FrameRate] as? ChoiceUi<*>)?.asType(PropertyType.EXPANDED)
                     ?: return@apply
             setProperties(listOf(Pair(property, ui)))
+
+            ui.choices.firstOrNull { it.item == property.value }?.let {
+                value_fps.setText(it.label)
+            }
         }
 
         list_stabilize.adapter = PropertiesAdapter(::onSelected).apply {
@@ -83,6 +91,10 @@ class SettingsFragment : DaggerFragment() {
                 (NodeUi[NodeDef.Camera.key][Stabilize] as? ChoiceUi<*>)?.asType(PropertyType.EXPANDED)
                     ?: return@apply
             setProperties(listOf(Pair(property, ui)))
+
+            ui.choices.firstOrNull { it.item == property.value }?.let {
+                value_stabilize.setText(it.label)
+            }
         }
 
         list_facing.adapter = PropertiesAdapter(::onSelected).apply {
@@ -95,6 +107,10 @@ class SettingsFragment : DaggerFragment() {
                 (NodeUi[NodeDef.Camera.key][CameraFacing] as? ChoiceUi<*>)?.asType(PropertyType.EXPANDED)
                     ?: return@apply
             setProperties(listOf(Pair(property, ui)))
+
+            ui.choices.firstOrNull { it.item == property.value }?.let {
+                value_facing.setText(it.label)
+            }
         }
     }
 
@@ -104,6 +120,7 @@ class SettingsFragment : DaggerFragment() {
             VideoSize -> value_capture.setText(choice.label)
             FrameRate -> value_fps.setText(choice.label)
             Stabilize -> value_stabilize.setText(choice.label)
+            CameraFacing -> value_facing.setText(choice.label)
         }
     }
 

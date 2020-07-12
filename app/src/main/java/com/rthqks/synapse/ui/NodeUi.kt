@@ -29,12 +29,12 @@ class NodeUi(
                         R.drawable.ic_flip_camera,
                         Choice(
                             CameraCharacteristics.LENS_FACING_BACK,
-                            0,
+                            R.string.property_label_camera_lens_facing_back,
                             R.drawable.ic_camera_rear
                         ),
                         Choice(
                             CameraCharacteristics.LENS_FACING_FRONT,
-                            0,
+                            R.string.property_label_camera_lens_facing_front,
                             R.drawable.ic_camera_front
                         )
                     ),
