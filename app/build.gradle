@@ -16,11 +16,11 @@ android {
         throw new RuntimeException("bad version code '$dateCode', check clock")
     }
     def num = (dateCode / 360).toInteger() % 10_000
-    compileSdkVersion 29
+    compileSdkVersion 30
     defaultConfig {
         applicationId "com.rthqks.synapse"
         minSdkVersion 23
-        targetSdkVersion 29
+        targetSdkVersion 30
         versionCode dateCode
         versionName "0.5.$num"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"

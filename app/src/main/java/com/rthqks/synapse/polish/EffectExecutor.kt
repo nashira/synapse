@@ -172,7 +172,7 @@ class EffectExecutor(
 
     fun registerLutPreview(textureView: TextureView, lut: String) {
 //        Log.d(TAG, "register $lut ${textureView.surfaceTexture}")
-        val surfaceTexture = textureView.surfaceTexture
+        val surfaceTexture = textureView.surfaceTexture ?: return
         lutJobs[surfaceTexture] = scope.launch {
             val preview = lutPreviewPool.poll() ?: await {
 //            Log.d(TAG, "creating new lut preview")

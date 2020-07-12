@@ -136,27 +136,25 @@ private class LutViewHolder(
         itemView.title_view.text = lut.replace("_", " ")
     }
 
-    override fun onSurfaceTextureSizeChanged(surface: SurfaceTexture?, width: Int, height: Int) {
+    override fun onSurfaceTextureSizeChanged(surface: SurfaceTexture, width: Int, height: Int) {
         Log.d("Lut", "surface size: $lut")
     }
 
-    override fun onSurfaceTextureUpdated(surface: SurfaceTexture?) {}
+    override fun onSurfaceTextureUpdated(surface: SurfaceTexture) {}
 
-    override fun onSurfaceTextureDestroyed(surface: SurfaceTexture?): Boolean {
+    override fun onSurfaceTextureDestroyed(surface: SurfaceTexture): Boolean {
 //        Log.d("Lut", "surface destroyed $lut $surface")
         created = false
-        surface?.let { viewModel.unregisterLutPreview(it) }
+        viewModel.unregisterLutPreview(surface)
         return false
     }
 
-    override fun onSurfaceTextureAvailable(surface: SurfaceTexture?, width: Int, height: Int) {
+    override fun onSurfaceTextureAvailable(surface: SurfaceTexture, width: Int, height: Int) {
 //        Log.d("Lut", "surface available $lut $surface")
         created = true
 
-        surface?.let {
-            val s = min(width, 320)
-            it.setDefaultBufferSize(s, s)
-        }
+        val minWidth = min(width, 320)
+        surface.setDefaultBufferSize(minWidth, minWidth)
 //        if (adapterPosition % 3 == 0)
         lut?.let { viewModel.registerLutPreview(itemView.texture_view, it) }
     }

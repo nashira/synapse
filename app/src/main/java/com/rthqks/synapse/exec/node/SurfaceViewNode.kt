@@ -139,7 +139,7 @@ class SurfaceViewNode(
     }
 
     override fun surfaceChanged(
-        holder: SurfaceHolder?,
+        holder: SurfaceHolder,
         format: Int,
         width: Int,
         height: Int
@@ -148,12 +148,12 @@ class SurfaceViewNode(
             exec {
                 Log.d(TAG, "surfaceChanged: $holder $format $width $height")
                 surfaceSize = Size(width, height)
-                updateWindowSurface(holder?.surface)
+                updateWindowSurface(holder.surface)
             }
         }
     }
 
-    override fun surfaceDestroyed(holder: SurfaceHolder?) {
+    override fun surfaceDestroyed(holder: SurfaceHolder) {
         runBlocking {
             exec {
                 Log.d(TAG, "surfaceDestroyed: $holder")
@@ -162,7 +162,7 @@ class SurfaceViewNode(
         }
     }
 
-    override fun surfaceCreated(holder: SurfaceHolder?) {
+    override fun surfaceCreated(holder: SurfaceHolder) {
         Log.d(TAG, "surfaceCreated: $holder")
     }
 

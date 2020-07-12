@@ -26,7 +26,7 @@ class Program {
             if (linkStatus[0] != GLES30.GL_TRUE) {
                 Log.e(TAG, "Could not link program: ")
                 Log.e(TAG, GLES30.glGetProgramInfoLog(it))
-                throw RuntimeException("Error creating program")
+                error("Error creating program")
             }
         }
 
