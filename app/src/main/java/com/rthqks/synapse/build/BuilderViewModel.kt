@@ -97,6 +97,14 @@ class BuilderViewModel @Inject constructor(
 
     }
 
+    fun deleteNetwork() {
+        network?.let {
+            viewModelScope.launch(Dispatchers.IO) {
+                logic.deleteNetwork(it.id)
+            }
+        }
+    }
+
     override fun onCleared() {
         Log.d(TAG, "onCleared")
         CoroutineScope(Dispatchers.IO).launch {

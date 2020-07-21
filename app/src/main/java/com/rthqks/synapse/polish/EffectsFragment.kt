@@ -1,6 +1,7 @@
 package com.rthqks.synapse.polish
 
 import android.os.Bundle
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -48,8 +49,13 @@ class EffectsFragment : DaggerFragment() {
     }
 
     private fun onEffectSelected(network: Network) {
-//        viewModel.bottomSheetState.value = BottomSheetBehavior.STATE_HIDDEN
-        viewModel.setEffect(network)
+        Log.d(TAG, "onEffectSelected: ${network.name}")
+        viewModel.bottomSheetState.value = BottomSheetBehavior.STATE_HIDDEN
+        viewModel.setEffect(network.id)
+    }
+
+    companion object {
+        private val TAG = "EffectsFragment"
     }
 }
 

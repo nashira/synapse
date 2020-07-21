@@ -2,13 +2,14 @@ package com.rthqks.synapse.data
 
 import androidx.room.*
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.map
 
 @Dao
 abstract class SynapseDao {
 
     @Query("SELECT * FROM network WHERE id = :networkId")
-    abstract fun getNetwork(networkId: String): Flow<NetworkData>
+    abstract fun getNetwork(networkId: String): Flow<NetworkData?>
 
     @Query("SELECT * FROM network")
     abstract fun getNetworkData(): Flow<List<NetworkData>>
@@ -96,7 +97,9 @@ abstract class SynapseDao {
 
     @Transaction
     open suspend fun getFullNetwork(networkId: String) =
-        getNetwork(networkId).map { populateNetwork(it); it }
+        getNetwork(networkId).map {
+            it?.also { data -> populateNetwork(data) }
+        }
 
 
     @Transaction

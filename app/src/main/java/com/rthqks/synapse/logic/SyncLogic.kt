@@ -4,7 +4,9 @@ import com.rthqks.synapse.data.*
 import com.rthqks.synapse.data.SeedData.BaseEffect
 import com.rthqks.synapse.data.SeedData.SeedNetworks
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.withContext
 import java.util.*
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -31,7 +33,12 @@ class SyncLogic @Inject constructor(
         dao.insertFullNetwork(BaseEffect.toData())
     }
 
-    suspend fun getNetwork(networkId: String): Flow<Network> = dao.getFullNetwork(networkId).map { it.toNetwork() }
+    suspend fun getNetwork(networkId: String): Flow<Network?> =
+        dao.getFullNetwork(networkId).distinctUntilChanged().map { it?.toNetwork() }
+
+    suspend fun deleteNetwork(id: String) {
+        dao.deleteFullNetwork(id)
+    }
 }
 
 fun Network.toData(networkId: String = id): NetworkData {

@@ -227,20 +227,6 @@ class BuilderActivity : DaggerAppCompatActivity() {
         }.show(supportFragmentManager, null)
     }
 
-    private fun onDeleteNetwork() {
-        ConfirmDialog(
-            R.string.menu_title_delete_network,
-            R.string.button_cancel,
-            R.string.confirm_delete
-        ) {
-            Log.d(TAG, "onDelete $it")
-            if (it) {
-//                viewModel.deleteNetwork()
-                finish()
-            }
-        }.show(supportFragmentManager, null)
-    }
-
 //    override fun onBackPressed() {
 //        if (!viewModel.onBackPressed()) {
 //            super.onBackPressed()

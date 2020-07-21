@@ -5,7 +5,6 @@ import android.content.Context
 import android.content.Intent
 import android.content.SharedPreferences
 import android.content.pm.PackageManager
-import android.location.LocationManager
 import android.os.Build
 import android.os.Bundle
 import android.util.Log
@@ -19,7 +18,7 @@ import androidx.core.content.edit
 import androidx.fragment.app.commitNow
 import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModelProvider
-import androidx.lifecycle.viewModelScope
+import androidx.lifecycle.lifecycleScope
 import com.google.android.material.bottomsheet.BottomSheetBehavior
 import com.rthqks.synapse.R
 import com.rthqks.synapse.build.BuilderActivity
@@ -103,7 +102,7 @@ class PolishActivity : DaggerAppCompatActivity() {
             }
         }
 
-        viewModel.viewModelScope.launch {
+        lifecycleScope.launch {
             val supported = deviceSupported.await()
             val permissions = permissionsGranted.await()
 
@@ -162,7 +161,7 @@ class PolishActivity : DaggerAppCompatActivity() {
             override fun onSlide(bottomSheet: View, slideOffset: Float) {}
 
             override fun onStateChanged(bottomSheet: View, newState: Int) {
-                Log.d(TAG, "state changed $newState")
+                Log.d(TAG, "bottomsheet state: $newState")
                 if (newState == BottomSheetBehavior.STATE_HIDDEN) {
                     Log.d(TAG, "stop lut previews")
                     viewModel.stopLutPreview()
@@ -180,6 +179,7 @@ class PolishActivity : DaggerAppCompatActivity() {
                     ) {
                         if (it) {
                             val id = viewModel.makeCopy(effect)
+                            viewModel.resumingEffectId = id
                             viewModel.releaseContext()
                             startActivity(BuilderActivity.getIntent(this, id))
                         }

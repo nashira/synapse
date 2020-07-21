@@ -14,6 +14,7 @@ import com.rthqks.synapse.R
 import com.rthqks.synapse.logic.Node
 import com.rthqks.synapse.logic.Port
 import com.rthqks.synapse.logic.PortType
+import com.rthqks.synapse.ui.ConfirmDialog
 import com.rthqks.synapse.ui.NodeUi
 import dagger.android.support.DaggerFragment
 import kotlinx.android.synthetic.main.fragment_network.*
@@ -72,6 +73,10 @@ class NetworkFragment : DaggerFragment() {
             Log.d(TAG, "desc focus $hasFocus")
             viewModel.setNetworkDescription(network_description.text.toString().trim())
         }
+
+        delete_network.setOnClickListener {
+            onDeleteNetwork()
+        }
     }
 
     private fun hideKeyboard() {
@@ -80,6 +85,19 @@ class NetworkFragment : DaggerFragment() {
         imm.hideSoftInputFromWindow(network_name.windowToken, 0)
     }
 
+    private fun onDeleteNetwork() {
+        ConfirmDialog(
+            R.string.menu_title_delete_network,
+            R.string.button_cancel,
+            R.string.confirm_delete
+        ) {
+            Log.d(TAG, "onDelete $it")
+            if (it) {
+                requireActivity().finish()
+                viewModel.deleteNetwork()
+            }
+        }.show(parentFragmentManager, null)
+    }
 
     companion object {
         const val TAG = "NetworkFragment"

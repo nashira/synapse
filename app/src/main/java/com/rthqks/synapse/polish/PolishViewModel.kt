@@ -25,6 +25,7 @@ import com.rthqks.synapse.logic.NodeDef.MediaEncoder.Recording
 import com.rthqks.synapse.logic.NodeDef.MediaEncoder.Rotation
 import com.rthqks.synapse.ops.Analytics
 import kotlinx.coroutines.*
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import java.util.*
@@ -40,7 +41,7 @@ class PolishViewModel @Inject constructor(
 ) : ViewModel() {
     val bottomSheetState = MutableLiveData<Int>()
     val effects = MediatorLiveData<List<Network>>()
-    private var currentEffectLD: LiveData<Network>? = null
+    private var currentEffectLD: LiveData<Network?>? = null
     val currentEffectLive = MediatorLiveData<Network>()
     val deviceSupported = MutableLiveData<Boolean>()
     var baseNetwork: Network? = null
@@ -53,6 +54,8 @@ class PolishViewModel @Inject constructor(
     private var context = ExecutionContext(contxt, videoStorage, assetManager)
     private var effectExecutor = EffectExecutor(context)
     private var surfaceView: SurfaceView? = null
+
+    var resumingEffectId: String? = null
 
     init {
         viewModelScope.launch {
@@ -70,28 +73,31 @@ class PolishViewModel @Inject constructor(
     }
 
     private suspend fun recreateContext() {
-        Log.d(TAG, "recreateContext")
+        val effectId = resumingEffectId ?: currentEffect?.id
+        resumingEffectId = null
+        Log.d(TAG, "recreateContext $effectId")
 
         effectExecutor.setup()
         effectExecutor.initializeEffect()
-        currentEffect?.let { setEffect(it) }
+        effectId?.let { setEffect(it) }
     }
 
     fun initializeEffect() {
-        viewModelScope.launch(Dispatchers.IO) {
+        viewModelScope.launch {
             effectExecutor.initializeEffect()
-            val ld = dao.getNetworks().map { list ->
-                list.filter {
-                    it.id != BaseEffectId
-                }.map { it.toNetwork() }
-            }.asLiveData()
+            val ld = withContext(Dispatchers.IO) {
+                dao.getNetworks().map { list ->
+                    list.filter {
+                        it.id != BaseEffectId
+                    }.map { it.toNetwork() }
+                }.asLiveData()
+            }
 
             effects.addSource(ld) {
                 effects.postValue(it)
             }
 
-            val defaultEffect = syncLogic.getNetwork(SeedData.SeedNetworks.first().id).first()
-            setEffect(defaultEffect)
+            setEffect(SeedData.SeedNetworks.first().id)
         }
     }
 
@@ -113,22 +119,9 @@ class PolishViewModel @Inject constructor(
         this.surfaceView = surfaceView
     }
 
-    fun flipCamera() {
-        val facing =
-            effectExecutor.getProperty(EffectExecutor.ID_CAMERA, CameraFacing.name)
-        val new = when (facing.value) {
-            CameraCharacteristics.LENS_FACING_BACK ->
-                CameraCharacteristics.LENS_FACING_FRONT
-            CameraCharacteristics.LENS_FACING_FRONT ->
-                CameraCharacteristics.LENS_FACING_BACK
-            else -> CameraCharacteristics.LENS_FACING_BACK
-        }
-        editProperty(EffectExecutor.ID_CAMERA, CameraFacing, new)
-    }
-
     fun startExecution() {
         Log.d(TAG, "resume $needsNewContext")
-        viewModelScope.launch(Dispatchers.IO) {
+        viewModelScope.launch(Dispatchers.Default) {
             effectExecutor.resume()
             Log.d(TAG, "resumed")
             if (needsNewContext) {
@@ -189,23 +182,25 @@ class PolishViewModel @Inject constructor(
         }
     }
 
-    fun setEffect(effect: Network): Boolean {
-        currentEffect = effect
-        analytics.logEvent(Analytics.Event.SetEffect(effect.name))
+    fun setEffect(effectId: String): Boolean {
         viewModelScope.launch {
-
             val ld = withContext(Dispatchers.IO) {
-                syncLogic.getNetwork(effect.id)
-            }.asLiveData()
+                syncLogic.getNetwork(effectId).asLiveData()
+            }
 
             currentEffectLD?.let { currentEffectLive.removeSource(it) }
             currentEffectLD = ld
             currentEffectLive.addSource(ld) {
-                currentEffect = it
-                currentEffectLive.postValue(it)
+                if (it != null) {
+                    currentEffect = it
+                    currentEffectLive.postValue(it)
+                    Log.d(TAG, "current effect ${it.name}")
+                    viewModelScope.launch(Dispatchers.Default) {
+                        effectExecutor.swapEffect(it)
+                    }
+                }
             }
 
-            effectExecutor.swapEffect(effect)
             if (!svSetup) {
                 svSetup = true
                 surfaceView?.let { effectExecutor.setSurfaceView(it) }

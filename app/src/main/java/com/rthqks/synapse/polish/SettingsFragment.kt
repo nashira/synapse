@@ -109,7 +109,11 @@ class SettingsFragment : DaggerFragment() {
             setProperties(listOf(Pair(property, ui)))
 
             ui.choices.firstOrNull { it.item == property.value }?.let {
-                value_facing.setText(it.label)
+                if (it.label != 0) {
+                    value_facing.setText(it.label)
+                } else {
+                    value_facing.text = it.item.toString()
+                }
             }
         }
     }

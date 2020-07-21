@@ -55,6 +55,18 @@
         android:maxLines="1"
         app:layout_constraintTop_toBottomOf="@id/network_name" />
 
+    <ImageButton
+        android:id="@+id/delete_network"
+        style="@style/Widget.AppCompat.ActionButton"
+        android:contentDescription="@string/menu_title_delete_network"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="12dp"
+        android:src="@drawable/ic_delete"
+        android:tint="@color/white"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/network_description" />
+
     <TextView
         android:id="@+id/title_nodes"
         android:layout_width="match_parent"
@@ -64,7 +76,7 @@
         android:text="@string/nodes"
         android:textSize="22sp"
         android:textStyle="bold"
-        app:layout_constraintTop_toBottomOf="@id/network_description" />
+        app:layout_constraintTop_toBottomOf="@id/delete_network" />
 
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/node_list"
