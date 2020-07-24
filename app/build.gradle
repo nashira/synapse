@@ -57,10 +57,23 @@ android {
             minifyEnabled true
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
         }
+
         debug {
             applicationIdSuffix ".debug"
             versionNameSuffix "-debug"
-            ext.enableCrashlytics = false
+            ext.alwaysUpdateBuildId = false
+        }
+    }
+
+    flavorDimensions "stage"
+    productFlavors {
+        dev {
+            dimension "stage"
+            resConfigs "en", "xxhdpi"
+        }
+
+        prod {
+            dimension "stage"
         }
     }
 
