@@ -1,12 +1,12 @@
 package com.rthqks.synapse.logic
 
+import com.rthqks.flow.logic.*
 import com.rthqks.synapse.data.*
 import com.rthqks.synapse.data.SeedData.BaseEffect
 import com.rthqks.synapse.data.SeedData.SeedNetworks
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.withContext
 import java.util.*
 import javax.inject.Inject
 import javax.inject.Singleton

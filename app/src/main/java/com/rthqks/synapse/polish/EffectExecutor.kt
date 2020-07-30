@@ -5,16 +5,16 @@ import android.net.Uri
 import android.util.Log
 import android.view.SurfaceView
 import android.view.TextureView
-import com.rthqks.synapse.exec.ExecutionContext
-import com.rthqks.synapse.exec.NetworkExecutor
-import com.rthqks.synapse.exec.node.BCubeImportNode
-import com.rthqks.synapse.exec.node.Lut3dNode
-import com.rthqks.synapse.exec.node.SurfaceViewNode
-import com.rthqks.synapse.exec.node.TextureViewNode
-import com.rthqks.synapse.logic.*
-import com.rthqks.synapse.logic.NodeDef.*
-import com.rthqks.synapse.logic.NodeDef.BCubeImport.LutUri
-import com.rthqks.synapse.logic.NodeDef.Lut3d.LutStrength
+import com.rthqks.flow.exec.ExecutionContext
+import com.rthqks.flow.exec.NetworkExecutor
+import com.rthqks.flow.exec.node.BCubeImportNode
+import com.rthqks.flow.exec.node.Lut3dNode
+import com.rthqks.flow.exec.node.SurfaceViewNode
+import com.rthqks.flow.exec.node.TextureViewNode
+import com.rthqks.flow.logic.*
+import com.rthqks.flow.logic.NodeDef.*
+import com.rthqks.flow.logic.NodeDef.BCubeImport.LutUri
+import com.rthqks.flow.logic.NodeDef.Lut3d.LutStrength
 import kotlinx.coroutines.*
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.ConcurrentLinkedQueue
@@ -367,10 +367,10 @@ class EffectExecutor(
 
 private val Network.videoOut: Pair<Int, String>?
     get() = getPorts().firstOrNull {
-        it.exposed && it.output && it.type == PortType.Video
+        it.exposed && it.output && it.type == com.rthqks.flow.logic.PortType.Video
     }?.let { Pair(it.nodeId, it.key) }
 
 private val Network.videoIn: List<Pair<Int, String>>
     get() = getPorts().filter {
-        it.exposed && it.input && it.type == PortType.Video
+        it.exposed && it.input && it.type == com.rthqks.flow.logic.PortType.Video
     }.map { Pair(it.nodeId, it.key) }

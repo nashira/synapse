@@ -1,7 +1,7 @@
-package com.rthqks.synapse.exec_dep.link
+package com.rthqks.flow.exec_dep.link
 
-import com.rthqks.synapse.gl.GlesManager
+import com.rthqks.flow.gl.GlesManager
 
 class MatrixEvent : Event() {
-    val matrix = GlesManager.identityMat()
+    val matrix = com.rthqks.flow.gl.GlesManager.identityMat()
 }

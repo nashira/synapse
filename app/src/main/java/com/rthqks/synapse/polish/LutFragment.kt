@@ -14,7 +14,7 @@ import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.google.android.material.bottomsheet.BottomSheetBehavior
 import com.rthqks.synapse.R
-import com.rthqks.synapse.logic.NodeDef
+import com.rthqks.flow.logic.NodeDef
 import dagger.android.support.DaggerFragment
 import kotlinx.android.synthetic.main.fragment_lut.*
 import kotlinx.android.synthetic.main.layout_lut.view.*

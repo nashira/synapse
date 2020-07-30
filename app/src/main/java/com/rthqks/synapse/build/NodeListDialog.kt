@@ -13,7 +13,7 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.rthqks.synapse.R
-import com.rthqks.synapse.logic.Node
+import com.rthqks.flow.logic.Node
 import com.rthqks.synapse.ui.NodeUi
 import dagger.android.support.AndroidSupportInjection
 import kotlinx.android.synthetic.main.layout_node_list_item.view.*

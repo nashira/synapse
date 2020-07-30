@@ -6,8 +6,8 @@ import android.graphics.Paint
 import android.util.AttributeSet
 import android.view.View
 import com.rthqks.synapse.R
-import com.rthqks.synapse.logic.Network
-import com.rthqks.synapse.logic.Node
+import com.rthqks.flow.logic.Network
+import com.rthqks.flow.logic.Node
 import java.lang.Math.random
 import kotlin.math.max
 import kotlin.math.sign

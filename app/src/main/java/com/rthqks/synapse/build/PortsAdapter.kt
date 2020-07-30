@@ -8,8 +8,7 @@ import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.RecyclerView
 import com.rthqks.synapse.R
 import com.rthqks.synapse.logic.Connector
-import com.rthqks.synapse.logic.PortType
-import kotlinx.android.synthetic.main.layout_port_fragment_node.view.*
+import com.rthqks.flow.logic.PortType
 
 class PortsAdapter(
     private val isStartAligned: Boolean,

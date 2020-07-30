@@ -10,7 +10,7 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.recyclerview.widget.RecyclerView
 import com.google.android.material.bottomsheet.BottomSheetBehavior
 import com.rthqks.synapse.R
-import com.rthqks.synapse.logic.Network
+import com.rthqks.flow.logic.Network
 import dagger.android.support.DaggerFragment
 import kotlinx.android.synthetic.main.fragment_effects.*
 import kotlinx.android.synthetic.main.fragment_settings.button_close

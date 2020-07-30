@@ -1,4 +1,4 @@
-package com.rthqks.synapse.exec_dep.node
+package com.rthqks.flow.exec_dep.node
 
 import android.graphics.SurfaceTexture
 import android.media.AudioFormat
@@ -13,13 +13,11 @@ import android.os.SystemClock
 import android.util.Log
 import android.util.Size
 import android.view.Surface
-import com.rthqks.synapse.codec.Decoder
-import com.rthqks.synapse.exec.ExecutionContext
-import com.rthqks.synapse.exec.Properties
-import com.rthqks.synapse.exec_dep.NodeExecutor
-import com.rthqks.synapse.exec_dep.link.*
-import com.rthqks.synapse.gl.Texture2d
-import com.rthqks.synapse.logic.NodeDef.MediaDecoder.MediaUri
+import com.rthqks.flow.exec.ExecutionContext
+import com.rthqks.flow.exec.Properties
+import com.rthqks.flow.exec_dep.NodeExecutor
+import com.rthqks.flow.exec_dep.link.*
+import com.rthqks.flow.logic.NodeDef.MediaDecoder.MediaUri
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.ReceiveChannel
@@ -35,20 +33,21 @@ class DecoderNode(
     private var size: Size = Size(0, 0)
     private var surfaceRotation = 0
     private var frameRate = 0
-    private var audioInput: Channel<Decoder.Event>? = null
-    private var videoInput: Channel<Decoder.Event>? = null
+    private var audioInput: Channel<com.rthqks.flow.codec.Decoder.Event>? = null
+    private var videoInput: Channel<com.rthqks.flow.codec.Decoder.Event>? = null
     private var audioSession = 0
     private var audioFormat: AudioFormat? = null
     private var videoJob: Job? = null
     private var audioJob: Job? = null
     private var outputSurface: Surface? = null
     private var outputSurfaceTexture: SurfaceTexture? = null
-    private val outputTexture = Texture2d(
+    private val outputTexture = com.rthqks.flow.gl.Texture2d(
         GLES11Ext.GL_TEXTURE_EXTERNAL_OES,
         GL_CLAMP_TO_EDGE,
         GL_LINEAR
     )
-    private val decoder = Decoder(context.context, glesManager.backgroundHandler)
+    private val decoder =
+        com.rthqks.flow.codec.Decoder(context.context, glesManager.backgroundHandler)
 
     private val uri: Uri get() = properties[MediaUri]
 

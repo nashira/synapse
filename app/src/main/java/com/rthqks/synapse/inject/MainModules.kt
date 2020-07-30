@@ -3,8 +3,8 @@ package com.rthqks.synapse.inject
 import android.content.Context
 import androidx.room.Room
 import com.rthqks.synapse.SynapseApp
-import com.rthqks.synapse.assets.AssetManager
-import com.rthqks.synapse.assets.VideoStorage
+import com.rthqks.flow.assets.AssetManager
+import com.rthqks.flow.assets.VideoStorage
 import com.rthqks.synapse.data.SynapseDao
 import com.rthqks.synapse.data.SynapseDb
 import dagger.Module
@@ -59,9 +59,9 @@ class ExecutionModule {
 
     @Singleton
     @Provides
-    fun provideAssetManager(context: Context) = AssetManager(context)
+    fun provideAssetManager(context: Context) = com.rthqks.flow.assets.AssetManager(context)
 
     @Singleton
     @Provides
-    fun provideVideoStorage(context: Context) = VideoStorage(context)
+    fun provideVideoStorage(context: Context) = com.rthqks.flow.assets.VideoStorage(context)
 }

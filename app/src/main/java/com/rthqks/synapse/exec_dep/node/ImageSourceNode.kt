@@ -1,4 +1,4 @@
-package com.rthqks.synapse.exec_dep.node
+package com.rthqks.flow.exec_dep.node
 
 import android.graphics.BitmapFactory
 import android.net.Uri
@@ -7,12 +7,11 @@ import android.opengl.Matrix
 import android.util.Log
 import android.util.Size
 import androidx.exifinterface.media.ExifInterface
-import com.rthqks.synapse.exec.ExecutionContext
-import com.rthqks.synapse.exec.Properties
-import com.rthqks.synapse.exec_dep.NodeExecutor
-import com.rthqks.synapse.exec_dep.link.*
-import com.rthqks.synapse.gl.Texture2d
-import com.rthqks.synapse.logic.NodeDef.Image.MediaUri
+import com.rthqks.flow.exec.ExecutionContext
+import com.rthqks.flow.exec.Properties
+import com.rthqks.flow.exec_dep.NodeExecutor
+import com.rthqks.flow.exec_dep.link.*
+import com.rthqks.flow.logic.NodeDef.Image.MediaUri
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import java.io.InputStream
@@ -29,7 +28,7 @@ class ImageSourceNode(
     private var rotation = 0f
     private var frameCount = 0
 
-    private var texture: Texture2d? = null
+    private var texture: com.rthqks.flow.gl.Texture2d? = null
 
     private fun getInputStream(): InputStream? {
         return when (imageUri.scheme) {
@@ -74,7 +73,11 @@ class ImageSourceNode(
         val connection = connection(OUTPUT) ?: return
         val inputStream = getInputStream() ?: return
 
-        val texture = Texture2d(GLES30.GL_TEXTURE_2D, GLES30.GL_CLAMP_TO_EDGE, GLES30.GL_LINEAR)
+        val texture = com.rthqks.flow.gl.Texture2d(
+            GLES30.GL_TEXTURE_2D,
+            GLES30.GL_CLAMP_TO_EDGE,
+            GLES30.GL_LINEAR
+        )
         this.texture = texture
 
         BitmapFactory.decodeStream(inputStream)?.let { bitmap ->

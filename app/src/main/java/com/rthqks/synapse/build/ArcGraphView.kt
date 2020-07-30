@@ -7,8 +7,8 @@ import android.util.AttributeSet
 import android.view.MotionEvent
 import androidx.recyclerview.widget.RecyclerView
 import com.rthqks.synapse.R
-import com.rthqks.synapse.logic.Link
-import com.rthqks.synapse.logic.Node
+import com.rthqks.flow.logic.Link
+import com.rthqks.flow.logic.Node
 
 
 class ArcGraphView @JvmOverloads constructor(

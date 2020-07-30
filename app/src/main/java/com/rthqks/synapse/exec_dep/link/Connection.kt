@@ -1,4 +1,4 @@
-package com.rthqks.synapse.exec_dep.link
+package com.rthqks.flow.exec_dep.link
 
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.ReceiveChannel

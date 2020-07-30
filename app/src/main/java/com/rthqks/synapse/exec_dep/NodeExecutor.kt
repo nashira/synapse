@@ -1,10 +1,10 @@
-package com.rthqks.synapse.exec_dep
+package com.rthqks.flow.exec_dep
 
-import com.rthqks.synapse.exec.ExecutionContext
-import com.rthqks.synapse.exec.Executor
-import com.rthqks.synapse.exec_dep.link.Config
-import com.rthqks.synapse.exec_dep.link.Connection
-import com.rthqks.synapse.exec_dep.link.Event
+import com.rthqks.flow.exec.ExecutionContext
+import com.rthqks.flow.exec.Executor
+import com.rthqks.flow.exec_dep.link.Config
+import com.rthqks.flow.exec_dep.link.Connection
+import com.rthqks.flow.exec_dep.link.Event
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.channels.ReceiveChannel

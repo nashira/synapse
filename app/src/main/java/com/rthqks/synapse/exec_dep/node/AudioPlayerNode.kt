@@ -1,15 +1,15 @@
-package com.rthqks.synapse.exec_dep.node
+package com.rthqks.flow.exec_dep.node
 
 import android.media.AudioAttributes
 import android.media.AudioFormat
 import android.media.AudioRecord
 import android.media.AudioTrack
 import android.util.Log
-import com.rthqks.synapse.exec.ExecutionContext
-import com.rthqks.synapse.exec_dep.NodeExecutor
-import com.rthqks.synapse.exec_dep.link.AudioConfig
-import com.rthqks.synapse.exec_dep.link.AudioEvent
-import com.rthqks.synapse.exec_dep.link.Connection
+import com.rthqks.flow.exec.ExecutionContext
+import com.rthqks.flow.exec_dep.NodeExecutor
+import com.rthqks.flow.exec_dep.link.AudioConfig
+import com.rthqks.flow.exec_dep.link.AudioEvent
+import com.rthqks.flow.exec_dep.link.Connection
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 

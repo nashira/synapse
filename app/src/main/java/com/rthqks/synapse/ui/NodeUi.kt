@@ -5,8 +5,8 @@ import android.util.Size
 import androidx.annotation.DrawableRes
 import androidx.annotation.StringRes
 import com.rthqks.synapse.R
-import com.rthqks.synapse.logic.NodeDef.*
-import com.rthqks.synapse.logic.Property
+import com.rthqks.flow.logic.NodeDef.*
+import com.rthqks.flow.logic.Property
 
 class NodeUi(
     @StringRes val title: Int,

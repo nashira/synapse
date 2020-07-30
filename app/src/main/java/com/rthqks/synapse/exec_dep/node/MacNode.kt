@@ -1,16 +1,16 @@
-//package com.rthqks.synapse.exec_dep.node
+//package com.rthqks.flow.exec_dep.node
 //
 //import android.opengl.GLES30.*
 //import android.opengl.Matrix
 //import android.util.Log
 //import android.util.Size
-//import com.rthqks.synapse.exec.ExecutionContext
-//import com.rthqks.synapse.exec_dep.NodeExecutor
-//import com.rthqks.synapse.exec_dep.link.*
+//import com.rthqks.flow.exec.ExecutionContext
+//import com.rthqks.flow.exec_dep.NodeExecutor
+//import com.rthqks.flow.exec_dep.link.*
 //import com.rthqks.synapse.gl.*
 //import com.rthqks.synapse.logic.AccumulateFactor
 //import com.rthqks.synapse.logic.MultiplyFactor
-//import com.rthqks.synapse.exec.Properties
+//import com.rthqks.flow.exec.Properties
 //import kotlinx.coroutines.Job
 //import kotlinx.coroutines.isActive
 //import kotlinx.coroutines.launch

@@ -13,7 +13,7 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
 import com.rthqks.synapse.R
-import com.rthqks.synapse.assets.VideoStorage
+import com.rthqks.flow.assets.VideoStorage
 import com.rthqks.synapse.ops.Analytics
 import dagger.android.support.DaggerAppCompatActivity
 import kotlinx.android.synthetic.main.activity_gallery.*
@@ -71,8 +71,8 @@ class GalleryActivity : DaggerAppCompatActivity() {
 private class VideoAdapter(
     private val onIntent: (Intent) -> Unit
 ) : RecyclerView.Adapter<VideoViewHolder>() {
-    private val videos = mutableListOf<VideoStorage.Video>()
-    fun setVideos(videos: List<VideoStorage.Video>) {
+    private val videos = mutableListOf<com.rthqks.flow.assets.VideoStorage.Video>()
+    fun setVideos(videos: List<com.rthqks.flow.assets.VideoStorage.Video>) {
         this.videos.clear()
         this.videos.addAll(videos)
         notifyDataSetChanged()
@@ -100,7 +100,7 @@ private class VideoViewHolder(
     itemView: View,
     onIntent: (Intent) -> Unit
 ) : RecyclerView.ViewHolder(itemView) {
-    private var video: VideoStorage.Video? = null
+    private var video: com.rthqks.flow.assets.VideoStorage.Video? = null
 
     init {
         itemView.image_view.setOnClickListener {
@@ -119,7 +119,7 @@ private class VideoViewHolder(
                 val sendIntent: Intent = Intent().apply {
                     action = Intent.ACTION_SEND
                     putExtra(Intent.EXTRA_STREAM, it.uri)
-                    type = VideoStorage.MIME_MP4
+                    type = com.rthqks.flow.assets.VideoStorage.MIME_MP4
                 }
 
                 val shareIntent = Intent.createChooser(sendIntent, null)
@@ -128,7 +128,7 @@ private class VideoViewHolder(
         }
     }
 
-    fun bind(video: VideoStorage.Video) {
+    fun bind(video: com.rthqks.flow.assets.VideoStorage.Video) {
         this.video = video
         Glide
             .with(itemView.context)

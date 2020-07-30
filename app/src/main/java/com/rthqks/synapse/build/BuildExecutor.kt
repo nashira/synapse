@@ -2,14 +2,14 @@ package com.rthqks.synapse.build
 
 import android.view.SurfaceView
 import com.rthqks.synapse.data.SeedData
-import com.rthqks.synapse.exec.ExecutionContext
-import com.rthqks.synapse.exec.NetworkExecutor
-import com.rthqks.synapse.exec.node.SurfaceViewNode
-import com.rthqks.synapse.logic.Link
-import com.rthqks.synapse.logic.Network
-import com.rthqks.synapse.logic.NodeDef.Camera
-import com.rthqks.synapse.logic.NodeDef.Screen
-import com.rthqks.synapse.logic.PortType
+import com.rthqks.flow.exec.ExecutionContext
+import com.rthqks.flow.exec.NetworkExecutor
+import com.rthqks.flow.exec.node.SurfaceViewNode
+import com.rthqks.flow.logic.Link
+import com.rthqks.flow.logic.Network
+import com.rthqks.flow.logic.NodeDef.Camera
+import com.rthqks.flow.logic.NodeDef.Screen
+import com.rthqks.flow.logic.PortType
 import kotlinx.coroutines.joinAll
 import kotlinx.coroutines.launch
 
@@ -92,10 +92,10 @@ operator fun Network.plusAssign(network: Network) {
 
 private val Network.videoOut: Pair<Int, String>?
     get() = getPorts().firstOrNull {
-        it.exposed && it.output && it.type == PortType.Video
+        it.exposed && it.output && it.type == com.rthqks.flow.logic.PortType.Video
     }?.let { Pair(it.nodeId, it.key) }
 
 private val Network.videoIn: List<Pair<Int, String>>
     get() = getPorts().filter {
-        it.exposed && it.input && it.type == PortType.Video
+        it.exposed && it.input && it.type == com.rthqks.flow.logic.PortType.Video
     }.map { Pair(it.nodeId, it.key) }

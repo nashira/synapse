@@ -6,10 +6,11 @@ import android.view.SurfaceView
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.rthqks.synapse.assets.AssetManager
-import com.rthqks.synapse.assets.VideoStorage
+import com.rthqks.flow.logic.Link
+import com.rthqks.flow.logic.Network
+import com.rthqks.flow.logic.Node
 import com.rthqks.synapse.data.SynapseDao
-import com.rthqks.synapse.exec.ExecutionContext
+import com.rthqks.flow.exec.ExecutionContext
 import com.rthqks.synapse.logic.*
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -20,8 +21,8 @@ import javax.inject.Inject
 
 class BuilderViewModel @Inject constructor(
     private val contxt: Context,
-    private val videoStorage: VideoStorage,
-    private val assetManager: AssetManager,
+    private val videoStorage: com.rthqks.flow.assets.VideoStorage,
+    private val assetManager: com.rthqks.flow.assets.AssetManager,
     private val logic: SyncLogic,
     private val dao: SynapseDao
 ) : ViewModel() {
@@ -115,7 +116,8 @@ class BuilderViewModel @Inject constructor(
     }
 
     fun getConnectors(nodeId: Int): List<Connector> {
-        return network?.getConnectors(nodeId) ?: emptyList()
+//        return network?.getConnectors(nodeId) ?: emptyList()
+        return emptyList()
     }
 
     fun setNetworkName(name: String) {

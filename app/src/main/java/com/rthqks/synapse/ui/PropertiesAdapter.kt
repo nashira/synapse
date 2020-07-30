@@ -7,9 +7,9 @@ import android.view.ViewGroup
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.RecyclerView
 import com.rthqks.synapse.R
-import com.rthqks.synapse.logic.Network
-import com.rthqks.synapse.logic.Node
-import com.rthqks.synapse.logic.Property
+import com.rthqks.flow.logic.Network
+import com.rthqks.flow.logic.Node
+import com.rthqks.flow.logic.Property
 import kotlinx.android.synthetic.main.layout_property.view.*
 import kotlin.math.max
 

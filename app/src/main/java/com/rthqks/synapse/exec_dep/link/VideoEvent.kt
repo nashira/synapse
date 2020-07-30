@@ -1,13 +1,13 @@
-package com.rthqks.synapse.exec_dep.link
+package com.rthqks.flow.exec_dep.link
 
-import com.rthqks.synapse.gl.GlesManager
-import com.rthqks.synapse.gl.Texture2d
+import com.rthqks.flow.gl.GlesManager
+import com.rthqks.flow.gl.Texture2d
 
 class VideoEvent(
-    var texture: Texture2d = EMPTY_TEXTURE,
-    var matrix: FloatArray = GlesManager.identityMat()
+    var texture: com.rthqks.flow.gl.Texture2d = EMPTY_TEXTURE,
+    var matrix: FloatArray = com.rthqks.flow.gl.GlesManager.identityMat()
 ) : Event() {
     companion object {
-        private val EMPTY_TEXTURE = Texture2d()
+        private val EMPTY_TEXTURE = com.rthqks.flow.gl.Texture2d()
     }
 }

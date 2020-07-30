@@ -11,9 +11,9 @@ import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModelProvider
 import androidx.recyclerview.widget.RecyclerView
 import com.rthqks.synapse.R
-import com.rthqks.synapse.logic.Node
-import com.rthqks.synapse.logic.Port
-import com.rthqks.synapse.logic.PortType
+import com.rthqks.flow.logic.Node
+import com.rthqks.flow.logic.Port
+import com.rthqks.flow.logic.PortType
 import com.rthqks.synapse.ui.ConfirmDialog
 import com.rthqks.synapse.ui.NodeUi
 import dagger.android.support.DaggerFragment

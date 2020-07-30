@@ -22,7 +22,7 @@ import androidx.viewpager2.adapter.FragmentStateAdapter
 import com.google.android.material.bottomsheet.BottomSheetBehavior
 import com.rthqks.synapse.R
 import com.rthqks.synapse.logic.Connector
-import com.rthqks.synapse.logic.Node
+import com.rthqks.flow.logic.Node
 import com.rthqks.synapse.ui.ConfirmDialog
 import com.rthqks.synapse.ui.PropertiesAdapter
 import com.rthqks.synapse.ui.propertiesUi

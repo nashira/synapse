@@ -63,7 +63,7 @@ class PolishActivity : DaggerAppCompatActivity() {
 
         val states = checkPermissions()
 
-        Log.d(TAG, "permissions $states")
+        Log.d(TAG, "permissions: $states")
 
         val neededPermissions = states.filter { !it.granted }.map { it.name }
 
