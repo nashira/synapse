@@ -6,7 +6,6 @@ import android.opengl.GLES30
 import android.opengl.Matrix
 import android.util.Log
 import android.util.Size
-import androidx.exifinterface.media.ExifInterface
 import com.rthqks.flow.exec.ExecutionContext
 import com.rthqks.flow.exec.Properties
 import com.rthqks.flow.exec_dep.NodeExecutor
@@ -47,25 +46,25 @@ class ImageSourceNode(
         asset.close()
         size = Size(options.outWidth, options.outHeight)
 
-        getInputStream()?.let {
-            val exif = ExifInterface(it)
-            val orientation = exif.getAttributeInt(ExifInterface.TAG_ORIENTATION, 0)
-
-            when (orientation) {
-                ExifInterface.ORIENTATION_ROTATE_90 -> {
-                    rotation = 90f
-                    size = Size(size.height, size.width)
-                }
-                ExifInterface.ORIENTATION_ROTATE_180 -> {
-                    rotation = 180f
-                }
-                ExifInterface.ORIENTATION_ROTATE_270 -> {
-                    rotation = 270f
-                    size = Size(size.height, size.width)
-                }
-            }
-            it.close()
-        }
+//        getInputStream()?.let {
+//            val exif = ExifInterface(it)
+//            val orientation = exif.getAttributeInt(ExifInterface.TAG_ORIENTATION, 0)
+//
+//            when (orientation) {
+//                ExifInterface.ORIENTATION_ROTATE_90 -> {
+//                    rotation = 90f
+//                    size = Size(size.height, size.width)
+//                }
+//                ExifInterface.ORIENTATION_ROTATE_180 -> {
+//                    rotation = 180f
+//                }
+//                ExifInterface.ORIENTATION_ROTATE_270 -> {
+//                    rotation = 270f
+//                    size = Size(size.height, size.width)
+//                }
+//            }
+//            it.close()
+//        }
         Log.d(TAG, "options $size")
     }
 

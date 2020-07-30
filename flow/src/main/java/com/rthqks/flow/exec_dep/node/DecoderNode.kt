@@ -135,9 +135,9 @@ class DecoderNode(
         val connection = channel(VIDEO) ?: return
         val videoInput = videoInput ?: return
         val config = config(VIDEO) ?: return
-        val surface = config.surface.get()
+//        val surface = config.surface.get()
 
-        decoder.start(surface, videoInput, audioInput)
+//        decoder.start(surface, videoInput, audioInput)
 
         var count = 0
         val startTime = SystemClock.elapsedRealtimeNanos()
@@ -162,9 +162,9 @@ class DecoderNode(
                 delay(diff / 1_000_000)
             }
 
-            if (!config.surface.has()) {
-                frame.eos = true
-            }
+//            if (!config.surface.has()) {
+//                frame.eos = true
+//            }
             decoder.releaseVideoBuffer(event.index, frame.eos)
             frame.queue()
         } while (!frame.eos)

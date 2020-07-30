@@ -3,7 +3,6 @@ package com.rthqks.flow.exec_dep.link
 import android.opengl.GLES11Ext
 import android.util.Size
 import android.view.Surface
-import com.rthqks.synapse.util.SuspendableGet
 
 
 class VideoConfig(
@@ -22,7 +21,6 @@ class VideoConfig(
 
     val size = Size(width, height)
     val isOes = target == GLES11Ext.GL_TEXTURE_EXTERNAL_OES
-    val surface = SuspendableGet<Surface>()
 
     // set by consumer
     var acceptsSurface = false
