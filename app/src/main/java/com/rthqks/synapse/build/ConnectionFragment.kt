@@ -13,7 +13,7 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.rthqks.synapse.R
-import com.rthqks.synapse.logic.Connector
+import com.rthqks.flow.logic.Connector
 import dagger.android.support.DaggerFragment
 import kotlinx.android.synthetic.main.fragment_connection.*
 import kotlinx.android.synthetic.main.layout_connection.view.*

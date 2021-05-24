@@ -17,7 +17,7 @@ import java.util.concurrent.Executors
 class Encoder(
     private val context: ExecutionContext
 ) : MediaCodec.Callback() {
-    private val videoStorage: com.rthqks.flow.assets.VideoStorage = context.videoStorage
+    private val videoStorage: VideoStorage = context.videoStorage
 
     private val dispatcher = Executors.newSingleThreadExecutor().asCoroutineDispatcher()
     private val scope = CoroutineScope(dispatcher + Job())

@@ -7,7 +7,7 @@ import android.widget.TextView
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.RecyclerView
 import com.rthqks.synapse.R
-import com.rthqks.synapse.logic.Connector
+import com.rthqks.flow.logic.Connector
 import com.rthqks.flow.logic.PortType
 
 class PortsAdapter(

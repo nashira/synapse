@@ -16,12 +16,11 @@ import androidx.appcompat.widget.PopupMenu
 import androidx.core.view.isEmpty
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.commitNow
-import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModelProvider
 import androidx.viewpager2.adapter.FragmentStateAdapter
 import com.google.android.material.bottomsheet.BottomSheetBehavior
 import com.rthqks.synapse.R
-import com.rthqks.synapse.logic.Connector
+import com.rthqks.flow.logic.Connector
 import com.rthqks.flow.logic.Node
 import com.rthqks.synapse.ui.ConfirmDialog
 import com.rthqks.synapse.ui.PropertiesAdapter
@@ -62,7 +61,7 @@ class BuilderActivity : DaggerAppCompatActivity() {
         outputs_list.adapter = outputsAdapter
 
         var firstNode = true
-        viewModel.networkChannel.observe(this, Observer { network ->
+        viewModel.networkChannel.observe(this) { network ->
             if (firstNode) {
                 firstNode = false
                 network.getFirstNode()?.let {
@@ -70,11 +69,11 @@ class BuilderActivity : DaggerAppCompatActivity() {
                 }
             }
             viewModel.setSurfaceView(surface_view)
-        })
+        }
 
-        viewModel.nodeChannel.observe(this, Observer { node ->
+        viewModel.nodeChannel.observe(this) { node ->
             handleNode(node, propertiesAdapter)
-        })
+        }
 
 //        button_node_list.setOnClickListener {
 //            onJumpToNode()

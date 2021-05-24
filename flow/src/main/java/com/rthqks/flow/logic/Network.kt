@@ -168,62 +168,62 @@ class Network(
 
     fun getFirstNode(): Node? = nodes.values.firstOrNull()
 
-//    fun getConnectors(nodeId: Int): List<Connector> {
-//        val node = getNode(nodeId)
-//        val ports = node.ports.toMutableMap()
-//        val nodeLinks = getLinks(nodeId)
-//
-//        return (nodeLinks.map {
-//            if (it.fromNodeId == nodeId) {
-//                ports.remove(it.fromPortId)!!
-//                val port = getPort(nodeId, it.fromPortId)
-//                Connector(node, port, it)
-//            } else {
-//                ports.remove(it.toPortId)!!
-//                val port = getPort(nodeId, it.toPortId)
-//                Connector(node, port, it)
+    fun getConnectors(nodeId: Int): List<Connector> {
+        val node = getNode(nodeId)
+        val ports = node.ports.toMutableMap()
+        val nodeLinks = getLinks(nodeId)
+
+        return (nodeLinks.map {
+            if (it.fromNodeId == nodeId) {
+                ports.remove(it.fromPortId)!!
+                val port = getPort(nodeId, it.fromPortId)
+                Connector(node, port, it)
+            } else {
+                ports.remove(it.toPortId)!!
+                val port = getPort(nodeId, it.toPortId)
+                Connector(node, port, it)
+            }
+        } + ports.map { Connector(node, it.value) }).sortedBy { it.port.key }
+    }
+
+    fun getOpenConnectors(connector: Connector): List<Connector> {
+        val node = connector.node
+        val port = connector.port
+        val connectors = mutableListOf<Connector>()
+        nodes.forEach {
+            val n = it.value
+            if (n.id != node.id) {
+                connectors += n.ports.filter {
+                    it.value.type == port.type
+                            && it.value.output != port.output
+                            && (it.value.output || !isConnected(n, it.value))
+                }.map { Connector(n, it.value) }
+            }
+        }
+        return connectors
+    }
+
+    fun getPotentialConnectors(connector: Connector): List<Connector> {
+        val port = connector.port
+        val connectors = mutableListOf<Connector>()
+//        Nodes.forEach { n ->
+//            connectors += n.ports.filter {
+//                it.value.type == port.type
+//                        && it.value.output != port.output
 //            }
-//        } + ports.map { Connector(node, it.value) }).sortedBy { it.port.key }
-//    }
-//
-//    fun getOpenConnectors(connector: Connector): List<Connector> {
-//        val node = connector.node
-//        val port = connector.port
-//        val connectors = mutableListOf<Connector>()
-//        nodes.forEach {
-//            val n = it.value
-//            if (n.id != node.id) {
-//                connectors += n.ports.filter {
-//                    it.value.type == port.type
-//                            && it.value.output != port.output
-//                            && (it.value.output || !isConnected(n, it.value))
-//                }.map { Connector(n, it.value) }
-//            }
+//                .map { Connector(n.copy(id), it.value) }
 //        }
-//        return connectors
-//    }
-//
-//    fun getPotentialConnectors(connector: Connector): List<Connector> {
-//        val port = connector.port
-//        val connectors = mutableListOf<Connector>()
-////        Nodes.forEach { n ->
-////            connectors += n.ports.filter {
-////                it.value.type == port.type
-////                        && it.value.output != port.output
-////            }
-////                .map { Connector(n.copy(id), it.value) }
-////        }
-//        return connectors
-//    }
-//
-//    fun getCreationConnectors(): List<Connector> {
-//        val connectors = mutableListOf<Connector>()
-////        Nodes.filter { it.producer }.forEach { n ->
-////            val port = n.ports.values.first { it.output }
-////            connectors += Connector(n.copy(id), port)
-////        }
-//        return connectors
-//    }
+        return connectors
+    }
+
+    fun getCreationConnectors(): List<Connector> {
+        val connectors = mutableListOf<Connector>()
+//        Nodes.filter { it.producer }.forEach { n ->
+//            val port = n.ports.values.first { it.output }
+//            connectors += Connector(n.copy(id), port)
+//        }
+        return connectors
+    }
 
     private fun isConnected(node: Node, port: Port): Boolean {
         return linkIndex[node.id]?.any {

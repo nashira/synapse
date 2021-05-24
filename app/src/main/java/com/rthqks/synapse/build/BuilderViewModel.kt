@@ -11,6 +11,7 @@ import com.rthqks.flow.logic.Network
 import com.rthqks.flow.logic.Node
 import com.rthqks.synapse.data.SynapseDao
 import com.rthqks.flow.exec.ExecutionContext
+import com.rthqks.flow.logic.Connector
 import com.rthqks.synapse.logic.*
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -116,8 +117,7 @@ class BuilderViewModel @Inject constructor(
     }
 
     fun getConnectors(nodeId: Int): List<Connector> {
-//        return network?.getConnectors(nodeId) ?: emptyList()
-        return emptyList()
+        return network?.getConnectors(nodeId) ?: emptyList()
     }
 
     fun setNetworkName(name: String) {

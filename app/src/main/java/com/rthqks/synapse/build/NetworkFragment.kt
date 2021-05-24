@@ -183,7 +183,7 @@ private class NodeViewHolder(
                 PortType.Audio -> icon.setImageResource(R.drawable.ic_volume_2)
                 PortType.Video -> icon.setImageResource(R.drawable.ic_image)
                 PortType.Texture3D -> icon.setImageResource(R.drawable.ic_layers)
-                PortType.Matrix -> icon.setImageResource(R.drawable.ic_3d_rotation)
+                PortType.Matrix -> icon.setImageResource(R.drawable.ic_box)
             }
         }
     }

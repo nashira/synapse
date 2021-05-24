@@ -1,4 +1,4 @@
-package com.rthqks.synapse.logic
+package com.rthqks.flow.logic
 
 import com.rthqks.flow.logic.Link
 import com.rthqks.flow.logic.Node

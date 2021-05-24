@@ -25,6 +25,7 @@ abstract class NodeExecutor(
         if (state != STATE_PAUSED) {
             state = STATE_PAUSED
             onPause()
+
         }
     }
 

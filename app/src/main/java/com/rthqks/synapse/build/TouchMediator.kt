@@ -6,7 +6,7 @@ import android.os.Looper
 import android.view.MotionEvent
 import android.view.View
 import android.view.ViewConfiguration
-import com.rthqks.synapse.logic.Connector
+import com.rthqks.flow.logic.Connector
 import kotlin.math.abs
 
 class TouchMediator(

@@ -1,4 +1,5 @@
 import java.util.*
+import java.util.concurrent.TimeUnit
 import kotlin.math.abs
 import kotlin.math.max
 import kotlin.math.sign
@@ -100,42 +101,20 @@ class Graph(builder: Graph.() -> Unit = {}) {
     }
 }
 
-val g = Graph {
-    node("camera") {
-        this linkTo node("camera:video_out")
-
-        onStop {
-            println("camera stop")
-        }
-
-        onStart {
-
-        }
-    }
-
-    node("blur") {
-        val input = this linkFrom node("blur:input")
-        val output = this linkTo node("blur:output")
-
-//        this["size"] = 5
-        on("blur:input") {
-            println("blur input")
-        }
-    }
-
-    node("camera:video_out") linkTo node("blur:input")
-
-    println(links)
-}
-
 val g1 = Graph {
+    val a = out<Int>("A")
 
-    val n1 = node("") {
-
-    }
+//    onDelay(50, TimeUnit.MILLISECONDS) {
+//        a.send(1)
+//    }
 }
 
-g {
-    println(nodes)
-    println(links)
+val gg = Graph {
+//    input("A")
+//    input("B")
+//    input("C")
+//    output("E")
+//    output("F")
+
+
 }
