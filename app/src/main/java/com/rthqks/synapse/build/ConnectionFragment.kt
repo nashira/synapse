@@ -5,6 +5,7 @@ import android.graphics.Rect
 import android.os.Bundle
 import android.util.Log
 import android.view.LayoutInflater
+import android.view.SurfaceView
 import android.view.View
 import android.view.ViewGroup
 import android.widget.TextView
@@ -14,9 +15,8 @@ import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.rthqks.synapse.R
 import com.rthqks.flow.logic.Connector
+import com.rthqks.synapse.databinding.FragmentConnectionBinding
 import dagger.android.support.DaggerFragment
-import kotlinx.android.synthetic.main.fragment_connection.*
-import kotlinx.android.synthetic.main.layout_connection.view.*
 import javax.inject.Inject
 
 class ConnectionFragment : DaggerFragment() {
@@ -25,25 +25,27 @@ class ConnectionFragment : DaggerFragment() {
     private lateinit var viewModel: BuilderViewModel
 //    private val network: Network get() = viewModel.network
     private lateinit var connectionAdapter: ConnectionAdapter
+    private lateinit var binding: FragmentConnectionBinding
 
     override fun onCreateView(
         inflater: LayoutInflater,
         container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View? {
-        return inflater.inflate(R.layout.fragment_connection, container, false)
+        binding = FragmentConnectionBinding.inflate(inflater)
+        return binding.root
     }
 
-    override fun onActivityCreated(savedInstanceState: Bundle?) {
+    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        super.onViewCreated(view, savedInstanceState)
         Log.d(TAG, "onActivityCreated")
-        super.onActivityCreated(savedInstanceState)
         viewModel = ViewModelProvider(requireActivity(), viewModelFactory)[BuilderViewModel::class.java]
         connectionAdapter = ConnectionAdapter(viewModel, requireContext(), 3)
         val layoutManager = GridLayoutManager(context, 3)
         layoutManager.spanSizeLookup = connectionAdapter.spanSizeLookup
-        recycler_view.addItemDecoration(connectionAdapter.itemDecoration)
-        recycler_view.layoutManager = layoutManager
-        recycler_view.adapter = connectionAdapter
+        binding.recyclerView.addItemDecoration(connectionAdapter.itemDecoration)
+        binding.recyclerView.layoutManager = layoutManager
+        binding.recyclerView.adapter = connectionAdapter
 
 //        viewModel.connectionChannel.observe(viewLifecycleOwner, Observer {
 //            Log.d(TAG, "changed ${it.node.def} ${it.port.name}")
@@ -180,9 +182,9 @@ class ConnectionAdapter(
     }
 
     inner class ItemViewHolder(itemView: View) : ViewHolder(itemView) {
-        private val surfaceView = itemView.surface_view
-        private val portName = itemView.port_name_view
-        private val nodeName = itemView.node_name_view
+        private val surfaceView = itemView.findViewById<SurfaceView>(R.id.surface_view)
+        private val portName = itemView.findViewById<TextView>(R.id.port_name_view)
+        private val nodeName = itemView.findViewById<TextView>(R.id.node_name_view)
         private var item: ConnectorItem? = null
 
         init {

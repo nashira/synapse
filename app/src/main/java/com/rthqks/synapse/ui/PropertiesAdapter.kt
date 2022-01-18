@@ -4,13 +4,14 @@ import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.ImageView
+import android.widget.TextView
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.RecyclerView
 import com.rthqks.synapse.R
 import com.rthqks.flow.logic.Network
 import com.rthqks.flow.logic.Node
 import com.rthqks.flow.logic.Property
-import kotlinx.android.synthetic.main.layout_property.view.*
 import kotlin.math.max
 
 class PropertiesAdapter(
@@ -126,9 +127,9 @@ abstract class PropertyViewHolder(itemView: View) : RecyclerView.ViewHolder(item
 private class SingleValueViewHolder(
     itemView: View, clickListener: (Property, Choice<*>) -> Unit
 ) : PropertyViewHolder(itemView) {
-    private val iconView = itemView.icon
-    private val nameView = itemView.text
-    private val titleView = itemView.title
+    private val iconView = itemView.findViewById<ImageView>(R.id.icon)
+    private val nameView = itemView.findViewById<TextView>(R.id.text)
+    private val titleView = itemView.findViewById<TextView>(R.id.title)
     private var propertyItem: PropertyItem? = null
 
     init {
@@ -162,9 +163,9 @@ private class SingleValueViewHolder(
 private class ToggleViewHolder(
     itemView: View, clickListener: (Property, Choice<*>) -> Unit
 ) : PropertyViewHolder(itemView) {
-    private val iconView = itemView.icon
-    private val textView = itemView.text
-    private val titleView = itemView.title
+    private val iconView = itemView.findViewById<ImageView>(R.id.icon)
+    private val textView = itemView.findViewById<TextView>(R.id.text)
+    private val titleView = itemView.findViewById<TextView>(R.id.title)
     private var propertyItem: PropertyItem? = null
     private var index = 0
     private var toggleType: ChoiceUi<*>? = null

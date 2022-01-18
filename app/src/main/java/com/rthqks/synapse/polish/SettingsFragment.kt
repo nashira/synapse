@@ -15,22 +15,24 @@ import com.rthqks.flow.logic.NodeDef.Camera.FrameRate
 import com.rthqks.flow.logic.NodeDef.Camera.Stabilize
 import com.rthqks.flow.logic.NodeDef.Camera.VideoSize
 import com.rthqks.flow.logic.Property
+import com.rthqks.synapse.databinding.FragmentSettingsBinding
 import com.rthqks.synapse.ui.*
 import dagger.android.support.DaggerFragment
-import kotlinx.android.synthetic.main.fragment_settings.*
 import javax.inject.Inject
 
 class SettingsFragment : DaggerFragment() {
     @Inject
     lateinit var viewModelFactory: ViewModelProvider.Factory
     private lateinit var viewModel: PolishViewModel
+    private lateinit var binding: FragmentSettingsBinding
 
     override fun onCreateView(
         inflater: LayoutInflater,
         container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View? {
-        return inflater.inflate(R.layout.fragment_settings, container, false)
+        binding = FragmentSettingsBinding.inflate(inflater, container, false)
+        return binding.root
     }
 
     override fun onActivityCreated(savedInstanceState: Bundle?) {
@@ -38,11 +40,11 @@ class SettingsFragment : DaggerFragment() {
         viewModel =
             ViewModelProvider(requireActivity(), viewModelFactory)[PolishViewModel::class.java]
 
-        button_close.setOnClickListener {
+        binding.buttonClose.setOnClickListener {
             viewModel.bottomSheetState.value = BottomSheetBehavior.STATE_HIDDEN
         }
 
-        list_capture.adapter = PropertiesAdapter(::onSelected).apply {
+        binding.listCapture.adapter = PropertiesAdapter(::onSelected).apply {
             val property =
                 viewModel.baseNetwork?.getNode(EffectExecutor.ID_CAMERA)?.properties?.get(VideoSize.name)
                     ?: return@apply
@@ -63,11 +65,11 @@ class SettingsFragment : DaggerFragment() {
             setProperties(listOf(Pair(property, ui)))
 
             ui.choices.firstOrNull { it.item == property.value }?.let {
-                value_capture.setText(it.label)
+                binding.valueCapture.setText(it.label)
             }
         }
 
-        list_fps.adapter = PropertiesAdapter(::onSelected).apply {
+        binding.listFps.adapter = PropertiesAdapter(::onSelected).apply {
             val property =
                 viewModel.baseNetwork?.getNode(EffectExecutor.ID_CAMERA)?.properties?.get(FrameRate.name)
                     ?: return@apply
@@ -77,11 +79,11 @@ class SettingsFragment : DaggerFragment() {
             setProperties(listOf(Pair(property, ui)))
 
             ui.choices.firstOrNull { it.item == property.value }?.let {
-                value_fps.setText(it.label)
+                binding.valueFps.setText(it.label)
             }
         }
 
-        list_stabilize.adapter = PropertiesAdapter(::onSelected).apply {
+        binding.listStabilize.adapter = PropertiesAdapter(::onSelected).apply {
             val property =
                 viewModel.baseNetwork?.getNode(EffectExecutor.ID_CAMERA)?.properties?.get(
                     Stabilize.name
@@ -93,11 +95,11 @@ class SettingsFragment : DaggerFragment() {
             setProperties(listOf(Pair(property, ui)))
 
             ui.choices.firstOrNull { it.item == property.value }?.let {
-                value_stabilize.setText(it.label)
+                binding.valueStabilize.setText(it.label)
             }
         }
 
-        list_facing.adapter = PropertiesAdapter(::onSelected).apply {
+        binding.listFacing.adapter = PropertiesAdapter(::onSelected).apply {
             val property =
                 viewModel.baseNetwork?.getNode(EffectExecutor.ID_CAMERA)?.properties?.get(
                     CameraFacing.name
@@ -110,9 +112,9 @@ class SettingsFragment : DaggerFragment() {
 
             ui.choices.firstOrNull { it.item == property.value }?.let {
                 if (it.label != 0) {
-                    value_facing.setText(it.label)
+                    binding.valueFacing.setText(it.label)
                 } else {
-                    value_facing.text = it.item.toString()
+                    binding.valueFacing.text = it.item.toString()
                 }
             }
         }
@@ -121,10 +123,10 @@ class SettingsFragment : DaggerFragment() {
     private fun onSelected(property: Property, choice: Choice<*>) {
         Log.d(TAG, "onSelected $property")
         when (property.key) {
-            VideoSize -> value_capture.setText(choice.label)
-            FrameRate -> value_fps.setText(choice.label)
-            Stabilize -> value_stabilize.setText(choice.label)
-            CameraFacing -> value_facing.setText(choice.label)
+            VideoSize -> binding.valueCapture.setText(choice.label)
+            FrameRate -> binding.valueFps.setText(choice.label)
+            Stabilize -> binding.valueStabilize.setText(choice.label)
+            CameraFacing -> binding.valueFacing.setText(choice.label)
         }
     }
 

@@ -7,6 +7,8 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.view.inputmethod.InputMethodManager
+import android.widget.ImageView
+import android.widget.TextView
 import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModelProvider
 import androidx.recyclerview.widget.RecyclerView
@@ -14,24 +16,25 @@ import com.rthqks.synapse.R
 import com.rthqks.flow.logic.Node
 import com.rthqks.flow.logic.Port
 import com.rthqks.flow.logic.PortType
+import com.rthqks.synapse.databinding.FragmentNetworkBinding
 import com.rthqks.synapse.ui.ConfirmDialog
 import com.rthqks.synapse.ui.NodeUi
 import dagger.android.support.DaggerFragment
-import kotlinx.android.synthetic.main.fragment_network.*
-import kotlinx.android.synthetic.main.layout_node_list_item.view.*
 import javax.inject.Inject
 
 class NetworkFragment : DaggerFragment() {
     @Inject
     lateinit var viewModelFactory: ViewModelProvider.Factory
     private lateinit var viewModel: BuilderViewModel
+    private lateinit var binding: FragmentNetworkBinding
 
     override fun onCreateView(
         inflater: LayoutInflater,
         container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View? {
-        return inflater.inflate(R.layout.fragment_network, container, false)
+        binding = FragmentNetworkBinding.inflate(inflater, container, false)
+        return binding.root
     }
 
     override fun onActivityCreated(savedInstanceState: Bundle?) {
@@ -43,38 +46,38 @@ class NetworkFragment : DaggerFragment() {
             viewModel.setNodeId(n.id)
             true
         }
-        node_list.adapter = nodeAdapter
+        binding.nodeList.adapter = nodeAdapter
         viewModel.networkChannel.observe(viewLifecycleOwner, Observer {
             nodeAdapter.setNodes(it.getNodes())
-            network_name.setText(it.name)
-            network_description.setText(it.description)
+            binding.networkName.setText(it.name)
+            binding.networkDescription.setText(it.description)
         })
 
-        network_name.setOnEditorActionListener { _, _, _ ->
-            network_name.clearFocus()
+        binding.networkName.setOnEditorActionListener { _, _, _ ->
+            binding.networkName.clearFocus()
             hideKeyboard()
             false
         }
 
-        network_description.setOnEditorActionListener { _, _, _ ->
-            network_description.clearFocus()
+        binding.networkDescription.setOnEditorActionListener { _, _, _ ->
+            binding.networkDescription.clearFocus()
             hideKeyboard()
             false
         }
 
-        network_name.setOnFocusChangeListener { _, hasFocus ->
+        binding.networkName.setOnFocusChangeListener { _, hasFocus ->
             Log.d(TAG, "name focus $hasFocus")
             if (!hasFocus) {
-                viewModel.setNetworkName(network_name.text.toString().trim())
+                viewModel.setNetworkName(binding.networkName.text.toString().trim())
             }
         }
 
-        network_description.setOnFocusChangeListener { _, hasFocus ->
+        binding.networkDescription.setOnFocusChangeListener { _, hasFocus ->
             Log.d(TAG, "desc focus $hasFocus")
-            viewModel.setNetworkDescription(network_description.text.toString().trim())
+            viewModel.setNetworkDescription(binding.networkDescription.text.toString().trim())
         }
 
-        delete_network.setOnClickListener {
+        binding.deleteNetwork.setOnClickListener {
             onDeleteNetwork()
         }
     }
@@ -82,7 +85,7 @@ class NetworkFragment : DaggerFragment() {
     private fun hideKeyboard() {
         val imm = requireContext()
             .getSystemService(Activity.INPUT_METHOD_SERVICE) as InputMethodManager
-        imm.hideSoftInputFromWindow(network_name.windowToken, 0)
+        imm.hideSoftInputFromWindow(binding.networkName.windowToken, 0)
     }
 
     private fun onDeleteNetwork() {
@@ -160,8 +163,8 @@ private class NodeViewHolder(
     itemView: View,
     clickListener: (Boolean, Node) -> Boolean
 ) : ItemViewHolder(itemView) {
-    private val icon = itemView.icon_view
-    private val label = itemView.title_view
+    private val icon = itemView.findViewById<ImageView>(R.id.icon_view)
+    private val label = itemView.findViewById<TextView>(R.id.title_view)
     private var node: Node? = null
 
     init {

@@ -95,14 +95,12 @@ abstract class SynapseDao {
     @Query("DELETE FROM property WHERE networkId = :networkId")
     abstract suspend fun deleteProperties(networkId: String)
 
-    @Transaction
     open suspend fun getFullNetwork(networkId: String) =
         getNetwork(networkId).map {
             it?.also { data -> populateNetwork(data) }
         }
 
 
-    @Transaction
     open fun getNetworks(): Flow<List<NetworkData>> {
         return getNetworkData().map { list ->
             list.forEach { populateNetwork(it) }

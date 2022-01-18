@@ -22,13 +22,13 @@ import androidx.lifecycle.lifecycleScope
 import com.google.android.material.bottomsheet.BottomSheetBehavior
 import com.rthqks.synapse.R
 import com.rthqks.synapse.build.BuilderActivity
+import com.rthqks.synapse.databinding.ActivityPolishBinding
 import com.rthqks.synapse.ops.Analytics
 import com.rthqks.synapse.ui.ConfirmDialog
 import com.rthqks.synapse.ui.PropertiesAdapter
 import com.rthqks.synapse.ui.propertiesUi
 import com.rthqks.synapse.util.throttleClick
 import dagger.android.support.DaggerAppCompatActivity
-import kotlinx.android.synthetic.main.activity_polish.*
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
@@ -48,13 +48,15 @@ class PolishActivity : DaggerAppCompatActivity() {
     private val permissionsGranted = CompletableDeferred<Boolean>()
     private var uiAngle = 0
     private val interpolator = AccelerateDecelerateInterpolator()
+    private lateinit var binding: ActivityPolishBinding
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_polish)
+        binding = ActivityPolishBinding.inflate(layoutInflater)
+        setContentView(binding.root)
         viewModel = ViewModelProvider(this, viewModelFactory)[PolishViewModel::class.java]
 
-        val behavior = BottomSheetBehavior.from(bottom_sheet)
+        val behavior = BottomSheetBehavior.from(binding.bottomSheet)
         behavior.state = BottomSheetBehavior.STATE_HIDDEN
 
         preferences = getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE)
@@ -140,8 +142,8 @@ class PolishActivity : DaggerAppCompatActivity() {
     private fun onReady() {
         viewModel.initializeEffect()
         var recording = false
-        viewModel.setSurfaceView(surface_view)
-        val behavior = BottomSheetBehavior.from(bottom_sheet)
+        viewModel.setSurfaceView(binding.surfaceView)
+        val behavior = BottomSheetBehavior.from(binding.bottomSheet)
 
         viewModel.bottomSheetState.observe(this, Observer {
             behavior.state = it
@@ -151,9 +153,9 @@ class PolishActivity : DaggerAppCompatActivity() {
             viewModel.setEffectProperty(p)
         }
 
-        effect_settings.adapter = adapter
+        binding.effectSettings.adapter = adapter
         viewModel.currentEffectLive.observe(this, Observer {
-            effect_name.text = it.name
+            binding.effectName.text = it.name
             adapter.setProperties(it.propertiesUi())
         })
 
@@ -169,7 +171,7 @@ class PolishActivity : DaggerAppCompatActivity() {
             }
         })
 
-        button_edit.setOnClickListener {
+        binding.buttonEdit.setOnClickListener {
             viewModel.currentEffect?.let { effect ->
                 if (effect.creatorId != viewModel.currentUser?.id) {
                     ConfirmDialog(
@@ -191,7 +193,7 @@ class PolishActivity : DaggerAppCompatActivity() {
             }
         }
 
-        button_color.setOnClickListener {
+        binding.buttonColor.setOnClickListener {
             Log.d(TAG, "show luts")
             analytics.logEvent(Analytics.Event.OpenLuts())
             supportFragmentManager.commitNow {
@@ -201,7 +203,7 @@ class PolishActivity : DaggerAppCompatActivity() {
             viewModel.startLutPreview()
         }
 
-        button_settings.setOnClickListener {
+        binding.buttonSettings.setOnClickListener {
             Log.d(TAG, "show settings")
             analytics.logEvent(Analytics.Event.OpenSettings())
 
@@ -212,32 +214,32 @@ class PolishActivity : DaggerAppCompatActivity() {
         }
 
         var updateRecordingTime: Job? = null
-        button_record.setOnClickListener(throttleClick {
+        binding.buttonRecord.setOnClickListener(throttleClick {
             recording = !recording
             if (recording) {
                 focusMode()
                 viewModel.startRecording()
-                video_duration.visibility = View.VISIBLE
-                updateRecordingTime = viewModel.updateRecordingTime(video_duration)
+                binding.videoDuration.visibility = View.VISIBLE
+                updateRecordingTime = viewModel.updateRecordingTime(binding.videoDuration)
             } else {
                 exploreMode()
                 highlightGalleryButton()
-                video_duration.visibility = View.GONE
+                binding.videoDuration.visibility = View.GONE
                 updateRecordingTime?.cancel()
                 viewModel.stopRecording()
             }
             Log.d(TAG, "recording $recording")
         })
 
-        button_effects.setOnClickListener {
+        binding.buttonEffects.setOnClickListener {
             showEffects(behavior)
         }
 
-        effect_name.setOnClickListener {
+        binding.effectName.setOnClickListener {
             showEffects(behavior)
         }
 
-        button_gallery.setOnClickListener {
+        binding.buttonGallery.setOnClickListener {
             analytics.logEvent(Analytics.Event.OpenGallery())
             Intent(this, GalleryActivity::class.java).also {
                 startActivity(it)
@@ -257,10 +259,10 @@ class PolishActivity : DaggerAppCompatActivity() {
 
     private fun setUiOrientation(rotation: Int) {
         listOf(
-            button_settings,
-            button_effects,
-            button_color,
-            button_gallery
+            binding.buttonSettings,
+            binding.buttonEffects,
+            binding.buttonColor,
+            binding.buttonGallery
         ).forEach {
             it.animate()
                 .rotation(rotation.toFloat())
@@ -270,7 +272,7 @@ class PolishActivity : DaggerAppCompatActivity() {
     }
 
     private fun highlightGalleryButton() {
-        button_gallery.animate()
+        binding.buttonGallery.animate()
             .scaleX(1.5f)
             .scaleY(1.5f)
             .setInterpolator {
@@ -278,17 +280,17 @@ class PolishActivity : DaggerAppCompatActivity() {
             }
             .setDuration(600)
             .withEndAction {
-                button_gallery.scaleX = 1f
-                button_gallery.scaleY = 1f
+                binding.buttonGallery.scaleX = 1f
+                binding.buttonGallery.scaleY = 1f
             }
             .start()
     }
 
     private fun focusMode() {
         listOf(
-            button_settings,
-            button_effects,
-            button_gallery
+            binding.buttonSettings,
+            binding.buttonEffects,
+            binding.buttonGallery
         ).forEach {
             it.animate()
                 .setInterpolator(interpolator)
@@ -301,9 +303,9 @@ class PolishActivity : DaggerAppCompatActivity() {
 
     private fun exploreMode() {
         listOf(
-            button_settings,
-            button_effects,
-            button_gallery
+            binding.buttonSettings,
+            binding.buttonEffects,
+            binding.buttonGallery
         ).forEach {
             it.visibility = View.VISIBLE
             it.animate()

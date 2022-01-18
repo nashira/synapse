@@ -9,15 +9,15 @@ import android.view.TextureView
 import android.view.View
 import android.view.ViewGroup
 import android.widget.SeekBar
+import android.widget.TextView
 import androidx.lifecycle.ViewModelProvider
 import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.google.android.material.bottomsheet.BottomSheetBehavior
 import com.rthqks.synapse.R
 import com.rthqks.flow.logic.NodeDef
+import com.rthqks.synapse.databinding.FragmentLutBinding
 import dagger.android.support.DaggerFragment
-import kotlinx.android.synthetic.main.fragment_lut.*
-import kotlinx.android.synthetic.main.layout_lut.view.*
 import javax.inject.Inject
 import kotlin.math.min
 import kotlin.math.roundToInt
@@ -26,21 +26,23 @@ class LutFragment : DaggerFragment() {
     @Inject
     lateinit var viewModelFactory: ViewModelProvider.Factory
     private lateinit var viewModel: PolishViewModel
+    private lateinit var binding: FragmentLutBinding
 
     override fun onCreateView(
         inflater: LayoutInflater,
         container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View? {
-        return inflater.inflate(R.layout.fragment_lut, container, false)
+        binding = FragmentLutBinding.inflate(inflater, container, false)
+        return binding.root
     }
 
     override fun onActivityCreated(savedInstanceState: Bundle?) {
         super.onActivityCreated(savedInstanceState)
         viewModel = ViewModelProvider(requireActivity(), viewModelFactory)[PolishViewModel::class.java]
-        lut_list.adapter = LutAdapter(EffectExecutor.LUTS, viewModel)
+        binding.lutList.adapter = LutAdapter(EffectExecutor.LUTS, viewModel)
 
-        lut_list.addItemDecoration(object : RecyclerView.ItemDecoration() {
+        binding.lutList.addItemDecoration(object : RecyclerView.ItemDecoration() {
             private val spans = 3
             private val margin = resources.getDimension(R.dimen.connector_margin).roundToInt()
             override fun getItemOffsets(
@@ -56,13 +58,13 @@ class LutFragment : DaggerFragment() {
             }
         })
 
-        button_lut_close.setOnClickListener {
+        binding.buttonLutClose.setOnClickListener {
             viewModel.bottomSheetState.value = BottomSheetBehavior.STATE_HIDDEN
         }
 
-        lut_strength.max = 1000
-        lut_strength.progress = (viewModel.getLutStrength() * 1000).toInt()
-        lut_strength.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
+        binding.lutStrength.max = 1000
+        binding.lutStrength.progress = (viewModel.getLutStrength() * 1000).toInt()
+        binding.lutStrength.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
             override fun onProgressChanged(seekBar: SeekBar?, progress: Int, fromUser: Boolean) {
                 viewModel.setLutStrength(progress / 1000f)
             }
@@ -71,7 +73,7 @@ class LutFragment : DaggerFragment() {
 
             override fun onStopTrackingTouch(seekBar: SeekBar?) {
                 viewModel.editProperty(EffectExecutor.ID_LUT,
-                    NodeDef.Lut3d.LutStrength, lut_strength.progress / 1000f)
+                    NodeDef.Lut3d.LutStrength, binding.lutStrength.progress / 1000f)
             }
         })
     }
@@ -116,12 +118,14 @@ private class LutViewHolder(
     itemView: View,
     private val viewModel: PolishViewModel
 ) : RecyclerView.ViewHolder(itemView), TextureView.SurfaceTextureListener {
+    private val textureView = itemView.findViewById<TextureView>(R.id.texture_view)
+    private val title = itemView.findViewById<TextView>(R.id.title_view)
     private var lut: String? = null
     private var created = false
 
     init {
         Log.d("Lut", "onCreateViewHolder $this")
-        itemView.texture_view.surfaceTextureListener = this
+        textureView.surfaceTextureListener = this
         itemView.setOnClickListener {
             lut?.let { it1 -> viewModel.setLut(it1) }
         }
@@ -133,7 +137,7 @@ private class LutViewHolder(
             Log.w("Lut", "destroy not called")
         }
         this.lut = lut
-        itemView.title_view.text = lut.replace("_", " ")
+        title.text = lut.replace("_", " ")
     }
 
     override fun onSurfaceTextureSizeChanged(surface: SurfaceTexture, width: Int, height: Int) {
@@ -156,6 +160,6 @@ private class LutViewHolder(
         val minWidth = min(width, 320)
         surface.setDefaultBufferSize(minWidth, minWidth)
 //        if (adapterPosition % 3 == 0)
-        lut?.let { viewModel.registerLutPreview(itemView.texture_view, it) }
+        lut?.let { viewModel.registerLutPreview(textureView, it) }
     }
 }

@@ -64,9 +64,9 @@ class CubeImportNode(
                     val b = it.groupValues[3].toFloat()
 
 //                    Log.d(TAG, "rgb($r, $g, $b)")
-                    buffer?.put((cube.scale(r, 0) * 255).toByte())
-                    buffer?.put((cube.scale(g, 1) * 255).toByte())
-                    buffer?.put((cube.scale(b, 2) * 255).toByte())
+                    buffer?.put((cube.scale(r, 0) * 255).toInt().toByte())
+                    buffer?.put((cube.scale(g, 1) * 255).toInt().toByte())
+                    buffer?.put((cube.scale(b, 2) * 255).toInt().toByte())
                 }
                 line matches DOMAIN_MIN -> DOMAIN_MIN.find(line)?.let {
                     cube.min[0] = it.groupValues[1].toFloat()

@@ -7,6 +7,8 @@ import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.ImageView
+import android.widget.TextView
 import androidx.appcompat.app.AlertDialog
 import androidx.fragment.app.DialogFragment
 import androidx.lifecycle.ViewModelProvider
@@ -16,7 +18,6 @@ import com.rthqks.synapse.R
 import com.rthqks.flow.logic.Node
 import com.rthqks.synapse.ui.NodeUi
 import dagger.android.support.AndroidSupportInjection
-import kotlinx.android.synthetic.main.layout_node_list_item.view.*
 import javax.inject.Inject
 
 class NodeListDialog : DialogFragment() {
@@ -75,6 +76,8 @@ class NodeListDialog : DialogFragment() {
     }
 
     inner class NodeHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
+        private val icon = itemView.findViewById<ImageView>(R.id.icon_view)
+        private val label = itemView.findViewById<TextView>(R.id.title_view)
         private var node: Node? = null
         init {
             itemView.setOnClickListener {
@@ -86,8 +89,8 @@ class NodeListDialog : DialogFragment() {
         fun bind(node: Node) {
             this.node = node
             val def = NodeUi[node.type]
-            itemView.icon_view.setImageResource(def.icon)
-            itemView.title_view.setText(def.title)
+            icon.setImageResource(def.icon)
+            label.setText(def.title)
         }
     }
 }

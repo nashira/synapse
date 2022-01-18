@@ -22,11 +22,11 @@ import com.google.android.material.bottomsheet.BottomSheetBehavior
 import com.rthqks.synapse.R
 import com.rthqks.flow.logic.Connector
 import com.rthqks.flow.logic.Node
+import com.rthqks.synapse.databinding.ActivityBuilderBinding
 import com.rthqks.synapse.ui.ConfirmDialog
 import com.rthqks.synapse.ui.PropertiesAdapter
 import com.rthqks.synapse.ui.propertiesUi
 import dagger.android.support.DaggerAppCompatActivity
-import kotlinx.android.synthetic.main.activity_builder.*
 import javax.inject.Inject
 
 
@@ -36,12 +36,14 @@ class BuilderActivity : DaggerAppCompatActivity() {
     lateinit var viewModel: BuilderViewModel
     private val inputsAdapter = PortsAdapter(true, this::onPortClick)
     private val outputsAdapter = PortsAdapter(false, this::onPortClick)
+    private lateinit var binding: ActivityBuilderBinding
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_builder)
+        binding = ActivityBuilderBinding.inflate(layoutInflater)
+        setContentView(binding.root)
 
-        val behavior = BottomSheetBehavior.from(bottom_sheet)
+        val behavior = BottomSheetBehavior.from(binding.bottomSheet)
         behavior.state = BottomSheetBehavior.STATE_HIDDEN
 
         viewModel = ViewModelProvider(this, viewModelFactory)[BuilderViewModel::class.java]
@@ -55,10 +57,10 @@ class BuilderActivity : DaggerAppCompatActivity() {
         val propertiesAdapter = PropertiesAdapter { property, choice ->
             Log.d(TAG, "property changed: ${property.key.name}: ${property.value}")
         }
-        properties_list.adapter = propertiesAdapter
+        binding.propertiesList.adapter = propertiesAdapter
 
-        inputs_list.adapter = inputsAdapter
-        outputs_list.adapter = outputsAdapter
+        binding.inputsList.adapter = inputsAdapter
+        binding.outputsList.adapter = outputsAdapter
 
         var firstNode = true
         viewModel.networkChannel.observe(this) { network ->
@@ -68,7 +70,7 @@ class BuilderActivity : DaggerAppCompatActivity() {
                     viewModel.setNodeId(it.id)
                 }
             }
-            viewModel.setSurfaceView(surface_view)
+            viewModel.setSurfaceView(binding.surfaceView)
         }
 
         viewModel.nodeChannel.observe(this) { node ->
@@ -79,7 +81,7 @@ class BuilderActivity : DaggerAppCompatActivity() {
 //            onJumpToNode()
 //        }
 
-        button_effects.setOnClickListener {
+        binding.buttonEffects.setOnClickListener {
             val state = if (behavior.state == BottomSheetBehavior.STATE_HIDDEN)
                 BottomSheetBehavior.STATE_EXPANDED else BottomSheetBehavior.STATE_HIDDEN
 
@@ -93,7 +95,7 @@ class BuilderActivity : DaggerAppCompatActivity() {
             behavior.state = state
         }
 
-        button_add_node.setOnClickListener {
+        binding.buttonAddNode.setOnClickListener {
             val state = if (behavior.state == BottomSheetBehavior.STATE_HIDDEN)
                 BottomSheetBehavior.STATE_EXPANDED else BottomSheetBehavior.STATE_HIDDEN
 
@@ -112,7 +114,7 @@ class BuilderActivity : DaggerAppCompatActivity() {
         node: Node,
         propertiesAdapter: PropertiesAdapter
     ) {
-        node_name_view.text = node.type
+        binding.nodeNameView.text = node.type
         propertiesAdapter.setProperties(node.propertiesUi())
         val connectors = viewModel.getConnectors(node.id).groupBy { it.port.output }
         inputsAdapter.setPorts(connectors[false] ?: emptyList())

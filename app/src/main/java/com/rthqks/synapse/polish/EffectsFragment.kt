@@ -5,29 +5,30 @@ import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.TextView
 import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModelProvider
 import androidx.recyclerview.widget.RecyclerView
 import com.google.android.material.bottomsheet.BottomSheetBehavior
 import com.rthqks.synapse.R
 import com.rthqks.flow.logic.Network
+import com.rthqks.synapse.databinding.FragmentEffectsBinding
 import dagger.android.support.DaggerFragment
-import kotlinx.android.synthetic.main.fragment_effects.*
-import kotlinx.android.synthetic.main.fragment_settings.button_close
-import kotlinx.android.synthetic.main.layout_effect_list_item.view.*
 import javax.inject.Inject
 
 class EffectsFragment : DaggerFragment() {
     @Inject
     lateinit var viewModelFactory: ViewModelProvider.Factory
     private lateinit var viewModel: PolishViewModel
+    private lateinit var binding: FragmentEffectsBinding
 
     override fun onCreateView(
         inflater: LayoutInflater,
         container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View? {
-        return inflater.inflate(R.layout.fragment_effects, container, false)
+        binding = FragmentEffectsBinding.inflate(inflater, container, false)
+        return binding.root
     }
 
     override fun onActivityCreated(savedInstanceState: Bundle?) {
@@ -35,12 +36,12 @@ class EffectsFragment : DaggerFragment() {
         viewModel =
             ViewModelProvider(requireActivity(), viewModelFactory)[PolishViewModel::class.java]
 
-        button_close.setOnClickListener {
+        binding.buttonClose.setOnClickListener {
             viewModel.bottomSheetState.value = BottomSheetBehavior.STATE_HIDDEN
         }
 
         val effectAdapter = EffectAdapter(::onEffectSelected)
-        effect_list.adapter = effectAdapter
+        binding.effectList.adapter = effectAdapter
 
         viewModel.effects.observe(viewLifecycleOwner, Observer {
             val selected = it.indexOfFirst { it.id == viewModel.currentEffect?.id }
@@ -96,8 +97,8 @@ private class EffectViewHolder(
     itemView: View,
     onEffect: (Int) -> Unit
 ) : RecyclerView.ViewHolder(itemView) {
-    private val nameView = itemView.effect_title
-    private val descView = itemView.effect_description
+    private val nameView = itemView.findViewById<TextView>(R.id.effect_title)
+    private val descView = itemView.findViewById<TextView>(R.id.effect_description)
     private var network: Network? = null
 
     init {
