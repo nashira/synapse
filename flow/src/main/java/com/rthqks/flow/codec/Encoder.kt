@@ -57,7 +57,7 @@ class Encoder(
         this.fps = fps
         videoEncoder = context.videoEncoder
         configureVideo()
-        return inputSurface!!
+        return inputSurface
     }
 
     private fun configureVideo() {
@@ -80,7 +80,7 @@ class Encoder(
         videoEncoder?.reset()
         videoEncoder?.setCallback(this, handler)
         videoEncoder?.configure(format, null, null, MediaCodec.CONFIGURE_FLAG_ENCODE)
-        videoEncoder!!.setInputSurface(inputSurface!!)
+        videoEncoder!!.setInputSurface(inputSurface)
     }
 
     fun setAudio(audioFormat: AudioFormat) {

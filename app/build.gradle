@@ -19,11 +19,11 @@ def dateCode = (System.currentTimeMillis() / 10_000).toInteger()
 def num = (dateCode / 360).toInteger() % 10_000
 
 android {
-    compileSdkVersion 31
+    compileSdk 33
     defaultConfig {
         applicationId "com.rthqks.synapse"
         minSdkVersion 23
-        targetSdkVersion 31
+        targetSdkVersion 33
         versionCode 1
         versionName "dev"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
@@ -71,7 +71,7 @@ android {
     productFlavors {
         dev {
             dimension "stage"
-            resConfigs "en", "xxhdpi"
+            resConfigs 'en', 'xxhdpi'
         }
 
         prod {
@@ -98,6 +98,7 @@ android {
     buildFeatures {
         viewBinding true
     }
+    namespace 'com.rthqks.synapse'
 
 //    playConfigs {
 //        release {
