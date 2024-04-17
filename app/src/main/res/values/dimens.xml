@@ -1,6 +1,0 @@
-<resources>
-    <dimen name="fab_margin">16dp</dimen>
-    <dimen name="connector_margin">12dp</dimen>
-    <dimen name="graph_diameter">48dp</dimen>
-    <dimen name="gallery_grid_spacing">6dp</dimen>
-</resources>
